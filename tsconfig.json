@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "esnext",
+    "allowJs": true,
+    "alwaysStrict": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "removeComments": true,
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*", "node_modules/@notionhq/client/build/src/api-endpoints.d.ts"],
+  "exclude": ["node_modules"]
+}
