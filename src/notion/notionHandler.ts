@@ -4,12 +4,15 @@ import {
   QueryDatabaseParameters,
   UpdatePageParameters,
   UpdatePageResponse,
-  GetDatabaseResponse
+  GetDatabaseResponse,
+  QueryDatabaseResponse
 } from '@notionhq/client/build/src/api-endpoints';
 import {
+  DataContentHandler,
   NotionFilterName,
 } from './notionTypes';
-import { DataContentHandler } from '../types';
+import { Proposal } from '../types';
+import * as notionUtils from './notionUtils';
 
 export class NotionHandler implements DataContentHandler {
   private notion;
@@ -17,52 +20,70 @@ export class NotionHandler implements DataContentHandler {
 
   constructor(
     private notionKey: string,
-    private databaseId: string,
-    private filters: any,
+    private config: any
   ) {
     this.notion = new NotionClient({ auth: this.notionKey });
     this.notionToMd = new NotionToMarkdown({ notionClient: this.notion });
   }
 
-  private async queryNotionDb(filters: any): Promise<any> {
-    return this.notion.databases.query(
+  private toProposal(unconvertedProposal: GetDatabaseResponse): Proposal {
+    return {
+      hash: unconvertedProposal.id,
+      title: notionUtils.getTitle(unconvertedProposal),
+      url: notionUtils.getURL(unconvertedProposal),
+      category: notionUtils.getCategory(unconvertedProposal),
+      status: notionUtils.getStatus(unconvertedProposal),
+      proposalId: notionUtils.getRichText(unconvertedProposal, this.config.proposalIdProperty),
+      discussionThreadURL: notionUtils.getPropertyURL(
+        unconvertedProposal,
+        this.config.discussionThreadPropertyKey
+      ),
+      ipfsURL: notionUtils.getPropertyURL(
+        unconvertedProposal,
+        this.config.ipfsPropertyKey
+      )
+    };
+  }
+
+  private async queryNotionDb(filters: any): Promise<Proposal[]> {
+    const databaseReponse = await this.notion.databases.query(
       {
-        database_id: this.databaseId,
+        database_id: this.config.database_id,
         filter: filters
       } as QueryDatabaseParameters
     );
+    return databaseReponse.results.map((data: any) => {
+      return this.toProposal(data as GetDatabaseResponse);
+    });
   }
 
-  async getToDiscuss(): Promise<GetDatabaseResponse[]> {
+  async getToDiscuss(): Promise<Proposal[]> {
     try {
-      const databaseReponse = await this.queryNotionDb(
-        this.filters[NotionFilterName.preDiscussion]
+      return await this.queryNotionDb(
+        this.config.filters[NotionFilterName.preDiscussion]
       );
-      return databaseReponse.results;
     } catch (error: any) {
-      return error.code;
+      throw error.code;
     }
   }
 
-  async getToTemperatureCheck(): Promise<GetDatabaseResponse[]> {
+  async getToTemperatureCheck(): Promise<Proposal[]> {
     try {
-      const databaseReponse = await this.queryNotionDb(
-        this.filters[NotionFilterName.discussion]
+      return await this.queryNotionDb(
+        this.config.filters[NotionFilterName.discussion]
       );
-      return databaseReponse.results;
     } catch (error: any) {
-      return error.code;
+      throw error.code;
     }
   }
 
-  async getToVote(): Promise<GetDatabaseResponse[]> {
+  async getToVote(): Promise<Proposal[]> {
     try {
-      const databaseReponse = await this.queryNotionDb(
-        this.filters[NotionFilterName.voting]
+      return await this.queryNotionDb(
+        this.config.filters[NotionFilterName.voting]
       );
-      return databaseReponse.results;
     } catch (error: any) {
-      return error.code;
+      throw error.code;
     }
   }
 

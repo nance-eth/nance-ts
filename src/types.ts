@@ -1,12 +1,12 @@
-import {
-  UpdatePageParameters,
-  UpdatePageResponse,
-} from '@notionhq/client/build/src/api-endpoints';
-
-export interface DataContentHandler {
-  getToDiscuss(): Promise<any>;
-  updateMetaData(
-    pageId: UpdatePageParameters['page_id'],
-    updateProperties: UpdatePageParameters['properties']
-  ): Promise<UpdatePageResponse>;
+export interface Proposal {
+  hash: string,
+  title?: string,
+  url?: string,
+  category?: string,
+  status?: string,
+  proposalId?: string
+  author?: string,
+  discussionThreadURL?: string,
+  ipfsURL?: string,
+  snapshotURL?: string,
 }

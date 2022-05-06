@@ -16,17 +16,15 @@ export const setupPollMessage = (messageObj: Message) => {
     return messageObj.content;
   }
   return stripIndents`
-    ${messageObj.content}\n\n
+    ${messageObj.content}\n
     Temperature Check poll is now open! **Vote by reacting to this message.**
   `;
 };
 
 export const temperatureCheckRollUpMessage = (proposals: any, endTime: Date) => {
-  console.log(proposals);
   const urlListText = Object.values(proposals).map((entry:any, index) => {
-    return `${index + 1}. ${entry.title}: ${entry.url}`;
+    return `${index + 1}. ${entry.title}: ${entry.discussionThreadURL}`;
   }).join('\n\n');
-  console.log(urlListText);
   return stripIndents`
     React in the temperature checks before <t:${dateToUnixTimeStamp(endTime)}>\n
     ${urlListText}

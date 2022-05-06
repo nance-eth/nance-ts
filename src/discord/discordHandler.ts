@@ -72,17 +72,7 @@ export class DiscordHandler {
   }
 
   async sendTemperatureCheckRollup(proposals: any, endTime: Date) {
-    const betterProposals = proposals.map((proposal: any) => {
-      return (
-        {
-          title: proposal.properties.Name.title.map((t:any) => {
-            return t.plain_text;
-          }).join(' '),
-          url: proposal.properties[this.config.discussionThreadKey].url
-        }
-      );
-    });
-    const message = discordTemplates.temperatureCheckRollUpMessage(betterProposals, endTime);
+    const message = discordTemplates.temperatureCheckRollUpMessage(proposals, endTime);
     await this.getAlertChannel().send(message);
   }
 }
