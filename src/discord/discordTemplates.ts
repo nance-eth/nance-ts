@@ -4,7 +4,7 @@ import {
 import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp } from '../utils';
 
-export const startDiscussionMessage = (category: string, URL: string) => {
+export const startDiscussionMessage = (category: string | undefined, URL: string) => {
   const messageTitle = (category) ? `New **${category}** proposal` : 'New proposal';
   return `${messageTitle}: ${URL}`;
 };

@@ -2,12 +2,12 @@ export const sleep = (milliseconds: number) => {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds); });
 };
 
-export function log(text: string, type = 'l') {
-  if (type === 'l') {
+export function log(text: string, type = 'log') {
+  if (type === 'log') {
     console.log(`${new Date().toISOString()}\t${text}`);
-  } else if (type === 'e') {
+  } else if (type === 'error') {
     console.log('\x1b[31m%s\x1b[0m', `${new Date().toISOString()}\t${text}`);
-  } else if (type === 'g') {
+  } else if (type === 'good') {
     console.log('\x1b[32m%s\x1b[0m', `${new Date().toISOString()}\t${text}`);
   }
 }

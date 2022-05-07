@@ -1,13 +1,19 @@
 import {
   AnyChannel,
   Client as DiscordClient,
+  Collection,
+  User,
   Intents,
   Message,
   MessageComponent,
   MessageEmbed,
+  ReactionUserManager,
   TextChannel,
   ThreadAutoArchiveDuration,
+  UserManager,
+  Emoji,
 } from 'discord.js';
+import { Proposal } from '../types';
 
 import * as discordTemplates from './discordTemplates';
 
@@ -48,7 +54,7 @@ export class DiscordHandler {
     return sentMessage;
   }
 
-  async startDiscussion(toSend: any): Promise<string> {
+  async startDiscussion(toSend: Proposal): Promise<string> {
     const message = discordTemplates.startDiscussionMessage(toSend.category, toSend.url);
     const messageObj = await this.getAlertChannel().send(message);
     const thread = await messageObj.startThread({
@@ -71,8 +77,31 @@ export class DiscordHandler {
     }
   }
 
-  async sendTemperatureCheckRollup(proposals: any, endTime: Date) {
+  async sendTemperatureCheckRollup(proposals: Proposal[], endTime: Date) {
     const message = discordTemplates.temperatureCheckRollUpMessage(proposals, endTime);
     await this.getAlertChannel().send(message);
+  }
+
+  private static async getUserReactions(
+    messageObj: Message,
+    emoji: string
+  ): Promise<string[] | void> {
+    // https://stackoverflow.com/questions/64241315/is-there-a-way-to-get-reactions-on-an-old-message-in-discordjs/64242640#64242640
+    const pollReactionsCollection = messageObj.reactions.cache.get(emoji);
+    let users: string[] | void;
+    if (pollReactionsCollection !== undefined) {
+      users = await pollReactionsCollection.users.fetch()
+        .then((results: Collection<string, User>) => {
+          results.filter((user): boolean => { return !user.bot; })
+            .map((user) => { return user.tag; });
+        });
+    }
+    return users;
+  }
+
+  async closePoll(messageId: string) {
+    const messageObj = await this.getAlertChannel().messages.fetch(messageId);
+    const yesVoteUsers = DiscordHandler.getUserReactions(messageObj, this.config.poll.voteYesEmoji);
+    const noVoteUsers = DiscordHandler.getUserReactions(messageObj, this.config.poll.voteNoEmoji);
   }
 }

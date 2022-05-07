@@ -1,10 +1,6 @@
 import ical, { CalendarResponse, VEvent } from 'node-ical';
 import { formatUTCTime } from '../utils';
-
-type DateEvent = {
-  date: Date,
-  event: string
-};
+import { DateEvent } from '../types';
 
 export class CalendarHandler {
   public events: CalendarResponse;

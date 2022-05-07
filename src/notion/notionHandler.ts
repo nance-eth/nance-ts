@@ -58,33 +58,31 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async getToDiscuss(): Promise<Proposal[]> {
-    try {
-      return await this.queryNotionDb(
-        this.config.filters[NotionFilterName.preDiscussion]
-      );
-    } catch (error: any) {
-      throw error.code;
-    }
+    const proposals = await this.queryNotionDb(
+      this.config.filters[NotionFilterName.preDiscussion]
+    );
+    return proposals;
   }
 
   async getToTemperatureCheck(): Promise<Proposal[]> {
-    try {
-      return await this.queryNotionDb(
-        this.config.filters[NotionFilterName.discussion]
-      );
-    } catch (error: any) {
-      throw error.code;
-    }
+    const proposals = await this.queryNotionDb(
+      this.config.filters[NotionFilterName.discussion]
+    );
+    return proposals;
+  }
+
+  async getToCloseTemperatureCheck(): Promise<Proposal[]> {
+    const proposals = await this.queryNotionDb(
+      this.config.filters[NotionFilterName.temperatureCheck]
+    );
+    return proposals;
   }
 
   async getToVote(): Promise<Proposal[]> {
-    try {
-      return await this.queryNotionDb(
-        this.config.filters[NotionFilterName.voting]
-      );
-    } catch (error: any) {
-      throw error.code;
-    }
+    const proposals = await this.queryNotionDb(
+      this.config.filters[NotionFilterName.voting]
+    );
+    return proposals;
   }
 
   async updateMetaData(
