@@ -1,5 +1,5 @@
 import ical, { CalendarResponse, VEvent } from 'node-ical';
-import { formatUTCTime } from '../utils';
+import { addDaysToDate, formatUTCTime } from '../utils';
 import { DateEvent } from '../types';
 
 export class CalendarHandler {
@@ -15,18 +15,24 @@ export class CalendarHandler {
     this.events = await ical.fromURL(icsURL);
   }
 
-  getNextEvent(): any {
+  getNextEvent(): DateEvent {
     const nextDates: DateEvent[] = [];
     const now = new Date();
     Object.keys(this.events).forEach((key:string) => {
       const event = this.events[key] as VEvent;
       if (event.type !== 'VEVENT' || !event.rrule) return;
-      const nextEventDate = event.rrule.after(now, true);
-      const nextEventDateUTC = formatUTCTime(nextEventDate);
-      nextDates.push({ date: nextEventDateUTC, event: event.summary });
+      const eventDateStart = event.rrule.after(now, true);
+      const originalEventLength = (new Date(event.end).valueOf() - new Date(event.start).valueOf());
+      const eventDateStartUTC = formatUTCTime(eventDateStart);
+      const eventDateEndUTC = new Date(eventDateStartUTC.valueOf() + originalEventLength);
+      nextDates.push({
+        event: event.summary,
+        start: eventDateStartUTC,
+        end: eventDateEndUTC
+      });
     });
     const sortedNextDates = nextDates.sort((a: DateEvent, b: DateEvent) => {
-      return a.date.getTime() - b.date.getTime();
+      return a.start.getTime() - b.start.getTime();
     });
     return sortedNextDates[0];
   }

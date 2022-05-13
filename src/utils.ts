@@ -5,7 +5,7 @@ export const sleep = (milliseconds: number) => {
 export function log(text: string, type = 'log') {
   if (type === 'log') {
     console.log(`${new Date().toISOString()}\t${text}`);
-  } else if (type === 'error') {
+  } else if (type === 'err') {
     console.log('\x1b[31m%s\x1b[0m', `${new Date().toISOString()}\t${text}`);
   } else if (type === 'good') {
     console.log('\x1b[32m%s\x1b[0m', `${new Date().toISOString()}\t${text}`);
@@ -46,4 +46,12 @@ export const minutesToDays = (minutes: number) => {
 export function getLastSlash(url: string) {
   const split = url.split('/');
   return split[split.length - 1];
+}
+
+export function base64ToJSON(data: string) {
+  return JSON.parse(Buffer.from(data, 'base64').toString());
+}
+
+export function base64ToString(data: string) {
+  return Buffer.from(data, 'base64').toString();
 }

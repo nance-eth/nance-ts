@@ -1,17 +1,12 @@
 import {
-  AnyChannel,
   Client as DiscordClient,
   Collection,
   User,
   Intents,
   Message,
-  MessageComponent,
   MessageEmbed,
-  ReactionUserManager,
   TextChannel,
   ThreadAutoArchiveDuration,
-  UserManager,
-  Emoji,
 } from 'discord.js';
 import { Proposal } from '../types';
 

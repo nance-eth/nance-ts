@@ -11,18 +11,15 @@ import {
 } from './utils';
 import { Proposal } from './types';
 
-const ICS_FILE = './src/config/juicebox.ics';
-
-const notion = new NotionHandler(keys.NOTION_KEY, config);
-const discord = new DiscordHandler(keys.DISCORD_KEY, config);
-const calendar = new CalendarHandler(ICS_FILE);
+const proposalHandler = new NotionHandler(keys.NOTION_KEY, config);
+const dialogHandler = new DiscordHandler(keys.DISCORD_KEY, config);
 
 async function queryAndSendDiscussions() {
   try {
-    const proposalsToDiscuss = await notion.getToDiscuss();
+    const proposalsToDiscuss = await proposalHandler.getToDiscuss();
     proposalsToDiscuss.forEach(async (proposal: Proposal) => {
-      const threadURL = await discord.startDiscussion(proposal);
-      await notion.updateMetaData(
+      const threadURL = await dialogHandler.startDiscussion(proposal);
+      await proposalHandler.updateMetaData(
         proposal.hash,
         { [config.discussionThreadPropertyKey]: { url: threadURL } }
       );
@@ -34,12 +31,12 @@ async function queryAndSendDiscussions() {
 
 async function temperatureCheckSetup() {
   try {
-    const proposalsToTemperatureCheck = await notion.getToTemperatureCheck();
-    proposalsToTemperatureCheck.forEach(async (proposal: any) => {
+    const proposalsToTemperatureCheck = await proposalHandler.getToTemperatureCheck();
+    proposalsToTemperatureCheck.forEach(async (proposal: Proposal) => {
       const threadId = getLastSlash(proposal.discussionThreadURL);
-      await discord.setupPoll(threadId);
+      await dialogHandler.setupPoll(threadId);
     });
-    await discord.sendTemperatureCheckRollup(
+    await dialogHandler.sendTemperatureCheckRollup(
       proposalsToTemperatureCheck,
       addDaysToDate(new Date(), config.poll.votingTimeDays)
     );
@@ -51,7 +48,7 @@ async function temperatureCheckSetup() {
 
 async function temperatureCheckClose() {
   try {
-    const proposalsToCloseTemperatureCheck = await notion.getToCloseTemperatureCheck();
+    const proposalsToCloseTemperatureCheck = await proposalHandler.getToCloseTemperatureCheck();
   } catch (e) {
     log(`${config.name}: temperatureCheckClose() issue`, 'error');
   }
