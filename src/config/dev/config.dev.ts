@@ -22,6 +22,9 @@ const config = {
     database_id: '50e11ebe3d2440b7a64d39805868df87',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
+      status: 'Status',
+      statusVoting: 'Voting',
+      statusCancelled: 'Cancelled',
       proposalIdPrefix: 'JBP-',
       discussionThread: 'Discussion Thread',
       ipfs: 'IPFS',

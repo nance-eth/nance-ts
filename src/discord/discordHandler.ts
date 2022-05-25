@@ -95,7 +95,7 @@ export class DiscordHandler {
     return [''];
   }
 
-  async closePoll(messageId: string): Promise<PollResults> {
+  async getPollVoters(messageId: string): Promise<PollResults> {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
     const yesVoteUserList = await DiscordHandler.getUserReactions(
       messageObj,
@@ -108,7 +108,7 @@ export class DiscordHandler {
     return { voteYesUsers: yesVoteUserList, voteNoUsers: noVoteUserList };
   }
 
-  async sendPollResults(pollResults: PollResults, threadId: string) {
+  async sendPollResults(pollResults: PollResults, outcome: boolean, threadId: string) {
     const message = discordTemplates.pollResultsMessage(
       pollResults,
       {
@@ -116,6 +116,7 @@ export class DiscordHandler {
         voteNoEmoji: this.config.discord.poll.voteNoEmoji
       }
     );
-    await this.discord.channels.cache.get(threadId).send({ embeds: [message] });
+    const sendChannel = this.discord.channels.cache.get(threadId) as TextChannel;
+    await sendChannel.send({ embeds: [message] });
   }
 }

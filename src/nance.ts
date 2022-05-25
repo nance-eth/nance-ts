@@ -71,13 +71,30 @@ export class Nance {
       const temperatureCheckProposals = await this.proposalHandler.getTemperatureCheckProposals();
       temperatureCheckProposals.forEach(async (proposal: Proposal) => {
         const threadId = getLastSlash(proposal.discussionThreadURL);
-        const pollResults = await this.dialogHandler.closePoll(threadId);
+        const pollResults = await this.dialogHandler.getPollVoters(threadId);
+        const outcome = this.pollPassCheck(
+          pollResults.voteYesUsers.length,
+          pollResults.voteNoUsers.length
+        );
         if (this.config.discord.poll.showResults) {
-          await this.dialogHandler.sendPollResults(pollResults, threadId);
+          await this.dialogHandler.sendPollResults(pollResults, outcome, threadId);
         }
+        await this.proposalHandler.updateMetaData(
+          proposal.hash,
+          {
+            [this.config.notion.propertyKeys.status]: {
+              select: {
+                name: (outcome)
+                  ? this.config.notion.propertyKeys.statusVoting
+                  : this.config.notion.propertyKeys.statusCancelled
+              }
+            }
+          }
+        );
       });
     } catch (e) {
       logger.error(`${this.config.name}: temperatureCheckClose() issue`);
+      logger.error(e);
     }
   }
 }
