@@ -1,55 +1,83 @@
 import { DiscordHandler } from './discord/discordHandler';
 import { NotionHandler } from './notion/notionHandler';
-import { keys, configName } from './keys';
-import config from './config/config.dev';
-import { CalendarHandler } from './calendar/CalendarHandler';
+import { keys } from './keys';
 import {
-  log,
-  sleep,
   getLastSlash,
   addDaysToDate
 } from './utils';
-import { Proposal } from './types';
+import logger from './logging';
+import { INance, Proposal } from './types';
 
-const proposalHandler = new NotionHandler(keys.NOTION_KEY, config);
-const dialogHandler = new DiscordHandler(keys.DISCORD_KEY, config);
+export class Nance {
+  private proposalHandler;
+  private dialogHandler;
+  private discussionInterval: any;
 
-async function queryAndSendDiscussions() {
-  try {
-    const proposalsToDiscuss = await proposalHandler.getToDiscuss();
-    proposalsToDiscuss.forEach(async (proposal: Proposal) => {
-      const threadURL = await dialogHandler.startDiscussion(proposal);
-      await proposalHandler.updateMetaData(
-        proposal.hash,
-        { [config.discussionThreadPropertyKey]: { url: threadURL } }
-      );
-    });
-  } catch (e) {
-    log(`${config.name}: queryAndSendDiscussions() issue`, 'error');
+  constructor(
+    private config: any
+  ) {
+    this.proposalHandler = new NotionHandler(keys.NOTION_KEY, this.config);
+    this.dialogHandler = new DiscordHandler(keys.DISCORD_KEY, this.config);
   }
-}
 
-async function temperatureCheckSetup() {
-  try {
-    const proposalsToTemperatureCheck = await proposalHandler.getToTemperatureCheck();
-    proposalsToTemperatureCheck.forEach(async (proposal: Proposal) => {
-      const threadId = getLastSlash(proposal.discussionThreadURL);
-      await dialogHandler.setupPoll(threadId);
-    });
-    await dialogHandler.sendTemperatureCheckRollup(
-      proposalsToTemperatureCheck,
-      addDaysToDate(new Date(), config.poll.votingTimeDays)
-    );
-    log(`${config.name}: temperatureCheckSetup() complete`, 'good');
-  } catch (e) {
-    log(`${config.name}: temperatureCheckSetup() issue`, 'error');
+  async setDiscussionInterval(seconds: number) {
+    this.discussionInterval = setInterval(this.queryAndSendDiscussions.bind(this), seconds * 1000);
   }
-}
 
-async function temperatureCheckClose() {
-  try {
-    const proposalsToCloseTemperatureCheck = await proposalHandler.getToCloseTemperatureCheck();
-  } catch (e) {
-    log(`${config.name}: temperatureCheckClose() issue`, 'error');
+  async clearDiscussionInterval() {
+    clearInterval(this.discussionInterval);
+  }
+
+  async queryAndSendDiscussions() {
+    try {
+      const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();
+      proposalsToDiscuss.forEach(async (proposal: Proposal) => {
+        const threadURL = await this.dialogHandler.startDiscussion(proposal);
+        await this.proposalHandler.updateMetaData(
+          proposal.hash,
+          { [this.config.notion.propertyKeys.discussionThread]: { url: threadURL } }
+        );
+        logger.info(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
+      });
+    } catch (e) {
+      logger.error(`${this.config.name}: queryAndSendDiscussions() issue`);
+    }
+  }
+
+  async temperatureCheckSetup(endDate: Date) {
+    try {
+      const discussionProposals = await this.proposalHandler.getDiscussionProposals();
+      discussionProposals.forEach(async (proposal: Proposal) => {
+        const threadId = getLastSlash(proposal.discussionThreadURL);
+        await this.dialogHandler.setupPoll(threadId);
+      });
+      await this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
+      logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
+    } catch (e) {
+      logger.error(`${this.config.name}: temperatureCheckSetup() issue`);
+    }
+  }
+
+  pollPassCheck(yesCount: number, noCount: number) {
+    const ratio = yesCount / (yesCount + noCount);
+    if (yesCount >= this.config.poll.minYesVotes && ratio >= this.config.poll.yesNoRatio) {
+      return true;
+    }
+    return false;
+  }
+
+  async temperatureCheckClose() {
+    try {
+      const temperatureCheckProposals = await this.proposalHandler.getTemperatureCheckProposals();
+      temperatureCheckProposals.forEach(async (proposal: Proposal) => {
+        const threadId = getLastSlash(proposal.discussionThreadURL);
+        const pollResults = await this.dialogHandler.closePoll(threadId);
+        if (this.config.discord.poll.showResults) {
+          await this.dialogHandler.sendPollResults(pollResults, threadId);
+        }
+      });
+    } catch (e) {
+      logger.error(`${this.config.name}: temperatureCheckClose() issue`);
+    }
   }
 }

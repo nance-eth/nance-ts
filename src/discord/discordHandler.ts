@@ -8,7 +8,8 @@ import {
   TextChannel,
   ThreadAutoArchiveDuration,
 } from 'discord.js';
-import { Proposal } from '../types';
+import logger from '../logging';
+import { Proposal, PollResults } from '../types';
 
 import * as discordTemplates from './discordTemplates';
 
@@ -28,7 +29,7 @@ export class DiscordHandler {
     });
     this.discord.login(discordKey).then(async () => {
       this.discord.on('ready', async (discord) => {
-        console.log(`Ready! Logged in as ${discord.user.username}`);
+        logger.info(`Ready! Logged in as ${discord.user.username}`);
       });
     });
   }
@@ -38,7 +39,7 @@ export class DiscordHandler {
   }
 
   private getAlertChannel(): TextChannel {
-    return this.discord.channels.cache.get(this.config.channelId) as TextChannel;
+    return this.discord.channels.cache.get(this.config.discord.channelId) as TextChannel;
   }
 
   async sendEmbed(text: string, channelId: string): Promise<Message<boolean>> {
@@ -66,8 +67,8 @@ export class DiscordHandler {
         messageObj.edit(discordTemplates.setupPollMessage(messageObj));
       }
       await Promise.all([
-        messageObj.react(this.config.poll.voteYesEmoji),
-        messageObj.react(this.config.poll.voteNoEmoji)
+        messageObj.react(this.config.discord.poll.voteYesEmoji),
+        messageObj.react(this.config.discord.poll.voteNoEmoji)
       ]);
     }
   }
@@ -80,23 +81,41 @@ export class DiscordHandler {
   private static async getUserReactions(
     messageObj: Message,
     emoji: string
-  ): Promise<string[] | void> {
+  ): Promise<string[]> {
     // https://stackoverflow.com/questions/64241315/is-there-a-way-to-get-reactions-on-an-old-message-in-discordjs/64242640#64242640
     const pollReactionsCollection = messageObj.reactions.cache.get(emoji);
-    let users: string[] | void;
     if (pollReactionsCollection !== undefined) {
-      users = await pollReactionsCollection.users.fetch()
+      const users = <string[]> await pollReactionsCollection.users.fetch()
         .then((results: Collection<string, User>) => {
           results.filter((user): boolean => { return !user.bot; })
             .map((user) => { return user.tag; });
         });
+      return users;
     }
-    return users;
+    return [''];
   }
 
-  async closePoll(messageId: string) {
+  async closePoll(messageId: string): Promise<PollResults> {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
-    const yesVoteUsers = DiscordHandler.getUserReactions(messageObj, this.config.poll.voteYesEmoji);
-    const noVoteUsers = DiscordHandler.getUserReactions(messageObj, this.config.poll.voteNoEmoji);
+    const yesVoteUserList = await DiscordHandler.getUserReactions(
+      messageObj,
+      this.config.discord.poll.voteYesEmoji
+    );
+    const noVoteUserList = await DiscordHandler.getUserReactions(
+      messageObj,
+      this.config.discord.poll.voteNoEmoji
+    );
+    return { voteYesUsers: yesVoteUserList, voteNoUsers: noVoteUserList };
+  }
+
+  async sendPollResults(pollResults: PollResults, threadId: string) {
+    const message = discordTemplates.pollResultsMessage(
+      pollResults,
+      {
+        voteYesEmoji: this.config.discord.poll.voteYesEmoji,
+        voteNoEmoji: this.config.discord.poll.voteNoEmoji
+      }
+    );
+    await this.discord.channels.cache.get(threadId).send({ embeds: [message] });
   }
 }

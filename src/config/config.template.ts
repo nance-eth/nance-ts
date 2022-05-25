@@ -1,90 +1,102 @@
 const config = {
-  nameId: 'jbdao',
-  name: 'juiceboxDAO',
-  scheme: ['notion', 'discord', 'snapshot'],
+  nameId: null,
+  name: null,
+  scheme: null,
   discord: {
-    discord_guildId: '889377541675159602',
-    discord_channelId: '964601032703352873',
-    alertRole: '958529682796605440',
+    guildId: null,
+    channelId: null,
+    alertRole: null,
     poll: {
-      votingTimeDays: 3,
-      voteYesEmoji: '👍',
-      voteNoEmoji: '👎',
-      voteGoVoteEmoji: '🗳',
-      voteCanceledEmoji: '❌',
-      minYesVotes: 1,
-      yesNoRatio: 0.3,
-      showResults: true
+      votingTimeDays: null,
+      voteYesEmoji: null,
+      voteNoEmoji: null,
+      voteGoVoteEmoji: null,
+      voteCanceledEmoji: null,
+      minYesVotes: null,
+      yesNoRatio: null,
+      showResults: null
     },
   },
   notion: {
-    publicURLPrefix: 'foil-flat-c43.notion.site',
-    database_id: '50e11ebe3d2440b7a64d39805868df87',
+    publicURLPrefix: null,
+    database_id: null,
     propertyKeys: {
-      proposalId: 'Juicebox Proposal ID',
-      proposalIdPrefix: 'JBP-',
-      discussionThread: 'Discussion Thread',
-      ipfs: 'IPFS',
+      proposalId: null,
+      proposalIdPrefix: null,
+      discussionThread: null,
+      ipfs: null,
     },
     filters: {
       preDiscussion: {
         and: [
           {
-            property: 'Status',
+            property: null,
             select: {
-              equals: 'Discussion',
+              equals: null,
             },
           },
           {
             url: {
               is_empty: true,
             },
-            property: 'Discussion Thread',
+            property: null,
+          },
+          {
+            property: 'Name',
+            title: {
+              is_not_empty: null
+            }
           }],
       },
 
       discussion: {
         and: [
           {
-            property: 'Status',
+            property: null,
             select: {
-              equals: 'Discussion',
+              equals: null,
             },
           },
           {
-            property: 'Discussion Thread',
+            property: null,
             url: {
-              is_not_empty: true,
+              is_not_empty: null,
             },
+          },
+          {
+            property: 'Name',
+            title: {
+              is_not_empty: null
+            }
           }],
       },
 
       proposalId: {
         property: null,
         rich_text: {
-          contains: 'JBP-',
+          contains: null,
         },
       },
 
       temperatureCheck: {
-        property: 'Status',
+        property: null,
         select: {
-          equals: 'Temperature Check',
+          equals: null,
         },
       },
 
       voting: {
         and: [
           {
-            property: 'Status',
+            property: null,
             select: {
-              equals: 'Voting',
+              equals: null,
             },
           },
           {
-            property: 'Snapshot',
+            property: null,
             url: {
-              is_not_empty: true,
+              is_not_empty: null,
             },
           }],
       },
@@ -92,13 +104,12 @@ const config = {
   },
   snapshot: {
     base: 'https://snapshot.org/#',
-    space: 'jigglyjams.eth',
+    space: null,
     choices: ['For', 'Against', 'Abstain'],
-    votingTimeDays: 3,
-    quroum: 1,
-    passingRatio: 0.66,
+    votingTimeDays: null,
+    quroum: null,
+    passingRatio: null,
   },
-  ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
 };
 
 export default config;

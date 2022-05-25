@@ -33,5 +33,5 @@ export const getStatus = (page:any) => {
 };
 
 export const getPropertyURL = (page:any, property:any) => {
-  return (page.properties[property].url) ? page.properties[property].url : '';
+  return (page.properties[property]) ? page.properties[property].url : '';
 };

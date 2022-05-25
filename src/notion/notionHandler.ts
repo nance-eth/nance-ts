@@ -33,14 +33,17 @@ export class NotionHandler implements DataContentHandler {
       url: notionUtils.getURL(unconvertedProposal),
       category: notionUtils.getCategory(unconvertedProposal),
       status: notionUtils.getStatus(unconvertedProposal),
-      proposalId: notionUtils.getRichText(unconvertedProposal, this.config.proposalIdProperty),
+      proposalId: notionUtils.getRichText(
+        unconvertedProposal,
+        this.config.notion.propertyKeys.proposalId
+      ),
       discussionThreadURL: notionUtils.getPropertyURL(
         unconvertedProposal,
         this.config.discussionThreadPropertyKey
       ),
       ipfsURL: notionUtils.getPropertyURL(
         unconvertedProposal,
-        this.config.ipfsPropertyKey
+        this.config.notion.propertyKeys.ipfs
       )
     };
   }
@@ -48,7 +51,7 @@ export class NotionHandler implements DataContentHandler {
   private async queryNotionDb(filters: any): Promise<Proposal[]> {
     const databaseReponse = await this.notion.databases.query(
       {
-        database_id: this.config.database_id,
+        database_id: this.config.notion.database_id,
         filter: filters
       } as QueryDatabaseParameters
     );
@@ -59,28 +62,28 @@ export class NotionHandler implements DataContentHandler {
 
   async getToDiscuss(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.config.filters[NotionFilterName.preDiscussion]
+      this.config.notion.filters.preDiscussion
     );
     return proposals;
   }
 
-  async getToTemperatureCheck(): Promise<Proposal[]> {
+  async getDiscussionProposals(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.config.filters[NotionFilterName.discussion]
+      this.config.notion.filters.discussion
     );
     return proposals;
   }
 
-  async getToCloseTemperatureCheck(): Promise<Proposal[]> {
+  async getTemperatureCheckProposals(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.config.filters[NotionFilterName.temperatureCheck]
+      this.config.notion.filters.temperatureCheck
     );
     return proposals;
   }
 
   async getToVote(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.config.filters[NotionFilterName.voting]
+      this.config.notion.filters.voting
     );
     return proposals;
   }

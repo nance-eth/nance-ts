@@ -1,8 +1,9 @@
 import {
-  Message, ThreadChannel,
+  Message, MessageEmbed, ThreadChannel,
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp } from '../utils';
+import { PollResults, PollEmojis } from '../types';
 
 export const startDiscussionMessage = (category: string | undefined, URL: string) => {
   const messageTitle = (category) ? `New **${category}** proposal` : 'New proposal';
@@ -29,6 +30,19 @@ export const temperatureCheckRollUpMessage = (proposals: any, endTime: Date) => 
     React in the temperature checks before <t:${dateToUnixTimeStamp(endTime)}>\n
     ${urlListText}
   `;
+};
+
+export const pollResultsMessage = (pollResults: PollResults, pollEmojis: PollEmojis) => {
+  return new MessageEmbed().setDescription(
+    stripIndents`
+      Results\n========\n
+      ${pollResults.voteYesUsers.length} ${pollEmojis.voteYesEmoji}\n
+      ${pollResults.voteYesUsers.join('\n')}\n\n
+
+      ${pollResults.voteNoUsers.length} ${pollEmojis.voteNoEmoji}\n
+      ${pollResults.voteNoUsers.join('\n')}\n\n
+    `
+  );
 };
 
 export const threadToURL = (thread: ThreadChannel) => {

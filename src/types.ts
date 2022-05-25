@@ -11,15 +11,24 @@ export interface Proposal {
   snapshotURL?: string,
 }
 
+export interface INance {
+  queryAndSendDiscussions(): Promise<void>,
+  temperatureCheckSetup(): Promise<void>,
+  temperatureCheckClose(): Promise<void>
+}
+
 export interface DateEvent {
   event: string
   start: Date,
   end: Date,
 }
 
-export interface Organization {
-  configURL: string,
-  calendarURL: string
+export interface PollResults {
+  voteYesUsers: string[],
+  voteNoUsers: string[]
 }
 
-export type Organizations = [];
+export interface PollEmojis {
+  voteYesEmoji: string,
+  voteNoEmoji: string
+}

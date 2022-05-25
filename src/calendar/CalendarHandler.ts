@@ -6,9 +6,9 @@ export class CalendarHandler {
   public events: CalendarResponse;
 
   constructor(
-    private icsLink: string,
+    private icsString: string,
   ) {
-    this.events = ical.sync.parseFile(this.icsLink);
+    this.events = ical.sync.parseICS(this.icsString);
   }
 
   async useIcsLinkInstead(icsURL:string) {
