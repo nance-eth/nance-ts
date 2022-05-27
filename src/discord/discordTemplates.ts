@@ -26,21 +26,31 @@ export const temperatureCheckRollUpMessage = (proposals: any, endTime: Date) => 
   const urlListText = Object.values(proposals).map((entry:any, index) => {
     return `${index + 1}. ${entry.title}: ${entry.discussionThreadURL}`;
   }).join('\n\n');
-  return stripIndents`
-    React in the temperature checks before <t:${dateToUnixTimeStamp(endTime)}>\n
-    ${urlListText}
-  `;
+  return new MessageEmbed().setTitle(
+    'Temperature Checks'
+  ).setDescription(
+    stripIndents`
+      React in the temperature checks before <t:${dateToUnixTimeStamp(endTime)}>\n
+      ${urlListText}
+    `
+  );
 };
 
-export const pollResultsMessage = (pollResults: PollResults, pollEmojis: PollEmojis) => {
-  return new MessageEmbed().setDescription(
+export const pollResultsMessage = (
+  pollResults: PollResults,
+  outcome: boolean,
+  pollEmojis: PollEmojis
+) => {
+  return new MessageEmbed().setTitle(
+    `Temperature Check ${(outcome) ? pollEmojis.voteYesEmoji : pollEmojis.voteNoEmoji}`
+  ).setDescription(
     stripIndents`
       Results\n========\n
       ${pollResults.voteYesUsers.length} ${pollEmojis.voteYesEmoji}\n
-      ${pollResults.voteYesUsers.join('\n')}\n\n
+      ${pollResults.voteYesUsers.join('\n')}\n
 
       ${pollResults.voteNoUsers.length} ${pollEmojis.voteNoEmoji}\n
-      ${pollResults.voteNoUsers.join('\n')}\n\n
+      ${pollResults.voteNoUsers.join('\n')}\n
     `
   );
 };

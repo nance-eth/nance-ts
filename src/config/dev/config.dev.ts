@@ -23,6 +23,7 @@ const config = {
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',
+      statusTemperatureCheck: 'Temperature Check',
       statusVoting: 'Voting',
       statusCancelled: 'Cancelled',
       proposalIdPrefix: 'JBP-',

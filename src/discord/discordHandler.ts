@@ -75,7 +75,7 @@ export class DiscordHandler {
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endTime: Date) {
     const message = discordTemplates.temperatureCheckRollUpMessage(proposals, endTime);
-    await this.getAlertChannel().send(message);
+    await this.getAlertChannel().send({ embeds: [message] });
   }
 
   private static async getUserReactions(
@@ -84,15 +84,15 @@ export class DiscordHandler {
   ): Promise<string[]> {
     // https://stackoverflow.com/questions/64241315/is-there-a-way-to-get-reactions-on-an-old-message-in-discordjs/64242640#64242640
     const pollReactionsCollection = messageObj.reactions.cache.get(emoji);
+    let users = [''];
     if (pollReactionsCollection !== undefined) {
-      const users = <string[]> await pollReactionsCollection.users.fetch()
+      users = <string[]> await pollReactionsCollection.users.fetch()
         .then((results: Collection<string, User>) => {
-          results.filter((user): boolean => { return !user.bot; })
+          return results.filter((user): boolean => { return !user.bot; })
             .map((user) => { return user.tag; });
         });
-      return users;
     }
-    return [''];
+    return users;
   }
 
   async getPollVoters(messageId: string): Promise<PollResults> {
@@ -111,6 +111,7 @@ export class DiscordHandler {
   async sendPollResults(pollResults: PollResults, outcome: boolean, threadId: string) {
     const message = discordTemplates.pollResultsMessage(
       pollResults,
+      outcome,
       {
         voteYesEmoji: this.config.discord.poll.voteYesEmoji,
         voteNoEmoji: this.config.discord.poll.voteNoEmoji

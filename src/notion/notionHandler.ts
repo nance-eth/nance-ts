@@ -30,7 +30,7 @@ export class NotionHandler implements DataContentHandler {
     return {
       hash: unconvertedProposal.id,
       title: notionUtils.getTitle(unconvertedProposal),
-      url: notionUtils.getURL(unconvertedProposal),
+      url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
       category: notionUtils.getCategory(unconvertedProposal),
       status: notionUtils.getStatus(unconvertedProposal),
       proposalId: notionUtils.getRichText(
@@ -39,7 +39,7 @@ export class NotionHandler implements DataContentHandler {
       ),
       discussionThreadURL: notionUtils.getPropertyURL(
         unconvertedProposal,
-        this.config.discussionThreadPropertyKey
+        this.config.notion.propertyKeys.discussionThread
       ),
       ipfsURL: notionUtils.getPropertyURL(
         unconvertedProposal,
@@ -100,6 +100,30 @@ export class NotionHandler implements DataContentHandler {
     } catch (error: any) {
       return error.code;
     }
+  }
+
+  async updateStatusTemperatureCheck(pageId: string) {
+    this.updateMetaData(pageId, {
+      [this.config.notion.propertyKeys.status]: {
+        select: { name: this.config.notion.propertyKeys.statusTemperatureCheck }
+      }
+    });
+  }
+
+  async updateStatusVoting(pageId: string) {
+    this.updateMetaData(pageId, {
+      [this.config.notion.propertyKeys.status]: {
+        select: { name: this.config.notion.propertyKeys.statusVoting }
+      }
+    });
+  }
+
+  async updateStatusCancelled(pageId: string) {
+    this.updateMetaData(pageId, {
+      [this.config.notion.propertyKeys.status]: {
+        select: { name: this.config.notion.propertyKeys.statusCancelled }
+      }
+    });
   }
 
   async getContentMarkdown(pageId: string): Promise<string> {
