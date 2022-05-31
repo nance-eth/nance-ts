@@ -38,14 +38,14 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Da
 
 export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endTime: Date) => {
   const urlListText = Object.values(proposals).map((entry: Proposal) => {
-    return `${entry.title}: [vote](${entry.voteURL}) | [discussion](${entry.discussionThreadURL})`;
+    return `[${entry.title}](${entry.voteURL})`;
   }).join('\n\n');
   return new MessageEmbed().setTitle(
-    'Time to vote!'
-  ).setURL(voteURL).setDescription(
+    `[Snapshot voting](${voteURL}) is open until <t:${dateToUnixTimeStamp(endTime)}>`
+  ).setDescription(
     stripIndents`
-      Vote before <t:${dateToUnixTimeStamp(endTime)}>\n
       ${urlListText}
+      [Vote](${voteURL})｜[Discussions](${discussionThreadURL})｜[Governance Links](https://discord.com/channels/775859454780244028/903035787682131998/956386527217328138)
     `
   );
 };
