@@ -22,7 +22,8 @@ export class PinataHandler {
 
   async pinProposal(proposal: Proposal): Promise<string> {
     const fileName = path.join(TMP_DIR, `${proposal.hash}.md`);
-    fs.writeFileSync(fileName, proposal.markdown);
+    const titleAndMarkdown = `# ${proposal.title}${proposal.markdown}`;
+    fs.writeFileSync(fileName, titleAndMarkdown);
     return this.pinata.pinFromFS(fileName).then(async (response) => {
       fs.rm(fileName, () => {});
       return response.IpfsHash;
