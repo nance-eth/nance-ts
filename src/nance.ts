@@ -99,6 +99,7 @@ export class Nance {
   }
 
   async votingSetup(startDate: Date, endDate: Date) {
+    this.clearDiscussionInterval();
     const voteProposals = await this.proposalHandler.getVoteProposals();
     const voteProposalsFormatted: Proposal[] = [];
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
