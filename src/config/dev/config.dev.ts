@@ -2,6 +2,8 @@ const config = {
   nameId: 'dev',
   name: 'dev',
   scheme: ['notion', 'discord', 'snapshot'],
+  proposalDataBackup: 'ipfs',
+  ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   discord: {
     guildId: '889377541675159602',
     channelId: '964601032703352873',
@@ -29,7 +31,9 @@ const config = {
       proposalIdPrefix: 'JBP-',
       discussionThread: 'Discussion Thread',
       ipfs: 'IPFS',
+      vote: 'Snapshot'
     },
+    removeTextFromProposal: '[_How to fill out this template_](/3d81e6bb330a4c869bddd0d6449ac032)_._\n',
     filters: { }
   },
   snapshot: {
@@ -112,7 +116,7 @@ config.notion.filters = {
       {
         property: 'Snapshot',
         url: {
-          is_not_empty: true,
+          is_empty: true,
         },
       }],
   },

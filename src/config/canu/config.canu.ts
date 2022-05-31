@@ -1,6 +1,6 @@
 const config = {
-  nameId: 'dev',
-  name: 'dev',
+  nameId: 'canu',
+  name: 'canuDAO',
   scheme: ['notion', 'discord', 'snapshot'],
   discord: {
     guildId: '889377541675159602',

@@ -1,14 +1,15 @@
 export interface Proposal {
   hash: string,
   title: string,
+  markdown: string,
   url: string,
   category?: string | undefined,
   status?: string,
   proposalId?: string
   author?: string,
   discussionThreadURL: string,
-  ipfsURL?: string,
-  snapshotURL?: string,
+  ipfsURL: string,
+  voteURL: string,
 }
 
 export interface INance {
@@ -31,4 +32,9 @@ export interface PollResults {
 export interface PollEmojis {
   voteYesEmoji: string,
   voteNoEmoji: string
+}
+
+export interface PinataKey {
+  KEY: string,
+  SECRET: string
 }

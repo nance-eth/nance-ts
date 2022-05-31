@@ -73,8 +73,17 @@ export class DiscordHandler {
     }
   }
 
-  async sendTemperatureCheckRollup(proposals: Proposal[], endTime: Date) {
-    const message = discordTemplates.temperatureCheckRollUpMessage(proposals, endTime);
+  async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
+    const message = discordTemplates.temperatureCheckRollUpMessage(proposals, endDate);
+    await this.getAlertChannel().send({ embeds: [message] });
+  }
+
+  async sendVoteRollup(proposals: Proposal[], endDate: Date) {
+    const message = discordTemplates.voteRollUpMessage(
+      `${this.config.snapshot.base}/${this.config.snapshot.space}`,
+      proposals,
+      endDate
+    );
     await this.getAlertChannel().send({ embeds: [message] });
   }
 

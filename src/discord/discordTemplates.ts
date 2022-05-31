@@ -3,7 +3,7 @@ import {
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp } from '../utils';
-import { PollResults, PollEmojis } from '../types';
+import { PollResults, PollEmojis, Proposal } from '../types';
 
 export const startDiscussionMessage = (category: string | undefined, URL: string) => {
   const messageTitle = (category) ? `New **${category}** proposal` : 'New proposal';
@@ -22,15 +22,29 @@ export const setupPollMessage = (messageObj: Message) => {
   `;
 };
 
-export const temperatureCheckRollUpMessage = (proposals: any, endTime: Date) => {
-  const urlListText = Object.values(proposals).map((entry:any, index) => {
+export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Date) => {
+  const urlListText = Object.values(proposals).map((entry: Proposal, index) => {
     return `${index + 1}. ${entry.title}: ${entry.discussionThreadURL}`;
   }).join('\n\n');
   return new MessageEmbed().setTitle(
     'Temperature Checks'
   ).setDescription(
     stripIndents`
-      React in the temperature checks before <t:${dateToUnixTimeStamp(endTime)}>\n
+      React in the temperature checks before <t:${dateToUnixTimeStamp(endDate)}>\n
+      ${urlListText}
+    `
+  );
+};
+
+export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endTime: Date) => {
+  const urlListText = Object.values(proposals).map((entry: Proposal) => {
+    return `${entry.title}: [vote](${entry.voteURL}) | [discussion](${entry.discussionThreadURL})`;
+  }).join('\n\n');
+  return new MessageEmbed().setTitle(
+    'Time to vote!'
+  ).setURL(voteURL).setDescription(
+    stripIndents`
+      Vote before <t:${dateToUnixTimeStamp(endTime)}>\n
       ${urlListText}
     `
   );

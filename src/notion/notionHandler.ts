@@ -8,8 +8,7 @@ import {
   QueryDatabaseResponse
 } from '@notionhq/client/build/src/api-endpoints';
 import {
-  DataContentHandler,
-  NotionFilterName,
+  DataContentHandler
 } from './notionTypes';
 import { Proposal } from '../types';
 import * as notionUtils from './notionUtils';
@@ -30,6 +29,7 @@ export class NotionHandler implements DataContentHandler {
     return {
       hash: unconvertedProposal.id,
       title: notionUtils.getTitle(unconvertedProposal),
+      markdown: '',
       url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
       category: notionUtils.getCategory(unconvertedProposal),
       status: notionUtils.getStatus(unconvertedProposal),
@@ -44,7 +44,8 @@ export class NotionHandler implements DataContentHandler {
       ipfsURL: notionUtils.getPropertyURL(
         unconvertedProposal,
         this.config.notion.propertyKeys.ipfs
-      )
+      ),
+      voteURL: ''
     };
   }
 
@@ -81,7 +82,7 @@ export class NotionHandler implements DataContentHandler {
     return proposals;
   }
 
-  async getToVote(): Promise<Proposal[]> {
+  async getVoteProposals(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
       this.config.notion.filters.voting
     );
@@ -126,9 +127,33 @@ export class NotionHandler implements DataContentHandler {
     });
   }
 
+  async updateVoteAndIPFS(proposal: Proposal) {
+    this.updateMetaData(
+      proposal.hash,
+      {
+        [this.config.notion.propertyKeys.vote]: { url: proposal.voteURL },
+        [this.config.notion.propertyKeys.ipfs]: { url: proposal.ipfsURL }
+      }
+    );
+  }
+
+  private removeText(text: string) {
+    const textToRemove = this.config.notion.removeTextFromProposal;
+    if (text.indexOf(textToRemove) > -1) {
+      return text.replace(textToRemove, '');
+    }
+    return `\n ${text}`;
+  }
+
   async getContentMarkdown(pageId: string): Promise<string> {
     const mdBlocks = await this.notionToMd.pageToMarkdown(pageId);
     const mdString = this.notionToMd.toMarkdownString(mdBlocks);
-    return mdString;
+    const cleanMdString = this.removeText(mdString);
+    return cleanMdString;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  appendProposal(proposal: Proposal) {
+    return `${proposal.markdown}\n\n---\n[Discussion Thread](${proposal.discussionThreadURL}) | [IPFS](${proposal.ipfsURL})`;
   }
 }
