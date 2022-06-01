@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import { DiscordHandler } from './discord/discordHandler';
 import { NotionHandler } from './notion/notionHandler';
 import { keys } from './keys';
@@ -101,29 +102,25 @@ export class Nance {
   async votingSetup(startDate: Date, endDate: Date) {
     this.clearDiscussionInterval();
     const voteProposals = await this.proposalHandler.getVoteProposals();
-    const voteProposalsFormatted: Proposal[] = [];
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
-      const proposalClean = { ...proposal };
       const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
-      proposalClean.markdown = mdString;
-      proposalClean.title = `${proposal.proposalId} - ${proposal.title}`;
+      proposal.markdown = mdString;
       if (this.config.proposalDataBackup) {
-        const ipfsCID = await this.proposalDataBackupHandler.pinProposal(proposalClean);
-        proposalClean.ipfsURL = `${this.config.ipfsGateway}/${ipfsCID}`;
+        const ipfsCID = await this.proposalDataBackupHandler.pinProposal(proposal);
+        proposal.ipfsURL = `${this.config.ipfsGateway}/${ipfsCID}`;
       }
-      const markdownWithAdditions = this.proposalHandler.appendProposal(proposalClean);
-      proposalClean.markdown = markdownWithAdditions;
-      proposalClean.voteURL = await this.votingHandler.createProposal(
-        proposalClean,
+      const markdownWithAdditions = this.proposalHandler.appendProposal(proposal);
+      proposal.markdown = markdownWithAdditions;
+      proposal.voteURL = await this.votingHandler.createProposal(
+        proposal,
         startDate,
         endDate
       );
-      this.proposalHandler.updateVoteAndIPFS(proposalClean);
-      voteProposalsFormatted.push(proposalClean);
-      logger.info(`${this.config.name}: ${proposalClean.title}: ${proposalClean.voteURL}`);
+      this.proposalHandler.updateVoteAndIPFS(proposal);
+      logger.info(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
     }));
-    if (voteProposalsFormatted.length > 0) {
-      this.dialogHandler.sendVoteRollup(voteProposalsFormatted, endDate);
+    if (voteProposals.length > 0) {
+      this.dialogHandler.sendVoteRollup(voteProposals, endDate);
     }
   }
 }

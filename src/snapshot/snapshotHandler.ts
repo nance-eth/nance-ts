@@ -29,9 +29,9 @@ export class SnapshotHandler {
     const voteHash = await this.snapshot.proposal(this.wallet, this.wallet.address, {
       space: this.config.snapshot.space,
       type: 'single-choice',
-      title: proposal.title,
+      title: `${proposal.proposalId} - ${proposal.title}`,
       body: proposal.markdown,
-      discussion: proposal.discussionThreadURL,
+      discussion: '',
       choices: this.config.snapshot.choices,
       start: startTimeStamp,
       end: endTimeStamp,

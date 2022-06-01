@@ -49,11 +49,12 @@ export class NotionHandler implements DataContentHandler {
     };
   }
 
-  private async queryNotionDb(filters: any): Promise<Proposal[]> {
+  private async queryNotionDb(filters: any, sorts = []): Promise<Proposal[]> {
     const databaseReponse = await this.notion.databases.query(
       {
         database_id: this.config.notion.database_id,
-        filter: filters
+        filter: filters,
+        sorts
       } as QueryDatabaseParameters
     );
     return databaseReponse.results.map((data: any) => {

@@ -36,18 +36,15 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Da
   );
 };
 
-export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endTime: Date) => {
-  const urlListText = Object.values(proposals).map((entry: Proposal) => {
-    return `[${entry.title}](${entry.voteURL})`;
-  }).join('\n\n');
+export const voteRollUpMessage = (voteURL: string, voteProposals: Proposal[], endTime: Date) => {
   return new MessageEmbed().setTitle(
-    `[Snapshot voting](${voteURL}) is open until <t:${dateToUnixTimeStamp(endTime)}>`
-  ).setDescription(
-    stripIndents`
-      ${urlListText}
-      [Vote](${voteURL})｜[Discussions](${discussionThreadURL})｜[Governance Links](https://discord.com/channels/775859454780244028/903035787682131998/956386527217328138)
-    `
-  );
+    `Voting is open until <t:${dateToUnixTimeStamp(endTime)}>`
+  ).setURL(voteURL).setDescription(stripIndents`
+  ${voteProposals.map((proposal: Proposal) => {
+    return `${proposal.proposalId} - ${proposal.title}
+    [vote](${proposal.voteURL}) | [discussion](${proposal.discussionThreadURL})`;
+  }).join('\n\n')}
+  `);
 };
 
 export const pollResultsMessage = (
