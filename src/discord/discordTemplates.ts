@@ -41,7 +41,7 @@ export const voteRollUpMessage = (voteURL: string, voteProposals: Proposal[], en
     `Voting is open until <t:${dateToUnixTimeStamp(endTime)}>`
   ).setURL(voteURL).setDescription(stripIndents`
   ${voteProposals.map((proposal: Proposal) => {
-    return `${proposal.proposalId} - *${proposal.title}*
+    return `${proposal.proposalId}: *${proposal.title}*
     [vote](${proposal.voteURL}) | [discussion](${proposal.discussionThreadURL})`;
   }).join('\n\n')}
   `);
