@@ -52,18 +52,15 @@ export class Nance {
 
   async temperatureCheckSetup(endDate: Date) {
     const discussionProposals = await this.proposalHandler.getDiscussionProposals();
-    discussionProposals.forEach(async (proposal: Proposal) => {
-      try {
-        const threadId = getLastSlash(proposal.discussionThreadURL);
-        await this.dialogHandler.setupPoll(threadId);
-        await this.proposalHandler.updateStatusTemperatureCheck(proposal.hash);
-      } catch (e) {
-        logger.error(`${this.config.name}: temperatureCheckSetup() error: ${proposal.url}`);
-        logger.error(e);
-      } finally {
-        await this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
-        logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
-      }
+    Promise.all(discussionProposals.map(async (proposal: Proposal) => {
+      const threadId = getLastSlash(proposal.discussionThreadURL);
+      await this.dialogHandler.setupPoll(threadId);
+      await this.proposalHandler.updateStatusTemperatureCheck(proposal.hash);
+    })).then(() => {
+      this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
+      logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
+    }).catch((e) => {
+      logger.error(`${this.config.name}: temperatureCheckSetup() error: ${e}`);
     });
   }
 
