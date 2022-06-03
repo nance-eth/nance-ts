@@ -92,7 +92,7 @@ config.notion.filters = {
   },
 
   proposalId: {
-    property: null,
+    property: config.notion.propertyKeys.proposalId,
     rich_text: {
       contains: config.notion.propertyKeys.proposalIdPrefix,
     },

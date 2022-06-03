@@ -49,7 +49,7 @@ export class NotionHandler implements DataContentHandler {
     };
   }
 
-  private async queryNotionDb(filters: any, sorts = []): Promise<Proposal[]> {
+  async queryNotionDb(filters: any, sorts = []): Promise<Proposal[]> {
     const databaseReponse = await this.notion.databases.query(
       {
         database_id: this.config.notion.database_id,
@@ -90,6 +90,16 @@ export class NotionHandler implements DataContentHandler {
     return proposals;
   }
 
+  async getNextProposalIdString(): Promise<string> {
+    const proposals = await this.queryNotionDb(
+      this.config.notion.filters.proposalId
+    );
+    const sortProposalsById = proposals.map((proposal) => {
+      return Number(proposal.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1]);
+    }).sort((a:number, b:number) => { return b - a; });
+    return `${this.config.notion.propertyKeys.proposalIdPrefix}${sortProposalsById[0] + 1}`;
+  }
+
   async updateMetaData(
     pageId: string,
     updateProperties: UpdatePageParameters['properties']
@@ -104,10 +114,18 @@ export class NotionHandler implements DataContentHandler {
     }
   }
 
-  async updateStatusTemperatureCheck(pageId: string) {
-    this.updateMetaData(pageId, {
+  async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
+    this.updateMetaData(proposal.hash, {
       [this.config.notion.propertyKeys.status]: {
         select: { name: this.config.notion.propertyKeys.statusTemperatureCheck }
+      },
+      [this.config.notion.propertyKeys.proposalId]: {
+        rich_text: [
+          {
+            type: 'text',
+            text: { content: `${await this.getNextProposalIdString()}` }
+          }
+        ]
       }
     });
   }

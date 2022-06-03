@@ -5,7 +5,7 @@ export interface Proposal {
   url: string,
   category?: string | undefined,
   status?: string,
-  proposalId?: string
+  proposalId: string
   author?: string,
   discussionThreadURL: string,
   ipfsURL: string,

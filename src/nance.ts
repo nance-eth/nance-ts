@@ -3,7 +3,7 @@ import { DiscordHandler } from './discord/discordHandler';
 import { NotionHandler } from './notion/notionHandler';
 import { keys } from './keys';
 import {
-  getLastSlash
+  getLastSlash as getIdFromURL
 } from './utils';
 import logger from './logging';
 import { Proposal } from './types';
@@ -34,6 +34,15 @@ export class Nance {
     clearInterval(this.discussionInterval);
   }
 
+  pollPassCheck(yesCount: number, noCount: number) {
+    const ratio = yesCount / (yesCount + noCount);
+    if (yesCount >= this.config.discord.poll.minYesVotes
+      && ratio >= this.config.discord.poll.yesNoRatio) {
+      return true;
+    }
+    return false;
+  }
+
   async queryAndSendDiscussions() {
     try {
       const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();
@@ -53,9 +62,9 @@ export class Nance {
   async temperatureCheckSetup(endDate: Date) {
     const discussionProposals = await this.proposalHandler.getDiscussionProposals();
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
-      const threadId = getLastSlash(proposal.discussionThreadURL);
+      const threadId = getIdFromURL(proposal.discussionThreadURL);
       await this.dialogHandler.setupPoll(threadId);
-      await this.proposalHandler.updateStatusTemperatureCheck(proposal.hash);
+      await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
       this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
       logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
@@ -64,35 +73,24 @@ export class Nance {
     });
   }
 
-  pollPassCheck(yesCount: number, noCount: number) {
-    const ratio = yesCount / (yesCount + noCount);
-    if (yesCount >= this.config.discord.poll.minYesVotes
-      && ratio >= this.config.discord.poll.yesNoRatio) {
-      return true;
-    }
-    return false;
-  }
-
   async temperatureCheckClose() {
     const temperatureCheckProposals = await this.proposalHandler.getTemperatureCheckProposals();
-    temperatureCheckProposals.forEach(async (proposal: Proposal) => {
-      try {
-        const threadId = getLastSlash(proposal.discussionThreadURL);
-        const pollResults = await this.dialogHandler.getPollVoters(threadId);
-        const pass = this.pollPassCheck(
-          pollResults.voteYesUsers.length,
-          pollResults.voteNoUsers.length
-        );
-        if (this.config.discord.poll.showResults) {
-          await this.dialogHandler.sendPollResults(pollResults, pass, threadId);
-        }
-        if (pass) await this.proposalHandler.updateStatusVoting(proposal.hash);
-        else await this.proposalHandler.updateStatusCancelled(proposal.hash);
-        logger.info(`${this.config.name}: temperatureCheckClose() complete`);
-      } catch (e) {
-        logger.error(`${this.config.name}: temperatureCheckClose() error: ${proposal.url}`);
-        logger.error(e);
+    await Promise.all(temperatureCheckProposals.map(async (proposal: Proposal) => {
+      const threadId = getIdFromURL(proposal.discussionThreadURL);
+      const pollResults = await this.dialogHandler.getPollVoters(threadId);
+      const pass = this.pollPassCheck(
+        pollResults.voteYesUsers.length,
+        pollResults.voteNoUsers.length
+      );
+      if (this.config.discord.poll.showResults) {
+        this.dialogHandler.sendPollResults(pollResults, pass, threadId);
       }
+      if (pass) await this.proposalHandler.updateStatusVoting(proposal.hash);
+      else await this.proposalHandler.updateStatusCancelled(proposal.hash);
+    })).then(() => {
+      logger.info(`${this.config.name}: temperatureCheckClose() complete`);
+    }).catch((e) => {
+      logger.error(`${this.config.name}: temperatureCheckClose() error: ${e}`);
     });
   }
 
