@@ -1,40 +1,40 @@
 export interface Proposal {
-  hash: string,
-  title: string,
-  markdown: string,
-  url: string,
-  category?: string | undefined,
-  status?: string,
+  hash: string;
+  title: string;
+  markdown: string;
+  url: string;
+  category?: string | undefined;
+  status?: string;
   proposalId: string
-  author?: string,
-  discussionThreadURL: string,
-  ipfsURL: string,
-  voteURL: string,
+  author?: string;
+  discussionThreadURL: string;
+  ipfsURL: string;
+  voteURL: string;
 }
 
 export interface INance {
-  queryAndSendDiscussions(): Promise<void>,
-  temperatureCheckSetup(): Promise<void>,
+  queryAndSendDiscussions(): Promise<void>;
+  temperatureCheckSetup(): Promise<void>;
   temperatureCheckClose(): Promise<void>
 }
 
 export interface DateEvent {
-  event: string
-  start: Date,
-  end: Date,
+  event: string;
+  start: Date;
+  end: Date;
 }
 
 export interface PollResults {
-  voteYesUsers: string[],
-  voteNoUsers: string[]
+  voteYesUsers: string[];
+  voteNoUsers: string[];
 }
 
 export interface PollEmojis {
-  voteYesEmoji: string,
-  voteNoEmoji: string
+  voteYesEmoji: string;
+  voteNoEmoji: string;
 }
 
 export interface PinataKey {
-  KEY: string,
-  SECRET: string
+  KEY: string;
+  SECRET: string;
 }

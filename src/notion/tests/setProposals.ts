@@ -14,8 +14,8 @@ async function getConfigs() {
         [config.notion.propertyKeys.status]: {
           select: { name: 'Discussion' }
         },
-        // [config.notion.propertyKeys.discussionThread]: { url: null },
-        // [config.notion.propertyKeys.vote]: { url: null }
+        [config.notion.propertyKeys.discussionThread]: { url: null },
+        [config.notion.propertyKeys.vote]: { url: null }
       }
     );
   }));

@@ -7,7 +7,7 @@ import { PollResults, PollEmojis, Proposal } from '../types';
 
 export const startDiscussionMessage = (category: string | undefined, URL: string) => {
   const messageTitle = (category) ? `New **${category}** proposal` : 'New proposal';
-  return `${messageTitle}: ${URL}`;
+  return `${messageTitle}: <${URL}>`;
 };
 
 export const setupPollMessage = (messageObj: Message) => {
@@ -27,7 +27,7 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Da
     `Temperature Check is open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(stripIndents`
     ${proposals.map((proposal: Proposal) => {
-    return `${proposal.proposalId}: *${proposal.title}*
+    return `*${proposal.proposalId}* - ${proposal.title}
     [discussion](${proposal.discussionThreadURL})`;
   }).join('\n\n')}
   `);
@@ -38,7 +38,7 @@ export const voteRollUpMessage = (voteURL: string, voteProposals: Proposal[], en
     `Voting is open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setURL(voteURL).setDescription(stripIndents`
   ${voteProposals.map((proposal: Proposal) => {
-    return `${proposal.proposalId}: *${proposal.title}*
+    return `*${proposal.proposalId}* - ${proposal.title}
     [vote](${proposal.voteURL}) | [discussion](${proposal.discussionThreadURL})`;
   }).join('\n\n')}
   `);

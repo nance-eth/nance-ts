@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import { Client as NotionClient } from '@notionhq/client';
 import { NotionToMarkdown } from 'notion-to-md';
 import {
@@ -90,14 +91,22 @@ export class NotionHandler implements DataContentHandler {
     return proposals;
   }
 
-  async getNextProposalIdString(): Promise<string> {
+  async getNextProposalIdNumber(): Promise<number> {
     const proposals = await this.queryNotionDb(
       this.config.notion.filters.proposalId
     );
     const sortProposalsById = proposals.map((proposal) => {
       return Number(proposal.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1]);
     }).sort((a:number, b:number) => { return b - a; });
-    return `${this.config.notion.propertyKeys.proposalIdPrefix}${sortProposalsById[0] + 1}`;
+    return sortProposalsById[0] + 1;
+  }
+
+  async assignProposalIds(proposals: Proposal[]): Promise<Proposal[]> {
+    const nextProposalIdNumber = await this.getNextProposalIdNumber();
+    proposals.forEach((proposal, index) => {
+      proposal.proposalId = `${this.config.notion.propertyKeys.proposalIdPrefix}${nextProposalIdNumber + index}`;
+    });
+    return proposals;
   }
 
   async updateMetaData(
@@ -123,7 +132,7 @@ export class NotionHandler implements DataContentHandler {
         rich_text: [
           {
             type: 'text',
-            text: { content: `${await this.getNextProposalIdString()}` }
+            text: { content: proposal.proposalId }
           }
         ]
       }

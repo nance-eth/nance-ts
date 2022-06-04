@@ -60,7 +60,10 @@ export class Nance {
   }
 
   async temperatureCheckSetup(endDate: Date) {
-    const discussionProposals = await this.proposalHandler.getDiscussionProposals();
+    logger.info(`${this.config.name}: temperatureCheckSetup() begin...`);
+    const discussionProposals = await this.proposalHandler.assignProposalIds(
+      await this.proposalHandler.getDiscussionProposals()
+    );
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       const threadId = getIdFromURL(proposal.discussionThreadURL);
       await this.dialogHandler.setupPoll(threadId);
