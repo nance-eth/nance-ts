@@ -104,7 +104,9 @@ export class NotionHandler implements DataContentHandler {
   async assignProposalIds(proposals: Proposal[]): Promise<Proposal[]> {
     const nextProposalIdNumber = await this.getNextProposalIdNumber();
     proposals.forEach((proposal, index) => {
-      proposal.proposalId = `${this.config.notion.propertyKeys.proposalIdPrefix}${nextProposalIdNumber + index}`;
+      if (proposal.proposalId === '') {
+        proposal.proposalId = `${this.config.notion.propertyKeys.proposalIdPrefix}${nextProposalIdNumber + index}`;
+      }
     });
     return proposals;
   }

@@ -24,13 +24,17 @@ export const setupPollMessage = (messageObj: Message) => {
 
 export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Date) => {
   return new MessageEmbed().setTitle(
-    `Temperature Check is open until <t:${dateToUnixTimeStamp(endDate)}>`
-  ).setDescription(stripIndents`
-    ${proposals.map((proposal: Proposal) => {
-    return `*${proposal.proposalId}* - ${proposal.title}
-    [discussion](${proposal.discussionThreadURL})`;
-  }).join('\n\n')}
-  `);
+    `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
+  ).setDescription(`${String(proposals.length)} proposals`).addFields(
+    proposals.map((proposal: Proposal) => {
+      return {
+        name: `*${proposal.proposalId}*: ${proposal.title}`,
+        value: stripIndents`
+        [proposal](${proposal.url}) | [discussion](${proposal.discussionThreadURL})
+        ------------------------------`,
+      };
+    })
+  );
 };
 
 export const voteRollUpMessage = (voteURL: string, voteProposals: Proposal[], endDate: Date) => {
@@ -38,7 +42,7 @@ export const voteRollUpMessage = (voteURL: string, voteProposals: Proposal[], en
     `Voting is open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setURL(voteURL).setDescription(stripIndents`
   ${voteProposals.map((proposal: Proposal) => {
-    return `*${proposal.proposalId}* - ${proposal.title}
+    return `*${proposal.proposalId}*: ${proposal.title}
     [vote](${proposal.voteURL}) | [discussion](${proposal.discussionThreadURL})`;
   }).join('\n\n')}
   `);
