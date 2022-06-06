@@ -13,7 +13,7 @@ import { CalendarHandler } from '../calendar/CalendarHandler';
 async function getConfigs() {
   const nance = new Nance(config);
   await sleep(2000);
-  nance.temperatureCheckSetup(addDaysToDate(new Date(), 3));
+  nance.temperatureCheckSetup(new Date(1654560000000));
 }
 
 getConfigs();

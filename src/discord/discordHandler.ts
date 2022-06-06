@@ -50,11 +50,11 @@ export class DiscordHandler {
     return sentMessage;
   }
 
-  async startDiscussion(toSend: Proposal): Promise<string> {
-    const message = discordTemplates.startDiscussionMessage(toSend.category, toSend.url);
-    const messageObj = await this.getAlertChannel().send(message);
+  async startDiscussion(proposal: Proposal): Promise<string> {
+    const message = discordTemplates.startDiscussionMessage(proposal);
+    const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
-      name: toSend.title,
+      name: proposal.title,
       autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
     });
     return discordTemplates.threadToURL(thread);

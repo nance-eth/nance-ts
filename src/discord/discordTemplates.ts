@@ -5,9 +5,8 @@ import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
 
-export const startDiscussionMessage = (category: string | undefined, URL: string) => {
-  const messageTitle = (category) ? `New **${category}** proposal` : 'New proposal';
-  return `${messageTitle}: <${URL}>`;
+export const startDiscussionMessage = (proposal: Proposal) => {
+  return new MessageEmbed().setTitle(`📃 ${proposal.title}`).setURL(proposal.url);
 };
 
 export const setupPollMessage = (messageObj: Message) => {
