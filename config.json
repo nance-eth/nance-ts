@@ -20,7 +20,7 @@
       "Abstain"
     ],
     "votingTimeDays": 4,
-    "quroum": 15,
+    "quorum": 15,
     "passingRatio": 0.66
   },
   "proposalIdPrefix": "JBP-",
