@@ -46,7 +46,7 @@ export class NotionHandler implements DataContentHandler {
         unconvertedProposal,
         this.config.notion.propertyKeys.ipfs
       ),
-      voteURL: ''
+      voteURL: notionUtils.getPropertyURL(unconvertedProposal, this.config.notion.propertyKeys.vote)
     };
   }
 

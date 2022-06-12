@@ -106,19 +106,10 @@ config.notion.filters = {
   },
 
   voting: {
-    and: [
-      {
-        property: 'Status',
-        select: {
-          equals: 'Voting',
-        },
-      },
-      {
-        property: 'Snapshot',
-        url: {
-          is_empty: true,
-        },
-      }],
+    property: 'Status',
+    select: {
+      equals: 'Voting',
+    },
   },
 };
 

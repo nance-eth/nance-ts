@@ -10,7 +10,7 @@ export const startDiscussionMessage = (proposal: Proposal) => {
 };
 
 export const setupPollMessage = (messageObj: Message) => {
-  const additionalText = 'Temperature Check poll is now open! **Vote by reacting to this message.**';
+  const additionalText = 'Temperature Check poll is now open!';
   // in the event we have to run this twice, don't add additionalText again
   if (messageObj.content.includes(additionalText)) {
     return messageObj.content;
@@ -36,15 +36,20 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Da
   );
 };
 
-export const voteRollUpMessage = (voteURL: string, voteProposals: Proposal[], endDate: Date) => {
+export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endDate: Date) => {
   return new MessageEmbed().setTitle(
     `Voting is open until <t:${dateToUnixTimeStamp(endDate)}>`
-  ).setURL(voteURL).setDescription(stripIndents`
-  ${voteProposals.map((proposal: Proposal) => {
-    return `*${proposal.proposalId}*: ${proposal.title}
-    [vote](${proposal.voteURL}) | [discussion](${proposal.discussionThreadURL})`;
-  }).join('\n\n')}
-  `);
+  ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
+    .addFields(
+      proposals.map((proposal: Proposal) => {
+        return {
+          name: `*${proposal.proposalId}*: ${proposal.title}`,
+          value: stripIndents`
+          [proposal](${proposal.url}) | [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.voteURL})
+          ------------------------------`,
+        };
+      })
+    );
 };
 
 export const pollResultsMessage = (

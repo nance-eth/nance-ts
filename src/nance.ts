@@ -11,10 +11,10 @@ import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { PinataHandler } from './pinata/pinataHandler';
 
 export class Nance {
-  private proposalHandler;
-  private proposalDataBackupHandler;
-  private dialogHandler;
-  private votingHandler;
+  proposalHandler;
+  proposalDataBackupHandler;
+  dialogHandler;
+  votingHandler;
   private discussionInterval: any;
 
   constructor(

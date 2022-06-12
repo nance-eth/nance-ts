@@ -62,15 +62,10 @@ export class DiscordHandler {
 
   async setupPoll(messageId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
-    if (this.discord.user) {
-      if (messageObj.author.id === this.discord.user.id) {
-        messageObj.edit(discordTemplates.setupPollMessage(messageObj));
-      }
-      await Promise.all([
-        messageObj.react(this.config.discord.poll.voteYesEmoji),
-        messageObj.react(this.config.discord.poll.voteNoEmoji)
-      ]);
-    }
+    await Promise.all([
+      messageObj.react(this.config.discord.poll.voteYesEmoji),
+      messageObj.react(this.config.discord.poll.voteNoEmoji)
+    ]);
   }
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
