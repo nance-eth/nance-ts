@@ -28,7 +28,7 @@ export class SnapshotHandler {
     const latestBlock = await this.provider.getBlockNumber();
     const voteHash = await this.snapshot.proposal(this.wallet, this.wallet.address, {
       space: this.config.snapshot.space,
-      type: 'single-choice',
+      type: 'basic',
       title: `${proposal.proposalId} - ${proposal.title}`,
       body: proposal.markdown,
       discussion: '',
