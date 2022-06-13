@@ -29,13 +29,17 @@ export function addDaysToTimeStamp(timestamp: number, days: number) {
   return timestamp + Math.floor(days * 24 * 60 * 60);
 }
 
+export function addSecondsToDate(date: Date, seconds: number) {
+  return new Date(date.getTime() + (seconds * 1000));
+}
+
 export const minutesToDays = (minutes: number) => {
   return minutes / 24 / 60;
 };
 
 export function getLastSlash(url: string) {
   const split = url.split('/');
-  return split[split.length - 1];
+  return split[split.length - 1].trim();
 }
 
 export function base64ToJSON(data: string) {

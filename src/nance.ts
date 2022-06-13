@@ -6,7 +6,7 @@ import {
   getLastSlash as getIdFromURL
 } from './utils';
 import logger from './logging';
-import { Proposal } from './types';
+import { Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { PinataHandler } from './pinata/pinataHandler';
 
@@ -38,6 +38,17 @@ export class Nance {
     const ratio = yesCount / (yesCount + noCount);
     if (yesCount >= this.config.discord.poll.minYesVotes
       && ratio >= this.config.discord.poll.yesNoRatio) {
+      return true;
+    }
+    return false;
+  }
+
+  votePassCheck(voteResults: VoteResults) {
+    const yes = voteResults.votes[this.config.snapshot.choices[0]];
+    const no = voteResults.votes[this.config.snapshot.choices[1]];
+    const ratio = yes / (yes + no);
+    if (voteResults.totalVotes >= this.config.snapshot.quroum
+      && ratio >= this.config.snapshot.passingRatio) {
       return true;
     }
     return false;
@@ -116,9 +127,26 @@ export class Nance {
       );
       this.proposalHandler.updateVoteAndIPFS(proposal);
       logger.info(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
+    })).then(() => {
+      if (voteProposals.length > 0) {
+        this.dialogHandler.sendVoteRollup(voteProposals, endDate);
+      }
+    }).catch((e) => {
+      logger.error(`${this.config.name}: votingSetup() error:`);
+      logger.error(e);
+    });
+  }
+
+  async votingClose() {
+    const voteProposals = await this.proposalHandler.getVoteProposals();
+    const voteProposalIdStrings = voteProposals.map((proposal) => {
+      return `"${getIdFromURL(proposal.voteURL)}"`;
+    });
+    const voteResults = await this.votingHandler.getProposalVotes(voteProposalIdStrings);
+    await Promise.all(voteResults.map(async (vote) => {
+      if (vote.scoresState === 'final') {
+        const statusUpdate = this.votePassCheck(vote) ? 'Approved' : 'Cancelled';
+      }
     }));
-    if (voteProposals.length > 0) {
-      this.dialogHandler.sendVoteRollup(voteProposals, endDate);
-    }
   }
 }

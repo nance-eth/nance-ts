@@ -12,6 +12,13 @@ export interface Proposal {
   voteURL: string;
 }
 
+export interface VoteResults {
+  voteProposalId: string;
+  totalVotes: number;
+  scoresState: string;
+  votes: Record<string, number>;
+}
+
 export interface INance {
   queryAndSendDiscussions(): Promise<void>;
   temperatureCheckSetup(): Promise<void>;
