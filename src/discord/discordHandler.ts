@@ -124,4 +124,10 @@ export class DiscordHandler {
     const sendChannel = this.discord.channels.cache.get(threadId) as TextChannel;
     await sendChannel.send({ embeds: [message] });
   }
+
+  async sendPollResultsEmoji(pass: boolean, threadId: string) {
+    const messageObj = await this.getAlertChannel().messages.fetch(threadId);
+    if (pass) messageObj.react(this.config.discord.poll.voteGoVoteEmoji);
+    else messageObj.react(this.config.discord.poll.voteCancelledEmoji);
+  }
 }

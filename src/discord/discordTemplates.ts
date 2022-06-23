@@ -52,6 +52,22 @@ export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endDat
     );
 };
 
+export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => {
+  return new MessageEmbed().setTitle(
+    'Voting has ended. Thanks for participating!'
+  ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
+    .addFields(
+      proposals.map((proposal: Proposal) => {
+        return {
+          name: `*${proposal.proposalId}*: ${proposal.title}`,
+          value: stripIndents`
+          [proposal](${proposal.url}) | [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.voteURL})
+          ------------------------------`,
+        };
+      })
+    );
+};
+
 export const pollResultsMessage = (
   pollResults: PollResults,
   outcome: boolean,

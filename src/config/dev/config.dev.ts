@@ -13,7 +13,7 @@ const config = {
       voteYesEmoji: '👍',
       voteNoEmoji: '👎',
       voteGoVoteEmoji: '🗳',
-      voteCanceledEmoji: '❌',
+      voteCancelledEmoji: '❌',
       minYesVotes: 1,
       yesNoRatio: 0.3,
       showResults: true

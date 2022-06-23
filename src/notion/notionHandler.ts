@@ -149,12 +149,22 @@ export class NotionHandler implements DataContentHandler {
     });
   }
 
-  async updateStatusCancelled(pageId: string) {
+  async updateStatusApproved(pageId: string): Promise<string> {
+    this.updateMetaData(pageId, {
+      [this.config.notion.propertyKeys.status]: {
+        select: { name: this.config.notion.propertyKeys.statusApproved }
+      }
+    });
+    return this.config.notion.propertyKeys.statusApproved;
+  }
+
+  async updateStatusCancelled(pageId: string): Promise<string> {
     this.updateMetaData(pageId, {
       [this.config.notion.propertyKeys.status]: {
         select: { name: this.config.notion.propertyKeys.statusCancelled }
       }
     });
+    return this.config.notion.propertyKeys.statusCancelled;
   }
 
   async updateVoteAndIPFS(proposal: Proposal) {

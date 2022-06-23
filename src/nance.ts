@@ -99,6 +99,7 @@ export class Nance {
       if (this.config.discord.poll.showResults) {
         this.dialogHandler.sendPollResults(pollResults, pass, threadId);
       }
+      this.dialogHandler.sendPollResultsEmoji(pass, threadId);
       if (pass) await this.proposalHandler.updateStatusVoting(proposal.hash);
       else await this.proposalHandler.updateStatusCancelled(proposal.hash);
     })).then(() => {
@@ -138,15 +139,28 @@ export class Nance {
   }
 
   async votingClose() {
+    logger.info(`${this.config.name}: votingClose() begin...`);
     const voteProposals = await this.proposalHandler.getVoteProposals();
     const voteProposalIdStrings = voteProposals.map((proposal) => {
       return `"${getIdFromURL(proposal.voteURL)}"`;
     });
     const voteResults = await this.votingHandler.getProposalVotes(voteProposalIdStrings);
     await Promise.all(voteResults.map(async (vote) => {
+      const proposalMatch = voteProposals.find((proposal) => {
+        return getIdFromURL(proposal.voteURL) === vote.voteProposalId;
+      });
+      if (!proposalMatch) { return; }
+      const proposalHash = proposalMatch.hash;
       if (vote.scoresState === 'final') {
-        const statusUpdate = this.votePassCheck(vote) ? 'Approved' : 'Cancelled';
-      }
-    }));
+        if (this.votePassCheck(vote)) {
+          proposalMatch.status = await this.proposalHandler.updateStatusApproved(proposalHash);
+        } else {
+          proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
+        }
+      } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
+    })).then(() => {}).catch((e) => {
+      logger.error(`${this.config.name}: votingClose() error:`);
+      logger.error(e);
+    });
   }
 }

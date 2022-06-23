@@ -4,6 +4,8 @@ import {
   transports
 } from 'winston';
 
+console.log = function none() {};
+
 const logFormat = format.combine(
   format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   format.printf(({ message, level, timestamp }) => {
