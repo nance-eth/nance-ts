@@ -1,13 +1,14 @@
 const config = {
-  nameId: 'dev',
-  name: 'dev',
+  nameId: 'juiceboxDAO',
+  name: 'juiceboxDAO',
   scheme: ['notion', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
+  votingResultsDashboard: 'https://jbx-protocol.github.io/juice-snapshot-dashboard/',
   discord: {
-    guildId: '889377541675159602',
-    channelId: '964601032703352873',
-    alertRole: '958529682796605440',
+    guildId: '775859454780244028',
+    channelId: '873248745771372584',
+    alertRole: '953865172764729404',
     poll: {
       votingTimeDays: 3,
       voteYesEmoji: '👍',
@@ -15,19 +16,20 @@ const config = {
       voteGoVoteEmoji: '🗳',
       votePassEmoji: '✅',
       voteCancelledEmoji: '❌',
-      minYesVotes: 1,
+      minYesVotes: 10,
       yesNoRatio: 0.3,
       showResults: true
     },
   },
   notion: {
-    publicURLPrefix: 'foil-flat-c43.notion.site',
-    database_id: '50e11ebe3d2440b7a64d39805868df87',
+    publicURLPrefix: 'juicebox.notion.site',
+    database_id: '9d126f9148dc42ee83317d5cd74e4db4',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',
       statusTemperatureCheck: 'Temperature Check',
       statusVoting: 'Voting',
+      statusApproved: 'Approved',
       statusCancelled: 'Cancelled',
       proposalIdPrefix: 'JBP-',
       discussionThread: 'Discussion Thread',
@@ -39,10 +41,10 @@ const config = {
   },
   snapshot: {
     base: 'https://snapshot.org/#',
-    space: 'jigglyjams.eth',
+    space: 'jbdao.eth',
     choices: ['For', 'Against', 'Abstain'],
     votingTimeDays: 3,
-    quroum: 1,
+    quroum: 15,
     passingRatio: 0.66,
   },
 };
@@ -111,7 +113,7 @@ config.notion.filters = {
     select: {
       equals: 'Voting',
     },
-  },
+  }
 };
 
 export default config;
