@@ -10,13 +10,18 @@ export interface Proposal {
   discussionThreadURL: string;
   ipfsURL: string;
   voteURL: string;
+  voteResults?: VoteResults;
 }
 
 export interface VoteResults {
   voteProposalId: string;
   totalVotes: number;
   scoresState: string;
-  votes: Record<string, number>;
+  scores: Record<string, number>;
+  percentages: Record<string, number>;
+  outcome: boolean;
+  outcomePercentage: string;
+  outcomeEmoji: string;
 }
 
 export interface INance {
@@ -26,7 +31,7 @@ export interface INance {
 }
 
 export interface DateEvent {
-  event: string;
+  title: string;
   start: Date;
   end: Date;
 }

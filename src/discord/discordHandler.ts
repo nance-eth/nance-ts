@@ -82,6 +82,14 @@ export class DiscordHandler {
     await this.getAlertChannel().send({ embeds: [message] });
   }
 
+  async sendVoteResultsRollup(proposals: Proposal[]) {
+    const message = discordTemplates.voteResultsRollUpMessage(
+      this.config.votingResultsDashboard,
+      proposals
+    );
+    await this.getAlertChannel().send({ embeds: [message] });
+  }
+
   private static async getUserReactions(
     messageObj: Message,
     emoji: string

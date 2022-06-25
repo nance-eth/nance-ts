@@ -3,7 +3,8 @@ import { DiscordHandler } from './discord/discordHandler';
 import { NotionHandler } from './notion/notionHandler';
 import { keys } from './keys';
 import {
-  getLastSlash as getIdFromURL
+  getLastSlash as getIdFromURL,
+  floatToPercentage
 } from './utils';
 import logger from './logging';
 import { Proposal, VoteResults } from './types';
@@ -43,12 +44,21 @@ export class Nance {
     return false;
   }
 
+  getVotePercentages(voteResults: VoteResults) {
+    const yes = voteResults.scores[this.config.snapshot.choices[0]];
+    const no = voteResults.scores[this.config.snapshot.choices[1]];
+    const percentageYes = yes / (yes + no);
+    const percentageNo = no / (yes + no);
+    return {
+      [this.config.snapshot.choices[0]]: percentageYes,
+      [this.config.snapshot.choices[1]]: percentageNo,
+    };
+  }
+
   votePassCheck(voteResults: VoteResults) {
-    const yes = voteResults.votes[this.config.snapshot.choices[0]];
-    const no = voteResults.votes[this.config.snapshot.choices[1]];
-    const ratio = yes / (yes + no);
     if (voteResults.totalVotes >= this.config.snapshot.quroum
-      && ratio >= this.config.snapshot.passingRatio) {
+      && voteResults.percentages[this.config.snapshot.choices[0]]
+        >= this.config.snapshot.passingRatio) {
       return true;
     }
     return false;
@@ -152,13 +162,24 @@ export class Nance {
       if (!proposalMatch) { return; }
       const proposalHash = proposalMatch.hash;
       if (vote.scoresState === 'final') {
-        if (this.votePassCheck(vote)) {
+        proposalMatch.voteResults = vote;
+        proposalMatch.voteResults.percentages = this.getVotePercentages(vote);
+        if (this.votePassCheck(proposalMatch.voteResults)) {
+          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
+            .voteResults.percentages[this.config.snapshot.choices[0]]);
+          proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusApproved(proposalHash);
         } else {
+          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
+            .voteResults.percentages[this.config.snapshot.choices[1]]);
+          proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
         }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
-    })).then(() => {}).catch((e) => {
+    })).then(() => {
+      this.dialogHandler.sendVoteResultsRollup(voteProposals);
+      logger.info(`${this.config.name}: votingClose() complete`);
+    }).catch((e) => {
       logger.error(`${this.config.name}: votingClose() error:`);
       logger.error(e);
     });

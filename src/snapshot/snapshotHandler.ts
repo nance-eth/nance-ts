@@ -76,10 +76,12 @@ export class SnapshotHandler {
         voteProposalId: proposal.id,
         totalVotes: proposal.votes,
         scoresState: proposal.scores_state,
-        votes: proposal.choices.map((choice: string, index: number) => {
-          return { [choice]: proposal.scores[index] };
-        })
-      } as VoteResults;
+        scores: proposal.choices.reduce((output: any, choice: string, index: number) => {
+          return {
+            ...output, [choice]: proposal.scores[index]
+          };
+        }, {})
+      };
     });
     return results;
   }

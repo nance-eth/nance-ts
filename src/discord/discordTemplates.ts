@@ -1,3 +1,4 @@
+/* eslint-disable newline-per-chained-call */
 import {
   Message, MessageEmbed, ThreadChannel,
 } from 'discord.js';
@@ -22,7 +23,7 @@ export const setupPollMessage = (messageObj: Message) => {
 };
 
 export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Date) => {
-  return new MessageEmbed().setTitle(
+  return new MessageEmbed().setColor('#c1272d').setTitle(
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(`${String(proposals.length)} proposals`).addFields(
     proposals.map((proposal: Proposal) => {
@@ -37,7 +38,7 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Da
 };
 
 export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endDate: Date) => {
-  return new MessageEmbed().setTitle(
+  return new MessageEmbed().setColor('#009460').setTitle(
     `Voting is open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
@@ -53,7 +54,7 @@ export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endDat
 };
 
 export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => {
-  return new MessageEmbed().setTitle(
+  return new MessageEmbed().setColor('#2772af').setTitle(
     'Voting has ended. Thanks for participating!'
   ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
@@ -61,7 +62,7 @@ export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => 
         return {
           name: `*${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
-          [proposal](${proposal.url}) | [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.voteURL})
+          ${proposal.status} ${proposal.voteResults?.outcomeEmoji} ${proposal.voteResults?.outcomePercentage}%
           ------------------------------`,
         };
       })

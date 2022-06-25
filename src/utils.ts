@@ -49,3 +49,7 @@ export function base64ToJSON(data: string) {
 export function base64ToString(data: string) {
   return Buffer.from(data, 'base64').toString();
 }
+
+export function floatToPercentage(float: number) {
+  return (float * 100).toFixed(2);
+}
