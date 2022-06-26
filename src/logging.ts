@@ -4,7 +4,7 @@ import {
   transports
 } from 'winston';
 
-if (process.env.NODE_ENV === 'prod') console.log = function none() {};
+console.log = function none() {};
 
 const logFormat = format.combine(
   format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),

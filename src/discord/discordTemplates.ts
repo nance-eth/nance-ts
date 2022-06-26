@@ -62,7 +62,7 @@ export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => 
         return {
           name: `*${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
-          ${proposal.status} ${proposal.voteResults?.outcomeEmoji} ${proposal.voteResults?.outcomePercentage}%
+          ${proposal.voteResults?.outcomeEmoji} ${proposal.voteResults?.outcomePercentage}%
           ------------------------------`,
         };
       })

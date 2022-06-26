@@ -23,6 +23,7 @@
     "node-ical": "^0.15.1",
     "node-schedule": "^2.1.0",
     "notion-to-md": "^2.3.2",
+    "ics": "^2.35.0",
     "winston": "^3.7.2"
   },
   "devDependencies": {

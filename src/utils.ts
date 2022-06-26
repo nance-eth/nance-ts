@@ -25,6 +25,16 @@ export function formatUTCTime(date: Date) {
   );
 }
 
+export function dateToArray(date: Date) {
+  return [
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes()
+  ];
+}
+
 export function addDaysToTimeStamp(timestamp: number, days: number) {
   return timestamp + Math.floor(days * 24 * 60 * 60);
 }

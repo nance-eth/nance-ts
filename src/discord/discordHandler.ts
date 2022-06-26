@@ -70,6 +70,7 @@ export class DiscordHandler {
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
     const message = discordTemplates.temperatureCheckRollUpMessage(proposals, endDate);
+    message.description += ` <@&${this.config.discord.alertRole}>`;
     await this.getAlertChannel().send({ embeds: [message] });
   }
 
@@ -79,6 +80,7 @@ export class DiscordHandler {
       proposals,
       endDate
     );
+    message.description += ` <@&${this.config.discord.alertRole}>`;
     await this.getAlertChannel().send({ embeds: [message] });
   }
 

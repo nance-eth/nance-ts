@@ -50,8 +50,8 @@ export class Nance {
     const percentageYes = yes / (yes + no);
     const percentageNo = no / (yes + no);
     return {
-      [this.config.snapshot.choices[0]]: percentageYes,
-      [this.config.snapshot.choices[1]]: percentageNo,
+      [this.config.snapshot.choices[0]]: (Number.isNaN(percentageYes) ? 0 : percentageYes),
+      [this.config.snapshot.choices[1]]: (Number.isNaN(percentageNo) ? 0 : percentageNo),
     };
   }
 
@@ -73,7 +73,7 @@ export class Nance {
           proposal.hash,
           { [this.config.notion.propertyKeys.discussionThread]: { url: threadURL } }
         );
-        logger.info(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
+        logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
       });
     } catch (e) {
       logger.error(`${this.config.name}: queryAndSendDiscussions() issue`);
@@ -90,14 +90,18 @@ export class Nance {
       await this.dialogHandler.setupPoll(threadId);
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
-      this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
-      logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
+      if (discussionProposals.length > 0) {
+        this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
+        logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
+        logger.info('===================================================================');
+      }
     }).catch((e) => {
       logger.error(`${this.config.name}: temperatureCheckSetup() error: ${e}`);
     });
   }
 
   async temperatureCheckClose() {
+    logger.info(`${this.config.name}: temperatureCheckClose() begin...`);
     const temperatureCheckProposals = await this.proposalHandler.getTemperatureCheckProposals();
     await Promise.all(temperatureCheckProposals.map(async (proposal: Proposal) => {
       const threadId = getIdFromURL(proposal.discussionThreadURL);
@@ -114,13 +118,16 @@ export class Nance {
       else await this.proposalHandler.updateStatusCancelled(proposal.hash);
     })).then(() => {
       logger.info(`${this.config.name}: temperatureCheckClose() complete`);
+      logger.info('===================================================================');
     }).catch((e) => {
       logger.error(`${this.config.name}: temperatureCheckClose() error: ${e}`);
     });
   }
 
   async votingSetup(startDate: Date, endDate: Date) {
+    logger.info(`${this.config.name}: votingSetup() begin...`);
     this.clearDiscussionInterval();
+    logger.info(`${this.config.name}: clearDiscussionInterval()`);
     const voteProposals = await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
@@ -137,10 +144,12 @@ export class Nance {
         endDate
       );
       this.proposalHandler.updateVoteAndIPFS(proposal);
-      logger.info(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
+      logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
     })).then(() => {
       if (voteProposals.length > 0) {
         this.dialogHandler.sendVoteRollup(voteProposals, endDate);
+        logger.info(`${this.config.name}: votingSetup() complete`);
+        logger.info('===================================================================');
       }
     }).catch((e) => {
       logger.error(`${this.config.name}: votingSetup() error:`);
@@ -179,6 +188,7 @@ export class Nance {
     })).then(() => {
       this.dialogHandler.sendVoteResultsRollup(voteProposals);
       logger.info(`${this.config.name}: votingClose() complete`);
+      logger.info('===================================================================');
     }).catch((e) => {
       logger.error(`${this.config.name}: votingClose() error:`);
       logger.error(e);

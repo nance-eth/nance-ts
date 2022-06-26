@@ -28,6 +28,7 @@ const config = {
       status: 'Status',
       statusTemperatureCheck: 'Temperature Check',
       statusVoting: 'Voting',
+      statusApproved: 'Approved',
       statusCancelled: 'Cancelled',
       proposalIdPrefix: 'JBP-',
       discussionThread: 'Discussion Thread',
