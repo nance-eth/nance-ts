@@ -4,6 +4,7 @@ const config = {
   scheme: ['notion', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
+  votingResultsDashboard: '',
   discord: {
     guildId: '889377541675159602',
     channelId: '964601032703352873',

@@ -3,16 +3,19 @@ import {
   sleep,
   addSecondsToDate
 } from './utils';
-import config from './config/dev/config.dev';
 import { Nance } from './nance';
 import logger from './logging';
+import getConfig from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
 
 let nance: Nance;
+let config: any;
+
 const PADDING_VOTE_START_SECONDS = 30;
 const PADDING_VOTE_COUNT_SECONDS = 120;
 
 async function setup() {
+  config = await getConfig();
   nance = new Nance(config);
   await sleep(1000);
   nance.setDiscussionInterval(10);
