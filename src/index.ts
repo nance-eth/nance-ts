@@ -5,7 +5,7 @@ import {
 } from './utils';
 import { Nance } from './nance';
 import logger from './logging';
-import getConfig from './configLoader';
+import { getConfig, calendarPath } from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
 
 let nance: Nance;
@@ -22,7 +22,7 @@ async function setup() {
 }
 
 async function scheduleCycle() {
-  const calendar = new CalendarHandler('./src/config/dev/dev.ics');
+  const calendar = new CalendarHandler(calendarPath);
   const cycle = calendar.getNextEvents();
   cycle.forEach((event) => {
     if (event.title === 'Temperature Check') {

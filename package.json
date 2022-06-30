@@ -4,7 +4,7 @@
   "description": "automated governance pipeliner",
   "license": "MIT",
   "scripts": {
-    "start": "export NODE_ENV='prod' && node nance.js",
+    "start": "export NODE_ENV='prod' && export CONFIG='juicebox' && ts-node src/index.ts",
     "dev": "export NODE_ENV='dev' && nodemon src/index.ts",
     "test": "export NODE_ENV='dev' && jest",
     "test:watch": "export NODE_ENV='dev' && jest --watch",
