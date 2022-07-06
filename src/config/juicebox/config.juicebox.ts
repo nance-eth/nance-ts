@@ -44,7 +44,7 @@ const config = {
     space: 'jbdao.eth',
     choices: ['For', 'Against', 'Abstain'],
     votingTimeDays: 3,
-    quroum: 15,
+    minTokenPassingAmount: 80E6,
     passingRatio: 0.66,
   },
 };

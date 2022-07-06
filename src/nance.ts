@@ -56,7 +56,8 @@ export class Nance {
   }
 
   votePassCheck(voteResults: VoteResults) {
-    if (voteResults.totalVotes >= this.config.snapshot.quroum
+    const yes = voteResults.scores[this.config.snapshot.choices[0]];
+    if (yes >= this.config.snapshot.minTokenPassingAmount
       && voteResults.percentages[this.config.snapshot.choices[0]]
         >= this.config.snapshot.passingRatio) {
       return true;
