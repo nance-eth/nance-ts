@@ -65,6 +65,16 @@ export class Nance {
     return false;
   }
 
+  async reminder(event: string, endDate: Date) {
+    logger.info(`${this.config.name}: reminder() begin...`);
+    this.dialogHandler.sendReminder(event, endDate).then(() => {
+      logger.info(`${this.config.name}: voteReminder() complete`);
+    }).catch((e) => {
+      logger.error(`${this.config.name}: voteReminder() error!`);
+      logger.error(e);
+    });
+  }
+
   async queryAndSendDiscussions() {
     try {
       const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();

@@ -92,6 +92,16 @@ export class DiscordHandler {
     await this.getAlertChannel().send({ embeds: [message] });
   }
 
+  async sendReminder(event: string, endDate: Date) {
+    const message = discordTemplates.reminderMessage(
+      event,
+      endDate,
+      `${this.config.snapshot.base}/${this.config.snapshot.space}`
+    );
+    message.description += ` \n<@&${this.config.discord.alertRole}>`;
+    await this.getAlertChannel().send({ embeds: [message] });
+  }
+
   private static async getUserReactions(
     messageObj: Message,
     emoji: string

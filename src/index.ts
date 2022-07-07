@@ -13,6 +13,7 @@ let config: any;
 
 const PADDING_VOTE_START_SECONDS = 30;
 const PADDING_VOTE_COUNT_SECONDS = 120;
+const ONE_HOUR_SECONDS = 1 * 60 * 60;
 
 async function setup() {
   config = await getConfig();
@@ -29,12 +30,18 @@ async function scheduleCycle() {
       schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
         nance.temperatureCheckSetup(event.end);
       });
+      schedule.scheduleJob(`${event.title} reminder`, addSecondsToDate(event.end, -ONE_HOUR_SECONDS), () => {
+        nance.reminder(event.title, event.end);
+      });
       schedule.scheduleJob('temperatureCheckClose', event.end, () => {
         nance.temperatureCheckClose();
       });
     } else if (event.title === 'Snapshot Vote') {
       schedule.scheduleJob('voteSetup', addSecondsToDate(event.start, PADDING_VOTE_START_SECONDS), () => {
         nance.votingSetup(event.start, event.end);
+      });
+      schedule.scheduleJob(`${event.title} reminder`, addSecondsToDate(event.end, -ONE_HOUR_SECONDS), () => {
+        nance.reminder(event.title, event.end);
       });
       schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
         nance.votingClose();
