@@ -29,10 +29,12 @@ export class Nance {
 
   async setDiscussionInterval(seconds: number) {
     this.discussionInterval = setInterval(this.queryAndSendDiscussions.bind(this), seconds * 1000);
+    logger.info(`${this.config.name}: setDiscussionInterval(${seconds})`);
   }
 
   async clearDiscussionInterval() {
     clearInterval(this.discussionInterval);
+    logger.info(`${this.config.name}: clearDiscussionInterval()`);
   }
 
   pollPassCheck(yesCount: number, noCount: number) {
@@ -63,6 +65,16 @@ export class Nance {
       return true;
     }
     return false;
+  }
+
+  async reminder(event: string, endDate: Date) {
+    logger.info(`${this.config.name}: reminder() begin...`);
+    this.dialogHandler.sendReminder(event, endDate).then(() => {
+      logger.info(`${this.config.name}: voteReminder() complete`);
+    }).catch((e) => {
+      logger.error(`${this.config.name}: voteReminder() error!`);
+      logger.error(e);
+    });
   }
 
   async queryAndSendDiscussions() {
@@ -128,7 +140,6 @@ export class Nance {
   async votingSetup(startDate: Date, endDate: Date) {
     logger.info(`${this.config.name}: votingSetup() begin...`);
     this.clearDiscussionInterval();
-    logger.info(`${this.config.name}: clearDiscussionInterval()`);
     const voteProposals = await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
