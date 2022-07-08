@@ -29,10 +29,12 @@ export class Nance {
 
   async setDiscussionInterval(seconds: number) {
     this.discussionInterval = setInterval(this.queryAndSendDiscussions.bind(this), seconds * 1000);
+    logger.info(`${this.config.name}: setDiscussionInterval(${seconds})`);
   }
 
   async clearDiscussionInterval() {
     clearInterval(this.discussionInterval);
+    logger.info(`${this.config.name}: clearDiscussionInterval()`);
   }
 
   pollPassCheck(yesCount: number, noCount: number) {
@@ -138,7 +140,6 @@ export class Nance {
   async votingSetup(startDate: Date, endDate: Date) {
     logger.info(`${this.config.name}: votingSetup() begin...`);
     this.clearDiscussionInterval();
-    logger.info(`${this.config.name}: clearDiscussionInterval()`);
     const voteProposals = await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
