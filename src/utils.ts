@@ -60,6 +60,10 @@ export function base64ToString(data: string) {
   return Buffer.from(data, 'base64').toString();
 }
 
+export function stringToBase64(data: string) {
+  return Buffer.from(data).toString('base64');
+}
+
 export function floatToPercentage(float: number) {
   return (float * 100).toFixed(2);
 }
