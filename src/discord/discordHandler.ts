@@ -9,6 +9,7 @@ import {
   ThreadAutoArchiveDuration,
 } from 'discord.js';
 import logger from '../logging';
+import { limitLength } from '../utils';
 import { Proposal, PollResults } from '../types';
 
 import * as discordTemplates from './discordTemplates';
@@ -54,7 +55,7 @@ export class DiscordHandler {
     const message = discordTemplates.startDiscussionMessage(proposal);
     const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
-      name: proposal.title,
+      name: limitLength(proposal.title),
       autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
     });
     return discordTemplates.threadToURL(thread);
