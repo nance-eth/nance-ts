@@ -67,3 +67,10 @@ export function stringToBase64(data: string) {
 export function floatToPercentage(float: number) {
   return (float * 100).toFixed(2);
 }
+
+export function limitLength(text: string, length = 100) {
+  if (text.length > length) {
+    return text.substring(0, length);
+  }
+  return text;
+}
