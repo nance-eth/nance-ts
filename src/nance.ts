@@ -10,12 +10,16 @@ import logger from './logging';
 import { Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { PinataHandler } from './pinata/pinataHandler';
+import { DeeplHandler } from './translate/deeplHandler';
+import { GithubHandler } from './github/githubHandler';
 
 export class Nance {
   proposalHandler;
   proposalDataBackupHandler;
   dialogHandler;
   votingHandler;
+  translationHandler;
+  githubHandler;
   private discussionInterval: any;
 
   constructor(
@@ -25,6 +29,12 @@ export class Nance {
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
     this.dialogHandler = new DiscordHandler(keys.DISCORD_KEY, this.config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
+    this.translationHandler = new DeeplHandler(keys.DEEPL_KEY);
+    this.githubHandler = new GithubHandler(
+      keys.GITHUB_KEY,
+      this.config.translate.owner,
+      this.config.translation.repo
+    );
   }
 
   async setDiscussionInterval(seconds: number) {
@@ -100,6 +110,19 @@ export class Nance {
     );
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       const threadId = getIdFromURL(proposal.discussionThreadURL);
+      if (this.config.translation) {
+        const nextGovernanceVersion = Number(await this.githubHandler.getContent('VERSION')) + 1;
+        const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
+        const translationLanguage = this.config.translation.targetLanguage;
+        const translatedmdString = await this.translationHandler.translate(
+          mdString,
+          translationLanguage
+        );
+        proposal.translationURL = await this.githubHandler.pushContent(
+          `GC${nextGovernanceVersion}/${proposal.proposalId}-${translationLanguage}.md`,
+          translatedmdString
+        );
+      }
       await this.dialogHandler.setupPoll(threadId);
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {

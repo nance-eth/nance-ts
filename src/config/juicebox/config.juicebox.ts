@@ -5,6 +5,14 @@ const config = {
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   votingResultsDashboard: 'https://jbx-protocol.github.io/juice-snapshot-dashboard/',
+  translation: {
+    api: 'deepl',
+    targetLanguage: 'zh',
+    storage: {
+      user: 'jigglyjams',
+      repo: 'dev-governance'
+    }
+  },
   discord: {
     guildId: '775859454780244028',
     channelId: '873248745771372584',

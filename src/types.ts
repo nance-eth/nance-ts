@@ -3,6 +3,7 @@ export interface Proposal {
   title: string;
   markdown: string;
   url: string;
+  translationURL?: string | undefined;
   category?: string | undefined;
   status?: string;
   proposalId: string

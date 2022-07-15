@@ -24,6 +24,7 @@ async function setup() {
 async function scheduleCycle() {
   const calendar = new CalendarHandler(calendarPath);
   const cycle = calendar.getNextEvents();
+  console.log(cycle);
   cycle.forEach((event) => {
     if ((event.inProgress) && (event.title === 'Execution' || event.title === 'Delay Period')) {
       nance.setDiscussionInterval(30);
@@ -64,10 +65,11 @@ function listScheduledJobs() {
   logger.debug('===================================================================');
 }
 
-setup();
-scheduleCycle().then(async () => {
-  await sleep(1000);
-  listScheduledJobs();
+setup().then(() => {
+  scheduleCycle().then(async () => {
+    await sleep(1000);
+    listScheduledJobs();
+  });
 });
 
 process.on('SIGINT', () => {

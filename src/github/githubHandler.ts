@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { stringToBase64 } from '../utils';
+import { stringToBase64, base64ToString } from '../utils';
 
 const API = 'https://api.github.com';
 
@@ -27,7 +27,17 @@ export class GithubHandler {
     }).catch((e) => { return e.response.data; });
   }
 
-  async pushContent(filePath: string, content: string) {
+  async getContent(filePath: string) {
+    return axios({
+      method: 'get',
+      url: `${API}/repos/${this.owner}/${this.repo}/contents/${filePath}`,
+      headers: this.HEADERS
+    }).then((results) => {
+      return base64ToString(results.data.content);
+    }).catch((e) => { return e.response.data; });
+  }
+
+  async pushContent(filePath: string, content: string): Promise<string> {
     return axios({
       method: 'put',
       url: `${API}/repos/${this.owner}/${this.repo}/contents/${filePath}`,
@@ -41,7 +51,7 @@ export class GithubHandler {
       },
       headers: this.HEADERS
     }).then((results) => {
-      return results.data;
+      return results.data.content.html_url;
     }).catch((e) => { return e.response.data; });
   }
 }

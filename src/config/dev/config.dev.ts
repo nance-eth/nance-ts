@@ -5,6 +5,14 @@ const config = {
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   votingResultsDashboard: '',
+  translation: {
+    api: 'deepl',
+    targetLanguage: 'zh',
+    storage: {
+      user: 'jigglyjams',
+      repo: 'dev-governance'
+    }
+  },
   discord: {
     guildId: '889377541675159602',
     channelId: '964601032703352873',
