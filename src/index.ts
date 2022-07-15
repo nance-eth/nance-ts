@@ -64,10 +64,11 @@ function listScheduledJobs() {
   logger.debug('===================================================================');
 }
 
-setup();
-scheduleCycle().then(async () => {
-  await sleep(1000);
-  listScheduledJobs();
+setup().then(() => {
+  scheduleCycle().then(async () => {
+    await sleep(1000);
+    listScheduledJobs();
+  });
 });
 
 process.on('SIGINT', () => {
