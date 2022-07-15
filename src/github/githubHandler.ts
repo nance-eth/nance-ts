@@ -1,4 +1,5 @@
 import axios from 'axios';
+import logger from '../logging';
 import { stringToBase64, base64ToString } from '../utils';
 
 const API = 'https://api.github.com';
@@ -24,7 +25,17 @@ export class GithubHandler {
       headers: this.HEADERS
     }).then((response) => {
       return response.data.sha;
-    }).catch((e) => { return e.response.data; });
+    }).catch((e) => { return Promise.reject(e.response.data); });
+  }
+
+  async getSHA(filePath: string) {
+    return axios({
+      method: 'get',
+      url: `${API}/repos/${this.owner}/${this.repo}/contents/${filePath}`,
+      headers: this.HEADERS
+    }).then((results) => {
+      return results.data.sha;
+    }).catch((e) => { return Promise.reject(e.response.data); });
   }
 
   async getContent(filePath: string) {
@@ -34,24 +45,36 @@ export class GithubHandler {
       headers: this.HEADERS
     }).then((results) => {
       return base64ToString(results.data.content);
-    }).catch((e) => { return e.response.data; });
+    }).catch((e) => { return Promise.reject(e.response.data); });
   }
 
-  async pushContent(filePath: string, content: string): Promise<string> {
+  async pushContent(
+    filePath: string,
+    content: string,
+    commitMessage = 'create file',
+    shaString: string | null = null
+  ): Promise<string> {
     return axios({
       method: 'put',
       url: `${API}/repos/${this.owner}/${this.repo}/contents/${filePath}`,
       data: {
-        message: `create ${filePath}`,
+        message: commitMessage,
         committer: {
           name: 'nance',
           email: 'nance@nance.app'
         },
         content: stringToBase64(content),
+        sha: shaString
       },
       headers: this.HEADERS
     }).then((results) => {
       return results.data.content.html_url;
-    }).catch((e) => { return e.response.data; });
+    }).catch((e) => { return Promise.reject(e.response.data); });
+  }
+
+  async updateContent(filePath: string, content: string): Promise<string> {
+    const shaString = await this.getSHA(filePath);
+    const url = this.pushContent(filePath, content, 'update VERSION', shaString);
+    return url;
   }
 }

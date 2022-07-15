@@ -27,10 +27,13 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Da
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(`${String(proposals.length)} proposals`).addFields(
     proposals.map((proposal: Proposal) => {
+      const proposalLinks = (proposal.translationURL)
+        ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
+        : `[proposal](${proposal.url})`;
       return {
         name: `*${proposal.proposalId}*: ${proposal.title}`,
         value: stripIndents`
-        [proposal](${proposal.url}) | [discussion](${proposal.discussionThreadURL})
+        ${proposalLinks} | [discussion](${proposal.discussionThreadURL})
         ------------------------------`,
       };
     })

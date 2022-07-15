@@ -32,8 +32,8 @@ export class Nance {
     this.translationHandler = new DeeplHandler(keys.DEEPL_KEY);
     this.githubHandler = new GithubHandler(
       keys.GITHUB_KEY,
-      this.config.translate.owner,
-      this.config.translation.repo
+      this.config.translation.storage.user,
+      this.config.translation.storage.repo
     );
   }
 
@@ -105,22 +105,23 @@ export class Nance {
 
   async temperatureCheckSetup(endDate: Date) {
     logger.info(`${this.config.name}: temperatureCheckSetup() begin...`);
+    let nextGovernanceVersion = 0;
     const discussionProposals = await this.proposalHandler.assignProposalIds(
       await this.proposalHandler.getDiscussionProposals()
     );
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       const threadId = getIdFromURL(proposal.discussionThreadURL);
       if (this.config.translation) {
-        const nextGovernanceVersion = Number(await this.githubHandler.getContent('VERSION')) + 1;
+        nextGovernanceVersion = Number(await this.githubHandler.getContent('VERSION')) + 1;
         const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
         const translationLanguage = this.config.translation.targetLanguage;
-        const translatedmdString = await this.translationHandler.translate(
+        const translatedMdString = await this.translationHandler.translate(
           mdString,
           translationLanguage
         );
         proposal.translationURL = await this.githubHandler.pushContent(
-          `GC${nextGovernanceVersion}/${proposal.proposalId}-${translationLanguage}.md`,
-          translatedmdString
+          `GC${nextGovernanceVersion}/${proposal.proposalId}_${translationLanguage}.md`,
+          translatedMdString
         );
       }
       await this.dialogHandler.setupPoll(threadId);
@@ -128,11 +129,13 @@ export class Nance {
     })).then(() => {
       if (discussionProposals.length > 0) {
         this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
+        this.githubHandler.updateContent('VERSION', String(nextGovernanceVersion));
         logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
         logger.info('===================================================================');
       }
     }).catch((e) => {
-      logger.error(`${this.config.name}: temperatureCheckSetup() error: ${e}`);
+      logger.error(`${this.config.name}: temperatureCheckSetup() error:`);
+      logger.error(e);
     });
   }
 
@@ -156,7 +159,8 @@ export class Nance {
       logger.info(`${this.config.name}: temperatureCheckClose() complete`);
       logger.info('===================================================================');
     }).catch((e) => {
-      logger.error(`${this.config.name}: temperatureCheckClose() error: ${e}`);
+      logger.error(`${this.config.name}: temperatureCheckClose() error:`);
+      logger.error(e);
     });
   }
 

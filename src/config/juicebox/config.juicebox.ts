@@ -10,7 +10,7 @@ const config = {
     targetLanguage: 'zh',
     storage: {
       user: 'jigglyjams',
-      repo: 'dev-governance'
+      repo: 'juicebox-governance'
     }
   },
   discord: {
