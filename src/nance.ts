@@ -87,6 +87,26 @@ export class Nance {
     });
   }
 
+  async translateProposals(proposals: Proposal[]) {
+    logger.info(`${this.config.name}: translateProposals() begin...`);
+    Promise.all(proposals.map(async (proposal) => {
+      const nextGovernanceVersion = Number(await this.githubHandler.getContent('VERSION')) + 1;
+      const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
+      const translationLanguage = this.config.translation.targetLanguage;
+      const translatedMdString = await this.translationHandler.translate(
+        mdString,
+        translationLanguage
+      );
+      proposal.translationURL = await this.githubHandler.pushContent(
+        `GC${nextGovernanceVersion}/${proposal.proposalId}_${translationLanguage}.md`,
+        translatedMdString
+      );
+    })).catch((e) => {
+      logger.error(`${this.config.name}: translateProposals() error:`);
+      logger.error(e);
+    });
+  }
+
   async queryAndSendDiscussions() {
     try {
       const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();
@@ -105,31 +125,17 @@ export class Nance {
 
   async temperatureCheckSetup(endDate: Date) {
     logger.info(`${this.config.name}: temperatureCheckSetup() begin...`);
-    let nextGovernanceVersion = 0;
     const discussionProposals = await this.proposalHandler.assignProposalIds(
       await this.proposalHandler.getDiscussionProposals()
     );
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       const threadId = getIdFromURL(proposal.discussionThreadURL);
-      if (this.config.translation) {
-        nextGovernanceVersion = Number(await this.githubHandler.getContent('VERSION')) + 1;
-        const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
-        const translationLanguage = this.config.translation.targetLanguage;
-        const translatedMdString = await this.translationHandler.translate(
-          mdString,
-          translationLanguage
-        );
-        proposal.translationURL = await this.githubHandler.pushContent(
-          `GC${nextGovernanceVersion}/${proposal.proposalId}_${translationLanguage}.md`,
-          translatedMdString
-        );
-      }
       await this.dialogHandler.setupPoll(threadId);
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
       if (discussionProposals.length > 0) {
         this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
-        this.githubHandler.updateContent('VERSION', String(nextGovernanceVersion));
+        if (this.config.translation) { this.translateProposals(discussionProposals); }
         logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
         logger.info('===================================================================');
       }
