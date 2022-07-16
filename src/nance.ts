@@ -10,7 +10,7 @@ import logger from './logging';
 import { Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { PinataHandler } from './pinata/pinataHandler';
-import { DeeplHandler } from './translate/deeplHandler';
+import { DeeplHandler } from './deepl/deeplHandler';
 import { GithubHandler } from './github/githubHandler';
 
 export class Nance {

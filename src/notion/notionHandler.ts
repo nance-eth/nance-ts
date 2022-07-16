@@ -6,6 +6,7 @@ import {
   UpdatePageParameters,
   UpdatePageResponse,
   GetDatabaseResponse,
+  GetPageResponse,
   QueryDatabaseResponse
 } from '@notionhq/client/build/src/api-endpoints';
 import {
@@ -26,7 +27,7 @@ export class NotionHandler implements DataContentHandler {
     this.notionToMd = new NotionToMarkdown({ notionClient: this.notion });
   }
 
-  private toProposal(unconvertedProposal: GetDatabaseResponse): Proposal {
+  private toProposal(unconvertedProposal: GetDatabaseResponse | GetPageResponse): Proposal {
     return {
       hash: unconvertedProposal.id,
       title: notionUtils.getTitle(unconvertedProposal),
@@ -190,6 +191,11 @@ export class NotionHandler implements DataContentHandler {
     const mdString = this.notionToMd.toMarkdownString(mdBlocks);
     const cleanMdString = this.removeText(mdString);
     return cleanMdString;
+  }
+
+  async pageIdToProposal(pageId: string) {
+    const page = await this.notion.pages.retrieve({ page_id: pageId });
+    return this.toProposal(page);
   }
 
   // eslint-disable-next-line class-methods-use-this
