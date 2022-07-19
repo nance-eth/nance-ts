@@ -13,7 +13,7 @@ async function main() {
   await sleep(2000);
   // const temperatureCheckProposals = await nance.proposalHandler.getTemperatureCheckProposals();
   const proposal = await nance.proposalHandler.pageIdToProposal(pageId);
-  nance.translateProposals([proposal]);
+  nance.translateAndStoreProposals([proposal]);
 }
 
 main();

@@ -22,7 +22,7 @@ export class Translate extends Nance {
     );
   }
 
-  async translateProposals(proposals: Proposal[]) {
+  async translateAndStoreProposals(proposals: Proposal[]) {
     logger.info(`${this.config.name}: translateProposals() begin...`);
     Promise.all(proposals.map(async (proposal) => {
       const nextGovernanceVersion = Number(await this.githubHandler.getContent('VERSION')) + 1;
