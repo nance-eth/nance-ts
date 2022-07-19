@@ -107,6 +107,8 @@ export class Nance {
         this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
         logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
         logger.info('===================================================================');
+      } else {
+        logger.warn(`${this.config.name}: no proposals to temperatureCheckSetup(). check database!`);
       }
     }).catch((e) => {
       logger.error(`${this.config.name}: temperatureCheckSetup() error: ${e}`);
