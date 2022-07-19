@@ -10,31 +10,21 @@ import logger from './logging';
 import { Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { PinataHandler } from './pinata/pinataHandler';
-import { DeeplHandler } from './deepl/deeplHandler';
-import { GithubHandler } from './github/githubHandler';
 
 export class Nance {
   proposalHandler;
   proposalDataBackupHandler;
   dialogHandler;
   votingHandler;
-  translationHandler;
-  githubHandler;
   private discussionInterval: any;
 
   constructor(
-    private config: any
+    protected config: any
   ) {
     this.proposalHandler = new NotionHandler(keys.NOTION_KEY, this.config);
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
     this.dialogHandler = new DiscordHandler(keys.DISCORD_KEY, this.config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
-    this.translationHandler = new DeeplHandler(keys.DEEPL_KEY);
-    this.githubHandler = new GithubHandler(
-      keys.GITHUB_KEY,
-      this.config.translation.storage.user,
-      this.config.translation.storage.repo
-    );
   }
 
   async setDiscussionInterval(seconds: number) {
@@ -87,26 +77,6 @@ export class Nance {
     });
   }
 
-  async translateProposals(proposals: Proposal[]) {
-    logger.info(`${this.config.name}: translateProposals() begin...`);
-    Promise.all(proposals.map(async (proposal) => {
-      const nextGovernanceVersion = Number(await this.githubHandler.getContent('VERSION')) + 1;
-      const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
-      const translationLanguage = this.config.translation.targetLanguage;
-      const translatedMdString = await this.translationHandler.translate(
-        mdString,
-        translationLanguage
-      );
-      proposal.translationURL = await this.githubHandler.pushContent(
-        `GC${nextGovernanceVersion}/${proposal.proposalId}_${translationLanguage}.md`,
-        translatedMdString
-      );
-    })).catch((e) => {
-      logger.error(`${this.config.name}: translateProposals() error:`);
-      logger.error(e);
-    });
-  }
-
   async queryAndSendDiscussions() {
     try {
       const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();
@@ -135,7 +105,6 @@ export class Nance {
     })).then(() => {
       if (discussionProposals.length > 0) {
         this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
-        if (this.config.translation) { this.translateProposals(discussionProposals); }
         logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
         logger.info('===================================================================');
       }

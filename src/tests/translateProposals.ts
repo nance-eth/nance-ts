@@ -1,15 +1,15 @@
 import {
   sleep
 } from '../utils';
-import { Nance } from '../nance';
+import { Translate } from '../translate';
 import { getConfig } from '../configLoader';
 
 let config: any;
-const pageId = 'c1b700dc7c294c1aa3a521b556168ea9';
+const pageId = '4adac5333e3b43e5ad8c95d667909225';
 
 async function main() {
   config = await getConfig();
-  const nance = new Nance(config);
+  const nance = new Translate(config);
   await sleep(2000);
   // const temperatureCheckProposals = await nance.proposalHandler.getTemperatureCheckProposals();
   const proposal = await nance.proposalHandler.pageIdToProposal(pageId);
