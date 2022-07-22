@@ -1,3 +1,5 @@
+import { TargetLanguageCode } from 'deepl-node';
+
 export interface Proposal {
   hash: string;
   title: string;
@@ -14,6 +16,64 @@ export interface Proposal {
   voteResults?: VoteResults;
 }
 
+export interface NanceConfig {
+  nameId: string;
+  name: string;
+  scheme: string[];
+  proposalDataBackup: string;
+  ipfsGateway: string;
+  votingResultsDashboard: string;
+  translation: {
+    api: string;
+    targetLanguage: TargetLanguageCode;
+    storage: {
+      user: string;
+      repo: string;
+    }
+  };
+  discord: {
+    guildId: string;
+    channelId: string;
+    alertRole: string;
+    poll: {
+      voteYesEmoji: string;
+      voteNoEmoji: string;
+      voteGoVoteEmoji: string;
+      votePassEmoji: string;
+      voteCancelledEmoji: string;
+      minYesVotes: number;
+      yesNoRatio: number;
+      showResults: boolean;
+    };
+  };
+  notion: {
+    publicURLPrefix: string;
+    database_id: string;
+    propertyKeys: {
+      proposalId: string;
+      status: string;
+      statusTemperatureCheck: string;
+      statusVoting: string;
+      statusApproved: string;
+      statusCancelled: string;
+      proposalIdPrefix: string;
+      discussionThread: string;
+      ipfs: string;
+      vote: string;
+    };
+    removeTextFromProposal: string;
+    filters: any;
+  };
+  snapshot: {
+    base: string;
+    space: string;
+    choices: string[];
+    votingTimeDays: number;
+    quroum: number;
+    passingRatio: number;
+  };
+}
+
 export interface VoteResults {
   voteProposalId: string;
   totalVotes: number;
@@ -23,12 +83,6 @@ export interface VoteResults {
   outcome: boolean;
   outcomePercentage: string;
   outcomeEmoji: string;
-}
-
-export interface INance {
-  queryAndSendDiscussions(): Promise<void>;
-  temperatureCheckSetup(): Promise<void>;
-  temperatureCheckClose(): Promise<void>
 }
 
 export interface DateEvent {

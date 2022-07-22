@@ -7,9 +7,10 @@ import { Nance } from './nance';
 import logger from './logging';
 import { getConfig, calendarPath } from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
+import { NanceConfig } from './types';
 
 let nance: Nance;
-let config: any;
+let config: NanceConfig;
 
 const PADDING_VOTE_START_SECONDS = 30;
 const PADDING_VOTE_COUNT_SECONDS = 120;

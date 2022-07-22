@@ -16,7 +16,7 @@ export class DeeplHandler {
     return this.translator.translateText(originalText, null, targetLanuage).then((response) => {
       return response.text;
     }).catch((e) => {
-      return e;
+      return Promise.reject(e);
     });
   }
 }

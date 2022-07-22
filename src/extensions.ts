@@ -1,19 +1,18 @@
 /* eslint-disable no-param-reassign */
-import { Proposal } from './types';
+import { NanceConfig, Proposal } from './types';
 import { Nance } from './nance';
 import logger from './logging';
 import { keys } from './keys';
 import { DeeplHandler } from './deepl/deeplHandler';
 import { GithubHandler } from './github/githubHandler';
 
-export class Translate extends Nance {
+export class NanceExtensions {
   translationHandler;
   githubHandler;
 
   constructor(
-    protected config: any
+    protected config: NanceConfig
   ) {
-    super(config);
     this.translationHandler = new DeeplHandler(keys.DEEPL_KEY);
     this.githubHandler = new GithubHandler(
       keys.GITHUB_KEY,
@@ -22,18 +21,26 @@ export class Translate extends Nance {
     );
   }
 
+  async getGitGovernanceCycle() {
+    return this.githubHandler.getContent('CURRENT_GOVERNANCE_CYCLE').then((response) => {
+      return response;
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
   async translateAndStoreProposals(proposals: Proposal[]) {
     logger.info(`${this.config.name}: translateProposals() begin...`);
     Promise.all(proposals.map(async (proposal) => {
-      const nextGovernanceVersion = Number(await this.githubHandler.getContent('VERSION')) + 1;
-      const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
+      const nextGovernanceVersion = Number(await this.getGitGovernanceCycle()) + 1;
+      const mdString = proposal.markdown;
       const translationLanguage = this.config.translation.targetLanguage;
       const translatedMdString = await this.translationHandler.translate(
         mdString,
         translationLanguage
       );
       proposal.translationURL = await this.githubHandler.pushContent(
-        `GC${nextGovernanceVersion}/${proposal.proposalId}_${translationLanguage}.md`,
+        `GC${nextGovernanceVersion}/translation/${translationLanguage}/${proposal.proposalId}_${translationLanguage}.md`,
         translatedMdString
       );
     })).then(() => {

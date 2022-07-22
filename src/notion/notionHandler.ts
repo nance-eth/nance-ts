@@ -178,19 +178,10 @@ export class NotionHandler implements DataContentHandler {
     );
   }
 
-  private removeText(text: string) {
-    const textToRemove = this.config.notion.removeTextFromProposal;
-    if (text.indexOf(textToRemove) > -1) {
-      return text.replace(textToRemove, '');
-    }
-    return `\n ${text}`;
-  }
-
   async getContentMarkdown(pageId: string): Promise<string> {
     const mdBlocks = await this.notionToMd.pageToMarkdown(pageId);
     const mdString = this.notionToMd.toMarkdownString(mdBlocks);
-    const cleanMdString = this.removeText(mdString);
-    return cleanMdString;
+    return mdString;
   }
 
   async pageIdToProposal(pageId: string) {
