@@ -70,9 +70,9 @@ export class Nance {
   async reminder(event: string, endDate: Date) {
     logger.info(`${this.config.name}: reminder() begin...`);
     this.dialogHandler.sendReminder(event, endDate).then(() => {
-      logger.info(`${this.config.name}: voteReminder() complete`);
+      logger.info(`${this.config.name}: reminder() complete`);
     }).catch((e) => {
-      logger.error(`${this.config.name}: voteReminder() error!`);
+      logger.error(`${this.config.name}: reminder() error!`);
       logger.error(e);
     });
   }
@@ -107,6 +107,8 @@ export class Nance {
         this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
         logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
         logger.info('===================================================================');
+      } else {
+        logger.warn(`${this.config.name}: no proposals to temperatureCheckSetup(). check database!`);
       }
     }).catch((e) => {
       logger.error(`${this.config.name}: temperatureCheckSetup() error:`);

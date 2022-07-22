@@ -94,10 +94,11 @@ export class DiscordHandler {
   }
 
   async sendReminder(event: string, endDate: Date) {
+    const url = (event === 'Snapshot Vote') ? `${this.config.snapshot.base}/${this.config.snapshot.space}` : undefined;
     const message = discordTemplates.reminderMessage(
       event,
       endDate,
-      `${this.config.snapshot.base}/${this.config.snapshot.space}`
+      url
     );
     message.description += ` \n<@&${this.config.discord.alertRole}>`;
     await this.getAlertChannel().send({ embeds: [message] });
