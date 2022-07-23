@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign */
 import { NanceConfig, Proposal } from './types';
-import { Nance } from './nance';
 import logger from './logging';
 import { keys } from './keys';
 import { DeeplHandler } from './deepl/deeplHandler';
@@ -48,6 +47,14 @@ export class NanceExtensions {
     }).catch((e) => {
       logger.error(`${this.config.name}: translateProposals() error:`);
       logger.error(e);
+    });
+  }
+
+  async getGitGovernanceDB() {
+    return this.githubHandler.getContent('DATABASE.json').then((content) => {
+      return JSON.parse(content);
+    }).catch((e) => {
+      Promise.reject(e);
     });
   }
 }
