@@ -14,6 +14,7 @@ export interface Proposal {
   ipfsURL: string;
   voteURL: string;
   voteResults?: VoteResults;
+  governanceCycle?: number;
 }
 
 export interface NanceConfig {
@@ -64,12 +65,31 @@ export interface NanceConfig {
     removeTextFromProposal: string;
     filters: any;
   };
+  github: {
+    user: string;
+    repo: string;
+    propertyKeys: {
+      title: string;
+      proposalId: string;
+      status: string;
+      statusTemperatureCheck: string;
+      statusVoting: string;
+      statusApproved: string;
+      statusCancelled: string;
+      proposalIdPrefix: string;
+      discussionThread: string;
+      ipfs: string;
+      vote: string;
+      category: string;
+      governanceCycle: string;
+    },
+  },
   snapshot: {
     base: string;
     space: string;
     choices: string[];
     votingTimeDays: number;
-    quroum: number;
+    minTokenPassingAmount: number;
     passingRatio: number;
   };
 }

@@ -47,6 +47,25 @@ const config = {
     removeTextFromProposal: '[_How to fill out this template_](/3d81e6bb330a4c869bddd0d6449ac032)_._\n',
     filters: { }
   },
+  github: {
+    user: 'jigglyjams',
+    repo: 'juicebox-governance',
+    propertyKeys: {
+      title: 'Name',
+      proposalId: 'Juicebox Proposal ID',
+      status: 'Status',
+      statusTemperatureCheck: 'Temperature Check',
+      statusVoting: 'Voting',
+      statusApproved: 'Approved',
+      statusCancelled: 'Cancelled',
+      proposalIdPrefix: 'JBP-',
+      discussionThread: 'Discussion Thread',
+      ipfs: 'Data Backup',
+      vote: 'Voting',
+      category: 'Category',
+      governanceCycle: 'Funding Cycle'
+    },
+  },
   snapshot: {
     base: 'https://snapshot.org/#',
     space: 'jbdao.eth',
