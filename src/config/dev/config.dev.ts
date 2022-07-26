@@ -1,7 +1,7 @@
 const config = {
   nameId: 'dev',
   name: 'dev',
-  scheme: ['notion', 'discord', 'snapshot'],
+  scheme: ['github', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   votingResultsDashboard: '',
@@ -68,10 +68,10 @@ const config = {
   },
   snapshot: {
     base: 'https://snapshot.org/#',
-    space: 'jigglyjams.eth',
+    space: 'jbdao.eth',
     choices: ['For', 'Against', 'Abstain'],
     votingTimeDays: 3,
-    quroum: 1,
+    minTokenPassingAmount: 80E6,
     passingRatio: 0.66,
   },
 };

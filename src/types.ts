@@ -7,8 +7,8 @@ export interface Proposal {
   url: string;
   translationURL?: string | undefined;
   category?: string | undefined;
-  status?: string;
-  proposalId: string
+  status: string;
+  proposalId: string;
   author?: string;
   discussionThreadURL: string;
   ipfsURL: string;
@@ -16,6 +16,8 @@ export interface Proposal {
   voteResults?: VoteResults;
   governanceCycle?: number;
 }
+
+// export type ProposalKey = <Record string, string>;
 
 export interface NanceConfig {
   nameId: string;

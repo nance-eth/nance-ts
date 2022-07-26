@@ -74,6 +74,7 @@ export class GithubHandler {
 
   async updateContent(filePath: string, content: string): Promise<string> {
     const shaString = await this.getSHA(filePath);
+    console.log(shaString);
     const url = this.pushContent(filePath, content, `update ${filePath}`, shaString);
     return url;
   }

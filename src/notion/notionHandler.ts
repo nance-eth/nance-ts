@@ -193,4 +193,9 @@ export class NotionHandler implements DataContentHandler {
   appendProposal(proposal: Proposal) {
     return `${proposal.markdown}\n\n---\n[Discussion Thread](${proposal.discussionThreadURL}) | [IPFS](${proposal.ipfsURL})`;
   }
+
+  // eslint-disable-next-line class-methods-use-this
+  async pushMetaData() {
+    const x = null;
+  }
 }
