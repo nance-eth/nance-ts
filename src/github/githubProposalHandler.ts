@@ -42,9 +42,9 @@ export class GithubProposalHandler {
     };
   }
 
-  async fetchDb(): Promise<Proposal[]> {
-    return this.githubHandler.getContent(this.database).then((content) => {
-      return JSON.parse(content);
+  async fetchDb() {
+    return this.githubHandler.getContent(this.database).then((db) => {
+      this.databaseCache = JSON.parse(db);
     }).catch((e) => {
       Promise.reject(e);
     });
@@ -60,27 +60,23 @@ export class GithubProposalHandler {
   }
 
   pushMetaData() {
-    // const stringifyDB = JSON.stringify(this.databaseCache, null, 4);
-    // this.githubHandler.updateContent(this.database, stringifyDB).then(() => {
-    //   this.databaseCache = null;
-    // });
-    console.log(this.databaseCache);
+    const stringifyDB = JSON.stringify(this.databaseCache, null, 4);
+    this.githubHandler.updateContent(this.database, stringifyDB).then(() => {
+      this.databaseCache = [];
+    });
   }
 
   async getTemperatureCheckProposals() {
-    return this.fetchDb().then((db) => {
-      return db.filter((proposal: Proposal) => {
-        return proposal.status === 'Temperature Check';
-      });
+    await this.fetchDb();
+    return this.databaseCache.filter((proposal) => {
+      return proposal.status === this.config.github.propertyKeys.statusTemperatureCheck;
     });
   }
 
   async getVoteProposals() {
-    return this.fetchDb().then((db) => {
-      this.databaseCache = db;
-      return db.filter((proposal: Proposal) => {
-        return proposal.status === 'Voting';
-      });
+    await this.fetchDb();
+    return this.databaseCache.filter((proposal) => {
+      return proposal.status === this.config.github.propertyKeys.statusVoting;
     });
   }
 
