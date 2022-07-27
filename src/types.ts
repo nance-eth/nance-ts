@@ -3,8 +3,9 @@ import { TargetLanguageCode } from 'deepl-node';
 export interface Proposal {
   hash: string;
   title: string;
-  markdown: string;
+  markdown?: string;
   url: string;
+  governanceCycle?: number;
   translationURL?: string | undefined;
   category?: string | undefined;
   status: string;
@@ -14,7 +15,6 @@ export interface Proposal {
   ipfsURL: string;
   voteURL: string;
   voteResults?: VoteResults;
-  governanceCycle?: number;
 }
 
 // export type ProposalKey = <Record string, string>;

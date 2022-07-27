@@ -1,15 +1,44 @@
-import axios from 'axios';
-import { keys } from '../keys';
+import { gql } from 'graphql-request';
 
-export const githubContent = async (url: string) => {
-  try {
-    const results = await axios.get(url, {
-      headers: {
-        Authorization: `token ${keys.GITHUB_KEY}`
+interface FileChanges {
+  path: string;
+  contents: string;
+}
+
+export const queryOID = gql`
+query OID ($owner: String!, $repo: String!){
+  repository(owner: $owner, name: $repo) {
+    defaultBranchRef {
+      target {
+        oid
       }
-    });
-    return results.data.content;
-  } catch (e) {
-    return Promise.reject(e);
+    }
   }
-};
+}`;
+
+export const mutationCommitAndPush = gql`
+mutation CommitAndPush (
+  $ownerSlashRepo: String!,
+  $branch: String = "main",
+  $commitMessage: String!,
+  $fileChanges: FileChanges!,
+  $expectedOid: GitObjectID!
+){
+  createCommitOnBranch(
+    input: {
+      branch: {
+        repositoryNameWithOwner: $ownerSlashRepo,
+        branchName: $branch
+      },
+      message :{
+        headline: $commitMessage
+      },
+      fileChanges: $fileChanges
+      expectedHeadOid: $expectedOid
+  }) {
+    commit{
+      oid
+    }
+  }
+}
+`;

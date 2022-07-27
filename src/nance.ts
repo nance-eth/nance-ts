@@ -1,7 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { DiscordHandler } from './discord/discordHandler';
 import { NotionHandler } from './notion/notionHandler';
-import { GithubProposalHandler } from './github/githubProposalHandler';
 import { keys } from './keys';
 import {
   getLastSlash as getIdFromURL,
@@ -22,25 +21,16 @@ export class Nance {
   constructor(
     protected config: any
   ) {
-    if (this.config.scheme[0] === 'notion') {
-      this.proposalHandler = new NotionHandler(keys.NOTION_KEY, this.config);
-    } else if (this.config.scheme[0] === 'github') {
-      logger.info('GITHUB');
-      this.proposalHandler = new GithubProposalHandler(this.config);
-    } else {
-      logger.error('Bad proposal handler config!');
-      process.exit();
-    }
+    this.proposalHandler = new NotionHandler(keys.NOTION_KEY, this.config);
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
     this.dialogHandler = new DiscordHandler(keys.DISCORD_KEY, this.config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
   }
 
-  // async setDiscussionInterval(seconds: number) {
-  //   this.discussionInterval = setInterval(
-  // this.queryAndSendDiscussions.bind(this), seconds * 1000);
-  //   logger.info(`${this.config.name}: setDiscussionInterval(${seconds})`);
-  // }
+  async setDiscussionInterval(seconds: number) {
+    this.discussionInterval = setInterval(this.queryAndSendDiscussions.bind(this), seconds * 1000);
+    logger.info(`${this.config.name}: setDiscussionInterval(${seconds})`);
+  }
 
   async clearDiscussionInterval() {
     clearInterval(this.discussionInterval);
@@ -87,45 +77,41 @@ export class Nance {
     });
   }
 
-  // async queryAndSendDiscussions() {
-  //   try {
-  //     const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();
-  //     proposalsToDiscuss.forEach(async (proposal: Proposal) => {
-  //       const threadURL = await this.dialogHandler.startDiscussion(proposal);
-  //       await this.proposalHandler.updateMetaData(
-  //         proposal.hash,
-  //         { [this.config.notion.propertyKeys.discussionThread]: { url: threadURL } }
-  //       );
-  //       logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
-  //     });
-  //   } catch (e) {
-  //     logger.error(`${this.config.name}: queryAndSendDiscussions() issue`);
-  //   }
-  // }
+  async queryAndSendDiscussions() {
+    try {
+      const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();
+      proposalsToDiscuss.forEach(async (proposal: Proposal) => {
+        proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
+        this.proposalHandler.updateDiscussionURL(proposal);
+        logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
+      });
+    } catch (e) {
+      logger.error(`${this.config.name}: queryAndSendDiscussions() issue`);
+    }
+  }
 
-  // async temperatureCheckSetup(endDate: Date) {
-  //   logger.info(`${this.config.name}: temperatureCheckSetup() begin...`);
-  //   const discussionProposals = await this.proposalHandler.assignProposalIds(
-  //     await this.proposalHandler.getDiscussionProposals()
-  //   );
-  //   Promise.all(discussionProposals.map(async (proposal: Proposal) => {
-  //     const threadId = getIdFromURL(proposal.discussionThreadURL);
-  //     await this.dialogHandler.setupPoll(threadId);
-  //     await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
-  //   })).then(() => {
-  //     if (discussionProposals.length > 0) {
-  //       this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
-  //       logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
-  //       logger.info('===================================================================');
-  //     } else {
-  //       logger.warn(`${this.config.name}:
-  // no proposals to temperatureCheckSetup(). check database!`);
-  //     }
-  //   }).catch((e) => {
-  //     logger.error(`${this.config.name}: temperatureCheckSetup() error:`);
-  //     logger.error(e);
-  //   });
-  // }
+  async temperatureCheckSetup(endDate: Date) {
+    logger.info(`${this.config.name}: temperatureCheckSetup() begin...`);
+    const discussionProposals = await this.proposalHandler.assignProposalIds(
+      await this.proposalHandler.getDiscussionProposals()
+    );
+    Promise.all(discussionProposals.map(async (proposal: Proposal) => {
+      const threadId = getIdFromURL(proposal.discussionThreadURL);
+      await this.dialogHandler.setupPoll(threadId);
+      await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
+    })).then(() => {
+      if (discussionProposals.length > 0) {
+        this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
+        logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
+        logger.info('===================================================================');
+      } else {
+        logger.warn(`${this.config.name}:no proposals to temperatureCheckSetup(). check database!`);
+      }
+    }).catch((e) => {
+      logger.error(`${this.config.name}: temperatureCheckSetup() error:`);
+      logger.error(e);
+    });
+  }
 
   async temperatureCheckClose() {
     logger.info(`${this.config.name}: temperatureCheckClose() begin...`);
@@ -170,7 +156,7 @@ export class Nance {
         startDate,
         endDate
       );
-      this.proposalHandler.updateVoteAndIPFS(proposal);
+      proposal.status = await this.proposalHandler.updateVoteAndIPFS(proposal);
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
     })).then(() => {
       if (voteProposals.length > 0) {

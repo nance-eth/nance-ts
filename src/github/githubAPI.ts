@@ -1,10 +1,11 @@
 import axios from 'axios';
+import { request as gqlRequest, gql } from 'graphql-request';
 import logger from '../logging';
 import { stringToBase64, base64ToString } from '../utils';
 
 const API = 'https://api.github.com';
 
-export class GithubHandler {
+export class GithubAPI {
   private HEADERS;
 
   constructor(

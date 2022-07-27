@@ -1,49 +1,36 @@
-import { oneLine, oneLineTrim, stripIndents } from 'common-tags';
+import { oneLineTrim } from 'common-tags';
 import { NanceConfig, Proposal } from '../types';
 import logger from '../logging';
 import { keys } from '../keys';
-import { GithubHandler } from './githubHandler';
+import { GithubAPI } from './githubAPI';
 import { P } from '../const';
 
+const GITHUB = 'https://github.com';
+
 export class GithubProposalHandler {
-  githubHandler;
+  GithubAPI;
   protected database = 'DATABASE.json';
+  protected currentGovernanceCycle = 'CURRENT_GOVERNANCE_CYCLE';
   protected databaseCache: Proposal[] = [];
 
   constructor(
     protected config: NanceConfig
   ) {
-    this.githubHandler = new GithubHandler(
+    this.GithubAPI = new GithubAPI(
       keys.GITHUB_KEY,
       this.config.github.user,
       this.config.github.repo
     );
   }
 
-  private toProposal(unconvertedProposal: any): Proposal {
-    const proposalURL = oneLineTrim`https://github.com
-      /${this.config.github.user}
-      /${this.config.github.repo}
-      /blob/main
-      /GC${unconvertedProposal[this.config.github.propertyKeys.governanceCycle]}
-      /${unconvertedProposal[this.config.github.propertyKeys.proposalId]}.md`;
-    return {
-      hash: '',
-      title: unconvertedProposal[this.config.github.propertyKeys.title],
-      markdown: '',
-      url: proposalURL,
-      category: unconvertedProposal[this.config.github.propertyKeys.category],
-      status: unconvertedProposal[this.config.github.propertyKeys.status],
-      proposalId: unconvertedProposal[this.config.github.propertyKeys.proposalId],
-      governanceCycle: unconvertedProposal[this.config.github.propertyKeys.governanceCycle],
-      discussionThreadURL: unconvertedProposal[this.config.github.propertyKeys.discussionThread],
-      ipfsURL: unconvertedProposal[this.config.github.propertyKeys.ipfs],
-      voteURL: unconvertedProposal[this.config.github.propertyKeys.vote]
-    };
+  githubProposalURL(proposal: Proposal) {
+    return oneLineTrim`
+      ${GITHUB}/${this.config.github.user}/${this.config.github.repo}/blob/main/
+      GC${proposal.governanceCycle}/${proposal.proposalId}.md`;
   }
 
   async fetchDb() {
-    return this.githubHandler.getContent(this.database).then((db) => {
+    return this.GithubAPI.getContent(this.database).then((db) => {
       this.databaseCache = JSON.parse(db);
     }).catch((e) => {
       Promise.reject(e);
@@ -56,13 +43,26 @@ export class GithubProposalHandler {
         this.databaseCache[index] = { ...proposal, [updateProperty]: updateValue };
       }
     });
-    console.log(`ID ${proposalId} => ${updateProperty}: ${updateValue}`);
   }
 
-  pushMetaData() {
+  async pushMetaData() {
     const stringifyDB = JSON.stringify(this.databaseCache, null, 4);
-    this.githubHandler.updateContent(this.database, stringifyDB).then(() => {
+    this.GithubAPI.updateContent(this.database, stringifyDB).then(() => {
       this.databaseCache = [];
+    });
+  }
+
+  async pushProposal(proposal: Proposal) {
+    const proposalPath = `GC${proposal.governanceCycle}/${proposal.proposalId}`;
+    if (!proposal.markdown) { return; }
+    this.GithubAPI.pushContent(proposalPath, proposal.markdown);
+  }
+
+  async getCurrentGovernanceCycle() {
+    return this.GithubAPI.getContent(this.currentGovernanceCycle).then((content) => {
+      return content;
+    }).catch((e) => {
+      Promise.reject(e);
     });
   }
 
@@ -80,15 +80,19 @@ export class GithubProposalHandler {
     });
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  getContentMarkdown() {
-    return '';
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  appendProposal() {
-    const stub = this.database;
-    return '';
+  async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
+    Promise.all([
+      this.updateMetaData(
+        proposal.hash,
+        P.STATUS,
+        this.config.github.propertyKeys.statusTemperatureCheck
+      ),
+      this.updateMetaData(
+        proposal.hash,
+        P.STATUS,
+        this.config.github.propertyKeys.statusTemperatureCheck
+      )
+    ]);
   }
 
   async updateStatusVoting(proposalHash: string) {
@@ -100,7 +104,7 @@ export class GithubProposalHandler {
   }
 
   async updateStatusApproved(proposalHash: string) {
-    await this.updateMetaData(
+    this.updateMetaData(
       proposalHash,
       P.STATUS,
       this.config.github.propertyKeys.statusApproved
@@ -116,15 +120,17 @@ export class GithubProposalHandler {
   }
 
   async updateVoteAndIPFS(proposal: Proposal) {
-    this.updateMetaData(
-      proposal.proposalId,
-      P.VOTE_URL,
-      proposal.voteURL
-    );
-    this.updateMetaData(
-      proposal.proposalId,
-      P.IPFS_URL,
-      proposal.ipfsURL
-    );
+    Promise.all([
+      this.updateMetaData(
+        proposal.hash,
+        P.VOTE_URL,
+        proposal.voteURL
+      ),
+      this.updateMetaData(
+        proposal.hash,
+        P.IPFS_URL,
+        proposal.ipfsURL
+      )
+    ]);
   }
 }

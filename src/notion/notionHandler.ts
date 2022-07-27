@@ -31,7 +31,6 @@ export class NotionHandler implements DataContentHandler {
     return {
       hash: unconvertedProposal.id,
       title: notionUtils.getTitle(unconvertedProposal),
-      markdown: '',
       url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
       category: notionUtils.getCategory(unconvertedProposal),
       status: notionUtils.getStatus(unconvertedProposal),
@@ -126,6 +125,13 @@ export class NotionHandler implements DataContentHandler {
     }
   }
 
+  async updateDiscussionURL(proposal: Proposal) {
+    await this.updateMetaData(
+      proposal.hash,
+      { [this.config.notion.propertyKeys.discussionThread]: { url: proposal.discussionThreadURL } }
+    );
+  }
+
   async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
     this.updateMetaData(proposal.hash, {
       [this.config.notion.propertyKeys.status]: {
@@ -176,6 +182,7 @@ export class NotionHandler implements DataContentHandler {
         [this.config.notion.propertyKeys.ipfs]: { url: proposal.ipfsURL }
       }
     );
+    return this.config.notion.propertyKeys.vote;
   }
 
   async getContentMarkdown(pageId: string): Promise<string> {

@@ -3,58 +3,27 @@ import { NanceConfig, Proposal } from './types';
 import logger from './logging';
 import { keys } from './keys';
 import { DeeplHandler } from './deepl/deeplHandler';
-import { GithubHandler } from './github/githubHandler';
+import { GithubProposalHandler } from './github/githubProposalHandler';
 
 export class NanceExtensions {
   translationHandler;
-  githubHandler;
+  githubProposalHandler;
 
   constructor(
     protected config: NanceConfig
   ) {
     this.translationHandler = new DeeplHandler(keys.DEEPL_KEY);
-    this.githubHandler = new GithubHandler(
-      keys.GITHUB_KEY,
-      this.config.translation.storage.user,
-      this.config.translation.storage.repo
-    );
+    this.githubProposalHandler = new GithubProposalHandler(config);
   }
 
-  async getGitGovernanceCycle() {
-    return this.githubHandler.getContent('CURRENT_GOVERNANCE_CYCLE').then((response) => {
-      return response;
-    }).catch((e) => {
-      return Promise.reject(e);
-    });
-  }
-
-  async translateAndStoreProposals(proposals: Proposal[]) {
-    logger.info(`${this.config.name}: translateProposals() begin...`);
-    Promise.all(proposals.map(async (proposal) => {
-      const nextGovernanceVersion = Number(await this.getGitGovernanceCycle()) + 1;
-      const mdString = proposal.markdown;
-      const translationLanguage = this.config.translation.targetLanguage;
-      const translatedMdString = await this.translationHandler.translate(
-        mdString,
-        translationLanguage
-      );
-      proposal.translationURL = await this.githubHandler.pushContent(
-        `GC${nextGovernanceVersion}/translation/${translationLanguage}/${proposal.proposalId}_${translationLanguage}.md`,
-        translatedMdString
-      );
-    })).then(() => {
-      logger.info(`${this.config.name}: translateProposals() complete`);
-    }).catch((e) => {
-      logger.error(`${this.config.name}: translateProposals() error:`);
-      logger.error(e);
-    });
-  }
-
-  async getGitGovernanceDB() {
-    return this.githubHandler.getContent('DATABASE.json').then((content) => {
-      return JSON.parse(content);
-    }).catch((e) => {
-      Promise.reject(e);
+  async pushProposals(proposals: Proposal[]) {
+    const nextGovernanceCycle = Number(
+      await this.githubProposalHandler.getCurrentGovernanceCycle()
+    ) + 1;
+    proposals.forEach((proposal: Proposal) => {
+      proposal.governanceCycle = nextGovernanceCycle;
+      proposal.url = this.githubProposalHandler.githubProposalURL(proposal);
+      this.githubProposalHandler.pushProposal(proposal);
     });
   }
 }
