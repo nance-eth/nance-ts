@@ -45,9 +45,7 @@ export class SnapshotHandler {
     }).catch((e) => {
       return Promise.reject(e);
     });
-    const voteURL = `
-      ${this.config.snapshot.base}/${this.config.snapshot.space}/proposal/${voteHash}
-    `;
+    const voteURL = `${this.config.snapshot.base}/${this.config.snapshot.space}/proposal/${voteHash}`;
     return voteURL;
   }
 
