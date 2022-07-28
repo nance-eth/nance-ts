@@ -1,21 +1,5 @@
 import { gql } from 'graphql-request';
 
-interface FileChanges {
-  path: string;
-  contents: string;
-}
-
-export const queryOID = gql`
-query OID ($owner: String!, $repo: String!){
-  repository(owner: $owner, name: $repo) {
-    defaultBranchRef {
-      target {
-        oid
-      }
-    }
-  }
-}`;
-
 export const mutationCommitAndPush = gql`
 mutation CommitAndPush (
   $ownerSlashRepo: String!,

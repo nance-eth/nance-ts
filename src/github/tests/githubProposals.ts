@@ -1,13 +1,25 @@
 import { getConfig } from '../../configLoader';
 import { getLastSlash as getIdFromURL } from '../../utils';
 import { GithubProposalHandler } from '../githubProposalHandler';
+import { GithubAPI } from '../githubAPI';
+import { NanceConfig } from '../../types';
+import { keys } from '../../keys';
 
 async function main() {
-  const config = await getConfig();
-  const proposalHandler = new GithubProposalHandler(config);
-
-  const pickedProposal = await proposalHandler.updateMetaData('JBP-233', 'status', 'Voting');
-  console.log(JSON.stringify(pickedProposal, null, 4));
+  const config = await getConfig() as NanceConfig;
+  const github = new GithubAPI(keys.GITHUB_KEY, config.github.user, config.github.repo);
+  console.log(await github.getOid());
+  const files = [
+    {
+      path: 'GC27/README.md',
+      contents: 'ya its me again'
+    },
+    {
+      path: 'GC28/README.md',
+      contents: 'another one'
+    }
+  ];
+  console.log(await github.createCommitOnBranch(files, 'another1'));
 }
 
 main();

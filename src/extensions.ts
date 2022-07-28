@@ -1,3 +1,4 @@
+/* eslint-disable no-plusplus */
 /* eslint-disable no-param-reassign */
 import { NanceConfig, Proposal } from './types';
 import logger from './logging';
@@ -16,14 +17,15 @@ export class NanceExtensions {
     this.githubProposalHandler = new GithubProposalHandler(config);
   }
 
-  async pushProposals(proposals: Proposal[]) {
+  async pushProposalsAndDatabase(proposals: Proposal[]) {
     const nextGovernanceCycle = Number(
       await this.githubProposalHandler.getCurrentGovernanceCycle()
     ) + 1;
-    proposals.forEach((proposal: Proposal) => {
+    for (let i = 0; i < proposals.length; i++) {
+      const proposal = proposals[i];
       proposal.governanceCycle = nextGovernanceCycle;
       proposal.url = this.githubProposalHandler.githubProposalURL(proposal);
-      this.githubProposalHandler.pushProposal(proposal);
-    });
+    }
+    console.log(proposals);
   }
 }

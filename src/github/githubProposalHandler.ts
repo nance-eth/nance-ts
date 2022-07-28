@@ -1,5 +1,5 @@
 import { oneLineTrim } from 'common-tags';
-import { NanceConfig, Proposal } from '../types';
+import { GithubFileChange, NanceConfig, Proposal } from '../types';
 import logger from '../logging';
 import { keys } from '../keys';
 import { GithubAPI } from './githubAPI';
@@ -9,8 +9,8 @@ const GITHUB = 'https://github.com';
 
 export class GithubProposalHandler {
   GithubAPI;
-  protected database = 'DATABASE.json';
-  protected currentGovernanceCycle = 'CURRENT_GOVERNANCE_CYCLE';
+  protected databasePath = 'DATABASE.json';
+  protected currentGovernanceCyclePath = 'CURRENT_GOVERNANCE_CYCLE';
   protected databaseCache: Proposal[] = [];
 
   constructor(
@@ -23,6 +23,15 @@ export class GithubProposalHandler {
     );
   }
 
+  static stageProposals(proposals: Proposal[]): GithubFileChange[] {
+    return proposals.map((proposal: Proposal) => {
+      return {
+        path: `${proposal.governanceCycle}/${proposal.proposalId}.md`,
+        contents: proposal.markdown!
+      };
+    });
+  }
+
   githubProposalURL(proposal: Proposal) {
     return oneLineTrim`
       ${GITHUB}/${this.config.github.user}/${this.config.github.repo}/blob/main/
@@ -30,36 +39,24 @@ export class GithubProposalHandler {
   }
 
   async fetchDb() {
-    return this.GithubAPI.getContent(this.database).then((db) => {
+    return this.GithubAPI.getContent(this.databasePath).then((db) => {
       this.databaseCache = JSON.parse(db);
     }).catch((e) => {
       Promise.reject(e);
     });
   }
 
-  async updateMetaData(proposalId: string, updateProperty: string, updateValue: string) {
+  async updateMetaDataCache(proposalHash: string, updateProperty: string, updateValue: string) {
+    // TODO: ability to modify multiple propoerties and values
     this.databaseCache.forEach((proposal: Proposal, index: number) => {
-      if (proposal.proposalId === proposalId) {
+      if (proposal.proposalId === proposalHash) {
         this.databaseCache[index] = { ...proposal, [updateProperty]: updateValue };
       }
     });
   }
 
-  async pushMetaData() {
-    const stringifyDB = JSON.stringify(this.databaseCache, null, 4);
-    this.GithubAPI.updateContent(this.database, stringifyDB).then(() => {
-      this.databaseCache = [];
-    });
-  }
-
-  async pushProposal(proposal: Proposal) {
-    const proposalPath = `GC${proposal.governanceCycle}/${proposal.proposalId}`;
-    if (!proposal.markdown) { return; }
-    this.GithubAPI.pushContent(proposalPath, proposal.markdown);
-  }
-
   async getCurrentGovernanceCycle() {
-    return this.GithubAPI.getContent(this.currentGovernanceCycle).then((content) => {
+    return this.GithubAPI.getContent(this.currentGovernanceCyclePath).then((content) => {
       return content;
     }).catch((e) => {
       Promise.reject(e);
@@ -82,12 +79,12 @@ export class GithubProposalHandler {
 
   async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
     Promise.all([
-      this.updateMetaData(
+      this.updateMetaDataCache(
         proposal.hash,
         P.STATUS,
         this.config.github.propertyKeys.statusTemperatureCheck
       ),
-      this.updateMetaData(
+      this.updateMetaDataCache(
         proposal.hash,
         P.STATUS,
         this.config.github.propertyKeys.statusTemperatureCheck
@@ -96,7 +93,7 @@ export class GithubProposalHandler {
   }
 
   async updateStatusVoting(proposalHash: string) {
-    this.updateMetaData(
+    this.updateMetaDataCache(
       proposalHash,
       P.STATUS,
       this.config.github.propertyKeys.statusVoting
@@ -104,7 +101,7 @@ export class GithubProposalHandler {
   }
 
   async updateStatusApproved(proposalHash: string) {
-    this.updateMetaData(
+    this.updateMetaDataCache(
       proposalHash,
       P.STATUS,
       this.config.github.propertyKeys.statusApproved
@@ -112,7 +109,7 @@ export class GithubProposalHandler {
   }
 
   async updateStatusCancelled(proposalHash: string) {
-    this.updateMetaData(
+    this.updateMetaDataCache(
       proposalHash,
       P.STATUS,
       this.config.github.propertyKeys.statusCancelled
@@ -121,12 +118,12 @@ export class GithubProposalHandler {
 
   async updateVoteAndIPFS(proposal: Proposal) {
     Promise.all([
-      this.updateMetaData(
+      this.updateMetaDataCache(
         proposal.hash,
         P.VOTE_URL,
         proposal.voteURL
       ),
-      this.updateMetaData(
+      this.updateMetaDataCache(
         proposal.hash,
         P.IPFS_URL,
         proposal.ipfsURL

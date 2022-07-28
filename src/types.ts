@@ -128,3 +128,8 @@ export interface PinataKey {
   KEY: string;
   SECRET: string;
 }
+
+export interface GithubFileChange {
+  path: string,
+  contents: string
+}
