@@ -6,6 +6,7 @@ export interface Proposal {
   markdown?: string;
   url: string;
   governanceCycle?: number;
+  date?: string,
   translationURL?: string | undefined;
   category?: string | undefined;
   status: string;
@@ -102,7 +103,6 @@ export interface VoteResults {
   scoresState: string;
   scores: Record<string, number>;
   percentages: Record<string, number>;
-  outcome: boolean;
   outcomePercentage: string;
   outcomeEmoji: string;
 }

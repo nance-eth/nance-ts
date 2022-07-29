@@ -14,6 +14,7 @@ import {
 } from './notionTypes';
 import { Proposal } from '../types';
 import * as notionUtils from './notionUtils';
+import logger from '../logging';
 
 export class NotionHandler implements DataContentHandler {
   private notion;
@@ -29,7 +30,7 @@ export class NotionHandler implements DataContentHandler {
 
   private toProposal(unconvertedProposal: GetDatabaseResponse | GetPageResponse): Proposal {
     return {
-      hash: unconvertedProposal.id,
+      hash: unconvertedProposal.id.replaceAll('-', ''),
       title: notionUtils.getTitle(unconvertedProposal),
       url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
       category: notionUtils.getCategory(unconvertedProposal),
@@ -46,7 +47,11 @@ export class NotionHandler implements DataContentHandler {
         unconvertedProposal,
         this.config.notion.propertyKeys.ipfs
       ),
-      voteURL: notionUtils.getPropertyURL(unconvertedProposal, this.config.notion.propertyKeys.vote)
+      voteURL: notionUtils.getPropertyURL(
+        unconvertedProposal,
+        this.config.notion.propertyKeys.vote
+      ),
+      date: notionUtils.getDate(unconvertedProposal)
     };
   }
 

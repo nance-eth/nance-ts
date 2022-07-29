@@ -74,3 +74,16 @@ export function limitLength(text: string, length = 100) {
   }
   return text;
 }
+
+export function numToPrettyString(num: number | undefined) {
+  if (!num) {
+    return '0';
+  } if (num > 1E9) {
+    return `${(num / 1E9).toFixed(1)}B`;
+  } if (num > 1E6) {
+    return `${(num / 1E6).toFixed(1)}M`;
+  } if (num > 1E3) {
+    return `${(num / 1E3).toFixed(1)}k`;
+  }
+  return num.toFixed(1);
+}

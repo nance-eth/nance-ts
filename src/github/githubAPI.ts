@@ -47,6 +47,20 @@ export class GithubAPI {
     }).catch((e) => { return Promise.reject(e.response.data); });
   }
 
+  async getDirectories(branch = 'main') {
+    return axios({
+      method: 'get',
+      url: `${REST_API}/repos/${this.owner}/${this.repo}/git/trees/${branch}`,
+      headers: this.REST_HEADERS
+    }).then((results) => {
+      return results.data.tree.filter((tree: any) => {
+        return tree.type === 'tree';
+      }).map((folder: any) => {
+        return folder.path;
+      });
+    }).catch((e) => { return Promise.reject(e.response.data); });
+  }
+
   async getContent(filePath: string) {
     return axios({
       method: 'get',

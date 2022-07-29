@@ -20,7 +20,7 @@ async function main() {
     return proposals;
   });
   
-  nanceExt.translateAndStoreProposals(await temperatureCheckProposals);
+  // nanceExt.translateAndStoreProposals(await temperatureCheckProposals);
 }
 
 main();

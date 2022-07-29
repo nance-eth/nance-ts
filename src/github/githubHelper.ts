@@ -1,4 +1,5 @@
 import { gql } from 'graphql-request';
+import { Proposal } from '../types';
 
 export const mutationCommitAndPush = gql`
 mutation CommitAndPush (
