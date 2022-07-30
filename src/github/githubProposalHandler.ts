@@ -37,6 +37,19 @@ export class GithubProposalHandler {
   }
 
   // eslint-disable-next-line class-methods-use-this
+  translatedProposalsToGithubFileChanges(proposals: Proposal[]): GithubFileChange[] {
+    return proposals.map((proposal: Proposal) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const { language } = proposal.translation!;
+      return {
+        path: `GC${proposal.governanceCycle}/translation/${language}/${proposal.proposalId}_${language}.md`,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        contents: proposal.translation!.markdown!
+      };
+    });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
   cycleDbToFileChanges(cycle: number, proposals: Proposal[], mdTable: string): GithubFileChange[] {
     return ([
       {

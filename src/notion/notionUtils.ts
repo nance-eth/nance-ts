@@ -37,5 +37,5 @@ export const getPropertyURL = (page:any, property:any) => {
 };
 
 export const getDate = (page:any) => {
-  return (page.properties.Date) ? page.properties.Date.date.start : '';
+  return (page.properties.Date.date) ? page.properties.Date.date.start : '';
 };

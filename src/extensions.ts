@@ -7,11 +7,6 @@ import { DeeplHandler } from './deepl/deeplHandler';
 import { GithubProposalHandler } from './github/githubProposalHandler';
 import { JSONProposalsToMd } from './github/tableMaker';
 
-// declaration merge
-interface Array<T> {
-  concat<U>(...items: (U | ConcatArray<U>)[]): (T | U)[]
-}
-
 export class NanceExtensions {
   translationHandler;
   githubProposalHandler;
@@ -68,5 +63,37 @@ export class NanceExtensions {
 
   stageGovernanceCycle(cycle: number) {
     return this.githubProposalHandler.newGovernanceCycleFileChange(cycle);
+  }
+
+  async pushTranslatedProposals(proposals: Proposal[]) {
+    const githubTranslatedProposals = this.stageTranslationProposals(proposals);
+    const nextCycle = Number(await this.githubProposalHandler.getCurrentGovernanceCycle()) + 1;
+    this.githubProposalHandler.GithubAPI.createCommitOnBranch(
+      githubTranslatedProposals,
+      `GC${nextCycle} tranlations`
+    );
+  }
+
+  async translateProposals(proposals: Proposal[]): Promise<Proposal[]> {
+    logger.info(`${this.config.name}: translateProposals() begin...`);
+    const nextCycle = Number(await this.githubProposalHandler.getCurrentGovernanceCycle()) + 1;
+    return Promise.all(proposals.map(async (proposal) => {
+      proposal.governanceCycle = nextCycle;
+      const translation = await this.translationHandler.translate(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        proposal.markdown!,
+        this.config.translation.targetLanguage
+      );
+      proposal.translation = {
+        markdown: translation,
+        language: this.config.translation.targetLanguage
+      };
+    })).then(() => {
+      return proposals;
+    });
+  }
+
+  stageTranslationProposals(proposals: Proposal[]) {
+    return this.githubProposalHandler.translatedProposalsToGithubFileChanges(proposals);
   }
 }

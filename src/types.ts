@@ -4,6 +4,10 @@ export interface Proposal {
   hash: string;
   title: string;
   markdown?: string;
+  translation?: {
+    markdown?: string,
+    language?: string
+  },
   url: string;
   governanceCycle?: number;
   date?: string,
