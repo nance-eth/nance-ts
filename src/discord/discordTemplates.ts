@@ -3,7 +3,7 @@ import {
   Message, MessageEmbed, ThreadChannel,
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
-import { dateToUnixTimeStamp } from '../utils';
+import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
 
 export const startDiscussionMessage = (proposal: Proposal) => {
@@ -62,10 +62,13 @@ export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => 
   ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
+        const [[yesWord, yesVal], [noWord, noVal]] = Object.entries(
+          proposal.voteResults?.scores ?? {}
+        );
         return {
           name: `*${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
-          ${proposal.voteResults?.outcomeEmoji} ${proposal.voteResults?.outcomePercentage}%
+          ${proposal.voteResults?.outcomeEmoji} ${proposal.voteResults?.outcomePercentage}% | ${proposal.voteResults?.totalVotes} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}
           ------------------------------`,
         };
       })

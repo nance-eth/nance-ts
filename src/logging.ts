@@ -3,11 +3,16 @@ import {
   createLogger,
   transports
 } from 'winston';
+import 'dotenv/config';
+import { Logtail } from '@logtail/node';
+import { LogtailTransport } from '@logtail/winston';
 
 if (process.env.NODE_ENV !== 'dev') console.log = function none() {};
 
+const logtail = new Logtail(process.env.LOGTAIL_KEY ?? '');
+
 const logFormat = format.combine(
-  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
   format.printf(({ message, level, timestamp }) => {
     let messageText;
     if (typeof message === 'object') {
@@ -21,9 +26,11 @@ const logFormat = format.combine(
 const logger = createLogger({
   format:
     logFormat,
+  level: 'silly',
   transports: [
-    new transports.Console({ level: 'silly' }),
-    new transports.File({ filename: 'logs.log', level: 'silly' })
+    new transports.Console(),
+    new transports.File({ filename: 'logs.log' }),
+    new LogtailTransport(logtail)
   ]
 });
 
