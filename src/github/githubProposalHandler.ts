@@ -1,7 +1,12 @@
 /* eslint-disable no-param-reassign */
 import { oneLineTrim } from 'common-tags';
-import { GithubFileChange, NanceConfig, Proposal } from '../types';
-import logger from '../logging';
+import {
+  GithubFileChange,
+  NanceConfig,
+  Proposal,
+  ProposalStore
+} from '../types';
+import { omitKey } from '../utils';
 import { keys } from '../keys';
 import { GithubAPI } from './githubAPI';
 import { P } from '../const';
@@ -13,7 +18,7 @@ export class GithubProposalHandler {
   protected databasePath = 'DATABASE.json';
   protected mdPath = 'DATABASE.md';
   protected currentGovernanceCyclePath = 'CURRENT_GOVERNANCE_CYCLE';
-  databaseCache: Proposal[] = [];
+  databaseCache: ProposalStore = {};
 
   constructor(
     protected config: NanceConfig
@@ -50,7 +55,11 @@ export class GithubProposalHandler {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  cycleDbToFileChanges(cycle: number, proposals: Proposal[], mdTable: string): GithubFileChange[] {
+  cycleDbToFileChanges(
+    cycle: number,
+    proposals: ProposalStore,
+    mdTable: string
+  ): GithubFileChange[] {
     return ([
       {
         path: `GC${cycle}/DATABASE.json`,
@@ -63,7 +72,7 @@ export class GithubProposalHandler {
     ]);
   }
 
-  topDbToFileChanges(proposals: Proposal[], mdTable: string): GithubFileChange[] {
+  topDbToFileChanges(proposals: ProposalStore, mdTable: string): GithubFileChange[] {
     return ([
       {
         path: this.databasePath,
@@ -85,23 +94,12 @@ export class GithubProposalHandler {
     );
   }
 
-  async fetchDb() {
+  async fetchDb(): Promise<ProposalStore | void> {
     return this.GithubAPI.getContent(this.databasePath).then((db) => {
       this.databaseCache = JSON.parse(db);
       return this.databaseCache;
     }).catch((e) => {
       Promise.reject(e);
-    });
-  }
-
-  updateMetaDataCache(proposal: Proposal) {
-    // TODO: make less bad
-    this.databaseCache = this.databaseCache.map((dbProposal: Proposal) => {
-      if (dbProposal.hash === proposal.hash) {
-        delete proposal.markdown; // dont want to store this in JSON DB
-        return { ...dbProposal, ...proposal };
-      }
-      return dbProposal;
     });
   }
 
@@ -121,18 +119,28 @@ export class GithubProposalHandler {
     });
   }
 
-  async getTemperatureCheckProposals() {
-    await this.fetchDb();
-    return this.databaseCache.filter((proposal) => {
-      return proposal.status === this.config.github.propertyKeys.statusTemperatureCheck;
-    });
-  }
+  // async getTemperatureCheckProposals() {
+  //   await this.fetchDb();
+  //   return this.databaseCache.filter((proposal) => {
+  //     return proposal.status === this.config.github.propertyKeys.statusTemperatureCheck;
+  //   });
+  // }
 
-  async getVoteProposals() {
-    await this.fetchDb();
-    return this.databaseCache.filter((proposal) => {
-      return proposal.status === this.config.github.propertyKeys.statusVoting;
-    });
+  // async getVoteProposals() {
+  //   await this.fetchDb();
+  //   return this.databaseCache.filter((proposal) => {
+  //     return proposal.status === this.config.github.propertyKeys.statusVoting;
+  //   });
+  // }
+
+  // eslint-disable-next-line class-methods-use-this
+  proposalsToProposalStore(proposals: Proposal[]): ProposalStore {
+    return Object.fromEntries(
+      proposals.map((proposal) => {
+        const proposalNoHash = <Omit<Proposal, 'hash'>>omitKey(proposal, 'hash');
+        return [proposal.hash, proposalNoHash];
+      })
+    );
   }
 
   // async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {

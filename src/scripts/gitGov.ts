@@ -8,8 +8,8 @@ async function main() {
   const nance = new Nance(config);
   const nanceExt = new NanceExtensions(config);
   
-  const discussionProposals = await nance.proposalHandler.getVoteProposals();
-  Promise.all(discussionProposals.map(async (proposal: Proposal) => {
+  const proposals = await nance.proposalHandler.getTemperatureCheckProposals();
+  Promise.all(proposals.map(async (proposal: Proposal) => {
     proposal.markdown = await nance.proposalHandler.getContentMarkdown(proposal.hash);
     return proposal;
   })).then(async (proposals) => {

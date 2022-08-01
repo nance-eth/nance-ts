@@ -35,9 +35,10 @@ export class NanceExtensions {
     proposals.forEach((proposal: Proposal) => {
       delete proposal.markdown;
     });
+    const proposalStore = this.githubProposalHandler.proposalsToProposalStore(proposals);
     const dbFileChanges = this.githubProposalHandler.cycleDbToFileChanges(
       cycle,
-      proposals,
+      proposalStore,
       mdTable
     );
     return dbFileChanges;
@@ -53,11 +54,13 @@ export class NanceExtensions {
   }
 
   async stageCompleteDb(proposals: Proposal[]) {
-    const currentDb = await this.githubProposalHandler.fetchDb() ?? [];
-    console.log(currentDb);
-    const updatedJSON = currentDb.concat(proposals);
-    console.log(updatedJSON);
-    const updatedMd = JSONProposalsToMd(updatedJSON);
+    const currentDb = await this.githubProposalHandler.fetchDb() ?? {};
+    const newEntries = this.githubProposalHandler.proposalsToProposalStore(proposals);
+    const updatedJSON = {
+      ...currentDb,
+      ...newEntries
+    };
+    const updatedMd = JSONProposalsToMd(Object.values(updatedJSON));
     return this.githubProposalHandler.topDbToFileChanges(updatedJSON, updatedMd);
   }
 

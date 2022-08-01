@@ -23,15 +23,25 @@ const logFormat = format.combine(
   format.colorize({ all: true })
 );
 
-const logger = createLogger({
-  format:
-    logFormat,
-  level: 'silly',
-  transports: [
-    new transports.Console(),
-    new transports.File({ filename: 'logs.log' }),
-    new LogtailTransport(logtail)
-  ]
-});
+const logger = (process.env.NODE_ENV !== 'dev')
+  ? createLogger({
+    format:
+      logFormat,
+    level: 'silly',
+    transports: [
+      new transports.Console(),
+      new transports.File({ filename: 'logs.log' }),
+      new LogtailTransport(logtail)
+    ]
+  })
+  : createLogger({
+    format:
+      logFormat,
+    level: 'silly',
+    transports: [
+      new transports.Console(),
+      new transports.File({ filename: 'logs.log' }),
+    ]
+  });
 
 export default logger;

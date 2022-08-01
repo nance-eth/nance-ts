@@ -1,6 +1,5 @@
-import { oneLine, oneLineTrim, stripIndents } from 'common-tags';
 import { numToPrettyString } from '../utils';
-import { Proposal } from '../types';
+import { ProposalNoHash } from '../types';
 
 export const heading = [
   'Proposal ID',
@@ -16,9 +15,9 @@ export const heading = [
   'Against'
 ];
 
-export function JSONProposalsToMd(proposals: Proposal[]) {
+export function JSONProposalsToMd(proposals: ProposalNoHash[]) {
   const mdHeading = `| ${heading.join(' | ')} |\n|${' :--: |'.repeat(heading.length)}\n`;
-  const rows = proposals.reverse().map((p: Proposal) => {
+  const rows = proposals.map((p: ProposalNoHash) => {
     return ([
       `| _${p.proposalId}_`,
       `[${p.title}](${p.url})`,
@@ -26,8 +25,8 @@ export function JSONProposalsToMd(proposals: Proposal[]) {
       p.governanceCycle,
       p.category,
       `[Discord](${p.discussionThreadURL})`,
-      `[IPFS](${p.ipfsURL})`,
-      `[Snapshot](${p.voteURL})`,
+      (p.ipfsURL) ? `[IPFS](${p.ipfsURL})` : '',
+      (p.voteURL) ? `[Snapshot](${p.voteURL})` : '',
       `${p.voteResults?.totalVotes ?? ''}`,
       `${numToPrettyString(p.voteResults?.scores.For) ?? ''}`,
       `${numToPrettyString(p.voteResults?.scores.Against) ?? ''} |`,

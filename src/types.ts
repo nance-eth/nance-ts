@@ -22,7 +22,9 @@ export interface Proposal {
   voteResults?: VoteResults;
 }
 
-// export type ProposalKey = <Record string, string>;
+export type ProposalNoHash = Omit<Proposal, 'hash'>;
+
+export type ProposalStore = Record<string, ProposalNoHash>;
 
 export interface NanceConfig {
   nameId: string;
