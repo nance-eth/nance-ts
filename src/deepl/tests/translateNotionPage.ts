@@ -15,7 +15,7 @@ const language = 'zh';
 async function translatePage() {
   const content = await notion.getContentMarkdown(pageId);
   // const tranlation = await translator.translate(content, language);
-  console.log(await github.createCommitOnBranch([]);
+  // console.log(await github.createCommitOnBranch([]));
 }
 
 translatePage();

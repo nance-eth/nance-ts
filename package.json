@@ -11,8 +11,8 @@
     "test:coverage": "export NODE_ENV='dev' && jest --coverage"
   },
   "dependencies": {
-    "@logtail/node": "^0.1.12",
-    "@logtail/winston": "^0.1.12",
+    "@logtail/node": "https://gitpkg.now.sh/jigglyjams/logtail-js/packages/node?master",
+    "@logtail/winston": "https://gitpkg.now.sh/jigglyjams/logtail-js/packages/winston?master",
     "@notionhq/client": "^1.0.4",
     "@pinata/sdk": "^1.1.24",
     "@snapshot-labs/snapshot.js": "^0.3.96",
