@@ -8,13 +8,12 @@ async function main() {
   const nance = new Nance(config);
   const nanceExt = new NanceExtensions(config);
   
-  const proposals = await nance.proposalHandler.getTemperatureCheckProposals();
+  const proposals = await nance.proposalHandler.getVoteProposals();
   Promise.all(proposals.map(async (proposal: Proposal) => {
     proposal.markdown = await nance.proposalHandler.getContentMarkdown(proposal.hash);
     return proposal;
   })).then(async (proposals) => {
-    // console.log(proposals);
-    nanceExt.pushNewCycle(proposals)
+    nanceExt.updateCycle(proposals, 'voting');
   });
 }
 

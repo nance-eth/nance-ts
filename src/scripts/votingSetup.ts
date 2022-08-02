@@ -1,19 +1,16 @@
-import axios from 'axios';
-import schedule from 'node-schedule';
-import {
-  addSecondsToDate,
-  sleep
-} from '../utils';
-import config from '../config/juicebox/config.juicebox';
+import { getConfig, calendarPath } from '../configLoader';
 import { Nance } from '../nance';
 import logger from '../logging';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 
 async function getConfigs() {
+  const config = await getConfig()
   const nance = new Nance(config);
-  await sleep(2000);
-  const now = new Date();
-  nance.votingSetup(now, new Date(1656115200000));
+  const calendar = new CalendarHandler(calendarPath);
+  const nextEvents = calendar.getNextEvents();
+  const nextVote = nextEvents.filter((event) => { return event.title === 'Snapshot Vote' })[0];
+  logger.info(nextVote);
+  nance.votingSetup(nextVote.start, nextVote.end);
 }
 
 getConfigs();

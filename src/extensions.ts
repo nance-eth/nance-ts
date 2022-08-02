@@ -1,4 +1,4 @@
-/* eslint-disable no-plusplus */
+/* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
 import { NanceConfig, Proposal } from './types';
 import logger from './logging';
@@ -20,13 +20,26 @@ export class NanceExtensions {
 
   async pushNewCycle(proposals: Proposal[]) {
     const nextCycle = Number(await this.githubProposalHandler.getCurrentGovernanceCycle()) + 1;
-    const githubProposalFiles = this.stageCycleProposals(nextCycle, proposals);
+    this.formatProposalsForGithub(nextCycle, proposals);
+    const githubProposalFiles = this.stageCycleProposals(proposals);
     const githubCycleDbFiles = this.stageCycleDb(nextCycle, proposals);
     const githubTopDbFiles = await this.stageCompleteDb(proposals);
     const githubGovernanceCycleFile = this.stageGovernanceCycle(nextCycle);
     this.githubProposalHandler.GithubAPI.createCommitOnBranch(
       githubProposalFiles.concat(githubCycleDbFiles, githubTopDbFiles, githubGovernanceCycleFile),
-      `GC${nextCycle} updates`
+      `GC${nextCycle} push`
+    );
+  }
+
+  async updateCycle(proposals: Proposal[], update: string) {
+    const currentCycle = Number(await this.githubProposalHandler.getCurrentGovernanceCycle());
+    this.formatProposalsForGithub(currentCycle, proposals);
+    const githubProposalFiles = this.stageCycleProposals(proposals);
+    const githubCycleDbFiles = this.stageCycleDb(currentCycle, proposals);
+    const githubTopDbFiles = await this.stageCompleteDb(proposals);
+    this.githubProposalHandler.GithubAPI.createCommitOnBranch(
+      githubProposalFiles.concat(githubCycleDbFiles, githubTopDbFiles),
+      `GC${currentCycle} ${update}`
     );
   }
 
@@ -44,12 +57,15 @@ export class NanceExtensions {
     return dbFileChanges;
   }
 
-  stageCycleProposals(cycle: number, proposals: Proposal[]) {
-    for (let i = 0; i < proposals.length; i++) {
-      const proposal = proposals[i];
+  formatProposalsForGithub(cycle: number, proposals: Proposal[]) {
+    proposals.forEach((proposal: Proposal) => {
       proposal.governanceCycle = cycle;
       proposal.url = `/GC${proposal.governanceCycle}/${proposal.proposalId}.md`;
-    }
+      proposal.markdown = `# ${proposal.proposalId} - ${proposal.title}${proposal.markdown}`;
+    });
+  }
+
+  stageCycleProposals(proposals: Proposal[]) {
     return this.githubProposalHandler.proposalsToGithubFileChanges(proposals);
   }
 
