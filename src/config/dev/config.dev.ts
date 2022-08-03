@@ -68,10 +68,10 @@ const config = {
   },
   snapshot: {
     base: 'https://snapshot.org/#',
-    space: 'jbdao.eth',
+    space: 'jigglyjams.eth',
     choices: ['For', 'Against', 'Abstain'],
     votingTimeDays: 3,
-    minTokenPassingAmount: 80E6,
+    minTokenPassingAmount: 1,
     passingRatio: 0.66,
   },
 };
