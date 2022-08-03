@@ -13,23 +13,23 @@ const events = [
     startInputType: 'utc',
     startOutputType: 'utc',
     start: dateToArray(now),
-    end: dateToArray(addSecondsToDate(now, 4 * eventOffsetMinutes * 60)),
+    end: dateToArray(addSecondsToDate(now, 35)),
     recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
   },
   {
     title: 'Temperature Check',
     startInputType: 'utc',
     startOutputType: 'utc',
-    start: dateToArray(addSecondsToDate(now, 3 * eventOffsetMinutes * 60)),
-    end: dateToArray(addSecondsToDate(now, 4 * eventOffsetMinutes * 60)),
+    start: dateToArray(addSecondsToDate(now, 60)),
+    end: dateToArray(addSecondsToDate(now, 120)),
     recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
   },
   {
     title: 'Snapshot Vote',
     startInputType: 'utc',
     startOutputType: 'utc',
-    start: dateToArray(addSecondsToDate(now, 5 * eventOffsetMinutes * 60)),
-    end: dateToArray(addSecondsToDate(now, 6 * eventOffsetMinutes * 60)),
+    start: dateToArray(addSecondsToDate(now, 125)),
+    end: dateToArray(addSecondsToDate(now, 180)),
     recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
   }
   // {

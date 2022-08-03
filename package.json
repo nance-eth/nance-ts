@@ -8,7 +8,8 @@
     "dev": "export NODE_ENV='dev' && nodemon src/index.ts",
     "test": "export NODE_ENV='dev' && jest",
     "test:watch": "export NODE_ENV='dev' && jest --watch",
-    "test:coverage": "export NODE_ENV='dev' && jest --coverage"
+    "test:coverage": "export NODE_ENV='dev' && jest --coverage",
+    "test:gov": "ts-node src/scripts/createCalendar.ts&& ts-node src/index.ts"
   },
   "dependencies": {
     "@logtail/node": "^0.1.12",

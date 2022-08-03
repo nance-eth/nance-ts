@@ -31,7 +31,8 @@ export function dateToArray(date: Date) {
     date.getUTCMonth() + 1,
     date.getUTCDate(),
     date.getUTCHours(),
-    date.getUTCMinutes()
+    date.getUTCMinutes(),
+    date.getUTCSeconds()
   ];
 }
 
@@ -76,8 +77,10 @@ export function limitLength(text: string, length = 100) {
 }
 
 export function numToPrettyString(num: number | undefined) {
-  if (!num) {
+  if (num === undefined) {
     return '';
+  } if (num === 0) {
+    return 0;
   } if (num > 1E9) {
     return `${(num / 1E9).toFixed(1)}B`;
   } if (num > 1E6) {

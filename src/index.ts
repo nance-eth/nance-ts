@@ -19,7 +19,6 @@ const ONE_HOUR_SECONDS = 1 * 60 * 60;
 async function setup() {
   config = await getConfig();
   nance = new Nance(config);
-  await sleep(1000);
 }
 
 async function scheduleCycle() {
