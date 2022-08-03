@@ -199,8 +199,7 @@ export class Nance {
         }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
     })).then(() => {
-      this.proposalHandler.pushMetaData();
-      // this.dialogHandler.sendVoteResultsRollup(voteProposals);
+      this.dialogHandler.sendVoteResultsRollup(voteProposals);
       logger.info(`${this.config.name}: votingClose() complete`);
       logger.info('===================================================================');
     }).catch((e) => {
