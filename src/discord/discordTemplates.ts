@@ -46,10 +46,13 @@ export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endDat
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
+        const proposalLinks = (proposal.translationURL)
+          ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
+          : `[proposal](${proposal.url})`;
         return {
           name: `*${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
-          [proposal](${proposal.url}) | [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.voteURL})
+          ${proposalLinks} | [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.voteURL})
           ------------------------------`,
         };
       })
