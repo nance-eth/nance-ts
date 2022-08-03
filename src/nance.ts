@@ -19,7 +19,7 @@ export class Nance {
   private discussionInterval: any;
 
   constructor(
-    private config: any
+    protected config: any
   ) {
     this.proposalHandler = new NotionHandler(keys.NOTION_KEY, this.config);
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
@@ -81,11 +81,8 @@ export class Nance {
     try {
       const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();
       proposalsToDiscuss.forEach(async (proposal: Proposal) => {
-        const threadURL = await this.dialogHandler.startDiscussion(proposal);
-        await this.proposalHandler.updateMetaData(
-          proposal.hash,
-          { [this.config.notion.propertyKeys.discussionThread]: { url: threadURL } }
-        );
+        proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
+        this.proposalHandler.updateDiscussionURL(proposal);
         logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
       });
     } catch (e) {
@@ -108,10 +105,11 @@ export class Nance {
         logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
         logger.info('===================================================================');
       } else {
-        logger.warn(`${this.config.name}: no proposals to temperatureCheckSetup(). check database!`);
+        logger.warn(`${this.config.name}:no proposals to temperatureCheckSetup(). check database!`);
       }
     }).catch((e) => {
-      logger.error(`${this.config.name}: temperatureCheckSetup() error: ${e}`);
+      logger.error(`${this.config.name}: temperatureCheckSetup() error:`);
+      logger.error(e);
     });
   }
 
@@ -135,7 +133,8 @@ export class Nance {
       logger.info(`${this.config.name}: temperatureCheckClose() complete`);
       logger.info('===================================================================');
     }).catch((e) => {
-      logger.error(`${this.config.name}: temperatureCheckClose() error: ${e}`);
+      logger.error(`${this.config.name}: temperatureCheckClose() error:`);
+      logger.error(e);
     });
   }
 
@@ -157,7 +156,7 @@ export class Nance {
         startDate,
         endDate
       );
-      this.proposalHandler.updateVoteAndIPFS(proposal);
+      proposal.status = await this.proposalHandler.updateVoteAndIPFS(proposal);
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
     })).then(() => {
       if (voteProposals.length > 0) {
@@ -191,12 +190,12 @@ export class Nance {
           proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
             .voteResults.percentages[this.config.snapshot.choices[0]]);
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
-          proposalMatch.status = await this.proposalHandler.updateStatusApproved(proposalHash);
+          await this.proposalHandler.updateStatusApproved(proposalHash);
         } else {
           proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
             .voteResults.percentages[this.config.snapshot.choices[1]]);
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
-          proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
+          await this.proposalHandler.updateStatusCancelled(proposalHash);
         }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
     })).then(() => {

@@ -5,33 +5,33 @@ import { dateToArray, addSecondsToDate } from '../utils';
 const ics = require('ics');
 
 const now = new Date();
-const eventOffsetMinutes = 2;
+const eventOffsetMinutes = 1;
 
 const events = [
+  {
+    title: 'Execution',
+    startInputType: 'utc',
+    startOutputType: 'utc',
+    start: dateToArray(now),
+    end: dateToArray(addSecondsToDate(now, 35)),
+    recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
+  },
   {
     title: 'Temperature Check',
     startInputType: 'utc',
     startOutputType: 'utc',
-    start: dateToArray(addSecondsToDate(now, eventOffsetMinutes * 60)),
-    end: dateToArray(addSecondsToDate(now, 2 * eventOffsetMinutes * 60)),
+    start: dateToArray(addSecondsToDate(now, 60)),
+    end: dateToArray(addSecondsToDate(now, 120)),
     recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
   },
   {
     title: 'Snapshot Vote',
     startInputType: 'utc',
     startOutputType: 'utc',
-    start: dateToArray(addSecondsToDate(now, 3 * eventOffsetMinutes * 60)),
-    end: dateToArray(addSecondsToDate(now, 4 * eventOffsetMinutes * 60)),
+    start: dateToArray(addSecondsToDate(now, 125)),
+    end: dateToArray(addSecondsToDate(now, 180)),
     recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
   }
-  // {
-  //   title: 'Execution',
-  //   startInputType: 'utc',
-  //   startOutputType: 'utc',
-  //   start: dateToArray(addSecondsToDate(now, 3 * eventOffsetMinutes * 60)),
-  //   end: dateToArray(addSecondsToDate(now, 4 * eventOffsetMinutes * 60)),
-  //   recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
-  // },
   // {
   //   title: 'Delay Period',
   //   startInputType: 'utc',
@@ -41,8 +41,6 @@ const events = [
   //   recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
   // }
 ];
-
-console.log(events);
 
 const { error, value } = ics.createEvents(events);
 if (error) {

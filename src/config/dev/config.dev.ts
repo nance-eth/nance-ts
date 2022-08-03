@@ -1,10 +1,18 @@
 const config = {
   nameId: 'dev',
   name: 'dev',
-  scheme: ['notion', 'discord', 'snapshot'],
+  scheme: ['github', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   votingResultsDashboard: '',
+  translation: {
+    api: 'deepl',
+    targetLanguage: 'zh',
+    storage: {
+      user: 'jigglyjams',
+      repo: 'dev-governance'
+    }
+  },
   discord: {
     guildId: '889377541675159602',
     channelId: '964601032703352873',
@@ -39,12 +47,31 @@ const config = {
     removeTextFromProposal: '[_How to fill out this template_](/3d81e6bb330a4c869bddd0d6449ac032)_._\n',
     filters: { }
   },
+  github: {
+    user: 'jigglyjams',
+    repo: 'dev-governance',
+    propertyKeys: {
+      title: 'Name',
+      proposalId: 'Juicebox Proposal ID',
+      status: 'Status',
+      statusTemperatureCheck: 'Temperature Check',
+      statusVoting: 'Voting',
+      statusApproved: 'Approved',
+      statusCancelled: 'Cancelled',
+      proposalIdPrefix: 'JBP-',
+      discussionThread: 'Discussion Thread',
+      ipfs: 'Data Backup',
+      vote: 'Voting',
+      category: 'Category',
+      governanceCycle: 'Funding Cycle'
+    },
+  },
   snapshot: {
     base: 'https://snapshot.org/#',
     space: 'jigglyjams.eth',
     choices: ['For', 'Against', 'Abstain'],
     votingTimeDays: 3,
-    quroum: 1,
+    minTokenPassingAmount: 1,
     passingRatio: 0.66,
   },
 };

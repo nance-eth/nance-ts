@@ -6,6 +6,7 @@ import {
   UpdatePageParameters,
   UpdatePageResponse,
   GetDatabaseResponse,
+  GetPageResponse,
   QueryDatabaseResponse
 } from '@notionhq/client/build/src/api-endpoints';
 import {
@@ -13,6 +14,7 @@ import {
 } from './notionTypes';
 import { Proposal } from '../types';
 import * as notionUtils from './notionUtils';
+import logger from '../logging';
 
 export class NotionHandler implements DataContentHandler {
   private notion;
@@ -26,11 +28,10 @@ export class NotionHandler implements DataContentHandler {
     this.notionToMd = new NotionToMarkdown({ notionClient: this.notion });
   }
 
-  private toProposal(unconvertedProposal: GetDatabaseResponse): Proposal {
+  private toProposal(unconvertedProposal: GetDatabaseResponse | GetPageResponse): Proposal {
     return {
-      hash: unconvertedProposal.id,
+      hash: unconvertedProposal.id.replaceAll('-', ''),
       title: notionUtils.getTitle(unconvertedProposal),
-      markdown: '',
       url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
       category: notionUtils.getCategory(unconvertedProposal),
       status: notionUtils.getStatus(unconvertedProposal),
@@ -46,7 +47,11 @@ export class NotionHandler implements DataContentHandler {
         unconvertedProposal,
         this.config.notion.propertyKeys.ipfs
       ),
-      voteURL: notionUtils.getPropertyURL(unconvertedProposal, this.config.notion.propertyKeys.vote)
+      voteURL: notionUtils.getPropertyURL(
+        unconvertedProposal,
+        this.config.notion.propertyKeys.vote
+      ),
+      date: notionUtils.getDate(unconvertedProposal)
     };
   }
 
@@ -98,7 +103,8 @@ export class NotionHandler implements DataContentHandler {
     const sortProposalsById = proposals.map((proposal) => {
       return Number(proposal.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1]);
     }).sort((a:number, b:number) => { return b - a; });
-    return sortProposalsById[0] + 1;
+    const nextProposalId = sortProposalsById[0] + 1;
+    return (Number.isNaN(nextProposalId) ? 1 : nextProposalId);
   }
 
   async assignProposalIds(proposals: Proposal[]): Promise<Proposal[]> {
@@ -123,6 +129,13 @@ export class NotionHandler implements DataContentHandler {
     } catch (error: any) {
       return error.code;
     }
+  }
+
+  async updateDiscussionURL(proposal: Proposal) {
+    await this.updateMetaData(
+      proposal.hash,
+      { [this.config.notion.propertyKeys.discussionThread]: { url: proposal.discussionThreadURL } }
+    );
   }
 
   async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
@@ -175,25 +188,27 @@ export class NotionHandler implements DataContentHandler {
         [this.config.notion.propertyKeys.ipfs]: { url: proposal.ipfsURL }
       }
     );
-  }
-
-  private removeText(text: string) {
-    const textToRemove = this.config.notion.removeTextFromProposal;
-    if (text.indexOf(textToRemove) > -1) {
-      return text.replace(textToRemove, '');
-    }
-    return `\n ${text}`;
+    return this.config.notion.propertyKeys.vote;
   }
 
   async getContentMarkdown(pageId: string): Promise<string> {
     const mdBlocks = await this.notionToMd.pageToMarkdown(pageId);
     const mdString = this.notionToMd.toMarkdownString(mdBlocks);
-    const cleanMdString = this.removeText(mdString);
-    return cleanMdString;
+    return mdString;
+  }
+
+  async pageIdToProposal(pageId: string) {
+    const page = await this.notion.pages.retrieve({ page_id: pageId });
+    return this.toProposal(page);
   }
 
   // eslint-disable-next-line class-methods-use-this
   appendProposal(proposal: Proposal) {
     return `${proposal.markdown}\n\n---\n[Discussion Thread](${proposal.discussionThreadURL}) | [IPFS](${proposal.ipfsURL})`;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  async pushMetaData() {
+    const x = null;
   }
 }

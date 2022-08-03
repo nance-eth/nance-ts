@@ -35,3 +35,7 @@ export const getStatus = (page:any) => {
 export const getPropertyURL = (page:any, property:any) => {
   return (page.properties[property]) ? page.properties[property].url : '';
 };
+
+export const getDate = (page:any) => {
+  return (page.properties.Date.date) ? page.properties.Date.date.start : '';
+};

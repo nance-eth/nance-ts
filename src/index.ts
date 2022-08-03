@@ -7,9 +7,10 @@ import { Nance } from './nance';
 import logger from './logging';
 import { getConfig, calendarPath } from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
+import { NanceConfig } from './types';
 
 let nance: Nance;
-let config: any;
+let config: NanceConfig;
 
 const PADDING_VOTE_START_SECONDS = 30;
 const PADDING_VOTE_COUNT_SECONDS = 120;
@@ -18,12 +19,12 @@ const ONE_HOUR_SECONDS = 1 * 60 * 60;
 async function setup() {
   config = await getConfig();
   nance = new Nance(config);
-  await sleep(1000);
 }
 
 async function scheduleCycle() {
   const calendar = new CalendarHandler(calendarPath);
   const cycle = calendar.getNextEvents();
+  console.log(cycle);
   cycle.forEach((event) => {
     if ((event.inProgress) && (event.title === 'Execution' || event.title === 'Delay Period')) {
       nance.setDiscussionInterval(30);

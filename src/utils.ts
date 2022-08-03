@@ -31,7 +31,8 @@ export function dateToArray(date: Date) {
     date.getUTCMonth() + 1,
     date.getUTCDate(),
     date.getUTCHours(),
-    date.getUTCMinutes()
+    date.getUTCMinutes(),
+    date.getUTCSeconds()
   ];
 }
 
@@ -60,6 +61,10 @@ export function base64ToString(data: string) {
   return Buffer.from(data, 'base64').toString();
 }
 
+export function stringToBase64(data: string) {
+  return Buffer.from(data).toString('base64');
+}
+
 export function floatToPercentage(float: number) {
   return (float * 100).toFixed(2);
 }
@@ -72,8 +77,10 @@ export function limitLength(text: string, length = 100) {
 }
 
 export function numToPrettyString(num: number | undefined) {
-  if (!num) {
-    return '0';
+  if (num === undefined) {
+    return '';
+  } if (num === 0) {
+    return 0;
   } if (num > 1E9) {
     return `${(num / 1E9).toFixed(1)}B`;
   } if (num > 1E6) {
@@ -82,4 +89,9 @@ export function numToPrettyString(num: number | undefined) {
     return `${(num / 1E3).toFixed(1)}k`;
   }
   return num.toFixed(1);
+}
+
+export function omitKey(object: object, key: string) {
+  const { [key as keyof object]: unused, ...newObject } = object;
+  return newObject;
 }
