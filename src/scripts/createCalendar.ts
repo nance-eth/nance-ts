@@ -5,7 +5,7 @@ import { dateToArray, addSecondsToDate } from '../utils';
 const ics = require('ics');
 
 const now = new Date();
-const eventOffsetMinutes = 2;
+const eventOffsetMinutes = 1;
 
 const events = [
   {
@@ -41,8 +41,6 @@ const events = [
   //   recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
   // }
 ];
-
-console.log(events);
 
 const { error, value } = ics.createEvents(events);
 if (error) {

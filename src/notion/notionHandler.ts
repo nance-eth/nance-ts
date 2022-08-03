@@ -103,7 +103,8 @@ export class NotionHandler implements DataContentHandler {
     const sortProposalsById = proposals.map((proposal) => {
       return Number(proposal.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1]);
     }).sort((a:number, b:number) => { return b - a; });
-    return sortProposalsById[0] + 1;
+    const nextProposalId = sortProposalsById[0] + 1;
+    return (Number.isNaN(nextProposalId) ? 1 : nextProposalId);
   }
 
   async assignProposalIds(proposals: Proposal[]): Promise<Proposal[]> {
