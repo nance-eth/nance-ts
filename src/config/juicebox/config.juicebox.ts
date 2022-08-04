@@ -18,7 +18,6 @@ const config = {
     channelId: '873248745771372584',
     alertRole: '953865172764729404',
     poll: {
-      votingTimeDays: 3,
       voteYesEmoji: '👍',
       voteNoEmoji: '👎',
       voteGoVoteEmoji: '🗳',
@@ -44,7 +43,6 @@ const config = {
       ipfs: 'IPFS',
       vote: 'Snapshot'
     },
-    removeTextFromProposal: '[_How to fill out this template_](/3d81e6bb330a4c869bddd0d6449ac032)_._\n',
     filters: { }
   },
   github: {
@@ -70,7 +68,6 @@ const config = {
     base: 'https://snapshot.org/#',
     space: 'jbdao.eth',
     choices: ['For', 'Against', 'Abstain'],
-    votingTimeDays: 3,
     minTokenPassingAmount: 80E6,
     passingRatio: 0.66,
   },

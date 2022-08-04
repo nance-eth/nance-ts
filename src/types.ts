@@ -71,7 +71,6 @@ export interface NanceConfig {
       ipfs: string;
       vote: string;
     };
-    removeTextFromProposal: string;
     filters: any;
   };
   github: {
@@ -97,7 +96,6 @@ export interface NanceConfig {
     base: string;
     space: string;
     choices: string[];
-    votingTimeDays: number;
     minTokenPassingAmount: number;
     passingRatio: number;
   };

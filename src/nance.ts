@@ -7,7 +7,7 @@ import {
   floatToPercentage
 } from './utils';
 import logger from './logging';
-import { Proposal, VoteResults } from './types';
+import { NanceConfig, Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { PinataHandler } from './pinata/pinataHandler';
 
@@ -19,7 +19,7 @@ export class Nance {
   private discussionInterval: any;
 
   constructor(
-    protected config: any
+    protected config: NanceConfig
   ) {
     this.proposalHandler = new NotionHandler(keys.NOTION_KEY, this.config);
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
@@ -170,14 +170,14 @@ export class Nance {
     });
   }
 
-  async votingClose() {
+  async votingClose(): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingClose() begin...`);
     const voteProposals = await this.proposalHandler.getVoteProposals();
     const voteProposalIdStrings = voteProposals.map((proposal) => {
       return `"${getIdFromURL(proposal.voteURL)}"`;
     });
     const voteResults = await this.votingHandler.getProposalVotes(voteProposalIdStrings);
-    await Promise.all(voteResults.map(async (vote) => {
+    return Promise.all(voteResults.map(async (vote) => {
       const proposalMatch = voteProposals.find((proposal) => {
         return getIdFromURL(proposal.voteURL) === vote.voteProposalId;
       });
@@ -190,18 +190,19 @@ export class Nance {
           proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
             .voteResults.percentages[this.config.snapshot.choices[0]]);
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
-          await this.proposalHandler.updateStatusApproved(proposalHash);
+          proposalMatch.status = await this.proposalHandler.updateStatusApproved(proposalHash);
         } else {
           proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
             .voteResults.percentages[this.config.snapshot.choices[1]]);
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
-          await this.proposalHandler.updateStatusCancelled(proposalHash);
+          proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
         }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
     })).then(() => {
       this.dialogHandler.sendVoteResultsRollup(voteProposals);
       logger.info(`${this.config.name}: votingClose() complete`);
       logger.info('===================================================================');
+      return voteProposals;
     }).catch((e) => {
       logger.error(`${this.config.name}: votingClose() error:`);
       logger.error(e);

@@ -13,7 +13,7 @@ async function main() {
     proposal.markdown = await nance.proposalHandler.getContentMarkdown(proposal.hash);
     return proposal;
   })).then(async (proposals) => {
-    nanceExt.updateCycle(proposals, 'voting');
+    nanceExt.pushNewCycle(proposals);
   });
 }
 

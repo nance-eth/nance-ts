@@ -4,12 +4,14 @@ import {
   addSecondsToDate
 } from './utils';
 import { Nance } from './nance';
+import { NanceExtensions } from './extensions';
 import logger from './logging';
 import { getConfig, calendarPath } from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
 import { NanceConfig } from './types';
 
 let nance: Nance;
+let nanceExt: NanceExtensions;
 let config: NanceConfig;
 
 const PADDING_VOTE_START_SECONDS = 30;
@@ -19,6 +21,7 @@ const ONE_HOUR_SECONDS = 1 * 60 * 60;
 async function setup() {
   config = await getConfig();
   nance = new Nance(config);
+  nanceExt = new NanceExtensions(config);
 }
 
 async function scheduleCycle() {
@@ -45,7 +48,9 @@ async function scheduleCycle() {
         });
       }
       schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
-        nance.votingClose();
+        nance.votingClose().then((proposals) => {
+          if (proposals) nanceExt.updateCycle(proposals, 'vote complete.');
+        });
         nance.setDiscussionInterval(30);
       });
     }
