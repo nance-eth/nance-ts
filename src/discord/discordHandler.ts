@@ -96,15 +96,22 @@ export class DiscordHandler {
     await this.getAlertChannel().send({ embeds: [message] });
   }
 
-  async sendReminder(event: string, endDate: Date) {
-    const url = (event === 'Snapshot Vote') ? `${this.config.snapshot.base}/${this.config.snapshot.space}` : undefined;
-    const message = discordTemplates.reminderMessage(
-      event,
-      endDate,
-      url
-    );
+  async sendReminder(event: string, date: Date, type: string, url = '', deleteTimeOut = 60 * 65) {
+    const message = (type === 'start')
+      ? discordTemplates.reminderStartMessage(
+        event,
+        date,
+        url
+      )
+      : discordTemplates.reminderEndMessage(
+        event,
+        date,
+        url
+      );
     message.description += ` \n<@&${this.config.discord.alertRole}>`;
-    await this.getAlertChannel().send({ embeds: [message] });
+    await this.getAlertChannel().send({ embeds: [message] }).then((messageObj) => {
+      setTimeout(() => { messageObj.delete(); }, deleteTimeOut * 1000);
+    });
   }
 
   private static async getUserReactions(

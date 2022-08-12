@@ -78,9 +78,15 @@ export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => 
     );
 };
 
-export const reminderMessage = (thingToRemind: string, endDate: Date, url = '') => {
+export const reminderEndMessage = (thingToRemind: string, endDate: Date, url = '') => {
   return new MessageEmbed().setColor('#F19800').setTitle(
     `${thingToRemind} ending <t:${dateToUnixTimeStamp(endDate)}:R>!`
+  ).setDescription(url);
+};
+
+export const reminderStartMessage = (thingToRemind: string, startDate: Date, url = '') => {
+  return new MessageEmbed().setColor('#F19800').setTitle(
+    `${thingToRemind} starting <t:${dateToUnixTimeStamp(startDate)}:R>!`
   ).setDescription(url);
 };
 

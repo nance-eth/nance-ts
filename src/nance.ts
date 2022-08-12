@@ -67,9 +67,9 @@ export class Nance {
     return false;
   }
 
-  async reminder(event: string, endDate: Date) {
+  async reminder(event: string, date: Date, type: string, url = '') {
     logger.info(`${this.config.name}: reminder() begin...`);
-    this.dialogHandler.sendReminder(event, endDate).then(() => {
+    this.dialogHandler.sendReminder(event, date, type, url).then(() => {
       logger.info(`${this.config.name}: reminder() complete`);
     }).catch((e) => {
       logger.error(`${this.config.name}: reminder() error!`);

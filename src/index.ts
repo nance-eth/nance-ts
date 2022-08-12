@@ -34,10 +34,20 @@ async function scheduleCycle() {
     }
     if (event.title === 'Temperature Check') {
       if (!event.inProgress) {
+        // start reminder
+        const reminderDate = addSecondsToDate(event.start, -ONE_HOUR_SECONDS);
+        schedule.scheduleJob('temperatureCheckSetup REMINDER', reminderDate, () => {
+          nance.reminder(event.title, reminderDate, 'start');
+        });
         schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
           nance.temperatureCheckSetup(event.end);
         });
       }
+      // end reminder
+      const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
+      schedule.scheduleJob('temperatureCheckClose REMINDER', reminderDate, () => {
+        nance.reminder(event.title, reminderDate, 'end');
+      });
       schedule.scheduleJob('temperatureCheckClose', event.end, () => {
         nance.temperatureCheckClose();
       });
@@ -47,6 +57,11 @@ async function scheduleCycle() {
           nance.votingSetup(event.start, event.end);
         });
       }
+      // end reminder
+      const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
+      schedule.scheduleJob('voteClose REMINDER', reminderDate, () => {
+        nance.reminder(event.title, reminderDate, 'end', `${config.snapshot.base}/${config.snapshot.space}`);
+      });
       schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
         nance.votingClose().then((proposals) => {
           if (proposals) nanceExt.updateCycle(proposals, 'vote complete.');
@@ -54,10 +69,6 @@ async function scheduleCycle() {
         nance.setDiscussionInterval(30);
       });
     }
-    // reminder for end of each event
-    schedule.scheduleJob(`${event.title} *reminder*`, addSecondsToDate(event.end, -ONE_HOUR_SECONDS), () => {
-      nance.reminder(event.title, event.end);
-    });
   });
 }
 

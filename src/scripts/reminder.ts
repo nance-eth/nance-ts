@@ -6,9 +6,9 @@ import { Nance } from '../nance';
 
 async function sendReminder() {
   const config = await getConfig();
-  const nance = new Nance(config);
+  const dialogHandler = new DiscordHandler(keys.DISCORD_KEY, config);
   await sleep(1000);
-  nance.reminder('Snapshot Vote', addSecondsToDate(new Date(), -60 * 60));
+  dialogHandler.sendReminder('Temperature Check', addSecondsToDate(new Date(), 6), 'end', '', 6 );
 }
 
 sendReminder();
