@@ -27,7 +27,7 @@ export class CalendarHandler {
       const eventDateStartUTC = formatUTCTime(eventDateStart);
       const eventDateEndUTC = new Date(eventDateStartUTC.valueOf() + originalEventLength);
       const now = new Date();
-      const eventInProgress = eventDateStartUTC <= now;
+      const eventInProgress = eventDateStartUTC <= now && eventDateEndUTC > now;
       console.log(`event: ${eventDateStartUTC}, now: ${now}`);
       nextDates.push({
         title: event.summary,
