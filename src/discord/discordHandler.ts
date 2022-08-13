@@ -110,7 +110,10 @@ export class DiscordHandler {
       );
     message.description += ` \n<@&${this.config.discord.alertRole}>`;
     await this.getAlertChannel().send({ embeds: [message] }).then((messageObj) => {
-      setTimeout(() => { messageObj.delete(); }, deleteTimeOut * 1000);
+      setTimeout(
+        () => { messageObj.delete().catch((e) => { logger.error(e); }); },
+        deleteTimeOut * 1000
+      );
     });
   }
 
