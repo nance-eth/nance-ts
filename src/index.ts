@@ -27,7 +27,7 @@ async function setup() {
 async function scheduleCycle() {
   const calendar = new CalendarHandler(calendarPath);
   const cycle = calendar.getNextEvents();
-  console.log(cycle);
+  logger.debug(cycle);
   cycle.forEach((event) => {
     if ((event.inProgress) && (event.title === 'Execution' || event.title === 'Delay Period')) {
       nance.setDiscussionInterval(30);
@@ -37,7 +37,7 @@ async function scheduleCycle() {
         // start reminder
         const reminderDate = addSecondsToDate(event.start, -ONE_HOUR_SECONDS);
         schedule.scheduleJob('temperatureCheckSetup REMINDER', reminderDate, () => {
-          nance.reminder(event.title, reminderDate, 'start');
+          nance.reminder(event.title, event.start, 'start');
         });
         schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
           nance.temperatureCheckSetup(event.end);
@@ -46,7 +46,7 @@ async function scheduleCycle() {
       // end reminder
       const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
       schedule.scheduleJob('temperatureCheckClose REMINDER', reminderDate, () => {
-        nance.reminder(event.title, reminderDate, 'end');
+        nance.reminder(event.title, event.end, 'end');
       });
       schedule.scheduleJob('temperatureCheckClose', event.end, () => {
         nance.temperatureCheckClose();
@@ -60,7 +60,7 @@ async function scheduleCycle() {
       // end reminder
       const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
       schedule.scheduleJob('voteClose REMINDER', reminderDate, () => {
-        nance.reminder(event.title, reminderDate, 'end', `${config.snapshot.base}/${config.snapshot.space}`);
+        nance.reminder(event.title, event.end, 'end', `${config.snapshot.base}/${config.snapshot.space}`);
       });
       schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
         nance.votingClose().then((proposals) => {
