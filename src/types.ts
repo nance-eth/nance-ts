@@ -41,6 +41,10 @@ export interface NanceConfig {
       repo: string;
     }
   };
+  juicebox: {
+    network: 'mainnet' | 'rinkeby';
+    projectId: string;
+  };
   discord: {
     guildId: string;
     channelId: string;

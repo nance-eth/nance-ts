@@ -3,9 +3,12 @@ import {
   getFundingCycles,
   getModStore
 } from 'juice-sdk-v1';
+import { PayoutModStructOutput, TicketModStructOutput } from 'juice-sdk-v1/dist/cjs/types/contracts/TerminalV1';
 import { keys } from '../keys';
+import { TEN_THOUSAND } from './juiceboxMath';
 
-const TOKEN_ETH = '0x000000000000000000000000000000000000eeee';
+const CSV_HEADING_PAYOUT = 'beneficiary,percent,preferUnstaked,lockedUntil,projectId,allocator';
+const CSV_HEADING_RESERVE = 'beneficiary,percent,preferUnstaked,lockedUntil';
 
 export class JuiceboxHandlerV1 {
   protected provider;
@@ -27,20 +30,71 @@ export class JuiceboxHandlerV1 {
     ).currentOf(this.projectId)).configured;
   };
 
-  async getDistribution() {
+  queuedConfiguration = async () => {
+    return (await getFundingCycles(
+      this.provider,
+      { network: this.network }
+    ).queuedOf(this.projectId)).start;
+  };
+
+  // eslint-disable-next-line class-methods-use-this
+  payoutDistributionsArrayPretty = (distributions: PayoutModStructOutput[]) => {
+    return distributions.map((distribution: PayoutModStructOutput) => {
+      return [
+        distribution.beneficiary,
+        Number(distribution.percent) / TEN_THOUSAND,
+        distribution.preferUnstaked,
+        Number(distribution.lockedUntil),
+        Number(distribution.projectId),
+        distribution.allocator
+      ];
+    });
+  };
+
+  // eslint-disable-next-line class-methods-use-this
+  reserveDistributionsArrayPretty = (distributions: TicketModStructOutput[]) => {
+    return distributions.map((distribution: TicketModStructOutput) => {
+      return [
+        distribution.beneficiary,
+        Number(distribution.percent) / TEN_THOUSAND,
+        distribution.preferUnstaked,
+        Number(distribution.lockedUntil),
+      ];
+    });
+  };
+
+  async getPayoutDistribution() {
     const currentConfiguration = await this.currentConfiguration();
     const fundingDistribution = await getModStore(
       this.provider,
       { network: this.network }
     ).payoutModsOf(this.projectId, currentConfiguration);
+    return fundingDistribution;
+  }
+
+  async getPayoutDistributionCSV() {
+    const distributions = await this.getPayoutDistribution();
+    return CSV_HEADING_PAYOUT.concat(
+      '\n',
+      this.payoutDistributionsArrayPretty(distributions).join('\n')
+    );
+  }
+
+  async getReserveDistribution() {
+    const currentConfiguration = await this.currentConfiguration();
     const reservedDistribution = await getModStore(
       this.provider,
       { network: this.network }
     ).ticketModsOf(this.projectId, currentConfiguration);
-    return {
-      fundingDistribution,
-      reservedDistribution
-    };
+    return reservedDistribution;
+  }
+
+  async getReserveDistributionCSV() {
+    const distributions = await this.getReserveDistribution();
+    return CSV_HEADING_RESERVE.concat(
+      '\n',
+      this.reserveDistributionsArrayPretty(distributions).join('\n')
+    );
   }
 
   async getDistributionLimit() {

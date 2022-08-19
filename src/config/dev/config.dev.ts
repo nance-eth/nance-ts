@@ -13,6 +13,10 @@ const config = {
       repo: 'dev-governance'
     }
   },
+  juicebox: {
+    network: 'mainnet',
+    projectId: '1'
+  },
   discord: {
     guildId: '889377541675159602',
     channelId: '964601032703352873',
