@@ -34,11 +34,10 @@ export class NanceExtensions {
   async updateCycle(proposals: Proposal[], update: string) {
     const currentCycle = Number(await this.githubProposalHandler.getCurrentGovernanceCycle());
     this.formatProposalsForGithub(currentCycle, proposals);
-    const githubProposalFiles = this.stageCycleProposals(proposals);
     const githubCycleDbFiles = this.stageCycleDb(currentCycle, proposals);
     const githubTopDbFiles = await this.stageCompleteDb(proposals);
     this.githubProposalHandler.GithubAPI.createCommitOnBranch(
-      githubProposalFiles.concat(githubCycleDbFiles, githubTopDbFiles),
+      githubCycleDbFiles.concat(githubTopDbFiles),
       `GC${currentCycle} ${update}`
     );
   }
