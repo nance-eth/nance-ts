@@ -1,11 +1,15 @@
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { Interface } from 'ethers/lib/utils';
 import {
   getJBFundingCycleStore,
   getJBController,
   getJBSplitsStore,
   getJBDirectory
 } from 'juice-sdk';
-import { JBSplitStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
+import { BigNumber } from 'ethers';
+import { JBGroupedSplitsStruct, JBSplitsStoreInterface } from 'juice-sdk/dist/cjs/types/contracts/JBSplitsStore';
+import { JBSplitStruct, JBSplitStructOutput } from 'juice-sdk/dist/cjs/types/contracts/JBController';
+import { JBSplitsStore__factory } from 'juice-sdk/dist/cjs/types/contracts/factories/JBSplitsStore__factory';
 import { ONE_BILLION } from './juiceboxMath';
 import { keys } from '../keys';
 
@@ -14,6 +18,7 @@ const CSV_HEADING = 'beneficiary,percent,preferClaimed,lockedUntil,projectId,all
 
 export class JuiceboxHandlerV2 {
   provider;
+  interface;
 
   constructor(
     protected projectId: string,
@@ -23,6 +28,7 @@ export class JuiceboxHandlerV2 {
       ? `https://mainnet.infura.io/v3/${keys.INFURA_KEY}`
       : `https://rinkeby.infura.io/v3/${keys.INFURA_KEY}`;
     this.provider = new JsonRpcProvider(RPC_HOST);
+    this.interface = new Interface(JBSplitsStore__factory.abi);
   }
 
   currentConfiguration = async () => {
@@ -105,11 +111,20 @@ export class JuiceboxHandlerV2 {
     return distributionLimit;
   }
 
-  // async getHexEncoded(domain: BigNumberish, groupedSplits: JBGroupedSplitsStruct[]) {
-  //   await getJBSplitsStore(this.provider).set(
-  //     this.projectId,
-  //     domain,
-  //     groupedSplits
-  //   );
-  // }
+  async getSetDistributionHexEncoded(
+    params: any[],
+    projectId = this.projectId,
+    domain = 0
+  ) {
+    const configuration = (domain === 0) ? await this.queuedConfiguration() : domain;
+    console.log(configuration);
+    return this.interface.encodeFunctionData(
+      'set',
+      [
+        BigNumber.from(projectId),
+        BigNumber.from(configuration),
+        params
+      ]
+    );
+  }
 }

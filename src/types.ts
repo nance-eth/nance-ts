@@ -5,9 +5,15 @@ export interface Proposal {
   title: string;
   markdown?: string;
   translation?: {
-    markdown?: string,
-    language?: string
+    markdown?: string;
+    language?: string;
   },
+  payout?: {
+    type: 'onetime' | 'recurring';
+    address: string;
+    amount: number;
+    lastPayoutCycle?: number;
+  }
   url: string;
   governanceCycle?: number;
   date?: string,
