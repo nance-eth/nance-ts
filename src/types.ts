@@ -11,8 +11,8 @@ export interface Proposal {
   payout?: {
     type: 'onetime' | 'recurring';
     address: string;
-    amount: number;
-    lastPayoutCycle?: number;
+    amount?: number;
+    lastCycle?: string;
   }
   url: string;
   governanceCycle?: number;
@@ -80,6 +80,11 @@ export interface NanceConfig {
       discussionThread: string;
       ipfs: string;
       vote: string;
+      category: string;
+      categoryRecurringPayout: string;
+      payoutAmount: string;
+      payoutAddress: string;
+      payoutLastCycle: string;
     };
     filters: any;
   };

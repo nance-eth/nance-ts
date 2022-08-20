@@ -12,9 +12,8 @@ import {
 import {
   DataContentHandler
 } from './notionTypes';
-import { Proposal } from '../types';
+import { NanceConfig, Proposal } from '../types';
 import * as notionUtils from './notionUtils';
-import logger from '../logging';
 
 export class NotionHandler implements DataContentHandler {
   private notion;
@@ -22,14 +21,17 @@ export class NotionHandler implements DataContentHandler {
 
   constructor(
     private notionKey: string,
-    private config: any
+    private config: NanceConfig
   ) {
     this.notion = new NotionClient({ auth: this.notionKey });
     this.notionToMd = new NotionToMarkdown({ notionClient: this.notion });
   }
 
-  private toProposal(unconvertedProposal: GetDatabaseResponse | GetPageResponse): Proposal {
-    return {
+  private toProposal(
+    unconvertedProposal: GetDatabaseResponse | GetPageResponse,
+    getExtendedData = false
+  ): Proposal {
+    const cleanProposal: Proposal = {
       hash: unconvertedProposal.id.replaceAll('-', ''),
       title: notionUtils.getTitle(unconvertedProposal),
       url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
@@ -51,8 +53,28 @@ export class NotionHandler implements DataContentHandler {
         unconvertedProposal,
         this.config.notion.propertyKeys.vote
       ),
-      date: notionUtils.getDate(unconvertedProposal)
+      date: notionUtils.getDate(unconvertedProposal),
     };
+    if (getExtendedData) {
+      if (cleanProposal.category === this.config.notion.propertyKeys.categoryRecurringPayout) {
+        cleanProposal.payout = {
+          type: 'recurring',
+          address: notionUtils.getRichText(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutAddress
+          ),
+          amount: notionUtils.getNumber(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutAmount
+          ),
+          lastCycle: notionUtils.getFormula(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutLastCycle
+          )
+        };
+      }
+    }
+    return cleanProposal;
   }
 
   async queryNotionDb(filters: any, sorts = []): Promise<Proposal[]> {
@@ -199,7 +221,7 @@ export class NotionHandler implements DataContentHandler {
 
   async pageIdToProposal(pageId: string) {
     const page = await this.notion.pages.retrieve({ page_id: pageId });
-    return this.toProposal(page);
+    return this.toProposal(page, true);
   }
 
   // eslint-disable-next-line class-methods-use-this

@@ -14,6 +14,14 @@ export function getRichText(page:any, property:any): string {
   }).join(' ');
 }
 
+export function getNumber(page:any, property:any): number {
+  return page.properties[property].number;
+}
+
+export function getFormula(page:any, property:any): string {
+  return page.properties[property].formula.string;
+}
+
 export const getCategory = (page:any) => {
   return page.properties.Category.multi_select.map((p:any) => {
     return p.name;

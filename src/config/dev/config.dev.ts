@@ -46,7 +46,12 @@ const config = {
       proposalIdPrefix: 'JBP-',
       discussionThread: 'Discussion Thread',
       ipfs: 'IPFS',
-      vote: 'Snapshot'
+      vote: 'Snapshot',
+      category: 'Category',
+      categoryRecurringPayout: 'Recurring Payment',
+      payoutAmount: 'USD Payout Amount',
+      payoutAddress: 'Payout Address',
+      payoutLastCycle: 'Payout End Cycle'
     },
     removeTextFromProposal: '[_How to fill out this template_](/3d81e6bb330a4c869bddd0d6449ac032)_._\n',
     filters: { }

@@ -45,7 +45,12 @@ const config = {
       proposalIdPrefix: 'JBP-',
       discussionThread: 'Discussion Thread',
       ipfs: 'IPFS',
-      vote: 'Snapshot'
+      vote: 'Snapshot',
+      category: 'Category',
+      categoryRecurringPayout: 'Recurring Payment',
+      payoutAmount: 'USD Payout Amount',
+      payoutAddress: 'Payout Address',
+      payoutLastCycle: 'Payout End Cycle'
     },
     filters: { }
   },
