@@ -6,28 +6,16 @@ import { keys } from './keys';
 import { DeeplHandler } from './deepl/deeplHandler';
 import { GithubProposalHandler } from './github/githubProposalHandler';
 import { JSONProposalsToMd } from './github/tableMaker';
-import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
-import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
 
 export class NanceExtensions {
   translationHandler;
   githubProposalHandler;
-  juiceboxHandlerV1;
-  juiceboxHandlerV2;
 
   constructor(
     protected config: NanceConfig
   ) {
     this.translationHandler = new DeeplHandler(keys.DEEPL_KEY);
     this.githubProposalHandler = new GithubProposalHandler(config);
-    this.juiceboxHandlerV1 = new JuiceboxHandlerV1(
-      config.juicebox.projectId,
-      config.juicebox.network
-    );
-    this.juiceboxHandlerV2 = new JuiceboxHandlerV2(
-      config.juicebox.projectId,
-      config.juicebox.network
-    );
   }
 
   async pushNewCycle(proposals: Proposal[]) {

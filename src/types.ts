@@ -8,12 +8,7 @@ export interface Proposal {
     markdown?: string;
     language?: string;
   },
-  payout?: {
-    type: 'onetime' | 'recurring';
-    address: string;
-    amount?: number;
-    lastCycle?: string;
-  }
+  payout?: Payout,
   url: string;
   governanceCycle?: number;
   date?: string,
@@ -26,6 +21,13 @@ export interface Proposal {
   ipfsURL: string;
   voteURL: string;
   voteResults?: VoteResults;
+}
+
+export interface Payout {
+  type: 'onetime' | 'recurring';
+  address: string;
+  amountUSD?: number;
+  count?: number;
 }
 
 export type ProposalNoHash = Omit<Proposal, 'hash'>;
@@ -69,6 +71,7 @@ export interface NanceConfig {
   notion: {
     publicURLPrefix: string;
     database_id: string;
+    payouts_database_id: string;
     propertyKeys: {
       proposalId: string;
       status: string;
@@ -82,9 +85,12 @@ export interface NanceConfig {
       vote: string;
       category: string;
       categoryRecurringPayout: string;
-      payoutAmount: string;
+      categoryPayout: string;
+      governanceCycle: string;
+      governanceCyclePrefix: string;
+      payoutAmountUSD: string;
       payoutAddress: string;
-      payoutLastCycle: string;
+      payoutCount: string;
     };
     filters: any;
   };

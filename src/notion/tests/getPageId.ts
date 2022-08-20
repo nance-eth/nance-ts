@@ -8,7 +8,7 @@ import { NanceConfig } from '../../types';
 async function main() {
   if (keys.NOTION_KEY) {
     const notion = new NotionHandler(keys.NOTION_KEY, config as NanceConfig);
-    logger.info(await notion.pageIdToProposal('d0d1960fdd9b4969ad5834c9431ff125'));
+    logger.info(await notion.pageIdToProposal('24a4d31b86c9427493631fb9d8315a98'));
   }
 }
 

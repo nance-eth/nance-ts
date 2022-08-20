@@ -12,7 +12,7 @@ import {
 import {
   DataContentHandler
 } from './notionTypes';
-import { NanceConfig, Proposal } from '../types';
+import { NanceConfig, Payout, Proposal } from '../types';
 import * as notionUtils from './notionUtils';
 
 export class NotionHandler implements DataContentHandler {
@@ -54,6 +54,12 @@ export class NotionHandler implements DataContentHandler {
         this.config.notion.propertyKeys.vote
       ),
       date: notionUtils.getDate(unconvertedProposal),
+      governanceCycle: Number(
+        notionUtils.getRichText(
+          unconvertedProposal,
+          this.config.notion.propertyKeys.governanceCycle
+        ).split(this.config.notion.propertyKeys.governanceCyclePrefix)[1]
+      )
     };
     if (getExtendedData) {
       if (cleanProposal.category === this.config.notion.propertyKeys.categoryRecurringPayout) {
@@ -63,18 +69,40 @@ export class NotionHandler implements DataContentHandler {
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutAddress
           ),
-          amount: notionUtils.getNumber(
+          amountUSD: notionUtils.getNumber(
             unconvertedProposal,
-            this.config.notion.propertyKeys.payoutAmount
+            this.config.notion.propertyKeys.payoutAmountUSD
           ),
-          lastCycle: notionUtils.getFormula(
+          count: notionUtils.getNumber(
             unconvertedProposal,
-            this.config.notion.propertyKeys.payoutLastCycle
+            this.config.notion.propertyKeys.payoutCount
           )
+        };
+      } else if (cleanProposal.category === this.config.notion.propertyKeys.categoryPayout) {
+        cleanProposal.payout = {
+          type: 'onetime',
+          address: notionUtils.getRichText(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutAddress
+          ),
+          amountUSD: notionUtils.getNumber(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutAmountUSD
+          ),
         };
       }
     }
     return cleanProposal;
+  }
+
+  private toPayout(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Payout {
+    return {
+      type: 'recurring',
+      address: notionUtils.getRichText(unconvertedPayout, this.config.notion.propertyKeys.payoutAddress),
+      amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.notion.propertyKeys.payoutAmountUSD),
+      count:
+        notionUtils.getNumber(unconvertedPayout, 'Last FC') - notionUtils.getNumber(unconvertedPayout, 'First FC') + 1
+    };
   }
 
   async queryNotionDb(filters: any, sorts = []): Promise<Proposal[]> {
@@ -87,6 +115,18 @@ export class NotionHandler implements DataContentHandler {
     );
     return databaseReponse.results.map((data: any) => {
       return this.toProposal(data as GetDatabaseResponse);
+    });
+  }
+
+  async queryNotionPayoutDb(filters: any): Promise<any> {
+    const databaseReponse = await this.notion.databases.query(
+      {
+        database_id: this.config.notion.payouts_database_id,
+        filter: filters,
+      } as QueryDatabaseParameters
+    );
+    return databaseReponse.results.map((data: any) => {
+      return this.toPayout(data as GetDatabaseResponse);
     });
   }
 
@@ -229,8 +269,7 @@ export class NotionHandler implements DataContentHandler {
     return `${proposal.markdown}\n\n---\n[Discussion Thread](${proposal.discussionThreadURL}) | [IPFS](${proposal.ipfsURL})`;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  async pushMetaData() {
-    const x = null;
+  async getPayoutsDb(version: string) {
+    return this.queryNotionPayoutDb(this.config.notion.filters[`payouts${version}`]);
   }
 }

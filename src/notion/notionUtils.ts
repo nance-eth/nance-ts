@@ -19,7 +19,7 @@ export function getNumber(page:any, property:any): number {
 }
 
 export function getFormula(page:any, property:any): string {
-  return page.properties[property].formula.string;
+  return page.properties[property];
 }
 
 export const getCategory = (page:any) => {

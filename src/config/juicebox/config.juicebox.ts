@@ -35,6 +35,7 @@ const config = {
   notion: {
     publicURLPrefix: 'juicebox.notion.site',
     database_id: '9d126f9148dc42ee83317d5cd74e4db4',
+    payouts_database_id: '',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',
@@ -48,9 +49,12 @@ const config = {
       vote: 'Snapshot',
       category: 'Category',
       categoryRecurringPayout: 'Recurring Payment',
-      payoutAmount: 'USD Payout Amount',
+      categoryPayout: 'One-Time Payout',
+      governanceCycle: 'Funding Cycle',
+      governanceCyclePrefix: 'FC#',
+      payoutAmountUSD: 'USD Payout Amount',
       payoutAddress: 'Payout Address',
-      payoutLastCycle: 'Payout End Cycle'
+      payoutCount: 'Number of Payouts'
     },
     filters: { }
   },
@@ -146,6 +150,20 @@ config.notion.filters = {
     select: {
       equals: 'Voting',
     },
+  },
+
+  payoutsV1: {
+    property: 'JB DAO Treasury',
+    rich_text: {
+      contains: 'V1'
+    }
+  },
+
+  payoutsV2: {
+    property: 'JB DAO Treasury',
+    rich_text: {
+      contains: 'V2'
+    }
   }
 };
 
