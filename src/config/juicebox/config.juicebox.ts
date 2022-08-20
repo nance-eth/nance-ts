@@ -4,7 +4,7 @@ const config = {
   scheme: ['notion', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
-  votingResultsDashboard: 'https://jbx-protocol.github.io/juice-snapshot-dashboard/',
+  votingResultsDashboard: '',
   translation: {
     api: 'deepl',
     targetLanguage: 'zh',
