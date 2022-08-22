@@ -269,7 +269,7 @@ export class NotionHandler implements DataContentHandler {
     return `${proposal.markdown}\n\n---\n[Discussion Thread](${proposal.discussionThreadURL}) | [IPFS](${proposal.ipfsURL})`;
   }
 
-  async getPayoutsDb(version: string) {
+  async getPayoutsDb(version: string): Promise<Payout[]> {
     return this.queryNotionPayoutDb(this.config.notion.filters[`payouts${version}`]);
   }
 }

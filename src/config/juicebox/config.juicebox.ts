@@ -35,7 +35,7 @@ const config = {
   notion: {
     publicURLPrefix: 'juicebox.notion.site',
     database_id: '9d126f9148dc42ee83317d5cd74e4db4',
-    payouts_database_id: '',
+    payouts_database_id: 'c51c3d59c21445988f17c9332b7163dc',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',

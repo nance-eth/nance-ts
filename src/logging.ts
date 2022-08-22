@@ -7,7 +7,7 @@ import 'dotenv/config';
 import { Logtail } from '@logtail/node';
 import { LogtailTransport } from '@logtail/winston';
 
-if (process.env.NODE_ENV !== 'dev') console.log = function none() {};
+if (process.env.CONSOLE_LOG !== 'on') console.log = function none() {};
 
 const logtail = new Logtail(process.env.LOGTAIL_KEY ?? '');
 const LOGTAIL_SILENT = process.env.NODE_ENV === 'dev';

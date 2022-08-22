@@ -4,7 +4,7 @@ import {
   getJBFundingCycleStore,
   getJBController,
   getJBSplitsStore,
-  getJBDirectory
+  getJBDirectory,
 } from 'juice-sdk';
 import { BigNumber } from 'ethers';
 import { JBGroupedSplitsStruct, JBSplitsStoreInterface } from 'juice-sdk/dist/cjs/types/contracts/JBSplitsStore';
@@ -119,7 +119,7 @@ export class JuiceboxHandlerV2 {
     const configuration = (domain === 0) ? await this.queuedConfiguration() : domain;
     console.log(configuration);
     return this.interface.encodeFunctionData(
-      'set',
+      'reco',
       [
         BigNumber.from(projectId),
         BigNumber.from(configuration),

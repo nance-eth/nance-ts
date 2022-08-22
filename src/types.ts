@@ -26,7 +26,7 @@ export interface Proposal {
 export interface Payout {
   type: 'onetime' | 'recurring';
   address: string;
-  amountUSD?: number;
+  amountUSD: number;
   count?: number;
 }
 
