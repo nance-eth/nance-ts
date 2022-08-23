@@ -3,8 +3,6 @@ import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
 import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
 import { Nance } from './nance';
 
-const JB_FEE = 0.025;
-
 export class NanceTreasury {
   juiceboxHandlerV1;
   juiceboxHandlerV2;
@@ -25,12 +23,5 @@ export class NanceTreasury {
 
   async buildFundingCycleData(version: string) {
     const payouts = await this.nance.proposalHandler.getPayoutsDb(version);
-    const targetFundingTotal = payouts.reduce((total, payout) => {
-      // dont include fee if payout is to another project
-      return (payout.address.includes('V'))
-        ? total + payout.amountUSD
-        : total + (payout.amountUSD * (1 + JB_FEE));
-    }, 0);
-    return targetFundingTotal;
   }
 }

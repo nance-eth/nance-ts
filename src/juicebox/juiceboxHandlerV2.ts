@@ -1,26 +1,34 @@
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { Interface } from 'ethers/lib/utils';
 import {
   getJBFundingCycleStore,
   getJBController,
   getJBSplitsStore,
-  getJBDirectory
+  getJBDirectory,
+  getJBProjects
 } from 'juice-sdk';
-import { BigNumber } from 'ethers';
-import { parseEther } from '@ethersproject/units';
-import { JBSplitStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
-import { JBSplitsStore__factory } from 'juice-sdk/dist/cjs/types/contracts/factories/JBSplitsStore__factory';
-import { decodeV2FundingCycleMetadata } from './interface/utils/v2/fundingCycle';
-import { ONE_BILLION } from './interface/juiceboxMath';
-import { weightedAmount } from './interface/utils/v2/math';
+import { BigNumber } from '@ethersproject/bignumber';
+import { JBSplitStruct, JBGroupedSplitsStruct, JBFundAccessConstraintsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
+import { ONE_BILLION } from './juiceboxMath';
+import { getJBFundingCycleDataStruct, getJBFundingCycleMetadataStruct } from './typesV2';
+import { Payout, Reserved } from '../types';
 import { keys } from '../keys';
 
-const TOKEN_ETH = '0x000000000000000000000000000000000000eeee';
+const JB_FEE = 0.025;
+const TOKEN_ETH = '0x000000000000000000000000000000000000EEEe';
+const DEFAULT_MUST_START_AT_OR_AFTER = '1';
+const DEFAULT_WEIGHT = 0;
+const DISTRIBUTION_CURRENCY_USD = 2;
+const DISTRIBUTION_CURRENCY_ETH = 1;
+const GROUP_ETH_PAYOUT = 1;
+const GROUP_RESERVED_TOKENS = 2;
+
 const CSV_HEADING = 'beneficiary,percent,preferClaimed,lockedUntil,projectId,allocator';
 
 export class JuiceboxHandlerV2 {
   provider;
-  interface;
+  splitsInterface;
+  controllerInterface;
+  DEFAULT_PAYMENT_TERMINAL;
 
   constructor(
     protected projectId: string,
@@ -30,7 +38,11 @@ export class JuiceboxHandlerV2 {
       ? `https://mainnet.infura.io/v3/${keys.INFURA_KEY}`
       : `https://rinkeby.infura.io/v3/${keys.INFURA_KEY}`;
     this.provider = new JsonRpcProvider(RPC_HOST);
-    this.interface = new Interface(JBSplitsStore__factory.abi);
+    this.splitsInterface = getJBSplitsStore(this.provider, { network: this.network }).interface;
+    this.controllerInterface = getJBController(this.provider, { network: this.network }).interface;
+    this.DEFAULT_PAYMENT_TERMINAL = (network === 'mainnet')
+      ? '0x7Ae63FBa045Fec7CaE1a75cF7Aa14183483b8397'
+      : '0x765A8b9a23F58Db6c8849315C04ACf32b2D55cF8';
   }
 
   currentConfiguration = async () => {
@@ -97,20 +109,18 @@ export class JuiceboxHandlerV2 {
 
   async getDistributionLimit() {
     const currentConfiguration = await this.currentConfiguration();
-    const terminal = await getJBDirectory(
-      this.provider,
-      { network: this.network }
-    ).terminalsOf(this.projectId);
-    const distributionLimit = await getJBController(
-      this.provider,
-      { network: this.network }
-    ).distributionLimitOf(
+    const terminal = await getJBDirectory(this.provider, { network: this.network }).terminalsOf(this.projectId);
+    const distributionLimit = await getJBController(this.provider, { network: this.network }).distributionLimitOf(
       this.projectId,
       currentConfiguration,
       terminal[0],
       TOKEN_ETH
     );
     return distributionLimit;
+  }
+
+  async getProjectOwner() {
+    return getJBProjects(this.provider, { network: this.network }).ownerOf(this.projectId);
   }
 
   async getSetDistributionHexEncoded(
@@ -120,7 +130,7 @@ export class JuiceboxHandlerV2 {
   ) {
     const configuration = (domain === 0) ? await this.queuedConfiguration() : domain;
     console.log(configuration);
-    return this.interface.encodeFunctionData(
+    return this.splitsInterface.encodeFunctionData(
       'set',
       [
         BigNumber.from(projectId),
@@ -130,24 +140,24 @@ export class JuiceboxHandlerV2 {
     );
   }
 
-  // async getCurrent() {
-  //   const { metadata } = await getJBFundingCycleStore(this.provider).currentOf(this.projectId);
-  //   return decodeV2FundingCycleMetadata(metadata);
+  // buildJBGroupedSplitsStruct(
+  //   distributionLimit: number,
+  //   distrubutionPayouts: Payout[],
+  //   distributionReserved: Reserved[]
+  // ): JBGroupedSplitsStruct {
+  //   const targetFundingTotal = distrubutionPayouts.reduce((total, payout) => {
+  //     // dont include fee if payout is to a V2 project
+  //     return (payout.address.includes('V2'))
+  //       ? total + payout.amountUSD
+  //       : total + (payout.amountUSD * (1 + JB_FEE));
+  //   }, 0);
+  //   return {}
   // }
 
-  async getNewWeight() {
-    // const { weight, metadata } = await getJBFundingCycleStore(this.provider).currentOf(this.projectId);
-    // const { reservedRate } = decodeV2FundingCycleMetadata(metadata);
-    // return weightedAmount(weight, Number(reservedRate), parseEther('1'), 'payer');
-    const currentConfiguration = await getJBController(this.provider).currentFundingCycleOf(this.projectId);
-    return currentConfiguration;
-  }
-
-  async getReconfigureFundingCyclesOfHexEncoded(
-    params: any[],
-    projectId = this.projectId,
-    domain = 0
-  ) {
-    //
+  async getReconfigureFundingCyclesOfHex() {
+    const { fundingCycle, metadata } = await getJBController(this.provider).queuedFundingCycleOf(this.projectId);
+    const reconfigFundingCycleData = getJBFundingCycleDataStruct(fundingCycle, BigNumber.from(DEFAULT_WEIGHT));
+    const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
+    const mustStartAtOrAfter = DEFAULT_MUST_START_AT_OR_AFTER;
   }
 }

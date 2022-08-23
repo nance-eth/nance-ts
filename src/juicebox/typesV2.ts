@@ -1,57 +1,46 @@
 import { BigNumber } from '@ethersproject/bignumber';
 
-export type V2FundingCycleData = {
-  duration: BigNumber
+import {
+  JBFundingCycleDataStruct,
+  JBFundingCycleStructOutput,
+  JBFundingCycleMetadataStruct,
+  JBFundingCycleMetadataStructOutput,
+  JBGroupedSplitsStruct,
+  JBSplitStruct
+} from 'juice-sdk/dist/cjs/types/contracts/JBController';
+
+export const getJBFundingCycleDataStruct = (
+  data: JBFundingCycleStructOutput,
   weight: BigNumber
-  discountRate: BigNumber
-  ballot: string // hex, contract address
+): JBFundingCycleDataStruct => {
+  return {
+    duration: data.duration,
+    weight,
+    discountRate: data.discountRate,
+    ballot: data.ballot
+  };
 };
 
-export type V2FundingCycleMetadataGlobal = {
-  allowSetController: boolean
-  allowSetTerminals: boolean
+export const getJBFundingCycleMetadataStruct = (
+  data: JBFundingCycleMetadataStructOutput
+): JBFundingCycleMetadataStruct => {
+  return {
+    global: data.global,
+    reservedRate: data.reservedRate,
+    redemptionRate: data.redemptionRate,
+    ballotRedemptionRate: data.ballotRedemptionRate,
+    pausePay: data.pausePay,
+    pauseDistributions: data.pauseDistributions,
+    pauseRedeem: data.pauseRedeem,
+    pauseBurn: data.pauseBurn,
+    allowMinting: data.allowMinting,
+    allowChangeToken: data.allowChangeToken,
+    allowTerminalMigration: data.allowTerminalMigration,
+    allowControllerMigration: data.allowControllerMigration,
+    holdFees: data.holdFees,
+    useTotalOverflowForRedemptions: data.useTotalOverflowForRedemptions,
+    useDataSourceForPay: data.useDataSourceForPay,
+    useDataSourceForRedeem: data.useDataSourceForRedeem,
+    dataSource: data.dataSource
+  };
 };
-
-export type V2FundingCycleMetadata = {
-  version?: number
-  global: V2FundingCycleMetadataGlobal
-  reservedRate: BigNumber
-  redemptionRate: BigNumber
-  ballotRedemptionRate: BigNumber
-  pausePay: boolean
-  pauseDistributions: boolean
-  pauseRedeem: boolean
-  pauseBurn: boolean
-  allowMinting: boolean
-  allowChangeToken: boolean
-  allowTerminalMigration: boolean
-  allowControllerMigration: boolean
-  holdFees: boolean
-  useTotalOverflowForRedemptions: boolean
-  useDataSourceForPay: boolean
-  useDataSourceForRedeem: boolean
-  dataSource: string // hex, contract address
-};
-
-export type V2FundAccessConstraint = {
-  terminal: string // address probably
-  token: string // address
-  distributionLimit: BigNumber
-  distributionLimitCurrency: BigNumber
-  overflowAllowance: BigNumber
-  overflowAllowanceCurrency: BigNumber
-};
-
-export type V2FundingCycle = V2FundingCycleData & {
-  number: BigNumber
-  configuration: BigNumber
-  basedOn: BigNumber
-  start: BigNumber
-  metadata: BigNumber // encoded FundingCycleMetadata
-};
-
-export enum BallotState {
-  'active',
-  'approved',
-  'failed',
-}

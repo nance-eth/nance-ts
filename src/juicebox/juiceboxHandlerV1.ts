@@ -5,7 +5,7 @@ import {
 } from 'juice-sdk-v1';
 import { PayoutModStructOutput, TicketModStructOutput } from 'juice-sdk-v1/dist/cjs/types/contracts/TerminalV1';
 import { keys } from '../keys';
-import { TEN_THOUSAND } from './interface/juiceboxMath';
+import { TEN_THOUSAND } from './juiceboxMath';
 
 const CSV_HEADING_PAYOUT = 'beneficiary,percent,preferUnstaked,lockedUntil,projectId,allocator';
 const CSV_HEADING_RESERVE = 'beneficiary,percent,preferUnstaked,lockedUntil';

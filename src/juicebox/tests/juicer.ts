@@ -18,8 +18,8 @@ async function V2() {
 }
 
 async function getMetaData() {
-  const juice = new JuiceboxHandlerV2('1');
-  console.log((await juice.getNewWeight()));
+  const juice = new JuiceboxHandlerV2('13');
+  console.log(await juice.getProjectOwner());
 }
 
 async function V1() {

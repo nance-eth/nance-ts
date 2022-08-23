@@ -23,12 +23,17 @@ export interface Proposal {
   voteResults?: VoteResults;
 }
 
-export interface Payout {
+export type Payout = {
   type: 'onetime' | 'recurring';
   address: string;
   amountUSD: number;
   count?: number;
-}
+};
+
+export type Reserved = {
+  address: string;
+  percentage: number;
+};
 
 export type ProposalNoHash = Omit<Proposal, 'hash'>;
 
