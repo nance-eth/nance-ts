@@ -17,10 +17,15 @@ async function V2() {
   console.log(await juice.getSetDistributionHexEncoded(grouped, '4553'));
 }
 
+async function getMetaData() {
+  const juice = new JuiceboxHandlerV2('1');
+  console.log((await juice.getNewWeight()));
+}
+
 async function V1() {
   const juice = new JuiceboxHandlerV1('1');
   console.log((await juice.getReserveDistributionCSV()));
   console.log(Number((await juice.getDistributionLimit()).toString()) / 1E18);
 }
 
-V2();
+getMetaData();

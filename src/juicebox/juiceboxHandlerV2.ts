@@ -4,13 +4,15 @@ import {
   getJBFundingCycleStore,
   getJBController,
   getJBSplitsStore,
-  getJBDirectory,
+  getJBDirectory
 } from 'juice-sdk';
 import { BigNumber } from 'ethers';
-import { JBGroupedSplitsStruct, JBSplitsStoreInterface } from 'juice-sdk/dist/cjs/types/contracts/JBSplitsStore';
-import { JBSplitStruct, JBSplitStructOutput } from 'juice-sdk/dist/cjs/types/contracts/JBController';
+import { parseEther } from '@ethersproject/units';
+import { JBSplitStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
 import { JBSplitsStore__factory } from 'juice-sdk/dist/cjs/types/contracts/factories/JBSplitsStore__factory';
-import { ONE_BILLION } from './juiceboxMath';
+import { decodeV2FundingCycleMetadata } from './interface/utils/v2/fundingCycle';
+import { ONE_BILLION } from './interface/juiceboxMath';
+import { weightedAmount } from './interface/utils/v2/math';
 import { keys } from '../keys';
 
 const TOKEN_ETH = '0x000000000000000000000000000000000000eeee';
@@ -119,12 +121,33 @@ export class JuiceboxHandlerV2 {
     const configuration = (domain === 0) ? await this.queuedConfiguration() : domain;
     console.log(configuration);
     return this.interface.encodeFunctionData(
-      'reco',
+      'set',
       [
         BigNumber.from(projectId),
         BigNumber.from(configuration),
         params
       ]
     );
+  }
+
+  // async getCurrent() {
+  //   const { metadata } = await getJBFundingCycleStore(this.provider).currentOf(this.projectId);
+  //   return decodeV2FundingCycleMetadata(metadata);
+  // }
+
+  async getNewWeight() {
+    // const { weight, metadata } = await getJBFundingCycleStore(this.provider).currentOf(this.projectId);
+    // const { reservedRate } = decodeV2FundingCycleMetadata(metadata);
+    // return weightedAmount(weight, Number(reservedRate), parseEther('1'), 'payer');
+    const currentConfiguration = await getJBController(this.provider).currentFundingCycleOf(this.projectId);
+    return currentConfiguration;
+  }
+
+  async getReconfigureFundingCyclesOfHexEncoded(
+    params: any[],
+    projectId = this.projectId,
+    domain = 0
+  ) {
+    //
   }
 }
