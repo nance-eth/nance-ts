@@ -30,7 +30,7 @@ export type Payout = {
   count?: number;
 };
 
-export type Reserved = {
+export type Reserve = {
   address: string;
   percentage: number;
 };
@@ -77,6 +77,7 @@ export interface NanceConfig {
     publicURLPrefix: string;
     database_id: string;
     payouts_database_id: string;
+    reserves_database_id: string;
     propertyKeys: {
       proposalId: string;
       status: string;
@@ -96,6 +97,7 @@ export interface NanceConfig {
       payoutAmountUSD: string;
       payoutAddress: string;
       payoutCount: string;
+      reservePercentage: string;
     };
     filters: any;
   };

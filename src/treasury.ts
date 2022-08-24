@@ -21,7 +21,20 @@ export class NanceTreasury {
     );
   }
 
-  async buildFundingCycleData(version: string) {
+  async payoutTableToGroupedSplitsStruct(version: string) {
     const payouts = await this.nance.proposalHandler.getPayoutsDb(version);
+    const reserves = await this.nance.proposalHandler.getReserveDb(version);
+    const newDistributioinLimit = this.juiceboxHandlerV2.calculateNewDistributionLimit(payouts);
+    const JBGroupedSplitsStruct = await this.juiceboxHandlerV2.buildJBGroupedSplitsStruct(
+      newDistributioinLimit,
+      payouts,
+      reserves
+    );
+    return JBGroupedSplitsStruct;
+  }
+
+  async encodeReconfigureFundingCyclesOf() {
+    const groupedSplits = await this.payoutTableToGroupedSplitsStruct('V2');
+    console.log(await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits));
   }
 }

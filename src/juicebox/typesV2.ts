@@ -5,8 +5,6 @@ import {
   JBFundingCycleStructOutput,
   JBFundingCycleMetadataStruct,
   JBFundingCycleMetadataStructOutput,
-  JBGroupedSplitsStruct,
-  JBSplitStruct
 } from 'juice-sdk/dist/cjs/types/contracts/JBController';
 
 export const getJBFundingCycleDataStruct = (

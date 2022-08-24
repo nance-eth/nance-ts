@@ -10,9 +10,11 @@ import { BigNumber } from '@ethersproject/bignumber';
 import { JBSplitStruct, JBGroupedSplitsStruct, JBFundAccessConstraintsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
 import { ONE_BILLION } from './juiceboxMath';
 import { getJBFundingCycleDataStruct, getJBFundingCycleMetadataStruct } from './typesV2';
-import { Payout, Reserved } from '../types';
+import { Payout, Reserve } from '../types';
 import { keys } from '../keys';
 
+const PROJECT_PAYOUT_PREFIX = 'V2:';
+const payoutScalar = 1E9;
 const JB_FEE = 0.025;
 const TOKEN_ETH = '0x000000000000000000000000000000000000EEEe';
 const DEFAULT_MUST_START_AT_OR_AFTER = '1';
@@ -21,6 +23,12 @@ const DISTRIBUTION_CURRENCY_USD = 2;
 const DISTRIBUTION_CURRENCY_ETH = 1;
 const GROUP_ETH_PAYOUT = 1;
 const GROUP_RESERVED_TOKENS = 2;
+const DEFAULT_PREFER_CLAIMED = false;
+const DEFAULT_PREFER_ADD_BALANCE = false;
+const DEFAULT_LOCKED_UNTIL = 0;
+const DEFAULT_ALLOCATOR = '0x0000000000000000000000000000000000000000';
+const DEFAULT_PROJECT_ID = 0;
+const DEFAULT_MEMO = 'yours truly ~nance~';
 
 const CSV_HEADING = 'beneficiary,percent,preferClaimed,lockedUntil,projectId,allocator';
 
@@ -78,7 +86,7 @@ export class JuiceboxHandlerV2 {
     const fundingDistribution = await getJBSplitsStore(
       this.provider,
       { network: this.network }
-    ).splitsOf(this.projectId, currentConfiguration, '1');
+    ).splitsOf(this.projectId, currentConfiguration, GROUP_ETH_PAYOUT);
     return fundingDistribution;
   }
 
@@ -95,7 +103,7 @@ export class JuiceboxHandlerV2 {
     const reservedDistribution = await getJBSplitsStore(
       this.provider,
       { network: this.network }
-    ).splitsOf(this.projectId, currentConfiguration, '2');
+    ).splitsOf(this.projectId, currentConfiguration, GROUP_RESERVED_TOKENS);
     return reservedDistribution;
   }
 
@@ -140,24 +148,81 @@ export class JuiceboxHandlerV2 {
     );
   }
 
-  // buildJBGroupedSplitsStruct(
-  //   distributionLimit: number,
-  //   distrubutionPayouts: Payout[],
-  //   distributionReserved: Reserved[]
-  // ): JBGroupedSplitsStruct {
-  //   const targetFundingTotal = distrubutionPayouts.reduce((total, payout) => {
-  //     // dont include fee if payout is to a V2 project
-  //     return (payout.address.includes('V2'))
-  //       ? total + payout.amountUSD
-  //       : total + (payout.amountUSD * (1 + JB_FEE));
-  //   }, 0);
-  //   return {}
-  // }
+  // eslint-disable-next-line class-methods-use-this
+  calculateNewDistributionLimit(distrubutionPayouts: Payout[]) {
+    return distrubutionPayouts.reduce((total, payout) => {
+      // dont include fee if payout is to a V2 project
+      return (payout.address.includes(PROJECT_PAYOUT_PREFIX))
+        ? total + payout.amountUSD
+        : total + (payout.amountUSD * (1 + JB_FEE));
+    }, 0);
+  }
 
-  async getReconfigureFundingCyclesOfHex() {
+  async buildJBGroupedSplitsStruct(
+    distributionLimit: number,
+    distrubutionPayouts: Payout[],
+    distributionReserved: Reserve[]
+  ): Promise<JBGroupedSplitsStruct[]> {
+    // project owner is default beneficiary address for project routed payouts (check on this)
+    const owner = await this.getProjectOwner();
+    const distrubutionPayoutsJBSplitStruct = distrubutionPayouts.map((payout): JBSplitStruct => {
+      const projectPayout = (payout.address.includes(PROJECT_PAYOUT_PREFIX)) ? payout.address.split(PROJECT_PAYOUT_PREFIX)[1] : undefined;
+      return {
+        preferClaimed: DEFAULT_PREFER_CLAIMED,
+        preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
+        percent: Math.round(payout.amountUSD / distributionLimit) * payoutScalar,
+        projectId: projectPayout || DEFAULT_PROJECT_ID,
+        beneficiary: (projectPayout) ? owner : payout.address,
+        lockedUntil: DEFAULT_LOCKED_UNTIL,
+        allocator: DEFAULT_ALLOCATOR
+      };
+    });
+    const distrubutionReservedJBSplitStruct = distributionReserved.map((reserve): JBSplitStruct => {
+      return {
+        preferClaimed: DEFAULT_PREFER_CLAIMED,
+        preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
+        percent: reserve.percentage * payoutScalar,
+        projectId: DEFAULT_PROJECT_ID,
+        beneficiary: reserve.address,
+        lockedUntil: DEFAULT_LOCKED_UNTIL,
+        allocator: DEFAULT_ALLOCATOR
+      };
+    });
+    return [
+      {
+        group: GROUP_ETH_PAYOUT,
+        splits: distrubutionPayoutsJBSplitStruct
+      },
+      {
+        group: GROUP_RESERVED_TOKENS,
+        splits: distrubutionReservedJBSplitStruct
+      }
+    ];
+  }
+
+  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[]) {
     const { fundingCycle, metadata } = await getJBController(this.provider).queuedFundingCycleOf(this.projectId);
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(fundingCycle, BigNumber.from(DEFAULT_WEIGHT));
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
     const mustStartAtOrAfter = DEFAULT_MUST_START_AT_OR_AFTER;
+    return this.controllerInterface.encodeFunctionData(
+      'reconfigureFundingCyclesOf',
+      [
+        this.projectId,
+        reconfigFundingCycleData,
+        reconfigFundingCycleMetaData,
+        mustStartAtOrAfter,
+        groupedSplits,
+        [{
+          terminal: this.DEFAULT_PAYMENT_TERMINAL,
+          token: TOKEN_ETH,
+          distributionLimit: '123',
+          distributionLimitCurrency: DISTRIBUTION_CURRENCY_USD,
+          overflowAllowance: 0,
+          overflowAllowanceCurrency: 0
+        }] as JBFundAccessConstraintsStruct[],
+        DEFAULT_MEMO
+      ]
+    );
   }
 }

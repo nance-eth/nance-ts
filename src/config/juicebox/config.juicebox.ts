@@ -36,6 +36,7 @@ const config = {
     publicURLPrefix: 'juicebox.notion.site',
     database_id: '9d126f9148dc42ee83317d5cd74e4db4',
     payouts_database_id: 'c51c3d59c21445988f17c9332b7163dc',
+    reserves_database_id: 'b7276b64a43643d2bb8ee355376dd4fa',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',
@@ -54,7 +55,8 @@ const config = {
       governanceCyclePrefix: 'FC#',
       payoutAmountUSD: 'USD Payout Amount',
       payoutAddress: 'Payout Address',
-      payoutCount: 'Number of Payouts'
+      payoutCount: 'Number of Payouts',
+      reservePercentage: 'Percentage'
     },
     filters: { }
   },
@@ -163,6 +165,13 @@ config.notion.filters = {
     property: 'JB DAO Treasury',
     rich_text: {
       contains: 'V2'
+    }
+  },
+
+  reservedIsNotOwner: {
+    property: 'isOwner',
+    rich_text: {
+      contains: 'false'
     }
   }
 };

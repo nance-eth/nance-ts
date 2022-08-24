@@ -28,4 +28,4 @@ async function V1() {
   console.log(Number((await juice.getDistributionLimit()).toString()) / 1E18);
 }
 
-getMetaData();
+V2();

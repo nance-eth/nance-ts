@@ -1,18 +1,21 @@
+import { Nance } from '../nance';
 import { NanceExtensions } from '../extensions';
+import { NanceTreasury } from '../treasury';
 import { getConfig } from '../configLoader';
-import { GithubFileChange } from '../types';
 
 async function main() {
   const config  = await getConfig();
+  const nance = new Nance(config);
+  const treasury = new NanceTreasury(config, nance);
   const nanceExt = new NanceExtensions(config);
 
   const cycle = 28;
 
-  const payoutCSV_V1 = await nanceExt.juiceboxHandlerV1.getPayoutDistributionCSV();
-  const reserveCSV_V1 = await nanceExt.juiceboxHandlerV1.getReserveDistributionCSV();
+  const payoutCSV_V1 = await treasury.juiceboxHandlerV1.getPayoutDistributionCSV();
+  const reserveCSV_V1 = await treasury.juiceboxHandlerV1.getReserveDistributionCSV();
 
-  const payoutCSV_V2 = await nanceExt.juiceboxHandlerV2.getPayoutDistributionCSV();
-  const reserveCSV_V2 = await nanceExt.juiceboxHandlerV2.getReserveDistributionCSV();
+  const payoutCSV_V2 = await treasury.juiceboxHandlerV2.getPayoutDistributionCSV();
+  const reserveCSV_V2 = await treasury.juiceboxHandlerV2.getReserveDistributionCSV();
 
   nanceExt.githubProposalHandler.GithubAPI.createCommitOnBranch([
     {

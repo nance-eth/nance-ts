@@ -12,7 +12,12 @@ import {
 import {
   DataContentHandler
 } from './notionTypes';
-import { NanceConfig, Payout, Proposal } from '../types';
+import {
+  NanceConfig,
+  Payout,
+  Proposal,
+  Reserve
+} from '../types';
 import * as notionUtils from './notionUtils';
 
 export class NotionHandler implements DataContentHandler {
@@ -105,6 +110,13 @@ export class NotionHandler implements DataContentHandler {
     };
   }
 
+  private toReserve(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Reserve {
+    return {
+      address: notionUtils.getRichText(unconvertedPayout, this.config.notion.propertyKeys.payoutAddress),
+      percentage: notionUtils.getNumber(unconvertedPayout, this.config.notion.propertyKeys.reservePercentage),
+    };
+  }
+
   async queryNotionDb(filters: any, sorts = []): Promise<Proposal[]> {
     const databaseReponse = await this.notion.databases.query(
       {
@@ -127,6 +139,18 @@ export class NotionHandler implements DataContentHandler {
     );
     return databaseReponse.results.map((data: any) => {
       return this.toPayout(data as GetDatabaseResponse);
+    });
+  }
+
+  async queryNotionReserveDb(filters: any): Promise<any> {
+    const databaseReponse = await this.notion.databases.query(
+      {
+        database_id: this.config.notion.reserves_database_id,
+        filter: filters,
+      } as QueryDatabaseParameters
+    );
+    return databaseReponse.results.map((data: any) => {
+      return this.toReserve(data as GetDatabaseResponse);
     });
   }
 
@@ -271,5 +295,9 @@ export class NotionHandler implements DataContentHandler {
 
   async getPayoutsDb(version: string): Promise<Payout[]> {
     return this.queryNotionPayoutDb(this.config.notion.filters[`payouts${version}`]);
+  }
+
+  async getReserveDb(version: string): Promise<Reserve[]> {
+    return this.queryNotionReserveDb(this.config.notion.filters.reservedIsOwner);
   }
 }
