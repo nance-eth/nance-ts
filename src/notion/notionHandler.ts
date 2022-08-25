@@ -298,6 +298,6 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async getReserveDb(version: string): Promise<Reserve[]> {
-    return this.queryNotionReserveDb(this.config.notion.filters.reservedIsOwner);
+    return this.queryNotionReserveDb(this.config.notion.filters.reservedIsNotOwner);
   }
 }

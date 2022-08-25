@@ -37,6 +37,7 @@ const config = {
     publicURLPrefix: 'foil-flat-c43.notion.site',
     database_id: '65d4e28b2d624a97bdbcd09d54b5add4',
     payouts_database_id: '4d7be21693344a52bbb8ce91f17648d6',
+    reserves_database_id: 'f5aaed6fa15d4138b52069b097510a55',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',
@@ -55,9 +56,9 @@ const config = {
       governanceCyclePrefix: 'FC#',
       payoutAmountUSD: 'USD Payout Amount',
       payoutAddress: 'Payout Address',
-      payoutCount: 'Number of Payouts'
+      payoutCount: 'Number of Payouts',
+      reservePercentage: 'Percentage'
     },
-    removeTextFromProposal: '[_How to fill out this template_](/3d81e6bb330a4c869bddd0d6449ac032)_._\n',
     filters: { }
   },
   github: {
@@ -83,7 +84,6 @@ const config = {
     base: 'https://snapshot.org/#',
     space: 'jigglyjams.eth',
     choices: ['For', 'Against', 'Abstain'],
-    votingTimeDays: 3,
     minTokenPassingAmount: 1,
     passingRatio: 0.66,
   },
@@ -166,6 +166,13 @@ config.notion.filters = {
     property: 'JB DAO Treasury',
     rich_text: {
       contains: 'V2'
+    }
+  },
+
+  reservedIsNotOwner: {
+    property: 'isOwner',
+    rich_text: {
+      contains: 'false'
     }
   }
 };

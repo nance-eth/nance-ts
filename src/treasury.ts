@@ -30,11 +30,15 @@ export class NanceTreasury {
       payouts,
       reserves
     );
-    return JBGroupedSplitsStruct;
+    return {
+      groupedSplits: JBGroupedSplitsStruct,
+      newDistributioinLimit
+    };
   }
 
   async encodeReconfigureFundingCyclesOf() {
-    const groupedSplits = await this.payoutTableToGroupedSplitsStruct('V2');
-    console.log(await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits));
+    const { groupedSplits, newDistributioinLimit } = await this.payoutTableToGroupedSplitsStruct('V2');
+    const encoded = await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributioinLimit);
+    return encoded;
   }
 }

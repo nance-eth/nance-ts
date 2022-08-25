@@ -7,15 +7,18 @@ import {
   getJBProjects
 } from 'juice-sdk';
 import { BigNumber } from '@ethersproject/bignumber';
-import { JBSplitStruct, JBGroupedSplitsStruct, JBFundAccessConstraintsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
+import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
 import { ONE_BILLION } from './juiceboxMath';
-import { getJBFundingCycleDataStruct, getJBFundingCycleMetadataStruct } from './typesV2';
+import {
+  getJBFundingCycleDataStruct,
+  getJBFundingCycleMetadataStruct,
+  ReconfigureFundingCyclesOfData,
+  getJBFundAccessConstraintsStruct
+} from './typesV2';
 import { Payout, Reserve } from '../types';
 import { keys } from '../keys';
 
 const PROJECT_PAYOUT_PREFIX = 'V2:';
-const payoutScalar = 1E9;
-const JB_FEE = 0.025;
 const TOKEN_ETH = '0x000000000000000000000000000000000000EEEe';
 const DEFAULT_MUST_START_AT_OR_AFTER = '1';
 const DEFAULT_WEIGHT = 0;
@@ -27,6 +30,8 @@ const DEFAULT_PREFER_CLAIMED = false;
 const DEFAULT_PREFER_ADD_BALANCE = false;
 const DEFAULT_LOCKED_UNTIL = 0;
 const DEFAULT_ALLOCATOR = '0x0000000000000000000000000000000000000000';
+const DEFAULT_OVERFLOW_ALLOWANCE = 0;
+const DEFAULT_OVERFLOW_ALLOWANCE_CURRENCY = 0;
 const DEFAULT_PROJECT_ID = 0;
 const DEFAULT_MEMO = 'yours truly ~nance~';
 
@@ -37,6 +42,7 @@ export class JuiceboxHandlerV2 {
   splitsInterface;
   controllerInterface;
   DEFAULT_PAYMENT_TERMINAL;
+  BALLOT_14_DAYS;
 
   constructor(
     protected projectId: string,
@@ -51,6 +57,9 @@ export class JuiceboxHandlerV2 {
     this.DEFAULT_PAYMENT_TERMINAL = (network === 'mainnet')
       ? '0x7Ae63FBa045Fec7CaE1a75cF7Aa14183483b8397'
       : '0x765A8b9a23F58Db6c8849315C04ACf32b2D55cF8';
+    this.BALLOT_14_DAYS = (network === 'mainnet')
+      ? '0x4b9f876c7Fc5f6DEF8991fDe639b2C812a85Fb12'
+      : '';
   }
 
   currentConfiguration = async () => {
@@ -151,10 +160,7 @@ export class JuiceboxHandlerV2 {
   // eslint-disable-next-line class-methods-use-this
   calculateNewDistributionLimit(distrubutionPayouts: Payout[]) {
     return distrubutionPayouts.reduce((total, payout) => {
-      // dont include fee if payout is to a V2 project
-      return (payout.address.includes(PROJECT_PAYOUT_PREFIX))
-        ? total + payout.amountUSD
-        : total + (payout.amountUSD * (1 + JB_FEE));
+      return total + payout.amountUSD;
     }, 0);
   }
 
@@ -170,7 +176,7 @@ export class JuiceboxHandlerV2 {
       return {
         preferClaimed: DEFAULT_PREFER_CLAIMED,
         preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
-        percent: Math.round(payout.amountUSD / distributionLimit) * payoutScalar,
+        percent: Math.floor((payout.amountUSD / distributionLimit) * ONE_BILLION),
         projectId: projectPayout || DEFAULT_PROJECT_ID,
         beneficiary: (projectPayout) ? owner : payout.address,
         lockedUntil: DEFAULT_LOCKED_UNTIL,
@@ -181,7 +187,7 @@ export class JuiceboxHandlerV2 {
       return {
         preferClaimed: DEFAULT_PREFER_CLAIMED,
         preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
-        percent: reserve.percentage * payoutScalar,
+        percent: reserve.percentage * 1E7,
         projectId: DEFAULT_PROJECT_ID,
         beneficiary: reserve.address,
         lockedUntil: DEFAULT_LOCKED_UNTIL,
@@ -200,29 +206,35 @@ export class JuiceboxHandlerV2 {
     ];
   }
 
-  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[]) {
+  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, projectId = this.projectId) {
     const { fundingCycle, metadata } = await getJBController(this.provider).queuedFundingCycleOf(this.projectId);
-    const reconfigFundingCycleData = getJBFundingCycleDataStruct(fundingCycle, BigNumber.from(DEFAULT_WEIGHT));
+    const reconfigFundingCycleData = getJBFundingCycleDataStruct(fundingCycle, BigNumber.from(DEFAULT_WEIGHT), this.BALLOT_14_DAYS);
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
-    const mustStartAtOrAfter = DEFAULT_MUST_START_AT_OR_AFTER;
-    return this.controllerInterface.encodeFunctionData(
-      'reconfigureFundingCyclesOf',
-      [
-        this.projectId,
-        reconfigFundingCycleData,
-        reconfigFundingCycleMetaData,
-        mustStartAtOrAfter,
-        groupedSplits,
-        [{
-          terminal: this.DEFAULT_PAYMENT_TERMINAL,
-          token: TOKEN_ETH,
-          distributionLimit: '123',
-          distributionLimitCurrency: DISTRIBUTION_CURRENCY_USD,
-          overflowAllowance: 0,
-          overflowAllowanceCurrency: 0
-        }] as JBFundAccessConstraintsStruct[],
-        DEFAULT_MEMO
-      ]
+    const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
+      this.DEFAULT_PAYMENT_TERMINAL,
+      TOKEN_ETH,
+      distributionLimit,
+      DISTRIBUTION_CURRENCY_ETH,
+      DEFAULT_OVERFLOW_ALLOWANCE,
+      DEFAULT_OVERFLOW_ALLOWANCE_CURRENCY
     );
+    const mustStartAtOrAfter = DEFAULT_MUST_START_AT_OR_AFTER;
+    const reconfigureFundingCyclesOfData: ReconfigureFundingCyclesOfData = [
+      projectId,
+      reconfigFundingCycleData,
+      reconfigFundingCycleMetaData,
+      mustStartAtOrAfter,
+      groupedSplits,
+      fundAccessConstraintsData,
+      DEFAULT_MEMO
+    ];
+    const encodedReconfiguration = this.controllerInterface.encodeFunctionData(
+      'reconfigureFundingCyclesOf',
+      reconfigureFundingCyclesOfData
+    );
+    console.dir(this.controllerInterface.decodeFunctionData(
+      'reconfigureFundingCyclesOf',
+      encodedReconfiguration
+    ), { depth: null });
   }
 }

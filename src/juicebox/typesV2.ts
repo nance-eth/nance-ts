@@ -1,21 +1,36 @@
-import { BigNumber } from '@ethersproject/bignumber';
+import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 import {
   JBFundingCycleDataStruct,
   JBFundingCycleStructOutput,
   JBFundingCycleMetadataStruct,
   JBFundingCycleMetadataStructOutput,
+  JBGroupedSplitsStruct,
+  JBFundAccessConstraintsStruct,
 } from 'juice-sdk/dist/cjs/types/contracts/JBController';
+
+const DISTRIBUTION_PAYOUT_SCALAR = 18;
+
+export type ReconfigureFundingCyclesOfData = [
+  BigNumberish,
+  JBFundingCycleDataStruct,
+  JBFundingCycleMetadataStruct,
+  BigNumberish,
+  JBGroupedSplitsStruct[],
+  JBFundAccessConstraintsStruct[],
+  string
+];
 
 export const getJBFundingCycleDataStruct = (
   data: JBFundingCycleStructOutput,
-  weight: BigNumber
+  weight: BigNumber,
+  ballot: string
 ): JBFundingCycleDataStruct => {
   return {
     duration: data.duration,
     weight,
     discountRate: data.discountRate,
-    ballot: data.ballot
+    ballot
   };
 };
 
@@ -23,7 +38,7 @@ export const getJBFundingCycleMetadataStruct = (
   data: JBFundingCycleMetadataStructOutput
 ): JBFundingCycleMetadataStruct => {
   return {
-    global: data.global,
+    global: { allowSetTerminals: data.global.allowSetTerminals, allowSetController: data.global.allowSetController },
     reservedRate: data.reservedRate,
     redemptionRate: data.redemptionRate,
     ballotRedemptionRate: data.ballotRedemptionRate,
@@ -41,4 +56,22 @@ export const getJBFundingCycleMetadataStruct = (
     useDataSourceForRedeem: data.useDataSourceForRedeem,
     dataSource: data.dataSource
   };
+};
+
+export const getJBFundAccessConstraintsStruct = (
+  terminal: string,
+  token: string,
+  distributionLimit: number,
+  distributionLimitCurrency: number,
+  overflowAllowance: number,
+  overflowAllowanceCurrency: number
+): JBFundAccessConstraintsStruct[] => {
+  return [{
+    terminal,
+    token,
+    distributionLimit: BigNumber.from(distributionLimit).mul(BigNumber.from(10).pow(DISTRIBUTION_PAYOUT_SCALAR)),
+    distributionLimitCurrency,
+    overflowAllowance,
+    overflowAllowanceCurrency
+  }];
 };
