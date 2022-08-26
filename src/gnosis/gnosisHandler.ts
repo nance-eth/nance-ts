@@ -1,8 +1,14 @@
 import { ethers } from 'ethers';
 import axios from 'axios';
+import { SafeFactory } from '@gnosis.pm/safe-core-sdk';
+import fs from 'fs';
 import { keys } from '../keys';
-import { SubTransaction } from './gnosisTypes';
+import { SubTransaction, SafeMultisigTransaction, SafeEstimateResponse } from './gnosisTypes';
+// eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+const gnosisSafeABI = require('./GnosisSafeABI.json');
 
+const gnosisSafeAddress = ethers.utils.getAddress('0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552'.toLowerCase());
+const checksumNanceAddress = ethers.utils.getAddress('0x50e70c43a5dd812e2309eacea61348041011b4ba'.toLowerCase());
 const headers = { 'Content-type': 'application/json' };
 
 export class GnosisHandler {
@@ -28,6 +34,24 @@ export class GnosisHandler {
       ? 'https://safe-relay.gnosis.io'
       : `https://safe-relay.${network}.gnosis.io`;
   }
+
+  // eslint-disable-next-line class-methods-use-this
+  getContractTransactionHash = async (transaction: SafeMultisigTransaction) => {
+    const safeContract = new ethers.Contract(gnosisSafeAddress, gnosisSafeABI, this.wallet);
+    const transactionHash = await safeContract.getTransactionHash(
+      transaction.to,
+      transaction.value,
+      transaction.data,
+      transaction.operation,
+      transaction.safeTxGas,
+      transaction.baseGas,
+      transaction.gasPrice,
+      transaction.gasToken,
+      transaction.refundReceiver,
+      transaction.nonce
+    );
+    return transactionHash;
+  };
 
   // eslint-disable-next-line class-methods-use-this
   private adjustV(signature: string) {
@@ -104,7 +128,7 @@ export class GnosisHandler {
     });
   }
 
-  async getGasEstimate(subTransaction: SubTransaction) {
+  async getGasEstimate(subTransaction: SubTransaction): Promise<SafeEstimateResponse> {
     // eslint-disable-next-line no-param-reassign
     subTransaction.to = ethers.utils.getAddress(subTransaction.to.toLowerCase());
     return axios({
@@ -118,6 +142,50 @@ export class GnosisHandler {
       return response.data;
     }).catch((e) => {
       console.log(e);
+      // return Promise.reject(e);
+    });
+  }
+
+  async sendTransaction(transactionInitial: SafeMultisigTransaction) {
+    const transactionHash = await this.getContractTransactionHash(transactionInitial);
+    const transactionUnsigned = {
+      ...transactionInitial,
+      contractTransactionHash: transactionHash,
+      sender: checksumNanceAddress,
+      origin: 'nance',
+    };
+    const lazyContractHash = await axios({
+      method: 'post',
+      url: `${this.TRANSACTION_API}/api/v1/safes/${this.safeId}/multisig-transactions/`,
+      headers,
+      data: {
+        ...transactionUnsigned
+      }
+    }).then((response) => {
+      return response.data;
+    }).catch((e) => {
+      console.log(e.response.data);
+      return (e.response.data.nonFieldErrors[0].split('Contract-transaction-hash=')[1].split(' ')[0]);
+      // return Promise.reject(e);
+    });
+    // console.log(lazyContractHash);
+    const signature = await this.wallet.signTransaction(lazyContractHash);
+    const transaction = {
+      ...transactionUnsigned,
+      contractTransactionHash: lazyContractHash,
+      signature
+    };
+    return axios({
+      method: 'post',
+      url: `${this.TRANSACTION_API}/api/v1/safes/${this.safeId}/multisig-transactions/`,
+      headers,
+      data: {
+        ...transaction
+      }
+    }).then((response) => {
+      return response.data;
+    }).catch((e) => {
+      console.log(e.response.data);
       // return Promise.reject(e);
     });
   }

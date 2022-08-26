@@ -1,12 +1,13 @@
 import { GnosisHandler } from '../gnosisHandler';
 
-const gnosis = new GnosisHandler('0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e');
+const gnosis = new GnosisHandler('0x32533f602527024EBC64FEbF05F18D32105fB199');
 
 async function main() {
   console.log(await gnosis.getGasEstimate({
-    to: '0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e',
+    to: '0x4e3ef8AFCC2B52E4e704f4c8d9B7E7948F651351',
     value: '0',
-    operation: 0,
+    data: '',
+    operation: 1,
   }));
 }
 
