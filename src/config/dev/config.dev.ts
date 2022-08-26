@@ -15,7 +15,7 @@ const config = {
   },
   juicebox: {
     network: 'mainnet',
-    projectId: '1'
+    projectId: '188'
   },
   discord: {
     guildId: '889377541675159602',
@@ -36,8 +36,8 @@ const config = {
   notion: {
     publicURLPrefix: 'foil-flat-c43.notion.site',
     database_id: '65d4e28b2d624a97bdbcd09d54b5add4',
-    payouts_database_id: '4d7be21693344a52bbb8ce91f17648d6',
-    reserves_database_id: 'f5aaed6fa15d4138b52069b097510a55',
+    payouts_database_id: 'f5aaed6fa15d4138b52069b097510a55',
+    reserves_database_id: '5f03d3ded5294819baa05210f41ad395',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',

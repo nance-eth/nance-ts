@@ -4,7 +4,8 @@ import {
   getJBController,
   getJBSplitsStore,
   getJBDirectory,
-  getJBProjects
+  getJBProjects,
+  getJB3DayReconfigurationBufferBallot
 } from 'juice-sdk';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
@@ -39,10 +40,10 @@ const CSV_HEADING = 'beneficiary,percent,preferClaimed,lockedUntil,projectId,all
 
 export class JuiceboxHandlerV2 {
   provider;
-  splitsInterface;
-  controllerInterface;
+  JBSplitsStore;
+  JBController;
+  JB3DayReconfigurationBufferBallot;
   DEFAULT_PAYMENT_TERMINAL;
-  BALLOT_14_DAYS;
 
   constructor(
     protected projectId: string,
@@ -52,14 +53,12 @@ export class JuiceboxHandlerV2 {
       ? `https://mainnet.infura.io/v3/${keys.INFURA_KEY}`
       : `https://rinkeby.infura.io/v3/${keys.INFURA_KEY}`;
     this.provider = new JsonRpcProvider(RPC_HOST);
-    this.splitsInterface = getJBSplitsStore(this.provider, { network: this.network }).interface;
-    this.controllerInterface = getJBController(this.provider, { network: this.network }).interface;
+    this.JBSplitsStore = getJBSplitsStore(this.provider, { network: this.network });
+    this.JBController = getJBController(this.provider, { network: this.network });
     this.DEFAULT_PAYMENT_TERMINAL = (network === 'mainnet')
       ? '0x7Ae63FBa045Fec7CaE1a75cF7Aa14183483b8397'
       : '0x765A8b9a23F58Db6c8849315C04ACf32b2D55cF8';
-    this.BALLOT_14_DAYS = (network === 'mainnet')
-      ? '0x4b9f876c7Fc5f6DEF8991fDe639b2C812a85Fb12'
-      : '';
+    this.JB3DayReconfigurationBufferBallot = getJB3DayReconfigurationBufferBallot(this.provider, { network: this.network });
   }
 
   currentConfiguration = async () => {
@@ -127,7 +126,7 @@ export class JuiceboxHandlerV2 {
   async getDistributionLimit() {
     const currentConfiguration = await this.currentConfiguration();
     const terminal = await getJBDirectory(this.provider, { network: this.network }).terminalsOf(this.projectId);
-    const distributionLimit = await getJBController(this.provider, { network: this.network }).distributionLimitOf(
+    const distributionLimit = await this.JBController.distributionLimitOf(
       this.projectId,
       currentConfiguration,
       terminal[0],
@@ -147,7 +146,7 @@ export class JuiceboxHandlerV2 {
   ) {
     const configuration = (domain === 0) ? await this.queuedConfiguration() : domain;
     console.log(configuration);
-    return this.splitsInterface.encodeFunctionData(
+    return this.JBSplitsStore.interface.encodeFunctionData(
       'set',
       [
         BigNumber.from(projectId),
@@ -207,8 +206,12 @@ export class JuiceboxHandlerV2 {
   }
 
   async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, projectId = this.projectId) {
-    const { fundingCycle, metadata } = await getJBController(this.provider).queuedFundingCycleOf(this.projectId);
-    const reconfigFundingCycleData = getJBFundingCycleDataStruct(fundingCycle, BigNumber.from(DEFAULT_WEIGHT), this.BALLOT_14_DAYS);
+    const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
+    const reconfigFundingCycleData = getJBFundingCycleDataStruct(
+      fundingCycle,
+      BigNumber.from(DEFAULT_WEIGHT),
+      this.JB3DayReconfigurationBufferBallot.address
+    );
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
     const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
       this.DEFAULT_PAYMENT_TERMINAL,
@@ -228,13 +231,14 @@ export class JuiceboxHandlerV2 {
       fundAccessConstraintsData,
       DEFAULT_MEMO
     ];
-    const encodedReconfiguration = this.controllerInterface.encodeFunctionData(
+    const encodedReconfiguration = this.JBController.interface.encodeFunctionData(
       'reconfigureFundingCyclesOf',
       reconfigureFundingCyclesOfData
     );
-    console.dir(this.controllerInterface.decodeFunctionData(
-      'reconfigureFundingCyclesOf',
-      encodedReconfiguration
-    ), { depth: null });
+    // console.dir(this.controllerInterface.decodeFunctionData(
+    //   'reconfigureFundingCyclesOf',
+    //   encodedReconfiguration
+    // ), { depth: null });
+    return { address: this.JBController.address, data: encodedReconfiguration };
   }
 }
