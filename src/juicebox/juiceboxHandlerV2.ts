@@ -5,7 +5,8 @@ import {
   getJBSplitsStore,
   getJBDirectory,
   getJBProjects,
-  getJB3DayReconfigurationBufferBallot
+  getJB3DayReconfigurationBufferBallot,
+  getJBETHPaymentTerminal
 } from 'juice-sdk';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
@@ -43,22 +44,18 @@ export class JuiceboxHandlerV2 {
   JBSplitsStore;
   JBController;
   JB3DayReconfigurationBufferBallot;
-  DEFAULT_PAYMENT_TERMINAL;
+  JBETHPaymentTerminal;
 
   constructor(
     protected projectId: string,
     protected network = 'mainnet' as 'mainnet' | 'rinkeby'
   ) {
-    const RPC_HOST = (network === 'mainnet')
-      ? `https://mainnet.infura.io/v3/${keys.INFURA_KEY}`
-      : `https://rinkeby.infura.io/v3/${keys.INFURA_KEY}`;
+    const RPC_HOST = `https://${this.network}.infura.io/v3/${keys.INFURA_KEY}`;
     this.provider = new JsonRpcProvider(RPC_HOST);
     this.JBSplitsStore = getJBSplitsStore(this.provider, { network: this.network });
     this.JBController = getJBController(this.provider, { network: this.network });
-    this.DEFAULT_PAYMENT_TERMINAL = (network === 'mainnet')
-      ? '0x7Ae63FBa045Fec7CaE1a75cF7Aa14183483b8397'
-      : '0x765A8b9a23F58Db6c8849315C04ACf32b2D55cF8';
     this.JB3DayReconfigurationBufferBallot = getJB3DayReconfigurationBufferBallot(this.provider, { network: this.network });
+    this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network }).address;
   }
 
   currentConfiguration = async () => {
@@ -214,7 +211,7 @@ export class JuiceboxHandlerV2 {
     );
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
     const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
-      this.DEFAULT_PAYMENT_TERMINAL,
+      this.JBETHPaymentTerminal,
       TOKEN_ETH,
       distributionLimit,
       DISTRIBUTION_CURRENCY_ETH,
