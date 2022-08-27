@@ -16,11 +16,10 @@ async function main() {
     data
   });
   gnosis.sendTransaction({
-    safe: '0x32533f602527024EBC64FEbF05F18D32105fB199',
     to: address,
-    value: 0,
+    value: '0',
     data,
-    operation: 1,
+    operation: 0,
     gasToken: gnosisInfo.gasToken,
     safeTxGas: Number(gnosisInfo.safeTxGas),
     baseGas: Number(gnosisInfo.baseGas),
