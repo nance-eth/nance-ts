@@ -57,6 +57,7 @@ export interface NanceConfig {
   juicebox: {
     network: 'mainnet' | 'rinkeby';
     projectId: string;
+    gnosisSafeAddress: string;
   };
   discord: {
     guildId: string;
@@ -99,7 +100,16 @@ export interface NanceConfig {
       payoutCount: string;
       reservePercentage: string;
     };
-    filters: any;
+    filters?: {
+      preDiscussion: any;
+      discussion: any;
+      proposalId: any;
+      temperatureCheck: any;
+      voting: any;
+      payoutsV1: any;
+      payoutsV2: any;
+      reservedIsNotOwner: any;
+    };
   };
   github: {
     user: string;

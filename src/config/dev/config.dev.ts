@@ -14,8 +14,12 @@ const config = {
     }
   },
   juicebox: {
-    network: 'mainnet',
-    projectId: '188'
+    // network: 'mainnet',
+    // projectId: '188'
+    // gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199'
+    network: 'rinkeby',
+    projectId: '4625',
+    gnosisSafeAddress: '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6'
   },
   discord: {
     guildId: '889377541675159602',
