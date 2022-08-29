@@ -214,7 +214,7 @@ export class JuiceboxHandlerV2 {
       this.JBETHPaymentTerminal,
       TOKEN_ETH,
       distributionLimit,
-      DISTRIBUTION_CURRENCY_ETH,
+      DISTRIBUTION_CURRENCY_USD,
       DEFAULT_OVERFLOW_ALLOWANCE,
       DEFAULT_OVERFLOW_ALLOWANCE_CURRENCY
     );

@@ -100,16 +100,7 @@ export interface NanceConfig {
       payoutCount: string;
       reservePercentage: string;
     };
-    filters?: {
-      preDiscussion: any;
-      discussion: any;
-      proposalId: any;
-      temperatureCheck: any;
-      voting: any;
-      payoutsV1: any;
-      payoutsV2: any;
-      reservedIsNotOwner: any;
-    };
+    filters: any;
   };
   github: {
     user: string;

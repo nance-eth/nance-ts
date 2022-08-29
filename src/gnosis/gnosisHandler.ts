@@ -147,6 +147,7 @@ export class GnosisHandler {
       contractTransactionHash: transactionHash,
       signature: transactionSignature.data
     };
+    console.log(data);
     return axios({
       method: 'post',
       url: `${this.TRANSACTION_API}/api/v1/safes/${this.safeAddress}/multisig-transactions/`,
@@ -155,6 +156,7 @@ export class GnosisHandler {
     }).then((response) => {
       return response.status;
     }).catch((e) => {
+      console.log(e.response.data);
       return Promise.reject(e);
     });
   }

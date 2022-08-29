@@ -24,21 +24,21 @@ export class NanceTreasury {
   async payoutTableToGroupedSplitsStruct(version: string) {
     const payouts = await this.nance.proposalHandler.getPayoutsDb(version);
     const reserves = await this.nance.proposalHandler.getReserveDb(version);
-    const newDistributioinLimit = this.juiceboxHandlerV2.calculateNewDistributionLimit(payouts);
+    const newDistributionLimit = this.juiceboxHandlerV2.calculateNewDistributionLimit(payouts);
     const JBGroupedSplitsStruct = await this.juiceboxHandlerV2.buildJBGroupedSplitsStruct(
-      newDistributioinLimit,
+      newDistributionLimit,
       payouts,
       reserves
     );
     return {
       groupedSplits: JBGroupedSplitsStruct,
-      newDistributioinLimit
+      newDistributionLimit
     };
   }
 
   async encodeReconfigureFundingCyclesOf() {
-    const { groupedSplits, newDistributioinLimit } = await this.payoutTableToGroupedSplitsStruct('V2');
-    const encoded = await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributioinLimit);
+    const { groupedSplits, newDistributionLimit } = await this.payoutTableToGroupedSplitsStruct('V2');
+    const encoded = await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributionLimit);
     return encoded;
   }
 }

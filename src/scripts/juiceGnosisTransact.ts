@@ -3,9 +3,6 @@ import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { NanceTreasury } from '../treasury';
 import { getConfig } from '../configLoader';
 
-// const mySafeAddress = '0x32533f602527024EBC64FEbF05F18D32105fB199';
-const mySafeAddress = '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6';
-
 async function main() {
   const config = await getConfig();
   const nance = new Nance(config);
@@ -15,7 +12,7 @@ async function main() {
   const gnosisInfo = await gnosis.getGasEstimate({
     to: address,
     value: '0',
-    operation: 1,
+    operation: 0,
     data
   });
   const nextNonce = Number(await gnosis.getCurrentNonce())
