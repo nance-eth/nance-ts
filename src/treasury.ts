@@ -1,6 +1,7 @@
 import { NanceConfig } from './types';
 import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
 import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
+import { BallotKey } from './juicebox/typesV2';
 import { Nance } from './nance';
 
 export class NanceTreasury {
@@ -36,9 +37,9 @@ export class NanceTreasury {
     };
   }
 
-  async encodeReconfigureFundingCyclesOf() {
+  async encodeReconfigureFundingCyclesOf(reconfigurationBallot?: BallotKey) {
     const { groupedSplits, newDistributionLimit } = await this.payoutTableToGroupedSplitsStruct('V2');
-    const encoded = await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributionLimit);
+    const encoded = await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributionLimit, reconfigurationBallot);
     return encoded;
   }
 }

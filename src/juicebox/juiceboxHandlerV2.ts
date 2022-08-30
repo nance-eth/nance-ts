@@ -6,6 +6,7 @@ import {
   getJBDirectory,
   getJBProjects,
   getJB3DayReconfigurationBufferBallot,
+  getJB7DayReconfigurationBufferBallot,
   getJBETHPaymentTerminal
 } from 'juice-sdk';
 import { BigNumber } from '@ethersproject/bignumber';
@@ -15,11 +16,14 @@ import {
   getJBFundingCycleDataStruct,
   getJBFundingCycleMetadataStruct,
   ReconfigureFundingCyclesOfData,
-  getJBFundAccessConstraintsStruct
+  getJBFundAccessConstraintsStruct,
+  ReconfigurationBallotAddresses,
+  BallotKey,
 } from './typesV2';
 import { Payout, Reserve } from '../types';
 import { keys } from '../keys';
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const PROJECT_PAYOUT_PREFIX = 'V2:';
 const TOKEN_ETH = '0x000000000000000000000000000000000000EEEe';
 const DEFAULT_MUST_START_AT_OR_AFTER = '1';
@@ -43,7 +47,7 @@ export class JuiceboxHandlerV2 {
   provider;
   JBSplitsStore;
   JBController;
-  JB3DayReconfigurationBufferBallot;
+  JBReconfigurationBallotAddresses;
   JBETHPaymentTerminal;
 
   constructor(
@@ -54,7 +58,11 @@ export class JuiceboxHandlerV2 {
     this.provider = new JsonRpcProvider(RPC_HOST);
     this.JBSplitsStore = getJBSplitsStore(this.provider, { network: this.network });
     this.JBController = getJBController(this.provider, { network: this.network });
-    this.JB3DayReconfigurationBufferBallot = getJB3DayReconfigurationBufferBallot(this.provider, { network: this.network });
+    this.JBReconfigurationBallotAddresses = {
+      0: ZERO_ADDRESS,
+      3: getJB3DayReconfigurationBufferBallot(this.provider, { network: this.network }).address,
+      7: getJB7DayReconfigurationBufferBallot(this.provider, { network: this.network }).address
+    } as ReconfigurationBallotAddresses;
     this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network }).address;
   }
 
@@ -202,12 +210,13 @@ export class JuiceboxHandlerV2 {
     ];
   }
 
-  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, projectId = this.projectId) {
+  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, reconfigurationBallot?: BallotKey) {
     const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(
       fundingCycle,
       BigNumber.from(DEFAULT_WEIGHT),
-      this.JB3DayReconfigurationBufferBallot.address
+      // use queued ballot if none passed in
+      (reconfigurationBallot) ? this.JBReconfigurationBallotAddresses[reconfigurationBallot] : fundingCycle.ballot
     );
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
     const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
@@ -220,7 +229,7 @@ export class JuiceboxHandlerV2 {
     );
     const mustStartAtOrAfter = DEFAULT_MUST_START_AT_OR_AFTER;
     const reconfigureFundingCyclesOfData: ReconfigureFundingCyclesOfData = [
-      projectId,
+      this.projectId,
       reconfigFundingCycleData,
       reconfigFundingCycleMetaData,
       mustStartAtOrAfter,

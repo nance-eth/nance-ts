@@ -11,6 +11,14 @@ import {
 
 const DISTRIBUTION_PAYOUT_SCALAR = 18;
 
+export type ReconfigurationBallotAddresses = {
+  0: string,
+  3: string,
+  7: string
+};
+
+export type BallotKey = keyof ReconfigurationBallotAddresses;
+
 export type ReconfigureFundingCyclesOfData = [
   BigNumberish,
   JBFundingCycleDataStruct,
