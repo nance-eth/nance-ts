@@ -2,4 +2,3 @@ node_modules/
 dist/
 scripts/
 jest.config.ts
-src/juicebox/interface

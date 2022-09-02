@@ -6,8 +6,7 @@ import {
   UpdatePageParameters,
   UpdatePageResponse,
   GetDatabaseResponse,
-  GetPageResponse,
-  QueryDatabaseResponse
+  GetPageResponse
 } from '@notionhq/client/build/src/api-endpoints';
 import {
   DataContentHandler
@@ -117,16 +116,23 @@ export class NotionHandler implements DataContentHandler {
     };
   }
 
-  async queryNotionDb(filters: any, sorts = []): Promise<Proposal[]> {
+  async queryNotionDb(filters: any): Promise<Proposal[]> {
     const databaseReponse = await this.notion.databases.query(
       {
         database_id: this.config.notion.database_id,
         filter: filters,
-        sorts
+        sorts: [{
+          timestamp: 'created_time',
+          direction: 'ascending'
+        }]
       } as QueryDatabaseParameters
     );
     return databaseReponse.results.map((data: any) => {
       return this.toProposal(data as GetDatabaseResponse);
+    }).sort((a, b) => {
+      // sort ascending by proposalId
+      return Number(a.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1])
+        - Number(b.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1]);
     });
   }
 
