@@ -13,6 +13,14 @@ const config = {
       repo: 'dev-governance'
     }
   },
+  juicebox: {
+    // network: 'mainnet',
+    // projectId: '188'
+    // gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199'
+    network: 'rinkeby',
+    projectId: '4661',
+    gnosisSafeAddress: '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6'
+  },
   discord: {
     guildId: '889377541675159602',
     channelId: '964601032703352873',
@@ -31,7 +39,9 @@ const config = {
   },
   notion: {
     publicURLPrefix: 'foil-flat-c43.notion.site',
-    database_id: '50e11ebe3d2440b7a64d39805868df87',
+    database_id: '65d4e28b2d624a97bdbcd09d54b5add4',
+    payouts_database_id: 'f5aaed6fa15d4138b52069b097510a55',
+    reserves_database_id: '5f03d3ded5294819baa05210f41ad395',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',
@@ -42,9 +52,17 @@ const config = {
       proposalIdPrefix: 'JBP-',
       discussionThread: 'Discussion Thread',
       ipfs: 'IPFS',
-      vote: 'Snapshot'
+      vote: 'Snapshot',
+      category: 'Category',
+      categoryRecurringPayout: 'Recurring Payment',
+      categoryPayout: 'One-Time Payout',
+      governanceCycle: 'Funding Cycle',
+      governanceCyclePrefix: 'FC#',
+      payoutAmountUSD: 'USD Payout Amount',
+      payoutAddress: 'Payout Address',
+      payoutCount: 'Number of Payouts',
+      reservePercentage: 'Percentage'
     },
-    removeTextFromProposal: '[_How to fill out this template_](/3d81e6bb330a4c869bddd0d6449ac032)_._\n',
     filters: { }
   },
   github: {
@@ -70,7 +88,6 @@ const config = {
     base: 'https://snapshot.org/#',
     space: 'jigglyjams.eth',
     choices: ['For', 'Against', 'Abstain'],
-    votingTimeDays: 3,
     minTokenPassingAmount: 1,
     passingRatio: 0.66,
   },
@@ -141,6 +158,27 @@ config.notion.filters = {
       equals: 'Voting',
     },
   },
+
+  payoutsV1: {
+    property: 'JB DAO Treasury',
+    rich_text: {
+      contains: 'V1'
+    }
+  },
+
+  payoutsV2: {
+    property: 'JB DAO Treasury',
+    rich_text: {
+      contains: 'V2'
+    }
+  },
+
+  reservedIsNotOwner: {
+    property: 'isOwner',
+    rich_text: {
+      contains: 'false'
+    }
+  }
 };
 
 export default config;

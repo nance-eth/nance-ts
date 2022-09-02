@@ -5,9 +5,10 @@ export interface Proposal {
   title: string;
   markdown?: string;
   translation?: {
-    markdown?: string,
-    language?: string
+    markdown?: string;
+    language?: string;
   },
+  payout?: Payout,
   url: string;
   governanceCycle?: number;
   date?: string,
@@ -21,6 +22,18 @@ export interface Proposal {
   voteURL: string;
   voteResults?: VoteResults;
 }
+
+export type Payout = {
+  type: 'onetime' | 'recurring';
+  address: string;
+  amountUSD: number;
+  count?: number;
+};
+
+export type Reserve = {
+  address: string;
+  percentage: number;
+};
 
 export type ProposalNoHash = Omit<Proposal, 'hash'>;
 
@@ -41,6 +54,11 @@ export interface NanceConfig {
       repo: string;
     }
   };
+  juicebox: {
+    network: 'mainnet' | 'rinkeby';
+    projectId: string;
+    gnosisSafeAddress: string;
+  };
   discord: {
     guildId: string;
     channelId: string;
@@ -59,6 +77,8 @@ export interface NanceConfig {
   notion: {
     publicURLPrefix: string;
     database_id: string;
+    payouts_database_id: string;
+    reserves_database_id: string;
     propertyKeys: {
       proposalId: string;
       status: string;
@@ -70,6 +90,15 @@ export interface NanceConfig {
       discussionThread: string;
       ipfs: string;
       vote: string;
+      category: string;
+      categoryRecurringPayout: string;
+      categoryPayout: string;
+      governanceCycle: string;
+      governanceCyclePrefix: string;
+      payoutAmountUSD: string;
+      payoutAddress: string;
+      payoutCount: string;
+      reservePercentage: string;
     };
     filters: any;
   };

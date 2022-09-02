@@ -13,6 +13,10 @@ const config = {
       repo: 'juicebox-governance'
     }
   },
+  juicebox: {
+    network: 'mainnet',
+    projectId: '1'
+  },
   discord: {
     guildId: '775859454780244028',
     channelId: '873248745771372584',
@@ -31,6 +35,8 @@ const config = {
   notion: {
     publicURLPrefix: 'juicebox.notion.site',
     database_id: '9d126f9148dc42ee83317d5cd74e4db4',
+    payouts_database_id: 'c51c3d59c21445988f17c9332b7163dc',
+    reserves_database_id: 'b7276b64a43643d2bb8ee355376dd4fa',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',
@@ -41,7 +47,16 @@ const config = {
       proposalIdPrefix: 'JBP-',
       discussionThread: 'Discussion Thread',
       ipfs: 'IPFS',
-      vote: 'Snapshot'
+      vote: 'Snapshot',
+      category: 'Category',
+      categoryRecurringPayout: 'Recurring Payment',
+      categoryPayout: 'One-Time Payout',
+      governanceCycle: 'Funding Cycle',
+      governanceCyclePrefix: 'FC#',
+      payoutAmountUSD: 'USD Payout Amount',
+      payoutAddress: 'Payout Address',
+      payoutCount: 'Number of Payouts',
+      reservePercentage: 'Percentage'
     },
     filters: { }
   },
@@ -137,6 +152,27 @@ config.notion.filters = {
     select: {
       equals: 'Voting',
     },
+  },
+
+  payoutsV1: {
+    property: 'JB DAO Treasury',
+    rich_text: {
+      contains: 'V1'
+    }
+  },
+
+  payoutsV2: {
+    property: 'JB DAO Treasury',
+    rich_text: {
+      contains: 'V2'
+    }
+  },
+
+  reservedIsNotOwner: {
+    property: 'isOwner',
+    rich_text: {
+      contains: 'false'
+    }
   }
 };
 

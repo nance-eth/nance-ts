@@ -12,6 +12,11 @@
     "test:gov": "ts-node src/scripts/createCalendar.ts&& ts-node src/index.ts"
   },
   "dependencies": {
+    "@ethersproject/bignumber": "^5.7.0",
+    "@ethersproject/providers": "^5.6.8",
+    "@gnosis.pm/safe-core-sdk": "^2.3.2",
+    "@gnosis.pm/safe-core-sdk-types": "^1.4.0",
+    "@gnosis.pm/safe-ethers-lib": "^1.4.0",
     "@logtail/node": "^0.1.12",
     "@logtail/winston": "^0.1.13",
     "@notionhq/client": "^1.0.4",
@@ -25,6 +30,8 @@
     "ethers": "^5.6.3",
     "graphql-request": "^4.2.0",
     "ics": "^2.35.0",
+    "juice-sdk": "^2.1.0-alpha",
+    "juice-sdk-v1": "^2.1.0-alpha",
     "node-ical": "^0.15.1",
     "node-schedule": "^2.1.0",
     "notion-to-md": "^2.3.2",

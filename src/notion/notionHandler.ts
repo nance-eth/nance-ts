@@ -12,9 +12,13 @@ import {
 import {
   DataContentHandler
 } from './notionTypes';
-import { Proposal } from '../types';
+import {
+  NanceConfig,
+  Payout,
+  Proposal,
+  Reserve
+} from '../types';
 import * as notionUtils from './notionUtils';
-import logger from '../logging';
 
 export class NotionHandler implements DataContentHandler {
   private notion;
@@ -22,14 +26,17 @@ export class NotionHandler implements DataContentHandler {
 
   constructor(
     private notionKey: string,
-    private config: any
+    private config: NanceConfig
   ) {
     this.notion = new NotionClient({ auth: this.notionKey });
     this.notionToMd = new NotionToMarkdown({ notionClient: this.notion });
   }
 
-  private toProposal(unconvertedProposal: GetDatabaseResponse | GetPageResponse): Proposal {
-    return {
+  private toProposal(
+    unconvertedProposal: GetDatabaseResponse | GetPageResponse,
+    getExtendedData = false
+  ): Proposal {
+    const cleanProposal: Proposal = {
       hash: unconvertedProposal.id.replaceAll('-', ''),
       title: notionUtils.getTitle(unconvertedProposal),
       url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
@@ -51,7 +58,62 @@ export class NotionHandler implements DataContentHandler {
         unconvertedProposal,
         this.config.notion.propertyKeys.vote
       ),
-      date: notionUtils.getDate(unconvertedProposal)
+      date: notionUtils.getDate(unconvertedProposal),
+      governanceCycle: Number(
+        notionUtils.getRichText(
+          unconvertedProposal,
+          this.config.notion.propertyKeys.governanceCycle
+        ).split(this.config.notion.propertyKeys.governanceCyclePrefix)[1]
+      )
+    };
+    if (getExtendedData) {
+      if (cleanProposal.category === this.config.notion.propertyKeys.categoryRecurringPayout) {
+        cleanProposal.payout = {
+          type: 'recurring',
+          address: notionUtils.getRichText(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutAddress
+          ),
+          amountUSD: notionUtils.getNumber(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutAmountUSD
+          ),
+          count: notionUtils.getNumber(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutCount
+          )
+        };
+      } else if (cleanProposal.category === this.config.notion.propertyKeys.categoryPayout) {
+        cleanProposal.payout = {
+          type: 'onetime',
+          address: notionUtils.getRichText(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutAddress
+          ),
+          amountUSD: notionUtils.getNumber(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.payoutAmountUSD
+          ),
+        };
+      }
+    }
+    return cleanProposal;
+  }
+
+  private toPayout(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Payout {
+    return {
+      type: 'recurring',
+      address: notionUtils.getRichText(unconvertedPayout, this.config.notion.propertyKeys.payoutAddress),
+      amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.notion.propertyKeys.payoutAmountUSD),
+      count:
+        notionUtils.getNumber(unconvertedPayout, 'Last FC') - notionUtils.getNumber(unconvertedPayout, 'First FC') + 1
+    };
+  }
+
+  private toReserve(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Reserve {
+    return {
+      address: notionUtils.getRichText(unconvertedPayout, this.config.notion.propertyKeys.payoutAddress),
+      percentage: notionUtils.getNumber(unconvertedPayout, this.config.notion.propertyKeys.reservePercentage),
     };
   }
 
@@ -65,6 +127,30 @@ export class NotionHandler implements DataContentHandler {
     );
     return databaseReponse.results.map((data: any) => {
       return this.toProposal(data as GetDatabaseResponse);
+    });
+  }
+
+  async queryNotionPayoutDb(filters: any): Promise<any> {
+    const databaseReponse = await this.notion.databases.query(
+      {
+        database_id: this.config.notion.payouts_database_id,
+        filter: filters,
+      } as QueryDatabaseParameters
+    );
+    return databaseReponse.results.map((data: any) => {
+      return this.toPayout(data as GetDatabaseResponse);
+    });
+  }
+
+  async queryNotionReserveDb(filters: any): Promise<any> {
+    const databaseReponse = await this.notion.databases.query(
+      {
+        database_id: this.config.notion.reserves_database_id,
+        filter: filters,
+      } as QueryDatabaseParameters
+    );
+    return databaseReponse.results.map((data: any) => {
+      return this.toReserve(data as GetDatabaseResponse);
     });
   }
 
@@ -199,7 +285,7 @@ export class NotionHandler implements DataContentHandler {
 
   async pageIdToProposal(pageId: string) {
     const page = await this.notion.pages.retrieve({ page_id: pageId });
-    return this.toProposal(page);
+    return this.toProposal(page, true);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -207,8 +293,11 @@ export class NotionHandler implements DataContentHandler {
     return `${proposal.markdown}\n\n---\n[Discussion Thread](${proposal.discussionThreadURL}) | [IPFS](${proposal.ipfsURL})`;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  async pushMetaData() {
-    const x = null;
+  async getPayoutsDb(version: string): Promise<Payout[]> {
+    return this.queryNotionPayoutDb(this.config.notion.filters[`payouts${version}`]);
+  }
+
+  async getReserveDb(version: string): Promise<Reserve[]> {
+    return this.queryNotionReserveDb(this.config.notion.filters.reservedIsNotOwner);
   }
 }
