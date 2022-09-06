@@ -42,6 +42,7 @@ export type ProposalStore = Record<string, ProposalNoHash>;
 export interface NanceConfig {
   nameId: string;
   name: string;
+  calendarPath: string;
   scheme: string[];
   proposalDataBackup: string;
   ipfsGateway: string;

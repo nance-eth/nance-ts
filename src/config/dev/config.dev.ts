@@ -1,9 +1,12 @@
 import 'dotenv/config';
 import { NanceConfig } from '../../types';
 
+const NAME = 'dev';
+
 const config: NanceConfig = {
   nameId: 'dev',
   name: 'dev',
+  calendarPath: `${__dirname}/${NAME}.ics`,
   scheme: ['github', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
