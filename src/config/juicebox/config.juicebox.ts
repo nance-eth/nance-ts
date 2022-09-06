@@ -1,4 +1,7 @@
-const config = {
+import 'dotenv/config';
+import { NanceConfig } from '../../types';
+
+const config: NanceConfig = {
   nameId: 'juiceboxDAO',
   name: 'juiceboxDAO',
   scheme: ['notion', 'discord', 'snapshot'],
@@ -15,9 +18,12 @@ const config = {
   },
   juicebox: {
     network: 'mainnet',
-    projectId: '1'
+    projectId: '1',
+    // gnosisSafeAddress: '0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e'
+    gnosisSafeAddress: ''
   },
   discord: {
+    API_KEY: process.env.DISCORD_KEY_JUICEBOX ?? '',
     guildId: '775859454780244028',
     channelId: '873248745771372584',
     alertRole: '953865172764729404',
@@ -33,6 +39,7 @@ const config = {
     },
   },
   notion: {
+    API_KEY: process.env.NOTION_KEY_JUICEBOX ?? '',
     publicURLPrefix: 'juicebox.notion.site',
     database_id: '9d126f9148dc42ee83317d5cd74e4db4',
     payouts_database_id: 'c51c3d59c21445988f17c9332b7163dc',

@@ -24,10 +24,9 @@ export class NotionHandler implements DataContentHandler {
   private notionToMd;
 
   constructor(
-    private notionKey: string,
     private config: NanceConfig
   ) {
-    this.notion = new NotionClient({ auth: this.notionKey });
+    this.notion = new NotionClient({ auth: this.config.notion.API_KEY });
     this.notionToMd = new NotionToMarkdown({ notionClient: this.notion });
   }
 
@@ -62,7 +61,7 @@ export class NotionHandler implements DataContentHandler {
         notionUtils.getRichText(
           unconvertedProposal,
           this.config.notion.propertyKeys.governanceCycle
-        ).split(this.config.notion.propertyKeys.governanceCyclePrefix)[1]
+        ).split(this.config.notion.propertyKeys.governanceCyclePrefix)[1] ?? ''
       )
     };
     if (getExtendedData) {

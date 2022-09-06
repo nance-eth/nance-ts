@@ -241,7 +241,7 @@ export class JuiceboxHandlerV2 {
       'reconfigureFundingCyclesOf',
       reconfigureFundingCyclesOfData
     );
-    // console.dir(this.controllerInterface.decodeFunctionData(
+    // console.dir(this.JBController.interface.decodeFunctionData(
     //   'reconfigureFundingCyclesOf',
     //   encodedReconfiguration
     // ), { depth: null });

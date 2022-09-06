@@ -21,9 +21,9 @@ export class Nance {
   constructor(
     protected config: NanceConfig
   ) {
-    this.proposalHandler = new NotionHandler(keys.NOTION_KEY, this.config);
+    this.proposalHandler = new NotionHandler(this.config);
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
-    this.dialogHandler = new DiscordHandler(keys.DISCORD_KEY, this.config);
+    this.dialogHandler = new DiscordHandler(this.config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
   }
 

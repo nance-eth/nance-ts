@@ -60,6 +60,7 @@ export interface NanceConfig {
     gnosisSafeAddress: string;
   };
   discord: {
+    API_KEY: string;
     guildId: string;
     channelId: string;
     alertRole: string;
@@ -75,6 +76,7 @@ export interface NanceConfig {
     };
   };
   notion: {
+    API_KEY: string;
     publicURLPrefix: string;
     database_id: string;
     payouts_database_id: string;

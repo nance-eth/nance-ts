@@ -1,4 +1,7 @@
-const config = {
+import 'dotenv/config';
+import { NanceConfig } from '../../types';
+
+const config: NanceConfig = {
   nameId: 'dev',
   name: 'dev',
   scheme: ['github', 'discord', 'snapshot'],
@@ -22,11 +25,11 @@ const config = {
     gnosisSafeAddress: '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6'
   },
   discord: {
+    API_KEY: process.env.DISCORD_KEY_DEV ?? '',
     guildId: '889377541675159602',
     channelId: '964601032703352873',
     alertRole: '958529682796605440',
     poll: {
-      votingTimeDays: 3,
       voteYesEmoji: '👍',
       voteNoEmoji: '👎',
       voteGoVoteEmoji: '🗳',
@@ -38,10 +41,11 @@ const config = {
     },
   },
   notion: {
+    API_KEY: process.env.NOTION_KEY_DEV ?? '',
     publicURLPrefix: 'foil-flat-c43.notion.site',
     database_id: '65d4e28b2d624a97bdbcd09d54b5add4',
-    payouts_database_id: 'f5aaed6fa15d4138b52069b097510a55',
-    reserves_database_id: '5f03d3ded5294819baa05210f41ad395',
+    payouts_database_id: '039a723a7f734803842593b78a8198b5',
+    reserves_database_id: '5e62c3b048944801bee6bf48b48896ba',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',
       status: 'Status',
