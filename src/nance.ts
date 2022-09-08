@@ -19,7 +19,7 @@ export class Nance {
   private discussionInterval: any;
 
   constructor(
-    protected config: NanceConfig
+    public config: NanceConfig
   ) {
     this.proposalHandler = new NotionHandler(this.config);
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
