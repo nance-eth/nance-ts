@@ -28,6 +28,7 @@ export type Payout = {
   address: string;
   amountUSD: number;
   count?: number;
+  treasuryVersion?: string;
 };
 
 export type Reserve = {
@@ -98,10 +99,17 @@ export interface NanceConfig {
       categoryPayout: string;
       governanceCycle: string;
       governanceCyclePrefix: string;
+      reservePercentage: string;
+      payoutName: string;
+      payoutType: string;
       payoutAmountUSD: string;
       payoutAddress: string;
       payoutCount: string;
-      reservePercentage: string;
+      treasuryVersion: string;
+      payoutFirstFC: string;
+      payoutLastFC: string;
+      payoutRenewalFC: string;
+      payoutProposalLink: string;
     };
     filters: any;
   };

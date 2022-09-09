@@ -5,13 +5,13 @@ export const getTitle = (page:any) => {
   // multiple objects, map into single string separated by ' '
   return page.properties.Name.title.map((t:any) => {
     return t.plain_text;
-  }).join(' ');
+  }).join(' ').trim();
 };
 
 export function getRichText(page:any, property:any): string {
   return page.properties[property].rich_text.map((t:any) => {
     return t.plain_text;
-  }).join(' ');
+  }).join(' ').trim();
 }
 
 export function getNumber(page:any, property:any): number {

@@ -6,7 +6,7 @@ import { getConfig } from '../configLoader';
 async function main() {
   const config  = await getConfig();
   const nance = new Nance(config);
-  const treasury = new NanceTreasury(config, nance);
+  const treasury = new NanceTreasury(nance);
   const nanceExt = new NanceExtensions(config);
 
   const cycle = 28;

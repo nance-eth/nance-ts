@@ -66,7 +66,14 @@ const config: NanceConfig = {
       payoutAmountUSD: 'USD Payout Amount',
       payoutAddress: 'Payout Address',
       payoutCount: 'Number of Payouts',
-      reservePercentage: 'Percentage'
+      reservePercentage: 'Percentage',
+      treasuryVersion: 'JB DAO Treasury',
+      payoutFirstFC: 'First FC',
+      payoutLastFC: 'Last FC',
+      payoutRenewalFC: 'Renewal FC',
+      payoutProposalLink: 'Proposal',
+      payoutType: 'Type of payout',
+      payoutName: 'ENS'
     },
     filters: { }
   },
@@ -86,7 +93,7 @@ const config: NanceConfig = {
       ipfs: 'Data Backup',
       vote: 'Voting',
       category: 'Category',
-      governanceCycle: 'Funding Cycle'
+      governanceCycle: 'Funding Cycle',
     },
   },
   snapshot: {
@@ -162,6 +169,23 @@ config.notion.filters = {
     select: {
       equals: 'Voting',
     },
+  },
+
+  approvedRecurringPayment: {
+    and: [
+      {
+        property: 'Status',
+        select: {
+          equals: 'Approved',
+        },
+      },
+      {
+        property: config.notion.propertyKeys.category,
+        multi_select: {
+          contains: config.notion.propertyKeys.categoryRecurringPayout
+        }
+      }
+    ],
   },
 
   payoutsV1: {

@@ -6,7 +6,8 @@ import {
   UpdatePageParameters,
   UpdatePageResponse,
   GetDatabaseResponse,
-  GetPageResponse
+  GetPageResponse,
+  CreatePageParameters
 } from '@notionhq/client/build/src/api-endpoints';
 import {
   DataContentHandler
@@ -79,6 +80,10 @@ export class NotionHandler implements DataContentHandler {
           count: notionUtils.getNumber(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutCount
+          ),
+          treasuryVersion: notionUtils.getRichText(
+            unconvertedProposal,
+            this.config.notion.propertyKeys.treasuryVersion
           )
         };
       } else if (cleanProposal.category === this.config.notion.propertyKeys.categoryPayout) {
@@ -115,7 +120,7 @@ export class NotionHandler implements DataContentHandler {
     };
   }
 
-  async queryNotionDb(filters: any): Promise<Proposal[]> {
+  async queryNotionDb(filters: any, extendedData = false): Promise<Proposal[]> {
     const databaseReponse = await this.notion.databases.query(
       {
         database_id: this.config.notion.database_id,
@@ -127,7 +132,7 @@ export class NotionHandler implements DataContentHandler {
       } as QueryDatabaseParameters
     );
     return databaseReponse.results.map((data: any) => {
-      return this.toProposal(data as GetDatabaseResponse);
+      return this.toProposal(data as GetDatabaseResponse, extendedData);
     }).sort((a, b) => {
       // sort ascending by proposalId
       return Number(a.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1])
@@ -185,6 +190,72 @@ export class NotionHandler implements DataContentHandler {
       this.config.notion.filters.voting
     );
     return proposals;
+  }
+
+  async getApprovedRecurringPaymentProposals(governanceCycle: string): Promise<Proposal[]> {
+    // add filter by governance cycle (this changes so must push it in here)
+    this.config.notion.filters.approvedRecurringPayment.and.push(
+      {
+        property: this.config.notion.propertyKeys.governanceCycle,
+        rich_text: {
+          equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
+        }
+      }
+    );
+    const proposals = await this.queryNotionDb(
+      this.config.notion.filters.approvedRecurringPayment,
+      true // include payout data
+    );
+    return proposals;
+  }
+
+  async addPayoutToDb(payoutTitle: string, proposal: Proposal) {
+    this.notion.pages.create({
+      parent: {
+        database_id: this.config.notion.payouts_database_id,
+      },
+      properties: {
+        [this.config.notion.propertyKeys.payoutName]: {
+          title: [
+            {
+              text: { content: payoutTitle },
+            }
+          ]
+        },
+        [this.config.notion.propertyKeys.payoutAddress]: {
+          rich_text: [
+            {
+              text: { content: proposal.payout!.address }
+            }
+          ]
+        },
+        [this.config.notion.propertyKeys.payoutAmountUSD]: {
+          number: proposal.payout!.amountUSD
+        },
+        [this.config.notion.propertyKeys.treasuryVersion]: {
+          rich_text: [
+            {
+              text: { content: proposal.payout!.treasuryVersion }
+            }
+          ]
+        },
+        [this.config.notion.propertyKeys.payoutType]: {
+          select: { name: 'Recurring' }
+        },
+        [this.config.notion.propertyKeys.payoutProposalLink]: {
+          url: proposal.voteURL
+        },
+        [this.config.notion.propertyKeys.payoutFirstFC]: {
+          number: proposal.governanceCycle
+        },
+        [this.config.notion.propertyKeys.payoutLastFC]: {
+          number: proposal.governanceCycle! + proposal.payout!.count!
+        },
+        [this.config.notion.propertyKeys.payoutRenewalFC]: {
+          number: (proposal.governanceCycle! + proposal.payout!.count! + 1)
+        }
+      }
+    } as CreatePageParameters);
   }
 
   async getNextProposalIdNumber(): Promise<number> {

@@ -23,7 +23,7 @@ const config: NanceConfig = {
     // network: 'mainnet',
     // projectId: '188'
     // gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199'
-    network: 'rinkeby',
+    network: 'mainnet',
     projectId: '4661',
     gnosisSafeAddress: '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6'
   },
@@ -46,7 +46,7 @@ const config: NanceConfig = {
   notion: {
     API_KEY: process.env.NOTION_KEY_DEV ?? '',
     publicURLPrefix: 'foil-flat-c43.notion.site',
-    database_id: '65d4e28b2d624a97bdbcd09d54b5add4',
+    database_id: '2303e0fdc0514725b1935d6674d32874',
     payouts_database_id: '039a723a7f734803842593b78a8198b5',
     reserves_database_id: '5e62c3b048944801bee6bf48b48896ba',
     propertyKeys: {
@@ -68,7 +68,14 @@ const config: NanceConfig = {
       payoutAmountUSD: 'USD Payout Amount',
       payoutAddress: 'Payout Address',
       payoutCount: 'Number of Payouts',
-      reservePercentage: 'Percentage'
+      reservePercentage: 'Percentage',
+      treasuryVersion: 'JB DAO Treasury',
+      payoutFirstFC: 'First FC',
+      payoutLastFC: 'Last FC',
+      payoutRenewalFC: 'Renewal FC',
+      payoutProposalLink: 'Proposal',
+      payoutType: 'Type of payout',
+      payoutName: 'ENS'
     },
     filters: { }
   },
@@ -164,6 +171,23 @@ config.notion.filters = {
     select: {
       equals: 'Voting',
     },
+  },
+
+  approvedRecurringPayment: {
+    and: [
+      {
+        property: 'Status',
+        select: {
+          equals: 'Approved',
+        },
+      },
+      {
+        property: config.notion.propertyKeys.category,
+        multi_select: {
+          contains: config.notion.propertyKeys.categoryRecurringPayout
+        }
+      }
+    ],
   },
 
   payoutsV1: {

@@ -1,4 +1,3 @@
-import { NanceConfig } from './types';
 import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
 import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
 import { BallotKey } from './juicebox/typesV2';
@@ -7,19 +6,35 @@ import { Nance } from './nance';
 export class NanceTreasury {
   juiceboxHandlerV1;
   juiceboxHandlerV2;
+  provider;
 
   constructor(
-    protected config: NanceConfig,
     protected nance: Nance
   ) {
     this.juiceboxHandlerV1 = new JuiceboxHandlerV1(
-      config.juicebox.projectId,
-      config.juicebox.network
+      nance.config.juicebox.projectId,
+      nance.config.juicebox.network
     );
     this.juiceboxHandlerV2 = new JuiceboxHandlerV2(
-      config.juicebox.projectId,
-      config.juicebox.network
+      nance.config.juicebox.projectId,
+      nance.config.juicebox.network
     );
+    this.provider = this.juiceboxHandlerV2.provider;
+  }
+
+  // async removeStalePayouts() {
+  //
+  // }
+
+  async updatePayoutTableFromProposals(governanceCycle: string) {
+    const approvedReccuringPayoutProposals = await this.nance.proposalHandler.getApprovedRecurringPaymentProposals(governanceCycle);
+    approvedReccuringPayoutProposals.map((payoutProposal) => {
+      const payoutTitle = payoutProposal.title.toLowerCase().match(/[a-z1-9]*.eth/)?.[0] ?? payoutProposal.title;
+      return this.nance.proposalHandler.addPayoutToDb(
+        payoutTitle,
+        payoutProposal
+      );
+    });
   }
 
   async payoutTableToGroupedSplitsStruct(version: string) {

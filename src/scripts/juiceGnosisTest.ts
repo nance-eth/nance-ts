@@ -8,7 +8,7 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 async function main() {
   const config = await getConfig();
   const nance = new Nance(config);
-  const treasury = new NanceTreasury(config, nance);
+  const treasury = new NanceTreasury(nance);
   const gnosis = await GnosisHandler.initializeSafe(config.juicebox.gnosisSafeAddress, 'rinkeby');
   const { address, data } = await treasury.encodeReconfigureFundingCyclesOf();
   const gnosisInfo = await gnosis.getGasEstimate({
