@@ -120,14 +120,14 @@ export class NotionHandler implements DataContentHandler {
     };
   }
 
-  async queryNotionDb(filters: any, extendedData = false): Promise<Proposal[]> {
+  async queryNotionDb(filters: any, extendedData = false, sortTimeDirection = 'ascending'): Promise<Proposal[]> {
     const databaseReponse = await this.notion.databases.query(
       {
         database_id: this.config.notion.database_id,
         filter: filters,
         sorts: [{
           timestamp: 'created_time',
-          direction: 'ascending'
+          direction: sortTimeDirection
         }]
       } as QueryDatabaseParameters
     );
@@ -260,7 +260,9 @@ export class NotionHandler implements DataContentHandler {
 
   async getNextProposalIdNumber(): Promise<number> {
     const proposals = await this.queryNotionDb(
-      this.config.notion.filters.proposalId
+      this.config.notion.filters.proposalId,
+      false,
+      'descending'
     );
     const sortProposalsById = proposals.map((proposal) => {
       return Number(proposal.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1]);
