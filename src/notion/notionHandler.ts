@@ -209,52 +209,98 @@ export class NotionHandler implements DataContentHandler {
     return proposals;
   }
 
-  async addPayoutToDb(payoutTitle: string, proposal: Proposal) {
+  async addPayoutToDb(payoutTitle: string, proposal: Proposal): Promise<string> {
+    if (proposal.payout && proposal.payout.count && proposal.governanceCycle) {
+      this.notion.pages.create({
+        parent: {
+          database_id: this.config.notion.payouts_database_id,
+        },
+        properties: {
+          [this.config.notion.propertyKeys.payoutName]: {
+            title: [
+              {
+                text: { content: payoutTitle },
+              }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutAddress]: {
+            rich_text: [
+              {
+                text: { content: proposal.payout.address }
+              }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutAmountUSD]: {
+            number: proposal.payout.amountUSD
+          },
+          [this.config.notion.propertyKeys.treasuryVersion]: {
+            rich_text: [
+              {
+                text: { content: proposal.payout.treasuryVersion }
+              }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutType]: {
+            select: { name: 'Recurring' }
+          },
+          [this.config.notion.propertyKeys.payoutProposalLink]: {
+            url: proposal.voteURL
+          },
+          [this.config.notion.propertyKeys.payoutFirstFC]: {
+            number: proposal.governanceCycle
+          },
+          [this.config.notion.propertyKeys.payoutLastFC]: {
+            number: proposal.governanceCycle + proposal.payout.count
+          },
+          [this.config.notion.propertyKeys.payoutRenewalFC]: {
+            number: (proposal.governanceCycle + proposal.payout.count + 1)
+          }
+        }
+      } as CreatePageParameters);
+      return Promise.resolve('Success');
+    }
+    // eslint-disable-next-line prefer-promise-reject-errors
+    return Promise.reject('Bad proposal format');
+  }
+
+  async addProposalToDb(proposal: Proposal) {
     this.notion.pages.create({
+      icon: { type: 'emoji', emoji: '📜' },
       parent: {
-        database_id: this.config.notion.payouts_database_id,
+        database_id: this.config.notion.database_id
       },
       properties: {
-        [this.config.notion.propertyKeys.payoutName]: {
+        Name: {
           title: [
-            {
-              text: { content: payoutTitle },
-            }
+            { text: { content: proposal.title } }
           ]
         },
-        [this.config.notion.propertyKeys.payoutAddress]: {
+        [this.config.notion.propertyKeys.category]: {
+          multi_select: [
+            { name: proposal.category }
+          ]
+        },
+        [this.config.notion.propertyKeys.governanceCycle]: {
           rich_text: [
-            {
-              text: { content: proposal.payout!.address }
-            }
+            { text: { content: String(proposal.governanceCycle) } }
           ]
         },
-        [this.config.notion.propertyKeys.payoutAmountUSD]: {
-          number: proposal.payout!.amountUSD
+        [this.config.notion.propertyKeys.status]: {
+          select: { name: 'Draft' }
         },
-        [this.config.notion.propertyKeys.treasuryVersion]: {
-          rich_text: [
-            {
-              text: { content: proposal.payout!.treasuryVersion }
-            }
-          ]
-        },
-        [this.config.notion.propertyKeys.payoutType]: {
-          select: { name: 'Recurring' }
-        },
-        [this.config.notion.propertyKeys.payoutProposalLink]: {
-          url: proposal.voteURL
-        },
-        [this.config.notion.propertyKeys.payoutFirstFC]: {
-          number: proposal.governanceCycle
-        },
-        [this.config.notion.propertyKeys.payoutLastFC]: {
-          number: proposal.governanceCycle! + proposal.payout!.count!
-        },
-        [this.config.notion.propertyKeys.payoutRenewalFC]: {
-          number: (proposal.governanceCycle! + proposal.payout!.count! + 1)
+        Date: {
+          date: { start: new Date().toISOString().split('T')[0] }
         }
-      }
+      },
+      children: [
+        {
+          paragraph: {
+            rich_text: [
+              { text: { content: 'testing123' } }
+            ]
+          }
+        }
+      ]
     } as CreatePageParameters);
   }
 

@@ -1,5 +1,5 @@
 import cors from 'cors';
-import express from 'express';
+import express, { query } from 'express';
 import { NotionHandler } from '../notion/notionHandler';
 import { getConfig } from '../configLoader';
 
@@ -10,17 +10,26 @@ app.use(cors({ maxAge: 86400 }));
 
 const PORT = process.env.PORT || 3000;
 
-app.use(async (request, response, next) => {
-  const { space } = request.body;
+app.use('/notion/:space', async (request, response, next) => {
+  const { space } = request.params;
+  console.log(space);
   const config = await getConfig(space);
   response.locals.notion = new NotionHandler(config);
   next();
 });
 
-app.post('/notion', async (request, response, next) => {
-  console.log(await response.locals.notion.getPayoutsDb('V2'));
+app.post('/notion/:space/upload', async (request, response) => {
+  const { proposal } = request.body;
+  response.locals.notion.addProposalToDb(proposal);
+  // console.log(notion.databases.query());
   // const notion = new NotionHandler(config);
   // console.log(await getDatabase());
+});
+
+app.get('/notion/:space/getPage/:pageId', async (request, response) => {
+  const { pageId } = request.params;
+  console.log(pageId);
+  console.dir(await response.locals.notion.notion.pages.retrieve({ page_id: pageId }));
 });
 
 app.listen(PORT, () => {
