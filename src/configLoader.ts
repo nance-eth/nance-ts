@@ -3,8 +3,7 @@ import { NanceConfig } from './types';
 
 const CONFIG_ENV = process.env.CONFIG ?? '';
 if (CONFIG_ENV === '') {
-  logger.info('Specify CONFIG!');
-  process.exit();
+  logger.info('no CONFIG specify name when loading!');
 }
 const configPath = `${__dirname}/config/${CONFIG_ENV}/config.${CONFIG_ENV}`;
 export const calendarPath = `${__dirname}/config/${CONFIG_ENV}/${CONFIG_ENV}.ics`;

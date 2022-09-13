@@ -7,3 +7,5 @@ node_modules/
 *.log
 
 src/config/dev/dev.ics
+
+dist/
