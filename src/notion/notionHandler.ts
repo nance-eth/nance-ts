@@ -206,6 +206,21 @@ export class NotionHandler implements DataContentHandler {
       this.config.notion.filters.approvedRecurringPayment,
       true // include payout data
     );
+    this.config.notion.filters.approvedRecurringPayment.and.pop();
+    return proposals;
+  }
+
+  async getProposalsByGovernanceCycle(governanceCycle: string): Promise<Proposal[]> {
+    const filter = {
+      property: this.config.notion.propertyKeys.governanceCycle,
+      rich_text: {
+        equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
+      }
+    };
+    const proposals = await this.queryNotionDb(
+      filter,
+      true // include payout data
+    );
     return proposals;
   }
 

@@ -47,6 +47,16 @@ router.get('/:space/query/temperatureCheck', async (request, response) => {
 });
 
 router.get('/:space/query/vote', async (request, response) => {
+  const { cycle } = request.query;
+  if (cycle) {
+    return response.send(
+      await response.locals.notion.getApprovedRecurringPaymentProposals(cycle).then((data: Proposal[]) => {
+        return data;
+      }).catch((e: any) => {
+        return (e);
+      })
+    );
+  }
   return response.send(
     await response.locals.notion.getVoteProposals().then((data: Proposal[]) => {
       return data;
