@@ -138,7 +138,7 @@ export class Nance {
     });
   }
 
-  async votingSetup(startDate: Date, endDate: Date) {
+  async votingSetup(startDate: Date, endDate: Date): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingSetup() begin...`);
     this.clearDiscussionInterval();
     const voteProposals = await this.proposalHandler.getVoteProposals();
@@ -163,7 +163,9 @@ export class Nance {
         this.dialogHandler.sendVoteRollup(voteProposals, endDate);
         logger.info(`${this.config.name}: votingSetup() complete`);
         logger.info('===================================================================');
+        return voteProposals;
       }
+      return null;
     }).catch((e) => {
       logger.error(`${this.config.name}: votingSetup() error:`);
       logger.error(e);

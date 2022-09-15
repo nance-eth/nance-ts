@@ -138,7 +138,8 @@ export class GithubProposalHandler {
     return Object.fromEntries(
       proposals.map((proposal) => {
         const proposalNoHash = <Omit<Proposal, 'hash'>>omitKey(proposal, 'hash');
-        return [proposal.hash, proposalNoHash];
+        const proposalNoHashNoMarkdown = <Omit<Proposal, 'hash'>>omitKey(proposalNoHash, 'markdown');
+        return [proposal.hash, proposalNoHashNoMarkdown];
       })
     );
   }

@@ -12,11 +12,11 @@ const pageId = '';
 
 async function main() {
   config = await getConfig();
-  const nanceExt = new NanceExtensions(config);
   const nance = new Nance(config);
+  const nanceExt = new NanceExtensions(nance);
   await sleep(2000);
   const nextCycle = Number(await nanceExt.githubProposalHandler.getCurrentGovernanceCycle()) + 1;
-  const temperatureCheckProposals = await nance.proposalHandler.getTemperatureCheckProposals();
+  const temperatureCheckProposals = await nance.proposalHandler.getVoteProposals();
   Promise.all(temperatureCheckProposals.map(async (proposal) => {
     proposal.governanceCycle = nextCycle;
     proposal.markdown = await nance.proposalHandler.getContentMarkdown(proposal.hash);
