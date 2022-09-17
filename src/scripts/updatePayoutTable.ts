@@ -6,7 +6,7 @@ async function main() {
   const config = await getConfig();
   const nance = new Nance(config);
   const treasury = new NanceTreasury(nance);
-  treasury.updatePayoutTableFromProposals('29');
+  treasury.updatePayoutTableFromProposals('31');
 }
 
 main();

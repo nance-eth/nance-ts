@@ -210,52 +210,54 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async addPayoutToDb(payoutTitle: string, proposal: Proposal) {
-    this.notion.pages.create({
-      parent: {
-        database_id: this.config.notion.payouts_database_id,
-      },
-      properties: {
-        [this.config.notion.propertyKeys.payoutName]: {
-          title: [
-            {
-              text: { content: payoutTitle },
-            }
-          ]
+    if (proposal.payout && proposal.payout.count && proposal.governanceCycle) {
+      this.notion.pages.create({
+        parent: {
+          database_id: this.config.notion.payouts_database_id,
         },
-        [this.config.notion.propertyKeys.payoutAddress]: {
-          rich_text: [
-            {
-              text: { content: proposal.payout!.address }
-            }
-          ]
-        },
-        [this.config.notion.propertyKeys.payoutAmountUSD]: {
-          number: proposal.payout!.amountUSD
-        },
-        [this.config.notion.propertyKeys.treasuryVersion]: {
-          rich_text: [
-            {
-              text: { content: proposal.payout!.treasuryVersion }
-            }
-          ]
-        },
-        [this.config.notion.propertyKeys.payoutType]: {
-          select: { name: 'Recurring' }
-        },
-        [this.config.notion.propertyKeys.payoutProposalLink]: {
-          url: proposal.voteURL
-        },
-        [this.config.notion.propertyKeys.payoutFirstFC]: {
-          number: proposal.governanceCycle
-        },
-        [this.config.notion.propertyKeys.payoutLastFC]: {
-          number: proposal.governanceCycle! + proposal.payout!.count!
-        },
-        [this.config.notion.propertyKeys.payoutRenewalFC]: {
-          number: (proposal.governanceCycle! + proposal.payout!.count! + 1)
+        properties: {
+          [this.config.notion.propertyKeys.payoutName]: {
+            title: [
+              {
+                text: { content: payoutTitle },
+              }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutAddress]: {
+            rich_text: [
+              {
+                text: { content: proposal.payout.address }
+              }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutAmountUSD]: {
+            number: proposal.payout.amountUSD
+          },
+          [this.config.notion.propertyKeys.treasuryVersion]: {
+            rich_text: [
+              {
+                text: { content: proposal.payout.treasuryVersion }
+              }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutType]: {
+            select: { name: 'NANCE' } // mark as nance for now so its easy to identify and supplement manually
+          },
+          [this.config.notion.propertyKeys.payoutProposalLink]: {
+            url: proposal.voteURL
+          },
+          [this.config.notion.propertyKeys.payoutFirstFC]: {
+            number: proposal.governanceCycle
+          },
+          [this.config.notion.propertyKeys.payoutLastFC]: {
+            number: (proposal.payout.count > 1) ? (proposal.governanceCycle + proposal.payout.count) : proposal.governanceCycle
+          },
+          [this.config.notion.propertyKeys.payoutRenewalFC]: {
+            number: (proposal.payout.count > 1) ? (proposal.governanceCycle + proposal.payout.count + 1) : proposal.governanceCycle + 1
+          }
         }
-      }
-    } as CreatePageParameters);
+      } as CreatePageParameters);
+    }
   }
 
   async getNextProposalIdNumber(): Promise<number> {
