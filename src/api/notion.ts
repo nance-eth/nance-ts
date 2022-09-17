@@ -18,7 +18,10 @@ router.use('/:space', async (request, response, next) => {
 
 router.post('/:space/upload', async (request, response) => {
   const { proposal } = request.body;
+  proposal.markdown = proposal.body;
+  proposal.category = 'Payout';
   response.locals.notion.addProposalToDb(proposal);
+  response.send('ok');
 });
 
 router.get('/:space/getPage/:pageId', async (request, response) => {

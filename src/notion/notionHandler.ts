@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { Client as NotionClient } from '@notionhq/client';
 import { NotionToMarkdown } from 'notion-to-md';
+import { markdownToBlocks } from '@tryfabric/martian';
 import {
   QueryDatabaseParameters,
   UpdatePageParameters,
@@ -68,7 +69,6 @@ export class NotionHandler implements DataContentHandler {
     if (getExtendedData) {
       if (cleanProposal.category === this.config.notion.propertyKeys.categoryRecurringPayout) {
         cleanProposal.payout = {
-          type: 'recurring',
           address: notionUtils.getRichText(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutAddress
@@ -88,11 +88,11 @@ export class NotionHandler implements DataContentHandler {
         };
       } else if (cleanProposal.category === this.config.notion.propertyKeys.categoryPayout) {
         cleanProposal.payout = {
-          type: 'onetime',
           address: notionUtils.getRichText(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutAddress
           ),
+          count: 1,
           amountUSD: notionUtils.getNumber(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutAmountUSD
@@ -105,7 +105,6 @@ export class NotionHandler implements DataContentHandler {
 
   private toPayout(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Payout {
     return {
-      type: 'recurring',
       address: notionUtils.getRichText(unconvertedPayout, this.config.notion.propertyKeys.payoutAddress),
       amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.notion.propertyKeys.payoutAmountUSD),
       count:
@@ -279,44 +278,39 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async addProposalToDb(proposal: Proposal) {
-    this.notion.pages.create({
-      icon: { type: 'emoji', emoji: '📜' },
-      parent: {
-        database_id: this.config.notion.database_id
-      },
-      properties: {
-        Name: {
-          title: [
-            { text: { content: proposal.title } }
-          ]
+    if (proposal.markdown) {
+      this.notion.pages.create({
+        icon: { type: 'emoji', emoji: '📜' },
+        parent: {
+          database_id: this.config.notion.database_id
         },
-        [this.config.notion.propertyKeys.category]: {
-          multi_select: [
-            { name: proposal.category }
-          ]
-        },
-        [this.config.notion.propertyKeys.governanceCycle]: {
-          rich_text: [
-            { text: { content: String(proposal.governanceCycle) } }
-          ]
-        },
-        [this.config.notion.propertyKeys.status]: {
-          select: { name: 'Draft' }
-        },
-        Date: {
-          date: { start: new Date().toISOString().split('T')[0] }
-        }
-      },
-      children: [
-        {
-          paragraph: {
-            rich_text: [
-              { text: { content: 'testing123' } }
+        properties: {
+          Name: {
+            title: [
+              { text: { content: proposal.title } }
             ]
+          },
+          [this.config.notion.propertyKeys.category]: {
+            multi_select: [
+              { name: proposal.category }
+            ]
+          },
+          [this.config.notion.propertyKeys.governanceCycle]: {
+            rich_text: [
+              { text: { content: String(proposal.governanceCycle) } }
+            ]
+          },
+          [this.config.notion.propertyKeys.status]: {
+            select: { name: 'Draft' }
+          },
+          Date: {
+            date: { start: new Date().toISOString().split('T')[0] }
           }
-        }
-      ]
-    } as CreatePageParameters);
+        },
+        children:
+          markdownToBlocks(proposal.markdown)
+      } as CreatePageParameters);
+    }
   }
 
   async getNextProposalIdNumber(): Promise<number> {

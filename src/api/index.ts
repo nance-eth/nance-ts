@@ -8,7 +8,10 @@ import config2 from '../config/dev/config.dev';
 const app = express();
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: false }));
-app.use(cors({ maxAge: 86400 }));
+app.use(cors({
+  maxAge: 86400,
+  origin: 'http://localhost:3001'
+}));
 app.use('/notion', notion);
 
 const PORT = process.env.PORT || 3000;
