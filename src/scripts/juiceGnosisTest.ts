@@ -9,7 +9,7 @@ async function main() {
   const config = await getConfig();
   const nance = new Nance(config);
   const treasury = new NanceTreasury(nance);
-  const gnosis = await GnosisHandler.initializeSafe(config.juicebox.gnosisSafeAddress, 'rinkeby');
+  const gnosis = await GnosisHandler.initializeSafe(config.juicebox.gnosisSafeAddress, config.juicebox.network);
   const { address, data } = await treasury.encodeReconfigureFundingCyclesOf();
   const gnosisInfo = await gnosis.getGasEstimate({
     to: address,

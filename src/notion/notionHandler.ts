@@ -250,10 +250,10 @@ export class NotionHandler implements DataContentHandler {
             number: proposal.governanceCycle
           },
           [this.config.notion.propertyKeys.payoutLastFC]: {
-            number: (proposal.payout.count > 1) ? (proposal.governanceCycle + proposal.payout.count) : proposal.governanceCycle
+            number: (proposal.payout.count > 1) ? (proposal.governanceCycle + proposal.payout.count - 1) : proposal.governanceCycle
           },
           [this.config.notion.propertyKeys.payoutRenewalFC]: {
-            number: (proposal.payout.count > 1) ? (proposal.governanceCycle + proposal.payout.count + 1) : proposal.governanceCycle + 1
+            number: (proposal.payout.count > 1) ? (proposal.governanceCycle + proposal.payout.count) : proposal.governanceCycle + 1
           }
         }
       } as CreatePageParameters);
