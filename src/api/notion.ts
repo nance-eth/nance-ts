@@ -17,9 +17,20 @@ router.use('/:space', async (request, response, next) => {
 });
 
 router.post('/:space/upload', async (request, response) => {
-  const { proposal } = request.body;
+  const {
+    proposal,
+    payout,
+    type,
+    version
+  } = request.body;
   proposal.markdown = proposal.body;
-  proposal.category = 'Payout';
+  proposal.category = type;
+  proposal.payout = {
+    amountUSD: payout.amount,
+    count: payout.duration,
+    address: payout.address,
+    treasuryVersion: `V${version}`
+  };
   response.locals.notion.addProposalToDb(proposal);
   response.send('ok');
 });

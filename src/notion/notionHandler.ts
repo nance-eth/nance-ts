@@ -295,6 +295,22 @@ export class NotionHandler implements DataContentHandler {
               { name: proposal.category }
             ]
           },
+          [this.config.notion.propertyKeys.payoutAddress]: {
+            rich_text: [
+              { text: { content: proposal.payout?.address } }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutCount]: {
+            number: proposal.payout?.count
+          },
+          [this.config.notion.propertyKeys.payoutAmountUSD]: {
+            number: proposal.payout?.amountUSD
+          },
+          [this.config.notion.propertyKeys.treasuryVersion]: {
+            rich_text: [
+              { text: { content: proposal.payout?.treasuryVersion } }
+            ]
+          },
           [this.config.notion.propertyKeys.governanceCycle]: {
             rich_text: [
               { text: { content: String(proposal.governanceCycle) } }
