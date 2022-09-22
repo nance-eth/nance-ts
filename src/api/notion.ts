@@ -72,9 +72,10 @@ router.get('/:space/query/vote', async (request, response) => {
 
 router.get('/:space/query', async (request, response) => {
   const { cycle } = request.query;
-  if (cycle) {
+  const cycleSearch = cycle || await response.locals.notion.getCurrentGovernanceCycle();
+  if (cycleSearch) {
     return response.send(
-      await response.locals.notion.getProposalsByGovernanceCycle(cycle).then((data: Proposal[]) => {
+      await response.locals.notion.getProposalsByGovernanceCycle(cycleSearch).then((data: Proposal[]) => {
         return data;
       }).catch((e: any) => {
         return (e);

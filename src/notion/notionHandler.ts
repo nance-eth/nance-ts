@@ -8,7 +8,7 @@ import {
   UpdatePageResponse,
   GetDatabaseResponse,
   GetPageResponse,
-  CreatePageParameters
+  CreatePageParameters,
 } from '@notionhq/client/build/src/api-endpoints';
 import {
   DataContentHandler
@@ -211,10 +211,20 @@ export class NotionHandler implements DataContentHandler {
 
   async getProposalsByGovernanceCycle(governanceCycle: string): Promise<Proposal[]> {
     const filter = {
-      property: this.config.notion.propertyKeys.governanceCycle,
-      rich_text: {
-        equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
-      }
+      and: [
+        {
+          property: this.config.notion.propertyKeys.governanceCycle,
+          rich_text: {
+            equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
+          }
+        },
+        {
+          property: this.config.notion.propertyKeys.status,
+          select: {
+            does_not_equal: 'Draft'
+          }
+        }
+      ]
     };
     const proposals = await this.queryNotionDb(
       filter,
@@ -448,5 +458,28 @@ export class NotionHandler implements DataContentHandler {
 
   async getReserveDb(version: string): Promise<Reserve[]> {
     return this.queryNotionReserveDb(this.config.notion.filters.reservedIsNotOwner);
+  }
+
+  async getCurrentGovernanceCycle(): Promise<number> {
+    const currentGovernanceCycleBlock = await this.notion.blocks.retrieve({
+      block_id: this.config.notion.current_cycle_block_id
+    }) as any;
+    const currentGovernanceCycle = currentGovernanceCycleBlock.paragraph.rich_text[0].text.content;
+    return Number(currentGovernanceCycle);
+  }
+
+  async incrementGovernanceCycle() {
+    const currentCycle = await this.getCurrentGovernanceCycle();
+    this.notion.blocks.update({
+      block_id: this.config.notion.current_cycle_block_id,
+      paragraph: {
+        rich_text: [
+          {
+            type: 'text',
+            text: { content: String(currentCycle + 1) }
+          }
+        ]
+      }
+    });
   }
 }

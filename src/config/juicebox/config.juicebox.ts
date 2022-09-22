@@ -45,6 +45,7 @@ const config: NanceConfig = {
     API_KEY: process.env.NOTION_KEY_JUICEBOX ?? '',
     publicURLPrefix: 'juicebox.notion.site',
     database_id: '9d126f9148dc42ee83317d5cd74e4db4',
+    current_cycle_block_id: '7e88ba32f5484ea9900a5fb00426bc9a',
     payouts_database_id: 'c51c3d59c21445988f17c9332b7163dc',
     reserves_database_id: 'b7276b64a43643d2bb8ee355376dd4fa',
     propertyKeys: {

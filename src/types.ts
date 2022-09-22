@@ -91,6 +91,7 @@ export interface NanceConfig {
     API_KEY: string;
     publicURLPrefix: string;
     database_id: string;
+    current_cycle_block_id: string;
     payouts_database_id: string;
     reserves_database_id: string;
     propertyKeys: {
