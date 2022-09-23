@@ -2,6 +2,7 @@ import express from 'express';
 import { NotionHandler } from '../notion/notionHandler';
 import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
+import { ProposalType, juicetoolToNotion } from './juicetoolTypes';
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.use('/:space', async (request, response, next) => {
 });
 
 router.post('/:space/upload', async (request, response) => {
+  // console.dir(request.body, { depth: null });
   const {
     proposal,
     payout,
@@ -24,14 +26,20 @@ router.post('/:space/upload', async (request, response) => {
     version
   } = request.body;
   proposal.markdown = proposal.body;
-  proposal.category = type;
+  proposal.category = juicetoolToNotion[type as ProposalType];
+  if (!proposal.governanceCycle) {
+    const currentGovernanceCycle = await response.locals.notion.getCurrentGovernanceCycle();
+    const { governanceCyclePrefix } = response.locals.notion.config.notion.propertyKeys;
+    proposal.governanceCycle = `${governanceCyclePrefix}${currentGovernanceCycle}`;
+  }
   proposal.payout = {
-    amountUSD: payout.amount,
-    count: payout.duration,
-    address: payout.address,
+    amountUSD: payout?.amount || '',
+    count: payout?.duration || '',
+    address: payout?.address || '',
     treasuryVersion: `V${version}`
   };
-  response.locals.notion.addProposalToDb(proposal);
+  console.log(proposal);
+  const uuid = await response.locals.notion.addProposalToDb(proposal);
   response.send('ok');
 });
 

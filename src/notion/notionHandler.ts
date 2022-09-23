@@ -289,7 +289,7 @@ export class NotionHandler implements DataContentHandler {
 
   async addProposalToDb(proposal: Proposal) {
     if (proposal.markdown) {
-      this.notion.pages.create({
+      return this.notion.pages.create({
         icon: { type: 'emoji', emoji: '📜' },
         parent: {
           database_id: this.config.notion.database_id
@@ -311,10 +311,10 @@ export class NotionHandler implements DataContentHandler {
             ]
           },
           [this.config.notion.propertyKeys.payoutCount]: {
-            number: proposal.payout?.count
+            number: proposal.payout?.count || null
           },
           [this.config.notion.propertyKeys.payoutAmountUSD]: {
-            number: proposal.payout?.amountUSD
+            number: proposal.payout?.amountUSD || null
           },
           [this.config.notion.propertyKeys.treasuryVersion]: {
             rich_text: [
@@ -335,8 +335,11 @@ export class NotionHandler implements DataContentHandler {
         },
         children:
           markdownToBlocks(proposal.markdown)
-      } as CreatePageParameters);
+      } as CreatePageParameters).then((notionResponse) => {
+        return notionResponse.id.replaceAll('-', '');
+      });
     }
+    return Promise.reject();
   }
 
   async getNextProposalIdNumber(): Promise<number> {
