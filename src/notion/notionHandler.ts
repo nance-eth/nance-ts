@@ -265,7 +265,7 @@ export class NotionHandler implements DataContentHandler {
             ]
           },
           [this.config.notion.propertyKeys.payoutType]: {
-            select: { name: 'Recurring' }
+            select: { name: 'NANCE' } // mark as nance for now so its easy to identify and supplement manually
           },
           [this.config.notion.propertyKeys.payoutProposalLink]: {
             url: proposal.voteURL

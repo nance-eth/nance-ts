@@ -6,7 +6,7 @@ import { Proposal } from '../types';
 async function main() {
   const config  = await getConfig();
   const nance = new Nance(config);
-  const nanceExt = new NanceExtensions(config);
+  const nanceExt = new NanceExtensions(nance);
   
   const proposals = await nance.proposalHandler.getVoteProposals();
   Promise.all(proposals.map(async (proposal: Proposal) => {

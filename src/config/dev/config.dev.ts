@@ -23,7 +23,7 @@ const config: NanceConfig = {
     // network: 'mainnet',
     // projectId: '188'
     // gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199'
-    network: 'mainnet',
+    network: 'rinkeby',
     projectId: '4661',
     gnosisSafeAddress: '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6'
   },
@@ -48,7 +48,7 @@ const config: NanceConfig = {
     publicURLPrefix: 'foil-flat-c43.notion.site',
     database_id: '8f5a93009a364c4ebf69757ff98be405',
     current_cycle_block_id: '8458fa50e1724d7aa721275a195dece3',
-    payouts_database_id: '039a723a7f734803842593b78a8198b5',
+    payouts_database_id: '5f2b501f8e724af2879f4e440548da72',
     reserves_database_id: '5e62c3b048944801bee6bf48b48896ba',
     propertyKeys: {
       proposalId: 'Juicebox Proposal ID',

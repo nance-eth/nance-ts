@@ -21,7 +21,7 @@ const ONE_HOUR_SECONDS = 1 * 60 * 60;
 async function setup() {
   config = await getConfig();
   nance = new Nance(config);
-  nanceExt = new NanceExtensions(config);
+  nanceExt = new NanceExtensions(nance);
 }
 
 async function scheduleCycle() {
@@ -54,7 +54,9 @@ async function scheduleCycle() {
     } else if (event.title === 'Snapshot Vote') {
       if (!event.inProgress) {
         schedule.scheduleJob('voteSetup', addSecondsToDate(event.start, PADDING_VOTE_START_SECONDS), () => {
-          nance.votingSetup(event.start, event.end);
+          nance.votingSetup(event.start, event.end).then((proposals) => {
+            if (proposals) nanceExt.pushNewCycle(proposals);
+          });
         });
       }
       // end reminder

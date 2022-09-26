@@ -1,21 +1,22 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-param-reassign */
-import { NanceConfig, Proposal } from './types';
+import { GithubFileChange, Proposal } from './types';
 import logger from './logging';
 import { keys } from './keys';
 import { DeeplHandler } from './deepl/deeplHandler';
 import { GithubProposalHandler } from './github/githubProposalHandler';
 import { JSONProposalsToMd } from './github/tableMaker';
+import { Nance } from './nance';
 
 export class NanceExtensions {
   translationHandler;
   githubProposalHandler;
 
   constructor(
-    protected config: NanceConfig
+    protected nance: Nance
   ) {
     this.translationHandler = new DeeplHandler(keys.DEEPL_KEY);
-    this.githubProposalHandler = new GithubProposalHandler(config);
+    this.githubProposalHandler = new GithubProposalHandler(nance.config);
   }
 
   async pushNewCycle(proposals: Proposal[]) {
@@ -25,8 +26,15 @@ export class NanceExtensions {
     const githubCycleDbFiles = this.stageCycleDb(nextCycle, proposals);
     const githubTopDbFiles = await this.stageCompleteDb(proposals);
     const githubGovernanceCycleFile = this.stageGovernanceCycle(nextCycle);
+    let allGithubChanges = githubProposalFiles.concat(githubCycleDbFiles, githubTopDbFiles, githubGovernanceCycleFile);
+    if (this.nance.config.translation) {
+      const githubProposalTransaltionFiles = this.stageTranslationProposals(
+        await this.translateProposals(proposals)
+      );
+      allGithubChanges = allGithubChanges.concat(githubProposalTransaltionFiles);
+    }
     this.githubProposalHandler.GithubAPI.createCommitOnBranch(
-      githubProposalFiles.concat(githubCycleDbFiles, githubTopDbFiles, githubGovernanceCycleFile),
+      allGithubChanges,
       `GC${nextCycle} push`
     );
   }
@@ -44,9 +52,6 @@ export class NanceExtensions {
 
   stageCycleDb(cycle: number, proposals: Proposal[]) {
     const mdTable = JSONProposalsToMd(proposals);
-    proposals.forEach((proposal: Proposal) => {
-      delete proposal.markdown;
-    });
     const proposalStore = this.githubProposalHandler.proposalsToProposalStore(proposals);
     const dbFileChanges = this.githubProposalHandler.cycleDbToFileChanges(
       cycle,
@@ -93,20 +98,21 @@ export class NanceExtensions {
   }
 
   async translateProposals(proposals: Proposal[]): Promise<Proposal[]> {
-    logger.info(`${this.config.name}: translateProposals() begin...`);
+    logger.info(`${this.nance.config.name}: translateProposals() begin...`);
     const nextCycle = Number(await this.githubProposalHandler.getCurrentGovernanceCycle()) + 1;
     return Promise.all(proposals.map(async (proposal) => {
       proposal.governanceCycle = nextCycle;
       const translation = await this.translationHandler.translate(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        proposal.markdown!,
-        this.config.translation.targetLanguage
+        proposal.markdown!.split('```\n\n')[1], // cut out proposal header
+        this.nance.config.translation.targetLanguage
       );
       proposal.translation = {
-        markdown: translation,
-        language: this.config.translation.targetLanguage
+        markdown: translation.replace('∮∮', '## '),
+        language: this.nance.config.translation.targetLanguage
       };
     })).then(() => {
+      logger.info(`${this.nance.config.name}: translateProposals() complete`);
       return proposals;
     });
   }
