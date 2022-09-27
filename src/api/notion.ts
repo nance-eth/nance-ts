@@ -35,7 +35,7 @@ router.post('/:space/upload', async (request, response) => {
   proposal.payout = {
     amountUSD: payout?.amount || '',
     count: payout?.duration || '',
-    address: payout?.address || '',
+    address: (payout.type === 'address') ? payout?.address : `V${version}:${payout.project}`,
     treasuryVersion: `V${version}`
   };
   console.log(proposal);
