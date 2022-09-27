@@ -43,9 +43,15 @@ router.post('/:space/upload', async (request, response) => {
   response.send('ok');
 });
 
-router.get('/:space/getPage/:pageId', async (request, response) => {
-  const { pageId } = request.params;
-  console.dir(await response.locals.notion.notion.pages.retrieve({ page_id: pageId }));
+router.get('/:space/markdown', async (request, response) => {
+  const { hash } = request.query;
+  return response.send(
+    await response.locals.notion.getContentMarkdown(hash).then((data: string) => {
+      return data;
+    }).catch((e: any) => {
+      return (e);
+    })
+  );
 });
 
 router.get('/:space/query/discussion', async (request, response) => {
