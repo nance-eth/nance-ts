@@ -1,6 +1,6 @@
 import cors from 'cors';
 import express from 'express';
-import notion from './notion';
+import api from './api';
 // hacks
 import config from '../config/juicebox/config.juicebox';
 import config2 from '../config/dev/config.dev';
@@ -10,9 +10,12 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: false }));
 app.use(cors({
   maxAge: 86400,
-  // origin: (process.env.NODE_ENV === 'dev') ? 'http://localhost:3001' : '*'
 }));
-app.use('/notion', notion);
+app.use('/', api);
+
+app.get('/', (request, response) => {
+  return response.send(`nance-api commit:${process.env.RAILWAY_GIT_COMMIT_SHA?.substring(0, 7) ?? ''}`);
+});
 
 const PORT = process.env.PORT || 3000;
 
