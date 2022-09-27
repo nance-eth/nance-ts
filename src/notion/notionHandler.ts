@@ -1,13 +1,14 @@
 /* eslint-disable no-param-reassign */
 import { Client as NotionClient } from '@notionhq/client';
 import { NotionToMarkdown } from 'notion-to-md';
+import { markdownToBlocks } from '@tryfabric/martian';
 import {
   QueryDatabaseParameters,
   UpdatePageParameters,
   UpdatePageResponse,
   GetDatabaseResponse,
   GetPageResponse,
-  CreatePageParameters
+  CreatePageParameters,
 } from '@notionhq/client/build/src/api-endpoints';
 import {
   DataContentHandler
@@ -68,7 +69,6 @@ export class NotionHandler implements DataContentHandler {
     if (getExtendedData) {
       if (cleanProposal.category === this.config.notion.propertyKeys.categoryRecurringPayout) {
         cleanProposal.payout = {
-          type: 'recurring',
           address: notionUtils.getRichText(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutAddress
@@ -88,11 +88,11 @@ export class NotionHandler implements DataContentHandler {
         };
       } else if (cleanProposal.category === this.config.notion.propertyKeys.categoryPayout) {
         cleanProposal.payout = {
-          type: 'onetime',
           address: notionUtils.getRichText(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutAddress
           ),
+          count: 1,
           amountUSD: notionUtils.getNumber(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutAmountUSD
@@ -105,7 +105,6 @@ export class NotionHandler implements DataContentHandler {
 
   private toPayout(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Payout {
     return {
-      type: 'recurring',
       address: notionUtils.getRichText(unconvertedPayout, this.config.notion.propertyKeys.payoutAddress),
       amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.notion.propertyKeys.payoutAmountUSD),
       count:
@@ -206,10 +205,35 @@ export class NotionHandler implements DataContentHandler {
       this.config.notion.filters.approvedRecurringPayment,
       true // include payout data
     );
+    this.config.notion.filters.approvedRecurringPayment.and.pop();
     return proposals;
   }
 
-  async addPayoutToDb(payoutTitle: string, proposal: Proposal) {
+  async getProposalsByGovernanceCycle(governanceCycle: string): Promise<Proposal[]> {
+    const filter = {
+      and: [
+        {
+          property: this.config.notion.propertyKeys.governanceCycle,
+          rich_text: {
+            equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
+          }
+        },
+        {
+          property: this.config.notion.propertyKeys.status,
+          select: {
+            does_not_equal: 'Draft'
+          }
+        }
+      ]
+    };
+    const proposals = await this.queryNotionDb(
+      filter,
+      true // include payout data
+    );
+    return proposals;
+  }
+
+  async addPayoutToDb(payoutTitle: string, proposal: Proposal): Promise<string> {
     if (proposal.payout && proposal.payout.count && proposal.governanceCycle) {
       this.notion.pages.create({
         parent: {
@@ -250,14 +274,72 @@ export class NotionHandler implements DataContentHandler {
             number: proposal.governanceCycle
           },
           [this.config.notion.propertyKeys.payoutLastFC]: {
-            number: (proposal.payout.count > 1) ? (proposal.governanceCycle + proposal.payout.count - 1) : proposal.governanceCycle
+            number: proposal.governanceCycle + proposal.payout.count
           },
           [this.config.notion.propertyKeys.payoutRenewalFC]: {
-            number: (proposal.payout.count > 1) ? (proposal.governanceCycle + proposal.payout.count) : proposal.governanceCycle + 1
+            number: (proposal.governanceCycle + proposal.payout.count + 1)
           }
         }
       } as CreatePageParameters);
+      return Promise.resolve('Success');
     }
+    // eslint-disable-next-line prefer-promise-reject-errors
+    return Promise.reject('Bad proposal format');
+  }
+
+  async addProposalToDb(proposal: Proposal) {
+    if (proposal.markdown) {
+      return this.notion.pages.create({
+        icon: { type: 'emoji', emoji: '📜' },
+        parent: {
+          database_id: this.config.notion.database_id
+        },
+        properties: {
+          Name: {
+            title: [
+              { text: { content: proposal.title } }
+            ]
+          },
+          [this.config.notion.propertyKeys.category]: {
+            multi_select: [
+              { name: proposal.category }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutAddress]: {
+            rich_text: [
+              { text: { content: proposal.payout?.address } }
+            ]
+          },
+          [this.config.notion.propertyKeys.payoutCount]: {
+            number: proposal.payout?.count || null
+          },
+          [this.config.notion.propertyKeys.payoutAmountUSD]: {
+            number: proposal.payout?.amountUSD || null
+          },
+          [this.config.notion.propertyKeys.treasuryVersion]: {
+            rich_text: [
+              { text: { content: proposal.payout?.treasuryVersion } }
+            ]
+          },
+          [this.config.notion.propertyKeys.governanceCycle]: {
+            rich_text: [
+              { text: { content: String(proposal.governanceCycle) } }
+            ]
+          },
+          [this.config.notion.propertyKeys.status]: {
+            select: { name: 'Draft' }
+          },
+          Date: {
+            date: { start: new Date().toISOString().split('T')[0] }
+          }
+        },
+        children:
+          markdownToBlocks(proposal.markdown)
+      } as CreatePageParameters).then((notionResponse) => {
+        return notionResponse.id.replaceAll('-', '');
+      });
+    }
+    return Promise.reject();
   }
 
   async getNextProposalIdNumber(): Promise<number> {
@@ -379,5 +461,28 @@ export class NotionHandler implements DataContentHandler {
 
   async getReserveDb(version: string): Promise<Reserve[]> {
     return this.queryNotionReserveDb(this.config.notion.filters.reservedIsNotOwner);
+  }
+
+  async getCurrentGovernanceCycle(): Promise<number> {
+    const currentGovernanceCycleBlock = await this.notion.blocks.retrieve({
+      block_id: this.config.notion.current_cycle_block_id
+    }) as any;
+    const currentGovernanceCycle = currentGovernanceCycleBlock.paragraph.rich_text[0].text.content;
+    return Number(currentGovernanceCycle);
+  }
+
+  async incrementGovernanceCycle() {
+    const currentCycle = await this.getCurrentGovernanceCycle();
+    this.notion.blocks.update({
+      block_id: this.config.notion.current_cycle_block_id,
+      paragraph: {
+        rich_text: [
+          {
+            type: 'text',
+            text: { content: String(currentCycle + 1) }
+          }
+        ]
+      }
+    });
   }
 }

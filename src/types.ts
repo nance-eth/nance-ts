@@ -8,7 +8,8 @@ export interface Proposal {
     markdown?: string;
     language?: string;
   },
-  payout?: Payout,
+  payout?: Payout;
+  notification?: Notification;
   url: string;
   governanceCycle?: number;
   date?: string,
@@ -21,14 +22,23 @@ export interface Proposal {
   ipfsURL: string;
   voteURL: string;
   voteResults?: VoteResults;
+  version?: number;
+  project?: number
 }
 
 export type Payout = {
-  type: 'onetime' | 'recurring';
+  type?: 'address' | 'project';
   address: string;
   amountUSD: number;
-  count?: number;
+  count: number;
   treasuryVersion?: string;
+};
+
+type Notification = {
+  discordUserId: string;
+  expiry: boolean;
+  execution: boolean;
+  progress: boolean;
 };
 
 export type Reserve = {
@@ -81,6 +91,7 @@ export interface NanceConfig {
     API_KEY: string;
     publicURLPrefix: string;
     database_id: string;
+    current_cycle_block_id: string;
     payouts_database_id: string;
     reserves_database_id: string;
     propertyKeys: {

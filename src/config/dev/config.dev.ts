@@ -47,6 +47,7 @@ const config: NanceConfig = {
     API_KEY: process.env.NOTION_KEY_DEV ?? '',
     publicURLPrefix: 'foil-flat-c43.notion.site',
     database_id: '8f5a93009a364c4ebf69757ff98be405',
+    current_cycle_block_id: '8458fa50e1724d7aa721275a195dece3',
     payouts_database_id: '5f2b501f8e724af2879f4e440548da72',
     reserves_database_id: '5e62c3b048944801bee6bf48b48896ba',
     propertyKeys: {
