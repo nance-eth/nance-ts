@@ -3,10 +3,12 @@ import { NotionHandler } from '../notion/notionHandler';
 import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import { ProposalType, juicetoolToNotion } from './juicetoolTypes';
+import logger from '../logging';
 
 const router = express.Router();
+const spacePrefix = '/:space';
 
-router.use('/:space', async (request, response, next) => {
+router.use(spacePrefix, async (request, response, next) => {
   const { space } = request.params;
   try {
     const config = await getConfig(space);
@@ -17,7 +19,7 @@ router.use('/:space', async (request, response, next) => {
   }
 });
 
-router.post('/:space/upload', async (request, response) => {
+router.post(`${spacePrefix}/upload`, async (request, response) => {
   // console.dir(request.body, { depth: null });
   const {
     proposal,
@@ -38,12 +40,15 @@ router.post('/:space/upload', async (request, response) => {
     address: (payout.type === 'address') ? payout?.address : `V${version}:${payout.project}`,
     treasuryVersion: `V${version}`
   };
-  console.log(proposal);
-  const uuid = await response.locals.notion.addProposalToDb(proposal);
-  response.send('ok');
+  logger.debug(proposal);
+  await response.locals.notion.addProposalToDb(proposal).then((hash: string) => {
+    response.json({ status: 'ok', data: hash });
+  }).catch((e: any) => {
+    response.json({ status: 'error', data: e });
+  });
 });
 
-router.get('/:space/markdown', async (request, response) => {
+router.get(`${spacePrefix}/markdown`, async (request, response) => {
   const { hash } = request.query;
   return response.send(
     await response.locals.notion.getContentMarkdown(hash).then((data: string) => {
@@ -54,7 +59,7 @@ router.get('/:space/markdown', async (request, response) => {
   );
 });
 
-router.get('/:space/query/discussion', async (request, response) => {
+router.get(`${spacePrefix}/query/discussion`, async (request, response) => {
   return response.send(
     await response.locals.notion.getDiscussionProposals().then((data: Proposal[]) => {
       return data;
@@ -64,7 +69,7 @@ router.get('/:space/query/discussion', async (request, response) => {
   );
 });
 
-router.get('/:space/query/temperatureCheck', async (request, response) => {
+router.get(`${spacePrefix}/query/temperatureCheck`, async (request, response) => {
   return response.send(
     await response.locals.notion.getTemperatureCheckProposals().then((data: Proposal[]) => {
       return data;
@@ -74,7 +79,7 @@ router.get('/:space/query/temperatureCheck', async (request, response) => {
   );
 });
 
-router.get('/:space/query/vote', async (request, response) => {
+router.get(`${spacePrefix}/query/vote`, async (request, response) => {
   return response.send(
     await response.locals.notion.getVoteProposals().then((data: Proposal[]) => {
       return data;
@@ -84,7 +89,7 @@ router.get('/:space/query/vote', async (request, response) => {
   );
 });
 
-router.get('/:space/query', async (request, response) => {
+router.get(`${spacePrefix}/query`, async (request, response) => {
   const { cycle } = request.query;
   const cycleSearch = cycle || await response.locals.notion.getCurrentGovernanceCycle();
   if (cycleSearch) {
