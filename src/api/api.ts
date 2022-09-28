@@ -20,7 +20,7 @@ router.use(spacePrefix, async (request, response, next) => {
 });
 
 router.post(`${spacePrefix}/upload`, async (request, response) => {
-  // console.dir(request.body, { depth: null });
+  logger.debug(request.body, { depth: null });
   const {
     proposal,
     payout,
