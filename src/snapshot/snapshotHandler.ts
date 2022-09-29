@@ -34,7 +34,7 @@ export class SnapshotHandler {
       type: 'basic',
       title: `${proposal.proposalId} - ${proposal.title}`,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      body: proposal.markdown!,
+      body: proposal.body!,
       discussion: proposal.discussionThreadURL,
       choices: this.config.snapshot.choices,
       start: startTimeStamp,

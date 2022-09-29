@@ -144,13 +144,13 @@ export class Nance {
     const voteProposals = await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
-      proposal.markdown = mdString;
+      proposal.body = mdString;
       if (this.config.proposalDataBackup) {
         const ipfsCID = await this.proposalDataBackupHandler.pinProposal(proposal);
         proposal.ipfsURL = `${this.config.ipfsGateway}/${ipfsCID}`;
       }
       const markdownWithAdditions = this.proposalHandler.appendProposal(proposal);
-      proposal.markdown = markdownWithAdditions;
+      proposal.body = markdownWithAdditions;
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
         startDate,

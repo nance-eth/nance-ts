@@ -7,7 +7,7 @@ const x = {
   "6c7aaacbdd7f48aea253b2df35a598d5": {
       "title": "Renew tankbottom’s recurring payout",
       "url": "/GC27/JBP-227.md",
-      "category": "Recurring Payment",
+      "type": "Recurring Payment",
       "status": "Approved",
       "proposalId": "JBP-227",
       "discussionThreadURL": "https://discord.com/channels/775859454780244028/873248745771372584/997647977273376808",
@@ -35,7 +35,7 @@ const x = {
   "1e375b1e2cd94a7d99306e70ab50d96f": {
       "title": "Felixander renew recurring payout",
       "url": "/GC27/JBP-228.md",
-      "category": "Recurring Payment",
+      "type": "Recurring Payment",
       "status": "Approved",
       "proposalId": "JBP-228",
       "discussionThreadURL": "https://discord.com/channels/775859454780244028/873248745771372584/997619468375175379",
@@ -63,7 +63,7 @@ const x = {
   "9132ac522b6e4493a25b43ddda15dd5d": {
       "title": "Create Recurring Payout for Matthew and Brileigh",
       "url": "/GC27/JBP-229.md",
-      "category": "Recurring Payment",
+      "type": "Recurring Payment",
       "status": "Approved",
       "proposalId": "JBP-229",
       "discussionThreadURL": "https://discord.com/channels/775859454780244028/873248745771372584/997582471388471407",
@@ -91,7 +91,7 @@ const x = {
   "25bd54dedd2649bca5eb7b09b7d88667": {
       "title": "Jango recurring payout",
       "url": "/GC27/JBP-230.md",
-      "category": "Recurring Payment",
+      "type": "Recurring Payment",
       "status": "Approved",
       "proposalId": "JBP-230",
       "discussionThreadURL": "https://discord.com/channels/775859454780244028/873248745771372584/997578518500225164",
@@ -119,7 +119,7 @@ const x = {
   "c1b700dc7c294c1aa3a521b556168ea9": {
       "title": "Set `allowSetController` flag  to  true , and give multisig discretionary permission to execute a controller migration.",
       "url": "/GC27/JBP-231.md",
-      "category": "Funding Cycle Reconfiguration & Protocol Upgrades",
+      "type": "Funding Cycle Reconfiguration & Protocol Upgrades",
       "status": "Approved",
       "proposalId": "JBP-231",
       "discussionThreadURL": "https://discord.com/channels/775859454780244028/873248745771372584/997582472386728016",
@@ -147,7 +147,7 @@ const x = {
   "38f2e6cab592453c94691954ca54fa14": {
       "title": "Renew Recurring Payment Proposal for Viraz",
       "url": "/GC27/JBP-232.md",
-      "category": "Recurring Payment",
+      "type": "Recurring Payment",
       "status": "Approved",
       "proposalId": "JBP-232",
       "discussionThreadURL": "https://discord.com/channels/775859454780244028/873248745771372584/997583978057973790",
@@ -175,7 +175,7 @@ const x = {
   "45441be06be44638a81da149d460fa50": {
       "title": "Set handle of Juicebox V2 project to “@juicebox”",
       "url": "/GC27/JBP-233.md",
-      "category": "One-Time Payout",
+      "type": "One-Time Payout",
       "status": "Approved",
       "proposalId": "JBP-233",
       "discussionThreadURL": "https://discord.com/channels/775859454780244028/873248745771372584/996503828964843520",
@@ -203,7 +203,7 @@ const x = {
   "2ca44f60a16642b39b2cb4b8aaf79035": {
       "title": "Extend registration of jbx.eth and jbox.eth",
       "url": "/GC27/JBP-234.md",
-      "category": "One-Time Payout",
+      "type": "One-Time Payout",
       "status": "Approved",
       "proposalId": "JBP-234",
       "discussionThreadURL": "https://discord.com/channels/775859454780244028/873248745771372584/995117709371125881",

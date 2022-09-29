@@ -1,5 +1,4 @@
 import { NotionHandler } from '../notionHandler';
-import { keys } from '../../keys';
 import { getConfig } from '../../configLoader';
 
 async function main() {

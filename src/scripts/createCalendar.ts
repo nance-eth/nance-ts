@@ -29,7 +29,7 @@ const events = [
     startInputType: 'utc',
     startOutputType: 'utc',
     start: dateToArray(addSecondsToDate(now, 125)),
-    end: dateToArray(addSecondsToDate(now, 180)),
+    end: dateToArray(addSecondsToDate(now, 200)),
     recurrenceRule: 'FREQ=DAILY;INTERVAL=2'
   }
   // {

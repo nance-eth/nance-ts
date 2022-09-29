@@ -6,7 +6,7 @@ import logger from '../../logging';
 import { GithubAPI } from '../../github/githubAPI';
 
 const translator = new DeeplHandler(keys.DEEPL_KEY);
-const notion = new NotionHandler(keys.NOTION_KEY, config);
+const notion = new NotionHandler(config);
 const github = new GithubAPI(keys.GITHUB_KEY, 'jigglyjams', 'jbdao-governance');
 
 const pageId = '5fd9fcde35e84b5cb7af24d57104d78c';

@@ -19,10 +19,10 @@ async function main() {
   const temperatureCheckProposals = await nance.proposalHandler.getVoteProposals();
   Promise.all(temperatureCheckProposals.map(async (proposal) => {
     proposal.governanceCycle = nextCycle;
-    proposal.markdown = await nance.proposalHandler.getContentMarkdown(proposal.hash);
-    const translation = await nanceExt.translationHandler.translate(proposal.markdown, config.translation.targetLanguage);
+    proposal.body = await nance.proposalHandler.getContentMarkdown(proposal.hash);
+    const translation = await nanceExt.translationHandler.translate(proposal.body, config.translation.targetLanguage);
     proposal.translation = {
-      markdown: translation,
+      body: translation,
       language: config.translation.targetLanguage
     }
   })).then(() => {

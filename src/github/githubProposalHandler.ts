@@ -9,7 +9,6 @@ import {
 import { omitKey } from '../utils';
 import { keys } from '../keys';
 import { GithubAPI } from './githubAPI';
-import { P } from '../const';
 
 const GITHUB = 'https://github.com';
 
@@ -36,7 +35,7 @@ export class GithubProposalHandler {
       return {
         path: `GC${proposal.governanceCycle}/${proposal.proposalId}.md`,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        contents: proposal.markdown!
+        contents: proposal.body!
       };
     });
   }
@@ -49,7 +48,7 @@ export class GithubProposalHandler {
       return {
         path: `GC${proposal.governanceCycle}/translation/${language}/${proposal.proposalId}_${language}.md`,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        contents: proposal.translation!.markdown!
+        contents: proposal.translation!.body!
       };
     });
   }

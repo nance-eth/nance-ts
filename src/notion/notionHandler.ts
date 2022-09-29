@@ -40,7 +40,7 @@ export class NotionHandler implements DataContentHandler {
       hash: unconvertedProposal.id.replaceAll('-', ''),
       title: notionUtils.getTitle(unconvertedProposal),
       url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
-      category: notionUtils.getCategory(unconvertedProposal),
+      type: notionUtils.getType(unconvertedProposal),
       status: notionUtils.getStatus(unconvertedProposal),
       proposalId: notionUtils.getRichText(
         unconvertedProposal,
@@ -67,7 +67,7 @@ export class NotionHandler implements DataContentHandler {
       )
     };
     if (getExtendedData) {
-      if (cleanProposal.category === this.config.notion.propertyKeys.categoryRecurringPayout) {
+      if (cleanProposal.type === this.config.notion.propertyKeys.typeRecurringPayout) {
         cleanProposal.payout = {
           address: notionUtils.getRichText(
             unconvertedProposal,
@@ -86,7 +86,7 @@ export class NotionHandler implements DataContentHandler {
             this.config.notion.propertyKeys.treasuryVersion
           )
         };
-      } else if (cleanProposal.category === this.config.notion.propertyKeys.categoryPayout) {
+      } else if (cleanProposal.type === this.config.notion.propertyKeys.typePayout) {
         cleanProposal.payout = {
           address: notionUtils.getRichText(
             unconvertedProposal,
@@ -288,7 +288,7 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async addProposalToDb(proposal: Proposal) {
-    if (proposal.markdown) {
+    if (proposal.body) {
       return this.notion.pages.create({
         icon: { type: 'emoji', emoji: '📜' },
         parent: {
@@ -300,9 +300,9 @@ export class NotionHandler implements DataContentHandler {
               { text: { content: proposal.title } }
             ]
           },
-          [this.config.notion.propertyKeys.category]: {
+          [this.config.notion.propertyKeys.type]: {
             multi_select: [
-              { name: proposal.category }
+              { name: proposal.type }
             ]
           },
           [this.config.notion.propertyKeys.payoutAddress]: {
@@ -334,7 +334,7 @@ export class NotionHandler implements DataContentHandler {
           }
         },
         children:
-          markdownToBlocks(proposal.markdown)
+          markdownToBlocks(proposal.body)
       } as CreatePageParameters).then((notionResponse) => {
         return notionResponse.id.replaceAll('-', '');
       });
@@ -452,7 +452,7 @@ export class NotionHandler implements DataContentHandler {
 
   // eslint-disable-next-line class-methods-use-this
   appendProposal(proposal: Proposal) {
-    return `${proposal.markdown}\n\n---\n[Discussion Thread](${proposal.discussionThreadURL}) | [IPFS](${proposal.ipfsURL})`;
+    return `${proposal.body}\n\n---\n[Discussion Thread](${proposal.discussionThreadURL}) | [IPFS](${proposal.ipfsURL})`;
   }
 
   async getPayoutsDb(version: string): Promise<Payout[]> {

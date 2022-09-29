@@ -1,4 +1,4 @@
-import schedule, { scheduledJobs } from 'node-schedule';
+import schedule from 'node-schedule';
 import {
   sleep,
   addSecondsToDate

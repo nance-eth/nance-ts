@@ -1,11 +1,10 @@
 import { NotionHandler } from '../notionHandler';
 import config from '../../config/dev/config.dev';
-import { keys } from '../../keys';
 
 const getAllProposals = undefined;
 
 async function getConfigs() {
-  const notion = new NotionHandler(keys.NOTION_KEY, config);
+  const notion = new NotionHandler(config);
   const allProposals = await notion.queryNotionDb(getAllProposals);
   Promise.all(allProposals.map(async (proposal) => {
     notion.updateMetaData(

@@ -3,18 +3,19 @@ import { TargetLanguageCode } from 'deepl-node';
 export interface Proposal {
   hash: string;
   title: string;
-  markdown?: string;
+  body?: string;
   translation?: {
-    markdown?: string;
+    body?: string;
     language?: string;
   },
   payout?: Payout;
   notification?: Notification;
+  reserve?: Reserve;
   url: string;
   governanceCycle?: number;
   date?: string,
   translationURL?: string | undefined;
-  category?: string | undefined;
+  type?: string | undefined;
   status: string;
   proposalId: string;
   author?: string;
@@ -44,6 +45,13 @@ type Notification = {
 export type Reserve = {
   address: string;
   percentage: number;
+};
+
+export type ParameterUpdate = {
+  durationDays: number;
+  discountPercentage: number;
+  reservedPercentage: number;
+  redemptionPercentage: number;
 };
 
 export type ProposalNoHash = Omit<Proposal, 'hash'>;
@@ -105,9 +113,9 @@ export interface NanceConfig {
       discussionThread: string;
       ipfs: string;
       vote: string;
-      category: string;
-      categoryRecurringPayout: string;
-      categoryPayout: string;
+      type: string;
+      typeRecurringPayout: string;
+      typePayout: string;
       governanceCycle: string;
       governanceCyclePrefix: string;
       reservePercentage: string;
@@ -139,7 +147,7 @@ export interface NanceConfig {
       discussionThread: string;
       ipfs: string;
       vote: string;
-      category: string;
+      type: string;
       governanceCycle: string;
     },
   },
@@ -152,7 +160,7 @@ export interface NanceConfig {
   };
 }
 
-export interface VoteResults {
+export type VoteResults = {
   voteProposalId: string;
   totalVotes: number;
   scoresState: string;
@@ -160,7 +168,7 @@ export interface VoteResults {
   percentages: Record<string, number>;
   outcomePercentage: string;
   outcomeEmoji: string;
-}
+};
 
 export interface DateEvent {
   title: string;

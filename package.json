@@ -9,7 +9,7 @@
     "test": "export NODE_ENV='dev' && jest",
     "test:watch": "export NODE_ENV='dev' && jest --watch",
     "test:coverage": "export NODE_ENV='dev' && jest --coverage",
-    "test:gov": "ts-node src/scripts/createCalendar.ts&& ts-node src/index.ts",
+    "test:gov": "export NODE_ENV='dev' && export CONFIG='dev' && ts-node src/scripts/createCalendar.ts && ts-node src/index.ts",
     "start:api": "export CONSOLE_LOG=on && node ./dist/api/index.js",
     "build:api": "tsc src/api/index.ts --outDir ./dist --esModuleInterop --skipLibCheck --lib es2021"
   },

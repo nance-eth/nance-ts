@@ -59,9 +59,9 @@ const config: NanceConfig = {
       discussionThread: 'Discussion Thread',
       ipfs: 'IPFS',
       vote: 'Snapshot',
-      category: 'Category',
-      categoryRecurringPayout: 'Recurring Payment',
-      categoryPayout: 'One-Time Payout',
+      type: 'Category',
+      typeRecurringPayout: 'Recurring Payment',
+      typePayout: 'One-Time Payout',
       governanceCycle: 'Funding Cycle',
       governanceCyclePrefix: 'FC#',
       payoutAmountUSD: 'USD Payout Amount',
@@ -93,7 +93,7 @@ const config: NanceConfig = {
       discussionThread: 'Discussion Thread',
       ipfs: 'Data Backup',
       vote: 'Voting',
-      category: 'Category',
+      type: 'Category',
       governanceCycle: 'Funding Cycle',
     },
   },
@@ -181,9 +181,9 @@ config.notion.filters = {
         },
       },
       {
-        property: config.notion.propertyKeys.category,
+        property: config.notion.propertyKeys.type,
         multi_select: {
-          contains: config.notion.propertyKeys.categoryRecurringPayout
+          contains: config.notion.propertyKeys.typeRecurringPayout
         }
       }
     ],

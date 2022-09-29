@@ -65,7 +65,7 @@ export class NanceExtensions {
     proposals.forEach((proposal: Proposal) => {
       proposal.governanceCycle = cycle;
       proposal.url = `/GC${proposal.governanceCycle}/${proposal.proposalId}.md`;
-      proposal.markdown = `# ${proposal.proposalId} - ${proposal.title}${proposal.markdown}`;
+      proposal.body = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
     });
   }
 
@@ -104,11 +104,11 @@ export class NanceExtensions {
       proposal.governanceCycle = nextCycle;
       const translation = await this.translationHandler.translate(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        proposal.markdown!.split('```\n\n')[1], // cut out proposal header
+        proposal.body!.split('```\n\n')[1], // cut out proposal header
         this.nance.config.translation.targetLanguage
       );
       proposal.translation = {
-        markdown: translation.replace('∮∮', '## '),
+        body: translation.replace('∮∮', '## '),
         language: this.nance.config.translation.targetLanguage
       };
     })).then(() => {

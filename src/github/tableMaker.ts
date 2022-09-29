@@ -23,7 +23,7 @@ export function JSONProposalsToMd(proposals: ProposalNoHash[]) {
       `[${p.title}](${p.url})`,
       `${p.status}`,
       p.governanceCycle,
-      p.category,
+      p.type,
       `[Discord](${p.discussionThreadURL})`,
       (p.ipfsURL) ? `[IPFS](${p.ipfsURL})` : '',
       (p.voteURL) ? `[Snapshot](${p.voteURL})` : '',

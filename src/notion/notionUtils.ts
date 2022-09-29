@@ -22,7 +22,7 @@ export function getFormula(page:any, property:any): string {
   return page.properties[property];
 }
 
-export const getCategory = (page:any) => {
+export const getType = (page:any) => {
   return page.properties.Category.multi_select.map((p:any) => {
     return p.name;
   }).join(' & ');

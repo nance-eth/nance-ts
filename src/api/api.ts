@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import express from 'express';
 import { NotionHandler } from '../notion/notionHandler';
 import { getConfig } from '../configLoader';
@@ -20,15 +21,14 @@ router.use(spacePrefix, async (request, response, next) => {
 });
 
 router.post(`${spacePrefix}/upload`, async (request, response) => {
-  logger.debug(request.body, { depth: null });
+  const { space } = request.params;
   const {
     proposal,
     payout,
     type,
     version
   } = request.body;
-  proposal.markdown = proposal.body;
-  proposal.category = juicetoolToNotion[type as ProposalType];
+  proposal.type = juicetoolToNotion[type as ProposalType];
   if (!proposal.governanceCycle) {
     const currentGovernanceCycle = await response.locals.notion.getCurrentGovernanceCycle();
     const { governanceCyclePrefix } = response.locals.notion.config.notion.propertyKeys;
@@ -37,9 +37,10 @@ router.post(`${spacePrefix}/upload`, async (request, response) => {
   proposal.payout = {
     amountUSD: payout?.amount || '',
     count: payout?.duration || '',
-    address: (payout.type === 'address') ? payout?.address : `V${version}:${payout.project}`,
+    address: (payout?.type === 'address') ? payout?.address : (payout?.type === 'project') ? `V${version}:${payout?.project}` : '',
     treasuryVersion: `V${version}`
   };
+  logger.debug(`[UPLOAD] space: ${space}`);
   logger.debug(proposal);
   await response.locals.notion.addProposalToDb(proposal).then((hash: string) => {
     response.json({ status: 'ok', data: hash });

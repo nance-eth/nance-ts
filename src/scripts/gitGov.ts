@@ -10,7 +10,7 @@ async function main() {
   
   const proposals = await nance.proposalHandler.getVoteProposals();
   Promise.all(proposals.map(async (proposal: Proposal) => {
-    proposal.markdown = await nance.proposalHandler.getContentMarkdown(proposal.hash);
+    proposal.body = await nance.proposalHandler.getContentMarkdown(proposal.hash);
     return proposal;
   })).then(async (proposals) => {
     nanceExt.pushNewCycle(proposals);
