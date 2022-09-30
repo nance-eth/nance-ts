@@ -1,7 +1,7 @@
 import { keys } from '../../keys';
 import { DeeplHandler } from '../deeplHandler';
 import { NotionHandler } from '../../notion/notionHandler';
-import config from '../../config/dev/config.dev';
+import config from '../../config/waterbox/config.waterbox';
 import logger from '../../logging';
 import { GithubAPI } from '../../github/githubAPI';
 

@@ -1,11 +1,11 @@
 import 'dotenv/config';
 import { NanceConfig } from '../../types';
 
-const NAME = 'dev';
+const NAME = 'waterbox';
 
 const config: NanceConfig = {
-  nameId: 'dev',
-  name: 'dev',
+  nameId: 'waterbox',
+  name: 'waterbox',
   calendarPath: `${__dirname}/${NAME}.ics`,
   scheme: ['github', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
@@ -28,7 +28,7 @@ const config: NanceConfig = {
     gnosisSafeAddress: '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6'
   },
   discord: {
-    API_KEY: process.env.DISCORD_KEY_DEV ?? '',
+    API_KEY: process.env.DISCORD_KEY_WATERBOX ?? '',
     guildId: '889377541675159602',
     channelId: '964601032703352873',
     alertRole: '958529682796605440',
@@ -44,7 +44,7 @@ const config: NanceConfig = {
     },
   },
   notion: {
-    API_KEY: process.env.NOTION_KEY_DEV ?? '',
+    API_KEY: process.env.NOTION_KEY_WATERBOX ?? '',
     publicURLPrefix: 'foil-flat-c43.notion.site',
     database_id: '8f5a93009a364c4ebf69757ff98be405',
     current_cycle_block_id: '8458fa50e1724d7aa721275a195dece3',

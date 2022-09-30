@@ -8,10 +8,10 @@ if (CONFIG_ENV === '') {
 const configPath = `${__dirname}/config/${CONFIG_ENV}/config.${CONFIG_ENV}`;
 export const calendarPath = `${__dirname}/config/${CONFIG_ENV}/${CONFIG_ENV}.ics`;
 
-export async function getConfig(NAME?: string): Promise<NanceConfig> {
-  const config = (!NAME) ? await import(configPath).then((conf) => {
+export async function getConfig(query?: string): Promise<NanceConfig> {
+  const config = (!query) ? await import(configPath).then((conf) => {
     return conf.default;
-  }) : await import(`${__dirname}/config/${NAME}/config.${NAME}`).then((conf) => {
+  }) : await import(`${__dirname}/config/${query}/config.${query}`).then((conf) => {
     return conf.default;
   });
   return config;

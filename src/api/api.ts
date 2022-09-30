@@ -4,6 +4,7 @@ import { NotionHandler } from '../notion/notionHandler';
 import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import { ProposalType, juicetoolToNotion } from './juicetoolTypes';
+import { SPACES } from '../config/map';
 import logger from '../logging';
 
 const router = express.Router();
@@ -11,12 +12,16 @@ const spacePrefix = '/:space';
 
 router.use(spacePrefix, async (request, response, next) => {
   const { space } = request.params;
+  // fetch space by projectId stored in SPACES enum or by space name string
+  const query = Number(space);
+  const spaceQuery = (Number.isNaN(query)) ? space : SPACES[query];
   try {
-    const config = await getConfig(space);
+    const config = await getConfig(spaceQuery);
     response.locals.notion = new NotionHandler(config);
+    response.locals.spaceName = spaceQuery;
     next();
   } catch (e) {
-    response.send(`ERROR: Space ${space} not found!`);
+    response.json({ status: 'error', error: `space ${space} not found!` });
   }
 });
 
@@ -96,7 +101,13 @@ router.get(`${spacePrefix}/query`, async (request, response) => {
   if (cycleSearch) {
     return response.send(
       await response.locals.notion.getProposalsByGovernanceCycle(cycleSearch).then((data: Proposal[]) => {
-        return data;
+        return {
+          proposals: data,
+          space: {
+            name: response.locals.spaceName,
+            currentCycle: cycleSearch
+          }
+        };
       }).catch((e: any) => {
         return (e);
       })

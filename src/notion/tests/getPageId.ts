@@ -1,6 +1,6 @@
 import { NotionHandler } from '../notionHandler';
 // import config from '../../config/juicebox/config.juicebox';
-import config from '../../config/dev/config.dev';
+import config from '../../config/waterbox/config.waterbox';
 import logger from '../../logging';
 
 async function main() {

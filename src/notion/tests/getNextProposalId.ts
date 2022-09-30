@@ -1,5 +1,5 @@
 import { NotionHandler } from '../notionHandler';
-import config from '../../config/dev/config.dev';
+import config from '../../config/waterbox/config.waterbox';
 import { keys } from '../../keys';
 
 async function main() {

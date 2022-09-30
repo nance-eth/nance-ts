@@ -3,7 +3,7 @@ import express from 'express';
 import api from './api';
 // hacks
 import config from '../config/juicebox/config.juicebox';
-import config2 from '../config/dev/config.dev';
+import config2 from '../config/waterbox/config.waterbox';
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));

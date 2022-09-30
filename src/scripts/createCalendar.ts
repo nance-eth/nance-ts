@@ -5,7 +5,7 @@ import { dateToArray, addSecondsToDate } from '../utils';
 const ics = require('ics');
 
 export function createCalendar(newOrg?: string, TEST?: boolean) {
-  const orgName = (TEST) ? 'dev' : newOrg;
+  const orgName = (TEST) ? 'waterbox' : newOrg;
   const now = new Date();
   const FREQ = (TEST) ? 'DAILY' : 'WEEKLY';
 
@@ -14,9 +14,9 @@ export function createCalendar(newOrg?: string, TEST?: boolean) {
   const TEST_TEMPCHECK_START = addSecondsToDate(now, 60);
   const TEST_TEMPCHECK_END = addSecondsToDate(now, 120);
   const TEST_VOTE_START = addSecondsToDate(now, 125);
-  const TEST_VOTE_END = addSecondsToDate(now, 200);
-  const TEST_DELAY_START = addSecondsToDate(now, 225);
-  const TEST_DELAY_END = addSecondsToDate(now, 325);
+  const TEST_VOTE_END = addSecondsToDate(now, 500);
+  const TEST_DELAY_START = addSecondsToDate(now, 500);
+  const TEST_DELAY_END = addSecondsToDate(now, 600);
 
   type EventDateTimes = {
     // number[] = [year, month, day, hour, minute, second]
