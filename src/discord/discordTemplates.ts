@@ -78,8 +78,8 @@ export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => 
           };
         }
         return {
-          name: 'ERROR',
-          value: 'issue fetching vote results'
+          name: `*${proposal.proposalId}*: ${proposal.title}`,
+          value: 'ERROR: issue fetching vote results'
         };
       })
     );
