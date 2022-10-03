@@ -66,7 +66,7 @@ export interface NanceConfig {
   proposalDataBackup: string;
   ipfsGateway: string;
   votingResultsDashboard: string;
-  translation: {
+  translation?: {
     api: string;
     targetLanguage: TargetLanguageCode;
     storage: {
