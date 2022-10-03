@@ -9,6 +9,7 @@ import {
   getJB7DayReconfigurationBufferBallot,
   getJBETHPaymentTerminal
 } from 'juice-sdk-v3';
+import fs from 'fs';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk-v3/dist/cjs/types/contracts/JBController';
 import { ONE_BILLION } from './juiceboxMath';
@@ -242,10 +243,10 @@ export class JuiceboxHandlerV3 {
       'reconfigureFundingCyclesOf',
       reconfigureFundingCyclesOfData
     );
-    // console.dir(this.JBController.interface.decodeFunctionData(
-    //   'reconfigureFundingCyclesOf',
-    //   encodedReconfiguration
-    // ), { depth: null });
+    console.dir(this.JBController.interface.decodeFunctionData(
+      'reconfigureFundingCyclesOf',
+      encodedReconfiguration
+    ), { depth: null });
     return { address: this.JBController.address, data: encodedReconfiguration };
   }
 }

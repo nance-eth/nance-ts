@@ -20,18 +20,18 @@ async function main() {
   // const nextNonce = Number(await gnosis.getCurrentNonce()) + 1;
   const nextNonce = 166
   console.log(data);
-  // gnosis.sendTransaction({
-  //   to: address,
-  //   value: '0',
-  //   data,
-  //   operation: 0,
-  //   gasToken: gnosisInfo.gasToken,
-  //   safeTxGas: 0,
-  //   baseGas: 0,
-  //   gasPrice: 0,
-  //   refundReceiver: ZERO_ADDRESS,
-  //   nonce: nextNonce
-  // }).catch((e) => { console.log(e) });
+  gnosis.sendTransaction({
+    to: address,
+    value: '0',
+    data,
+    operation: 0,
+    gasToken: gnosisInfo.gasToken,
+    safeTxGas: 0,
+    baseGas: 0,
+    gasPrice: 0,
+    refundReceiver: ZERO_ADDRESS,
+    nonce: nextNonce
+  }).catch((e) => { console.log(e) });
 }
 
 main();
