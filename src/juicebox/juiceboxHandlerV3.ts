@@ -8,9 +8,9 @@ import {
   getJB3DayReconfigurationBufferBallot,
   getJB7DayReconfigurationBufferBallot,
   getJBETHPaymentTerminal
-} from 'juice-sdk';
+} from 'juice-sdk-v3';
 import { BigNumber } from '@ethersproject/bignumber';
-import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
+import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk-v3/dist/cjs/types/contracts/JBController';
 import { ONE_BILLION } from './juiceboxMath';
 import {
   getJBFundingCycleDataStruct,
@@ -19,7 +19,7 @@ import {
   getJBFundAccessConstraintsStruct,
   ReconfigurationBallotAddresses,
   BallotKey,
-} from './typesV2';
+} from './typesV3';
 import { Payout, Reserve } from '../types';
 import { keys } from '../keys';
 
@@ -43,7 +43,7 @@ const DEFAULT_MEMO = 'yours truly ~nance~';
 
 const CSV_HEADING = 'beneficiary,percent,preferClaimed,lockedUntil,projectId,allocator';
 
-export class JuiceboxHandlerV2 {
+export class JuiceboxHandlerV3 {
   provider;
   JBSplitsStore;
   JBController;
@@ -52,7 +52,7 @@ export class JuiceboxHandlerV2 {
 
   constructor(
     protected projectId: string,
-    protected network = 'mainnet' as 'mainnet' | 'rinkeby'
+    protected network = 'mainnet' as 'mainnet' | 'goerli'
   ) {
     const RPC_HOST = `https://${this.network}.infura.io/v3/${keys.INFURA_KEY}`;
     this.provider = new JsonRpcProvider(RPC_HOST);
@@ -199,10 +199,10 @@ export class JuiceboxHandlerV2 {
       };
     });
     return [
-      // {
-      //   group: GROUP_ETH_PAYOUT,
-      //   splits: distrubutionPayoutsJBSplitStruct
-      // },
+      {
+        group: GROUP_ETH_PAYOUT,
+        splits: distrubutionPayoutsJBSplitStruct
+      },
       {
         group: GROUP_RESERVED_TOKENS,
         splits: distrubutionReservedJBSplitStruct
@@ -214,11 +214,12 @@ export class JuiceboxHandlerV2 {
     const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(
       fundingCycle,
-      BigNumber.from(DEFAULT_WEIGHT),
+      BigNumber.from('62536265658750000000000'),
       // use queued ballot if none passed in
       (reconfigurationBallot) ? this.JBReconfigurationBallotAddresses[reconfigurationBallot] : fundingCycle.ballot
     );
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
+    console.log(reconfigFundingCycleData.weight.toString());
     const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
       this.JBETHPaymentTerminal,
       TOKEN_ETH,
