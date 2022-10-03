@@ -217,12 +217,6 @@ export class NotionHandler implements DataContentHandler {
           rich_text: {
             equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
           }
-        },
-        {
-          property: this.config.notion.propertyKeys.status,
-          select: {
-            does_not_equal: 'Draft'
-          }
         }
       ]
     };

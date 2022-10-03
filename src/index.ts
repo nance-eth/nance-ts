@@ -29,7 +29,12 @@ async function scheduleCycle() {
   const cycle = calendar.getNextEvents();
   logger.debug(cycle);
   const noEventsInProgress = cycle.some((event) => { return !event.inProgress; });
-  if (noEventsInProgress) { nance.setDiscussionInterval(30); }
+  const executionOrDelayInProgress = cycle.filter((event) => {
+    return event.title === 'Execution' || event.title === 'Delay';
+  }).some((event) => {
+    return event.inProgress;
+  });
+  if (noEventsInProgress || executionOrDelayInProgress) { nance.setDiscussionInterval(30); }
   cycle.forEach((event) => {
     if (event.title === 'Temperature Check') {
       if (!event.inProgress) {
