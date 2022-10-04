@@ -220,7 +220,6 @@ export class JuiceboxHandlerV3 {
       (reconfigurationBallot) ? this.JBReconfigurationBallotAddresses[reconfigurationBallot] : fundingCycle.ballot
     );
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
-    console.log(reconfigFundingCycleData.weight.toString());
     const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
       this.JBETHPaymentTerminal,
       TOKEN_ETH,
@@ -243,10 +242,10 @@ export class JuiceboxHandlerV3 {
       'reconfigureFundingCyclesOf',
       reconfigureFundingCyclesOfData
     );
-    console.dir(this.JBController.interface.decodeFunctionData(
-      'reconfigureFundingCyclesOf',
-      encodedReconfiguration
-    ), { depth: null });
+    // console.dir(this.JBController.interface.decodeFunctionData(
+    //   'reconfigureFundingCyclesOf',
+    //   encodedReconfiguration
+    // ), { depth: null });
     return { address: this.JBController.address, data: encodedReconfiguration };
   }
 }
