@@ -434,9 +434,11 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async getContentMarkdown(pageId: string): Promise<string> {
-    const mdBlocks = await this.notionToMd.pageToMarkdown(pageId);
-    const mdString = this.notionToMd.toMarkdownString(mdBlocks);
-    return mdString;
+    return this.notion.pages.retrieve({ page_id: pageId }).then(async () => {
+      const mdBlocks = await this.notionToMd.pageToMarkdown(pageId);
+      const mdString = this.notionToMd.toMarkdownString(mdBlocks);
+      return mdString;
+    }).catch((e) => { return Promise.reject(e.message); });
   }
 
   async pageIdToProposal(pageId: string) {

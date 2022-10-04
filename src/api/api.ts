@@ -21,7 +21,7 @@ router.use(spacePrefix, async (request, response, next) => {
     response.locals.spaceName = spaceQuery;
     next();
   } catch (e) {
-    response.json({ status: 'error', error: `space ${space} not found!` });
+    response.json({ success: false, error: `space ${space} not found!` });
   }
 });
 
@@ -48,71 +48,64 @@ router.post(`${spacePrefix}/upload`, async (request, response) => {
   logger.debug(`[UPLOAD] space: ${space}`);
   logger.debug(proposal);
   await response.locals.notion.addProposalToDb(proposal).then((hash: string) => {
-    response.json({ status: 'ok', data: hash });
+    response.json({ success: true, data: hash });
   }).catch((e: any) => {
-    response.json({ status: 'error', data: e });
+    response.json({ success: false, error: e });
   });
+});
+
+router.get(`${spacePrefix}`, async (request, response) => {
+  return response.send(
+    await response.locals.notion.getCurrentGovernanceCycle().then((currentCycle: string) => {
+      return {
+        sucess: true,
+        data: {
+          name: response.locals.spaceName,
+          currentCycle
+        }
+      };
+    }).catch((e: any) => {
+      return {
+        success: false,
+        error: e
+      };
+    })
+  );
 });
 
 router.get(`${spacePrefix}/markdown`, async (request, response) => {
   const { hash } = request.query;
   return response.send(
-    await response.locals.notion.getContentMarkdown(hash).then((data: string) => {
-      return data;
+    await response.locals.notion.getContentMarkdown(hash).then((markdown: string) => {
+      return {
+        sucess: true,
+        data: markdown
+      };
     }).catch((e: any) => {
-      return (e);
-    })
-  );
-});
-
-router.get(`${spacePrefix}/query/discussion`, async (request, response) => {
-  return response.send(
-    await response.locals.notion.getDiscussionProposals().then((data: Proposal[]) => {
-      return data;
-    }).catch((e: any) => {
-      return (e);
-    })
-  );
-});
-
-router.get(`${spacePrefix}/query/temperatureCheck`, async (request, response) => {
-  return response.send(
-    await response.locals.notion.getTemperatureCheckProposals().then((data: Proposal[]) => {
-      return data;
-    }).catch((e: any) => {
-      return (e);
-    })
-  );
-});
-
-router.get(`${spacePrefix}/query/vote`, async (request, response) => {
-  return response.send(
-    await response.locals.notion.getVoteProposals().then((data: Proposal[]) => {
-      return data;
-    }).catch((e: any) => {
-      return (e);
+      return {
+        success: false,
+        error: e
+      };
     })
   );
 });
 
 router.get(`${spacePrefix}/query`, async (request, response) => {
   const { cycle } = request.query;
-  const cycleSearch = cycle || await response.locals.notion.getCurrentGovernanceCycle();
-  if (cycleSearch) {
-    return response.send(
-      await response.locals.notion.getProposalsByGovernanceCycle(cycleSearch).then((data: Proposal[]) => {
-        return {
-          proposals: data,
-          space: {
-            name: response.locals.spaceName,
-            currentCycle: cycleSearch
-          }
-        };
-      }).catch((e: any) => {
-        return (e);
-      })
-    );
-  } return response.send([]);
+  const cycleSearch: string = cycle || await response.locals.notion.getCurrentGovernanceCycle();
+  return response.send(
+    await response.locals.notion.getProposalsByGovernanceCycle(cycleSearch).then((proposals: Proposal[]) => {
+      return {
+        success: true,
+        data: proposals,
+      };
+    }).catch((e: any) => {
+      return {
+        success: false,
+        error: e
+      };
+    })
+  );
 });
 
 export default router;
