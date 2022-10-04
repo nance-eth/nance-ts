@@ -1,9 +1,10 @@
 import { JsonRpcProvider } from '@ethersproject/providers';
 import {
   getFundingCycles,
-  getModStore
+  getModStore,
+  getProjects
 } from 'juice-sdk-v1';
-import { PayoutModStructOutput, TicketModStructOutput } from 'juice-sdk-v1/dist/cjs/types/contracts/TerminalV1';
+import { PayoutModStruct, TicketModStruct } from 'juice-sdk-v1/dist/cjs/types/contracts/TerminalV1';
 import { keys } from '../keys';
 import { TEN_THOUSAND } from './juiceboxMath';
 
@@ -103,4 +104,10 @@ export class JuiceboxHandlerV1 {
       { network: this.network }
     ).currentOf(this.projectId)).target;
   }
+
+  async getProjectOwner() {
+    return getProjects(this.provider, { network: this.network }).ownerOf(this.projectId);
+  }
+
+  async encodeGetReconfigureFundingCyclesOf(groupedMods: JBGroup
 }
