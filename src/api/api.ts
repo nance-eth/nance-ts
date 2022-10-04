@@ -73,13 +73,14 @@ router.get(`${spacePrefix}`, async (request, response) => {
   );
 });
 
+// juicebox/markdown?hash=6bb92c83571245949ecf1e495793e66b
 router.get(`${spacePrefix}/markdown`, async (request, response) => {
   const { hash } = request.query;
   return response.send(
-    await response.locals.notion.getContentMarkdown(hash).then((markdown: string) => {
+    await response.locals.notion.getContentMarkdown(hash).then((proposal: string) => {
       return {
         sucess: true,
-        data: markdown
+        data: proposal
       };
     }).catch((e: any) => {
       return {

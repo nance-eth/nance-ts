@@ -100,13 +100,9 @@ export class Nance {
       await this.dialogHandler.setupPoll(threadId);
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
-      if (discussionProposals.length > 0) {
-        this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
-        logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
-        logger.info('===================================================================');
-      } else {
-        logger.warn(`${this.config.name}:no proposals to temperatureCheckSetup(). check database!`);
-      }
+      this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
+      logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
+      logger.info('===================================================================');
     }).catch((e) => {
       logger.error(`${this.config.name}: temperatureCheckSetup() error:`);
       logger.error(e);
@@ -143,8 +139,8 @@ export class Nance {
     this.clearDiscussionInterval();
     const voteProposals = await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
-      const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
-      proposal.body = mdString;
+      const { body } = await this.proposalHandler.getContentMarkdown(proposal.hash);
+      proposal.body = body;
       if (this.config.proposalDataBackup) {
         const ipfsCID = await this.proposalDataBackupHandler.pinProposal(proposal);
         proposal.ipfsURL = `${this.config.ipfsGateway}/${ipfsCID}`;
