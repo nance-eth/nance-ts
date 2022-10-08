@@ -47,6 +47,7 @@ async function scheduleCycle() {
         });
         schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
           nance.temperatureCheckSetup(event.end);
+          nance.clearDiscussionInterval();
         });
       }
       // end reminder
