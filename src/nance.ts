@@ -154,7 +154,8 @@ export class Nance {
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
         startDate,
-        endDate
+        endDate,
+        (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
       proposal.status = await this.proposalHandler.updateVoteAndIPFS(proposal);
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);

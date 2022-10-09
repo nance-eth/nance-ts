@@ -22,6 +22,7 @@ export interface Proposal {
   discussionThreadURL: string;
   ipfsURL: string;
   voteURL: string;
+  voteSetup?: SnapshotVoteOptions;
   voteResults?: VoteResults;
   version?: number;
   project?: number
@@ -196,3 +197,8 @@ export interface GithubFileChange {
   path: string,
   contents: string
 }
+
+export type SnapshotVoteOptions = {
+  type: string,
+  choices: string[]
+};

@@ -1,7 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
-import { Proposal, VoteResults } from '../types';
+import { Proposal, VoteResults, SnapshotVoteOptions } from '../types';
 import logger from '../logging';
 import { dateToUnixTimeStamp } from '../utils';
 
@@ -25,18 +25,19 @@ export class SnapshotHandler {
     this.snapshot = new snapshot.Client712(this.hub);
   }
 
-  async createProposal(proposal: Proposal, startDate: Date, endDate: Date): Promise<string> {
+  async createProposal(proposal: Proposal, startDate: Date, endDate: Date, options?: SnapshotVoteOptions): Promise<string> {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();
+    console.log((options?.choices && options?.choices.length > 1) ? options?.choices : this.config.snapshot.choices);
     const voteHash = await this.snapshot.proposal(this.wallet, this.wallet.address, {
       space: this.config.snapshot.space,
-      type: 'basic',
+      type: (options?.type === '') ? 'basic' : options?.type ?? 'basic',
       title: `${proposal.proposalId} - ${proposal.title}`,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       body: proposal.body!,
       discussion: proposal.discussionThreadURL,
-      choices: this.config.snapshot.choices,
+      choices: (options?.choices && options?.choices.length > 1) ? options?.choices : this.config.snapshot.choices,
       start: startTimeStamp,
       end: endTimeStamp,
       snapshot: latestBlock,

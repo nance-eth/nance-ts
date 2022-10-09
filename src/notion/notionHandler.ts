@@ -64,7 +64,8 @@ export class NotionHandler implements DataContentHandler {
           unconvertedProposal,
           this.config.notion.propertyKeys.governanceCycle
         ).split(this.config.notion.propertyKeys.governanceCyclePrefix)[1] ?? ''
-      )
+      ),
+      voteSetup: notionUtils.getVoteSetup(unconvertedProposal)
     };
     if (getExtendedData) {
       if (cleanProposal.type === this.config.notion.propertyKeys.typeRecurringPayout) {
