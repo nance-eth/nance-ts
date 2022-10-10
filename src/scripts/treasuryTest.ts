@@ -8,8 +8,7 @@ async function main() {
   const nance = new Nance(config);
   const treasury = new NanceTreasury(nance);
 
-  const p = await treasury.encodeReconfigureFundingCyclesOf();
-  console.log(p.data);
+  const p = await treasury.V1encodeReconfigureFundingCyclesOf();
 }
 
 main();

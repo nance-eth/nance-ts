@@ -37,7 +37,7 @@ export class NanceTreasury {
     });
   }
 
-  async payoutTableToGroupedSplitsStruct(version: string) {
+  async payoutTableToGroupedSplitsStruct(version = 'V2') {
     const payouts = await this.nance.proposalHandler.getPayoutsDb(version);
     const reserves = await this.nance.proposalHandler.getReserveDb(version);
     const newDistributionLimit = this.juiceboxHandlerV2.calculateNewDistributionLimit(payouts);
@@ -52,9 +52,32 @@ export class NanceTreasury {
     };
   }
 
+  async payoutTableToMods(version = 'V1') {
+    const payouts = await this.nance.proposalHandler.getPayoutsDb(version);
+    const reserves = await this.nance.proposalHandler.getReserveDb(version);
+    const newDistributionLimit = this.juiceboxHandlerV1.calculateNewDistributionLimit(payouts);
+    console.log(newDistributionLimit);
+    const { payoutMods, ticketMods } = await this.juiceboxHandlerV1.buildModsStruct(
+      newDistributionLimit,
+      payouts,
+      reserves
+    );
+    return {
+      payoutMods,
+      ticketMods,
+      newDistributionLimit
+    };
+  }
+
   async encodeReconfigureFundingCyclesOf(reconfigurationBallot?: BallotKey) {
-    const { groupedSplits, newDistributionLimit } = await this.payoutTableToGroupedSplitsStruct('V2');
+    const { groupedSplits, newDistributionLimit } = await this.payoutTableToGroupedSplitsStruct();
     const encoded = await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributionLimit, reconfigurationBallot);
+    return encoded;
+  }
+
+  async V1encodeReconfigureFundingCyclesOf(reconfigurationBallot?: BallotKey) {
+    const { payoutMods, ticketMods, newDistributionLimit } = await this.payoutTableToMods();
+    const encoded = await this.juiceboxHandlerV1.encodeGetReconfigureFundingCyclesOf(payoutMods, ticketMods, newDistributionLimit, reconfigurationBallot);
     return encoded;
   }
 }
