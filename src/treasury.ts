@@ -7,7 +7,6 @@ import { NanceConfig } from './types';
 export class NanceTreasury {
   juiceboxHandlerV1;
   juiceboxHandlerV2;
-  provider;
 
   constructor(
     protected config: NanceConfig,
@@ -15,13 +14,12 @@ export class NanceTreasury {
   ) {
     this.juiceboxHandlerV1 = new JuiceboxHandlerV1(
       config.juicebox.projectId,
-      config.juicebox.network
+      'mainnet'
     );
     this.juiceboxHandlerV2 = new JuiceboxHandlerV2(
       config.juicebox.projectId,
-      config.juicebox.network
+      'mainnet'
     );
-    this.provider = this.juiceboxHandlerV2.provider;
   }
 
   // async removeStalePayouts() {
