@@ -3,7 +3,6 @@ import express from 'express';
 import { NotionHandler } from '../notion/notionHandler';
 import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
-import { ProposalType, juicetoolToNotion } from './juicetoolTypes';
 import { SPACES } from '../config/map';
 import logger from '../logging';
 
@@ -28,29 +27,18 @@ router.use(spacePrefix, async (request, response, next) => {
 router.post(`${spacePrefix}/upload`, async (request, response) => {
   const { space } = request.params;
   const {
-    proposal,
-    payout,
-    type,
-    version
-  } = request.body;
-  proposal.type = juicetoolToNotion[type as ProposalType];
+    proposal
+  } = request.body as Record<string, Proposal>;
   if (!proposal.governanceCycle) {
     const currentGovernanceCycle = await response.locals.notion.getCurrentGovernanceCycle();
-    const { governanceCyclePrefix } = response.locals.notion.config.notion.propertyKeys;
-    proposal.governanceCycle = `${governanceCyclePrefix}${currentGovernanceCycle}`;
+    proposal.governanceCycle = currentGovernanceCycle;
   }
-  proposal.payout = {
-    amountUSD: payout?.amount || '',
-    count: payout?.duration || '',
-    address: (payout?.type === 'address') ? payout?.address : (payout?.type === 'project') ? `V${version}:${payout?.project}` : '',
-    treasuryVersion: `V${version}`
-  };
   logger.debug(`[UPLOAD] space: ${space}`);
   logger.debug(proposal);
   await response.locals.notion.addProposalToDb(proposal).then((hash: string) => {
-    response.json({ success: true, data: hash });
+    response.json({ success: true, data: { hash } });
   }).catch((e: any) => {
-    response.json({ success: false, error: e });
+    response.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
   });
 });
 
@@ -67,7 +55,7 @@ router.get(`${spacePrefix}`, async (request, response) => {
     }).catch((e: any) => {
       return {
         success: false,
-        error: e
+        error: `[NOTION ERROR]: ${e}`
       };
     })
   );
@@ -85,7 +73,7 @@ router.get(`${spacePrefix}/markdown`, async (request, response) => {
     }).catch((e: any) => {
       return {
         success: false,
-        error: e
+        error: `[NOTION ERROR]: ${e}`
       };
     })
   );
@@ -103,7 +91,7 @@ router.get(`${spacePrefix}/query`, async (request, response) => {
     }).catch((e: any) => {
       return {
         success: false,
-        error: e
+        error: `[NOTION ERROR]: ${e}`
       };
     })
   );

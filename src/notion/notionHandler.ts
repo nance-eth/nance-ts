@@ -64,6 +64,10 @@ export class NotionHandler implements DataContentHandler {
           unconvertedProposal,
           this.config.notion.propertyKeys.governanceCycle
         ).split(this.config.notion.propertyKeys.governanceCyclePrefix)[1] ?? ''
+      ),
+      version: notionUtils.getRichText(
+        unconvertedProposal,
+        this.config.notion.propertyKeys.treasuryVersion
       )
     };
     if (getExtendedData) {
@@ -83,10 +87,6 @@ export class NotionHandler implements DataContentHandler {
           count: notionUtils.getNumber(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutCount
-          ),
-          treasuryVersion: notionUtils.getRichText(
-            unconvertedProposal,
-            this.config.notion.propertyKeys.treasuryVersion
           )
         };
       }
@@ -253,7 +253,7 @@ export class NotionHandler implements DataContentHandler {
           [this.config.notion.propertyKeys.treasuryVersion]: {
             rich_text: [
               {
-                text: { content: proposal.payout.treasuryVersion }
+                text: { content: proposal.version }
               }
             ]
           },
@@ -311,12 +311,12 @@ export class NotionHandler implements DataContentHandler {
           },
           [this.config.notion.propertyKeys.treasuryVersion]: {
             rich_text: [
-              { text: { content: proposal.payout?.treasuryVersion } }
+              { text: { content: proposal.version } }
             ]
           },
           [this.config.notion.propertyKeys.governanceCycle]: {
             rich_text: [
-              { text: { content: String(proposal.governanceCycle) } }
+              { text: { content: `${this.config.notion.propertyKeys.governanceCyclePrefix}${String(proposal.governanceCycle)}` } }
             ]
           },
           [this.config.notion.propertyKeys.status]: {

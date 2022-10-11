@@ -32,3 +32,7 @@ export type SpaceInfoRequest = BaseRequest;
 export interface ProposalMarkdownRequest extends BaseRequest {
   hash: string;
 }
+
+export interface ProposalUploadRequest extends BaseRequest {
+  proposal: Proposal;
+}
