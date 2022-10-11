@@ -67,7 +67,10 @@ export class NotionHandler implements DataContentHandler {
       )
     };
     if (getExtendedData) {
-      if (cleanProposal.type === this.config.notion.propertyKeys.typeRecurringPayout) {
+      if (
+        cleanProposal.type === this.config.notion.propertyKeys.typeRecurringPayout
+        || cleanProposal.type === this.config.notion.propertyKeys.typePayout
+      ) {
         cleanProposal.payout = {
           address: notionUtils.getRichText(
             unconvertedProposal,
@@ -85,18 +88,6 @@ export class NotionHandler implements DataContentHandler {
             unconvertedProposal,
             this.config.notion.propertyKeys.treasuryVersion
           )
-        };
-      } else if (cleanProposal.type === this.config.notion.propertyKeys.typePayout) {
-        cleanProposal.payout = {
-          address: notionUtils.getRichText(
-            unconvertedProposal,
-            this.config.notion.propertyKeys.payoutAddress
-          ),
-          count: 1,
-          amountUSD: notionUtils.getNumber(
-            unconvertedProposal,
-            this.config.notion.propertyKeys.payoutAmountUSD
-          ),
         };
       }
     }

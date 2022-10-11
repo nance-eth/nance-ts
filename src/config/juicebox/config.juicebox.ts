@@ -61,7 +61,7 @@ const config: NanceConfig = {
       vote: 'Snapshot',
       type: 'Category',
       typeRecurringPayout: 'Recurring Payment',
-      typePayout: 'One-Time Payout',
+      typePayout: 'Payout',
       governanceCycle: 'Funding Cycle',
       governanceCyclePrefix: 'FC#',
       payoutAmountUSD: 'USD Payout Amount',
