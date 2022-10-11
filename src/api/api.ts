@@ -1,6 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import express from 'express';
 import { NotionHandler } from '../notion/notionHandler';
+import { NanceTreasury } from '../treasury';
 import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import { SPACES } from '../config/map';
@@ -17,6 +18,7 @@ router.use(spacePrefix, async (request, response, next) => {
   try {
     const config = await getConfig(spaceQuery);
     response.locals.notion = new NotionHandler(config);
+    response.locals.treasury = new NanceTreasury(config, response.locals.notion);
     response.locals.spaceName = spaceQuery;
     next();
   } catch (e) {
@@ -92,6 +94,23 @@ router.get(`${spacePrefix}/query`, async (request, response) => {
       return {
         success: false,
         error: `[NOTION ERROR]: ${e}`
+      };
+    })
+  );
+});
+
+router.get(`${spacePrefix}/reconfigure`, async (request, response) => {
+  const { version } = request.query;
+  return response.send(
+    await response.locals.treasury.fetchReconfiguration(version).then((data: any) => {
+      return {
+        success: true,
+        data,
+      };
+    }).catch((e: any) => {
+      return {
+        success: false,
+        error: e
       };
     })
   );

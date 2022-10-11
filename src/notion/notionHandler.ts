@@ -375,7 +375,7 @@ export class NotionHandler implements DataContentHandler {
   async updateDiscussionURL(proposal: Proposal) {
     await this.updateMetaData(
       proposal.hash,
-      { [this.config.notion.propertyKeys.discussionThread]: { url: proposal.discussionThreadURL } }
+      { [this.config.notion.propertyKeys.discussionThread]: { url: proposal.discussionThreadURL || '' } }
     );
   }
 

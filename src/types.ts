@@ -64,6 +64,11 @@ export type VoteResults = {
   outcomeEmoji: string;
 };
 
+export type GnosisTransaction = {
+  address: string;
+  bytes: string;
+};
+
 export type ProposalNoHash = Omit<Proposal, 'hash'>;
 
 export type ProposalStore = Record<string, ProposalNoHash>;
