@@ -135,6 +135,10 @@ export class NotionHandler implements DataContentHandler {
       {
         database_id: this.config.notion.payouts_database_id,
         filter: filters,
+        sorts: [{
+          property: this.config.notion.propertyKeys.payoutAddress,
+          direction: 'descending'
+        }]
       } as QueryDatabaseParameters
     );
     return databaseReponse.results.map((data: any) => {
@@ -147,6 +151,10 @@ export class NotionHandler implements DataContentHandler {
       {
         database_id: this.config.notion.reserves_database_id,
         filter: filters,
+        sorts: [{
+          property: this.config.notion.propertyKeys.payoutAddress,
+          direction: 'descending'
+        }]
       } as QueryDatabaseParameters
     );
     return databaseReponse.results.map((data: any) => {

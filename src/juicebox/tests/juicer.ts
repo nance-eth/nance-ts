@@ -39,10 +39,4 @@ async function saveMetaData() {
   fs.writeFileSync('./src/juicebox/tests/JB_FundingCycle.json', JSON.stringify(dataOut, null, 4));
 }
 
-async function V1() {
-  const juice = new JuiceboxHandlerV1('1');
-  console.log((await juice.getReserveDistributionCSV()));
-  console.log(Number((await juice.getDistributionLimit()).toString()) / 1E18);
-}
-
 saveMetaData();
