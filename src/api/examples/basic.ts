@@ -10,10 +10,10 @@ import { Proposal } from '../../types';
 const API_STAGING = 'https://nance-ts-staging.up.railway.app';
 const API_MAIN = 'https://api.nance.app';
 const API_LOCAL = 'http://localhost:3000';
-const API = API_LOCAL;
+const API = API_STAGING;
 
 const SPACE = 'waterbox';
-const PROPOSAL_HASH = '7dec578d23f84cfb8355c0c469389719';
+const PROPOSAL_HASH = 'd2ef2ae69d2a4cff945c2677b73186b9';
 
 const exampleProposal: Proposal = {
   hash: '',
@@ -57,7 +57,7 @@ const queryProposals = async (space: string, cycle?: number): Promise<ProposalsQ
 };
 
 const queryMarkdown = async (space: string, hash: string): Promise<ProposalMarkdownResponse | APIErrorResponse> => {
-  return axios.get(`${API}/${space}/markdown/?hash=${hash}`).then((response) => {
+  return axios.get(`${API}/${space}/proposal?hash=${hash}`).then((response) => {
     return response.data;
   });
 };
