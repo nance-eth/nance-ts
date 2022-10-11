@@ -22,13 +22,11 @@ import { Payout, Reserve } from '../types';
 import { keys } from '../keys';
 import { TEN_THOUSAND } from './juiceboxMath';
 
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-const V1Fee = 0.025;
+const V1Fee = 0.025; // 2.5% = 0.025
 const PROJECT_PAYOUT_PREFIX = 'V1:';
 const DISTRIBUTION_CURRENCY_USD = 1;
 const DISTRIBUTION_CURRENCY_ETH = 0;
-const DEFAULT_PREFER_UNSTAKED = true;
-const DEFAULT_PREFER_ADD_BALANCE = false;
+const DEFAULT_PREFER_UNSTAKED = false;
 const DEFAULT_LOCKED_UNTIL = 0;
 const DEFAULT_ALLOCATOR = '0x0000000000000000000000000000000000000000';
 const DEFAULT_PROJECT_ID = 0;
@@ -92,10 +90,20 @@ export class JuiceboxHandlerV1 {
   }
 
   // eslint-disable-next-line class-methods-use-this
+  withFees(amount: number) {
+    return amount * (1 + V1Fee);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  withOutFees(amount: number) {
+    return Math.round(amount / (1 + V1Fee));
+  }
+
+  // eslint-disable-next-line class-methods-use-this
   calculateNewDistributionLimit(distrubutionPayouts: Payout[]) {
-    return distrubutionPayouts.reduce((total, payout) => {
-      return total + payout.amountUSD * (1 + V1Fee);
-    }, 0);
+    return Math.round(distrubutionPayouts.reduce((total, payout) => {
+      return total + this.withFees(payout.amountUSD);
+    }, 0));
   }
 
   async buildModsStruct(distributionLimit: number, distributionPayouts: Payout[], distributionReserved: Reserve[]): Promise<PayoutAndTickets> {
@@ -104,7 +112,7 @@ export class JuiceboxHandlerV1 {
       const projectPayout = (payout.address.includes(PROJECT_PAYOUT_PREFIX)) ? payout.address.split(PROJECT_PAYOUT_PREFIX)[1] : undefined;
       return {
         preferUnstaked: DEFAULT_PREFER_UNSTAKED,
-        percent: Math.floor((payout.amountUSD / distributionLimit) * TEN_THOUSAND),
+        percent: Math.floor((payout.amountUSD / this.withOutFees(distributionLimit)) * TEN_THOUSAND),
         lockedUntil: DEFAULT_LOCKED_UNTIL,
         beneficiary: (projectPayout) ? owner : payout.address,
         allocator: DEFAULT_ALLOCATOR,
@@ -114,7 +122,7 @@ export class JuiceboxHandlerV1 {
     const distributionTicketModStruct = distributionReserved.map((reserve): TicketModStruct => {
       return {
         preferUnstaked: DEFAULT_PREFER_UNSTAKED,
-        percent: reserve.percentage * 1E2,
+        percent: reserve.percentage * 100,
         lockedUntil: DEFAULT_LOCKED_UNTIL,
         beneficiary: reserve.address
       };
@@ -146,10 +154,10 @@ export class JuiceboxHandlerV1 {
       'configure',
       configureFundingCyclesOfData
     );
-    console.dir(this.TerminalV1.interface.decodeFunctionData(
-      'configure',
-      encodedConfigure
-    ), { depth: null });
+    // console.dir(this.TerminalV1.interface.decodeFunctionData(
+    //   'configure',
+    //   encodedConfigure
+    // ), { depth: null });
     return { address: this.TerminalV1.address, data: encodedConfigure };
   }
 }

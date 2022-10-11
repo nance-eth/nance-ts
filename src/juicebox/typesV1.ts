@@ -57,7 +57,7 @@ export const getFundingCyclePropertiesStruct = (
   ballot: string
 ): FundingCyclePropertiesStruct => {
   return {
-    target: distributionLimit,
+    target: BigNumber.from(distributionLimit).mul(BigNumber.from(10).pow(DISTRIBUTION_PAYOUT_SCALAR)),
     currency: distributionLimitCurrency,
     duration: data.duration,
     cycleLimit: 0,
