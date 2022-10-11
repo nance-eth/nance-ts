@@ -2,10 +2,12 @@
 
 ## Examples
 
+basic typescript example:
+
 `ts-node src/api/exmaples/basic.ts`
 
-query 
-`https://nance-ts-staging.up.railway.app/juicebox`
+**query** 
+https://nance-ts-staging.up.railway.app/juicebox
 
 success return
 ```
@@ -26,8 +28,8 @@ error return
 }
 ```
 
-query 
-`https://nance-ts-staging.up.railway.app/juicebox/query`
+**query**
+https://nance-ts-staging.up.railway.app/juicebox/query
 
 success return
 ```
@@ -60,8 +62,8 @@ success return
 }
 ```
 
-query 
-`https://nance-ts-staging.up.railway.app/juicebox/markdown?hash=6bb92c83571245949ecf1e495793e66b`
+**query**
+https://nance-ts-staging.up.railway.app/juicebox/markdown?hash=6bb92c83571245949ecf1e495793e66b
 
 success return
 ```
