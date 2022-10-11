@@ -14,11 +14,11 @@ export class NanceTreasury {
   ) {
     this.juiceboxHandlerV1 = new JuiceboxHandlerV1(
       config.juicebox.projectId,
-      'mainnet'
+      config.juicebox.network
     );
     this.juiceboxHandlerV2 = new JuiceboxHandlerV2(
       config.juicebox.projectId,
-      'mainnet'
+      config.juicebox.network
     );
   }
 
