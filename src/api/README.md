@@ -34,6 +34,40 @@ success return
 {
   "sucess": true,
   "data": {
+    [
+      {
+        "hash": "...",
+        "title": "...",
+        "url":"...",
+        "type":"...",
+        "status":"...",
+        "proposalId":"...",
+        "discussionThreadURL":"...",
+        "ipfsURL":"...",
+        "voteURL":"...",
+        "date":"...",
+        "governanceCycle":"...",
+        "payout": {
+          "address":"...",
+          "amountUSD":"...",
+          "count":"...",
+          "treasuryVersion":"..."
+        }
+      },
+    ...
+    ]
+  }
+}
+```
+
+query 
+`https://nance-ts-staging.up.railway.app/juicebox/markdown?hash=6bb92c83571245949ecf1e495793e66b`
+
+success return
+```
+{
+  "sucess": true,
+  "data": {
     "hash": "...",
     "title": "...",
     "url":"...",
