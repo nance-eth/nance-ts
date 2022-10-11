@@ -138,10 +138,9 @@ export class Nance {
     });
   }
 
-  async votingSetup(startDate: Date, endDate: Date): Promise<Proposal[] | void> {
+  async votingSetup(startDate: Date, endDate: Date, proposals?: Proposal[]): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingSetup() begin...`);
-    this.clearDiscussionInterval();
-    const voteProposals = await this.proposalHandler.getVoteProposals();
+    const voteProposals = proposals || await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
       proposal.body = mdString;
