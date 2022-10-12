@@ -23,7 +23,6 @@ const config: NanceConfig = {
     network: 'mainnet',
     projectId: '1',
     gnosisSafeAddress: '0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e'
-    // gnosisSafeAddress: ''
   },
   discord: {
     API_KEY: process.env.DISCORD_KEY_JUICEBOX ?? '',

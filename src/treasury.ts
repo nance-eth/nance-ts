@@ -1,8 +1,9 @@
+/* eslint-disable prefer-promise-reject-errors */
 import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
 import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
 import { BallotKey } from './juicebox/typesV2';
 import { NotionHandler } from './notion/notionHandler';
-import { NanceConfig } from './types';
+import { GnosisTransaction, NanceConfig } from './types';
 
 export class NanceTreasury {
   juiceboxHandlerV1;
@@ -68,7 +69,7 @@ export class NanceTreasury {
     };
   }
 
-  async encodeReconfigureFundingCyclesOf(reconfigurationBallot?: BallotKey) {
+  async V2encodeReconfigureFundingCyclesOf(reconfigurationBallot?: BallotKey) {
     const { groupedSplits, newDistributionLimit } = await this.payoutTableToGroupedSplitsStruct();
     const encoded = await this.juiceboxHandlerV2.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributionLimit, reconfigurationBallot);
     return encoded;
@@ -80,16 +81,15 @@ export class NanceTreasury {
     return encoded;
   }
 
-  async fetchReconfiguration(version: string) {
-    if (version === 'V1') {
-      return this.V1encodeReconfigureFundingCyclesOf();
-    }
-    if (version === 'V2') {
-      return this.encodeReconfigureFundingCyclesOf();
-    }
-    return {
-      address: '',
-      data: ''
-    };
+  async fetchReconfiguration(version: string): Promise<GnosisTransaction> {
+    if (version === 'V1') { return this.V1encodeReconfigureFundingCyclesOf(); }
+    if (version === 'V2') { return this.V2encodeReconfigureFundingCyclesOf(); }
+    return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
+  }
+
+  async fetchPayReserveDistribution(version: string) {
+    if (version === 'V1') { return this.payoutTableToMods(); }
+    if (version === 'V2') { return this.payoutTableToGroupedSplitsStruct(); }
+    return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
   }
 }

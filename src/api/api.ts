@@ -10,108 +10,92 @@ import logger from '../logging';
 const router = express.Router();
 const spacePrefix = '/:space';
 
-router.use(spacePrefix, async (request, response, next) => {
-  const { space } = request.params;
+router.use(spacePrefix, async (req, res, next) => {
+  const { space } = req.params;
   // fetch space by projectId stored in SPACES enum or by space name string
   const query = Number(space);
   const spaceQuery = (Number.isNaN(query)) ? space : SPACES[query];
   try {
     const config = await getConfig(spaceQuery);
-    response.locals.notion = new NotionHandler(config);
-    response.locals.treasury = new NanceTreasury(config, response.locals.notion);
-    response.locals.spaceName = spaceQuery;
+    res.locals.notion = new NotionHandler(config);
+    res.locals.treasury = new NanceTreasury(config, res.locals.notion);
+    res.locals.spaceName = spaceQuery;
     next();
   } catch (e) {
-    response.json({ success: false, error: `space ${space} not found!` });
+    res.json({ success: false, error: `space ${space} not found!` });
   }
 });
 
-router.post(`${spacePrefix}/upload`, async (request, response) => {
-  const { space } = request.params;
+router.post(`${spacePrefix}/upload`, async (req, res) => {
+  const { space } = req.params;
   const {
     proposal
-  } = request.body as Record<string, Proposal>;
+  } = req.body as Record<string, Proposal>;
   if (!proposal.governanceCycle) {
-    const currentGovernanceCycle = await response.locals.notion.getCurrentGovernanceCycle();
+    const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
     proposal.governanceCycle = currentGovernanceCycle;
   }
   logger.debug(`[UPLOAD] space: ${space}`);
   logger.debug(proposal);
-  await response.locals.notion.addProposalToDb(proposal).then((hash: string) => {
-    response.json({ success: true, data: { hash } });
+  await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
+    res.json({ success: true, data: { hash } });
   }).catch((e: any) => {
-    response.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
+    res.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
   });
 });
 
-router.get(`${spacePrefix}`, async (request, response) => {
-  return response.send(
-    await response.locals.notion.getCurrentGovernanceCycle().then((currentCycle: string) => {
-      return {
-        sucess: true,
-        data: {
-          name: response.locals.spaceName,
-          currentCycle
-        }
-      };
+router.get(`${spacePrefix}`, async (req, res) => {
+  return res.send(
+    await res.locals.notion.getCurrentGovernanceCycle().then((currentCycle: string) => {
+      return { sucess: true, data: { name: res.locals.spaceName, currentCycle } };
     }).catch((e: any) => {
-      return {
-        success: false,
-        error: `[NOTION ERROR]: ${e}`
-      };
+      return { success: false, error: `[NOTION ERROR]: ${e}` };
     })
   );
 });
 
 // juicebox/markdown?hash=6bb92c83571245949ecf1e495793e66b
-router.get(`${spacePrefix}/proposal`, async (request, response) => {
-  const { hash } = request.query;
-  return response.send(
-    await response.locals.notion.getContentMarkdown(hash).then((proposal: string) => {
-      return {
-        sucess: true,
-        data: proposal
-      };
+router.get(`${spacePrefix}/proposal`, async (req, res) => {
+  const { hash } = req.query;
+  return res.send(
+    await res.locals.notion.getContentMarkdown(hash).then((proposal: string) => {
+      return { sucess: true, data: proposal };
     }).catch((e: any) => {
-      return {
-        success: false,
-        error: `[NOTION ERROR]: ${e}`
-      };
+      return { success: false, error: `[NOTION ERROR]: ${e}` };
     })
   );
 });
 
-router.get(`${spacePrefix}/query`, async (request, response) => {
-  const { cycle } = request.query;
-  const cycleSearch: string = cycle || await response.locals.notion.getCurrentGovernanceCycle();
-  return response.send(
-    await response.locals.notion.getProposalsByGovernanceCycle(cycleSearch).then((proposals: Proposal[]) => {
-      return {
-        success: true,
-        data: proposals,
-      };
+router.get(`${spacePrefix}/query`, async (req, res) => {
+  const { cycle } = req.query;
+  const cycleSearch: string = cycle || await res.locals.notion.getCurrentGovernanceCycle();
+  return res.send(
+    await res.locals.notion.getProposalsByGovernanceCycle(cycleSearch).then((proposals: Proposal[]) => {
+      return { success: true, data: proposals };
     }).catch((e: any) => {
-      return {
-        success: false,
-        error: `[NOTION ERROR]: ${e}`
-      };
+      return { success: false, error: `[NOTION ERROR]: ${e}` };
     })
   );
 });
 
-router.get(`${spacePrefix}/reconfigure`, async (request, response) => {
-  const { version } = request.query;
-  return response.send(
-    await response.locals.treasury.fetchReconfiguration(version).then((data: any) => {
-      return {
-        success: true,
-        data,
-      };
+router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
+  const { version } = req.query;
+  return res.send(
+    await res.locals.treasury.fetchReconfiguration(version).then((data: any) => {
+      return { success: true, data };
     }).catch((e: any) => {
-      return {
-        success: false,
-        error: e
-      };
+      return { success: false, error: e };
+    })
+  );
+});
+
+router.get(`${spacePrefix}/payouts`, async (req, res) => {
+  const { version } = req.query;
+  return res.send(
+    await res.locals.treasury.fetchPayReserveDistribution(version).then((data: any) => {
+      return { success: true, data };
+    }).catch((e: any) => {
+      return { success: false, error: e };
     })
   );
 });
