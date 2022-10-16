@@ -23,7 +23,7 @@ interface BaseRequest {
   space: string;
 }
 
-export interface SpaceQueryRequest extends BaseRequest {
+export interface SpaceProposalRequest extends BaseRequest {
   cycle: number | undefined;
 }
 

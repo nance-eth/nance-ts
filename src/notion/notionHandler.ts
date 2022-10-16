@@ -300,7 +300,7 @@ export class NotionHandler implements DataContentHandler {
           },
           [this.config.notion.propertyKeys.payoutAddress]: {
             rich_text: [
-              { text: { content: proposal.payout?.address } }
+              { text: { content: proposal.payout?.address || proposal.reserve?.address || '' } }
             ]
           },
           [this.config.notion.propertyKeys.payoutCount]: {
