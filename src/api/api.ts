@@ -31,6 +31,7 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
   const {
     proposal
   } = req.body as Record<string, Proposal>;
+  if (!proposal) res.json({ success: false, error: '[NOTION ERROR]: proposal object validation fail' });
   if (!proposal.governanceCycle) {
     const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
     proposal.governanceCycle = currentGovernanceCycle;
