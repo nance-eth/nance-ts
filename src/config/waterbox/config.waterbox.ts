@@ -20,12 +20,9 @@ const config: NanceConfig = {
     }
   },
   juicebox: {
-    // network: 'mainnet',
-    // projectId: '188'
-    // gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199'
-    network: 'rinkeby',
-    projectId: '4661',
-    gnosisSafeAddress: '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6'
+    network: 'mainnet',
+    projectId: '188',
+    gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199',
   },
   discord: {
     API_KEY: process.env.DISCORD_KEY_WATERBOX ?? '',
@@ -63,7 +60,7 @@ const config: NanceConfig = {
       vote: 'Snapshot',
       type: 'Category',
       typeRecurringPayout: 'Recurring Payment',
-      typePayout: 'One-Time Payout',
+      typePayout: 'Payout',
       governanceCycle: 'Funding Cycle',
       governanceCyclePrefix: 'FC#',
       payoutAmountUSD: 'USD Payout Amount',

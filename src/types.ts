@@ -1,5 +1,7 @@
 import { TargetLanguageCode } from 'deepl-node';
 
+type ProposalType = 'Payout' | 'ReservedToken' | 'ParameterUpdate' | 'ProcessUpdate' | 'CustomTransaction';
+
 export interface Proposal {
   hash: string;
   title: string;
@@ -14,8 +16,8 @@ export interface Proposal {
   url: string;
   governanceCycle?: number;
   date?: string,
-  translationURL?: string | undefined;
-  type?: string | undefined;
+  translationURL?: string;
+  type?: ProposalType;
   status: string;
   proposalId: string;
   author?: string;
@@ -24,8 +26,7 @@ export interface Proposal {
   voteURL: string;
   voteSetup?: SnapshotVoteOptions;
   voteResults?: VoteResults;
-  version?: number;
-  project?: number
+  version?: string;
 }
 
 export type Payout = {
@@ -33,7 +34,6 @@ export type Payout = {
   address: string;
   amountUSD: number;
   count: number;
-  treasuryVersion?: string;
 };
 
 type Notification = {
@@ -53,6 +53,21 @@ export type ParameterUpdate = {
   discountPercentage: number;
   reservedPercentage: number;
   redemptionPercentage: number;
+};
+
+export type VoteResults = {
+  voteProposalId: string;
+  totalVotes: number;
+  scoresState: string;
+  scores: Record<string, number>;
+  percentages: Record<string, number>;
+  outcomePercentage: string;
+  outcomeEmoji: string;
+};
+
+export type GnosisTransaction = {
+  address: string;
+  bytes: string;
 };
 
 export type ProposalNoHash = Omit<Proposal, 'hash'>;
@@ -160,16 +175,6 @@ export interface NanceConfig {
     passingRatio: number;
   };
 }
-
-export type VoteResults = {
-  voteProposalId: string;
-  totalVotes: number;
-  scoresState: string;
-  scores: Record<string, number>;
-  percentages: Record<string, number>;
-  outcomePercentage: string;
-  outcomeEmoji: string;
-};
 
 export interface DateEvent {
   title: string;

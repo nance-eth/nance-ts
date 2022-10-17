@@ -4,7 +4,7 @@ import { Nance } from '../nance';
 import logger from '../logging';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 
-const DELAY_SEND_SECONDS = 30;
+const DELAY_SEND_SECONDS = (process.argv[2] === '') ? 30 : Number(process.argv[2] ?? 30);
 
 async function main() {
   const config = await getConfig();
