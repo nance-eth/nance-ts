@@ -48,6 +48,7 @@ export class NanceExtensions {
       githubCycleDbFiles.concat(githubTopDbFiles),
       `GC${currentCycle} ${update}`
     );
+    this.nance.proposalHandler.incrementGovernanceCycle();
   }
 
   stageCycleDb(cycle: number, proposals: Proposal[]) {
