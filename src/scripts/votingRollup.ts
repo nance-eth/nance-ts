@@ -1,20 +1,17 @@
-import axios from 'axios';
-import schedule from 'node-schedule';
-import {
-  addDaysToDate,
-  sleep
-} from '../utils';
-import config from '../config/juicebox/config.juicebox';
 import { Nance } from '../nance';
-import logger from '../logging';
+import { getConfig } from '../configLoader';
 import { CalendarHandler } from '../calendar/CalendarHandler';
+import { sleep } from '../utils';
 
 async function getConfigs() {
+  const config = await getConfig()
   const nance = new Nance(config);
-  await sleep(3000);
-  const endDate = new Date(1654905600 * 1000);
+  await sleep(2000);
+  const calendar = new CalendarHandler(config.calendarPath);
+  const nextEvents = calendar.getNextEvents();
+  const nextVote = nextEvents.filter((event) => { return event.title === 'Snapshot Vote' })[0];
   nance.proposalHandler.getVoteProposals().then((proposals) => {
-    nance.dialogHandler.sendVoteRollup(proposals, endDate);
+    nance.dialogHandler.sendVoteRollup(proposals, nextVote.end);
   });
 }
 

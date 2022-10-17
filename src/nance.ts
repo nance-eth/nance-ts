@@ -134,10 +134,9 @@ export class Nance {
     });
   }
 
-  async votingSetup(startDate: Date, endDate: Date): Promise<Proposal[] | void> {
+  async votingSetup(startDate: Date, endDate: Date, proposals?: Proposal[]): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingSetup() begin...`);
-    this.clearDiscussionInterval();
-    const voteProposals = await this.proposalHandler.getVoteProposals();
+    const voteProposals = proposals || await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       const { body } = await this.proposalHandler.getContentMarkdown(proposal.hash);
       proposal.body = body;
@@ -150,7 +149,8 @@ export class Nance {
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
         startDate,
-        endDate
+        endDate,
+        (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
       proposal.status = await this.proposalHandler.updateVoteAndIPFS(proposal);
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);

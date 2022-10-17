@@ -68,7 +68,8 @@ export class NotionHandler implements DataContentHandler {
       version: notionUtils.getRichText(
         unconvertedProposal,
         this.config.notion.propertyKeys.treasuryVersion
-      )
+      ),
+      voteSetup: notionUtils.getVoteSetup(unconvertedProposal)
     };
     if (getExtendedData) {
       if (

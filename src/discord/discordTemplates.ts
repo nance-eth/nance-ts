@@ -73,7 +73,7 @@ export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => 
           return {
             name: `*${proposal.proposalId}*: ${proposal.title}`,
             value: stripIndents`
-            ${proposal.voteResults?.outcomeEmoji} ${proposal.voteResults?.outcomePercentage}% | ${proposal.voteResults?.totalVotes} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}
+            [${proposal.voteResults?.outcomeEmoji} ${proposal.voteResults?.outcomePercentage}% | ${proposal.voteResults?.totalVotes} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposal.voteURL})
             ------------------------------`,
           };
         }
