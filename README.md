@@ -18,3 +18,15 @@ an ics calendar file `./src/config/<name>/<name>.ics`
 OR
 
 `export NODE_ENV='prod' && export CONFIG='<name>' && ts-node src/index.ts`
+
+## API
+
+development:
+
+`npm run dev:api`
+
+production:
+
+`npm run build:api`
+
+`npm run start:api`

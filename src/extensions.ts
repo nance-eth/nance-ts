@@ -48,6 +48,7 @@ export class NanceExtensions {
       githubCycleDbFiles.concat(githubTopDbFiles),
       `GC${currentCycle} ${update}`
     );
+    this.nance.proposalHandler.incrementGovernanceCycle();
   }
 
   stageCycleDb(cycle: number, proposals: Proposal[]) {
@@ -105,11 +106,13 @@ export class NanceExtensions {
       const translation = await this.translationHandler.translate(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         proposal.body!.split('```\n\n')[1], // cut out proposal header
-        this.nance.config.translation.targetLanguage
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.nance.config.translation!.targetLanguage
       );
       proposal.translation = {
         body: translation.replace('∮∮', '## '),
-        language: this.nance.config.translation.targetLanguage
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        language: this.nance.config.translation!.targetLanguage
       };
     })).then(() => {
       logger.info(`${this.nance.config.name}: translateProposals() complete`);

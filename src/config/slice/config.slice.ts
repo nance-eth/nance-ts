@@ -1,73 +1,68 @@
 import 'dotenv/config';
 import { NanceConfig } from '../../types';
 
-const NAME = 'waterbox';
+const NAME = 'slice';
 
 const config: NanceConfig = {
-  nameId: 'waterbox',
-  name: 'waterbox',
+  nameId: 'slice',
+  name: 'slice',
   calendarPath: `${__dirname}/${NAME}.ics`,
   scheme: ['github', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   votingResultsDashboard: '',
-  translation: {
-    api: 'deepl',
-    targetLanguage: 'zh',
-    storage: {
-      user: 'jigglyjams',
-      repo: 'dev-governance'
-    }
-  },
   juicebox: {
-    network: 'mainnet',
-    projectId: '188',
-    gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199',
+    // network: 'mainnet',
+    // projectId: '188'
+    // gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199'
+    network: 'rinkeby',
+    projectId: '4661',
+    gnosisSafeAddress: '0xB459e6B0a53a9401F6f4f6D31c1eDD30c1cbe3E6'
   },
   discord: {
-    API_KEY: process.env.DISCORD_KEY_WATERBOX ?? '',
-    guildId: '889377541675159602',
-    channelId: '964601032703352873',
-    alertRole: '958529682796605440',
+    API_KEY: process.env.DISCORD_KEY_SLICE ?? '',
+    guildId: '849297623310532628',
+    channelId: '1026502515669352458',
+    alertRole: '930603842628882472',
     poll: {
       voteYesEmoji: '👍',
       voteNoEmoji: '👎',
       voteGoVoteEmoji: '🗳',
       votePassEmoji: '✅',
       voteCancelledEmoji: '❌',
-      minYesVotes: 1,
-      yesNoRatio: 0.3,
+      minYesVotes: 6,
+      yesNoRatio: 0,
       showResults: true
     },
   },
   notion: {
-    API_KEY: process.env.NOTION_KEY_WATERBOX ?? '',
-    publicURLPrefix: 'foil-flat-c43.notion.site',
-    database_id: '8f5a93009a364c4ebf69757ff98be405',
-    current_cycle_block_id: '8458fa50e1724d7aa721275a195dece3',
+    API_KEY: process.env.NOTION_KEY_SLICE ?? '',
+    publicURLPrefix: 'slicedao.notion.site',
+    database_id: '6f5e82e9f6b047fcbb79d147ec0de342',
+    current_cycle_block_id: '9c92fff40830423fb9c1941851e51753',
     payouts_database_id: '5f2b501f8e724af2879f4e440548da72',
     reserves_database_id: '5e62c3b048944801bee6bf48b48896ba',
     propertyKeys: {
-      proposalId: 'Juicebox Proposal ID',
+      proposalId: 'Slice Proposal Number',
       status: 'Status',
-      statusTemperatureCheck: 'Temperature Check',
+      statusTemperatureCheck: 'Temp Check (Do we even vote on it)',
       statusVoting: 'Voting',
       statusApproved: 'Approved',
       statusCancelled: 'Cancelled',
-      proposalIdPrefix: 'JBP-',
+      proposalIdPrefix: 'SL-',
       discussionThread: 'Discussion Thread',
       ipfs: 'IPFS',
       vote: 'Snapshot',
       type: 'Category',
-      typeRecurringPayout: 'Recurring Payment',
-      typePayout: 'Payout',
+      typeRecurringPayout: 'Treasury',
+      typePayout: 'Treasury',
       governanceCycle: 'Funding Cycle',
       governanceCyclePrefix: 'FC#',
       payoutAmountUSD: 'USD Payout Amount',
       payoutAddress: 'Payout Address',
       payoutCount: 'Number of Payouts',
       reservePercentage: 'Percentage',
-      treasuryVersion: 'JB DAO Treasury',
+      treasuryVersion: 'Juicebox Treasury Version',
       payoutFirstFC: 'First FC',
       payoutLastFC: 'Last FC',
       payoutRenewalFC: 'Renewal FC',
@@ -79,16 +74,16 @@ const config: NanceConfig = {
   },
   github: {
     user: 'jigglyjams',
-    repo: 'dev-governance',
+    repo: 'slice-governance',
     propertyKeys: {
       title: 'Name',
-      proposalId: 'Juicebox Proposal ID',
+      proposalId: 'Slice Proposal ID',
       status: 'Status',
       statusTemperatureCheck: 'Temperature Check',
       statusVoting: 'Voting',
       statusApproved: 'Approved',
       statusCancelled: 'Cancelled',
-      proposalIdPrefix: 'JBP-',
+      proposalIdPrefix: 'SL-',
       discussionThread: 'Discussion Thread',
       ipfs: 'Data Backup',
       vote: 'Voting',
@@ -111,7 +106,7 @@ config.notion.filters = {
       {
         property: 'Status',
         select: {
-          equals: 'Discussion',
+          equals: 'Discussion (ready to be considered for temp check)',
         },
       },
       {
@@ -133,7 +128,7 @@ config.notion.filters = {
       {
         property: 'Status',
         select: {
-          equals: 'Discussion',
+          equals: 'Discussion (ready to be considered for temp check)',
         },
       },
       {
@@ -160,7 +155,7 @@ config.notion.filters = {
   temperatureCheck: {
     property: 'Status',
     select: {
-      equals: 'Temperature Check',
+      equals: config.notion.propertyKeys.statusTemperatureCheck,
     },
   },
 

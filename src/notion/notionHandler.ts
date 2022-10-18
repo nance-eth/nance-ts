@@ -64,10 +64,18 @@ export class NotionHandler implements DataContentHandler {
           unconvertedProposal,
           this.config.notion.propertyKeys.governanceCycle
         ).split(this.config.notion.propertyKeys.governanceCyclePrefix)[1] ?? ''
-      )
+      ),
+      version: notionUtils.getRichText(
+        unconvertedProposal,
+        this.config.notion.propertyKeys.treasuryVersion
+      ),
+      voteSetup: notionUtils.getVoteSetup(unconvertedProposal)
     };
     if (getExtendedData) {
-      if (cleanProposal.type === this.config.notion.propertyKeys.typeRecurringPayout) {
+      if (
+        cleanProposal.type === this.config.notion.propertyKeys.typeRecurringPayout
+        || cleanProposal.type === this.config.notion.propertyKeys.typePayout
+      ) {
         cleanProposal.payout = {
           address: notionUtils.getRichText(
             unconvertedProposal,
@@ -80,23 +88,7 @@ export class NotionHandler implements DataContentHandler {
           count: notionUtils.getNumber(
             unconvertedProposal,
             this.config.notion.propertyKeys.payoutCount
-          ),
-          treasuryVersion: notionUtils.getRichText(
-            unconvertedProposal,
-            this.config.notion.propertyKeys.treasuryVersion
           )
-        };
-      } else if (cleanProposal.type === this.config.notion.propertyKeys.typePayout) {
-        cleanProposal.payout = {
-          address: notionUtils.getRichText(
-            unconvertedProposal,
-            this.config.notion.propertyKeys.payoutAddress
-          ),
-          count: 1,
-          amountUSD: notionUtils.getNumber(
-            unconvertedProposal,
-            this.config.notion.propertyKeys.payoutAmountUSD
-          ),
         };
       }
     }
@@ -144,6 +136,10 @@ export class NotionHandler implements DataContentHandler {
       {
         database_id: this.config.notion.payouts_database_id,
         filter: filters,
+        sorts: [{
+          property: this.config.notion.propertyKeys.payoutAddress,
+          direction: 'descending'
+        }]
       } as QueryDatabaseParameters
     );
     return databaseReponse.results.map((data: any) => {
@@ -156,6 +152,10 @@ export class NotionHandler implements DataContentHandler {
       {
         database_id: this.config.notion.reserves_database_id,
         filter: filters,
+        sorts: [{
+          property: this.config.notion.propertyKeys.payoutAddress,
+          direction: 'descending'
+        }]
       } as QueryDatabaseParameters
     );
     return databaseReponse.results.map((data: any) => {
@@ -217,12 +217,6 @@ export class NotionHandler implements DataContentHandler {
           rich_text: {
             equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
           }
-        },
-        {
-          property: this.config.notion.propertyKeys.status,
-          select: {
-            does_not_equal: 'Draft'
-          }
         }
       ]
     };
@@ -260,7 +254,7 @@ export class NotionHandler implements DataContentHandler {
           [this.config.notion.propertyKeys.treasuryVersion]: {
             rich_text: [
               {
-                text: { content: proposal.payout.treasuryVersion }
+                text: { content: proposal.version }
               }
             ]
           },
@@ -307,7 +301,7 @@ export class NotionHandler implements DataContentHandler {
           },
           [this.config.notion.propertyKeys.payoutAddress]: {
             rich_text: [
-              { text: { content: proposal.payout?.address } }
+              { text: { content: proposal.payout?.address || proposal.reserve?.address || '' } }
             ]
           },
           [this.config.notion.propertyKeys.payoutCount]: {
@@ -318,12 +312,12 @@ export class NotionHandler implements DataContentHandler {
           },
           [this.config.notion.propertyKeys.treasuryVersion]: {
             rich_text: [
-              { text: { content: proposal.payout?.treasuryVersion } }
+              { text: { content: proposal.version } }
             ]
           },
           [this.config.notion.propertyKeys.governanceCycle]: {
             rich_text: [
-              { text: { content: String(proposal.governanceCycle) } }
+              { text: { content: `${this.config.notion.propertyKeys.governanceCyclePrefix}${String(proposal.governanceCycle)}` } }
             ]
           },
           [this.config.notion.propertyKeys.status]: {
@@ -382,7 +376,7 @@ export class NotionHandler implements DataContentHandler {
   async updateDiscussionURL(proposal: Proposal) {
     await this.updateMetaData(
       proposal.hash,
-      { [this.config.notion.propertyKeys.discussionThread]: { url: proposal.discussionThreadURL } }
+      { [this.config.notion.propertyKeys.discussionThread]: { url: proposal.discussionThreadURL || '' } }
     );
   }
 
@@ -439,10 +433,16 @@ export class NotionHandler implements DataContentHandler {
     return this.config.notion.propertyKeys.vote;
   }
 
-  async getContentMarkdown(pageId: string): Promise<string> {
-    const mdBlocks = await this.notionToMd.pageToMarkdown(pageId);
-    const mdString = this.notionToMd.toMarkdownString(mdBlocks);
-    return mdString;
+  async getContentMarkdown(pageId: string): Promise<Proposal> {
+    return this.notion.pages.retrieve({ page_id: pageId }).then(async (unconvertedProposal: GetDatabaseResponse | GetPageResponse) => {
+      const mdBlocks = await this.notionToMd.pageToMarkdown(pageId);
+      const mdString = this.notionToMd.toMarkdownString(mdBlocks);
+      const proposal = this.toProposal(unconvertedProposal);
+      return {
+        ...proposal,
+        body: mdString
+      };
+    }).catch((e) => { return Promise.reject(e.message); });
   }
 
   async pageIdToProposal(pageId: string) {

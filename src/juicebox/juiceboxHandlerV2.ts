@@ -20,7 +20,7 @@ import {
   ReconfigurationBallotAddresses,
   BallotKey,
 } from './typesV2';
-import { Payout, Reserve } from '../types';
+import { Payout, Reserve, GnosisTransaction } from '../types';
 import { keys } from '../keys';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -170,12 +170,12 @@ export class JuiceboxHandlerV2 {
 
   async buildJBGroupedSplitsStruct(
     distributionLimit: number,
-    distrubutionPayouts: Payout[],
+    distributionPayouts: Payout[],
     distributionReserved: Reserve[]
   ): Promise<JBGroupedSplitsStruct[]> {
     // project owner is default beneficiary address for project routed payouts (check on this)
     const owner = await this.getProjectOwner();
-    const distrubutionPayoutsJBSplitStruct = distrubutionPayouts.map((payout): JBSplitStruct => {
+    const distrubutionPayoutsJBSplitStruct = distributionPayouts.map((payout): JBSplitStruct => {
       const projectPayout = (payout.address.includes(PROJECT_PAYOUT_PREFIX)) ? payout.address.split(PROJECT_PAYOUT_PREFIX)[1] : undefined;
       return {
         preferClaimed: DEFAULT_PREFER_CLAIMED,
@@ -210,7 +210,7 @@ export class JuiceboxHandlerV2 {
     ];
   }
 
-  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, reconfigurationBallot?: BallotKey) {
+  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, reconfigurationBallot?: BallotKey): Promise<GnosisTransaction> {
     const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(
       fundingCycle,
@@ -245,6 +245,6 @@ export class JuiceboxHandlerV2 {
     //   'reconfigureFundingCyclesOf',
     //   encodedReconfiguration
     // ), { depth: null });
-    return { address: this.JBController.address, data: encodedReconfiguration };
+    return { address: this.JBController.address, bytes: encodedReconfiguration };
   }
 }

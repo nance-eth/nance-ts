@@ -22,7 +22,7 @@
     ],
   "rules": {
     "no-console": "off",
-    "max-len": ["error", { "code": 150 }],
+    "max-len": ["error", { "code": 250 }],
     "import/prefer-default-export": "off",
     "import/extensions": "off",
     "comma-dangle": "off",

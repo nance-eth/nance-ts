@@ -1,5 +1,7 @@
 import { TargetLanguageCode } from 'deepl-node';
 
+type ProposalType = 'Payout' | 'ReservedToken' | 'ParameterUpdate' | 'ProcessUpdate' | 'CustomTransaction';
+
 export interface Proposal {
   hash: string;
   title: string;
@@ -14,17 +16,17 @@ export interface Proposal {
   url: string;
   governanceCycle?: number;
   date?: string,
-  translationURL?: string | undefined;
-  type?: string | undefined;
+  translationURL?: string;
+  type?: ProposalType;
   status: string;
   proposalId: string;
   author?: string;
   discussionThreadURL: string;
   ipfsURL: string;
   voteURL: string;
+  voteSetup?: SnapshotVoteOptions;
   voteResults?: VoteResults;
-  version?: number;
-  project?: number
+  version?: string;
 }
 
 export type Payout = {
@@ -32,7 +34,6 @@ export type Payout = {
   address: string;
   amountUSD: number;
   count: number;
-  treasuryVersion?: string;
 };
 
 type Notification = {
@@ -54,6 +55,21 @@ export type ParameterUpdate = {
   redemptionPercentage: number;
 };
 
+export type VoteResults = {
+  voteProposalId: string;
+  totalVotes: number;
+  scoresState: string;
+  scores: Record<string, number>;
+  percentages: Record<string, number>;
+  outcomePercentage: string;
+  outcomeEmoji: string;
+};
+
+export type GnosisTransaction = {
+  address: string;
+  bytes: string;
+};
+
 export type ProposalNoHash = Omit<Proposal, 'hash'>;
 
 export type ProposalStore = Record<string, ProposalNoHash>;
@@ -66,7 +82,7 @@ export interface NanceConfig {
   proposalDataBackup: string;
   ipfsGateway: string;
   votingResultsDashboard: string;
-  translation: {
+  translation?: {
     api: string;
     targetLanguage: TargetLanguageCode;
     storage: {
@@ -160,16 +176,6 @@ export interface NanceConfig {
   };
 }
 
-export type VoteResults = {
-  voteProposalId: string;
-  totalVotes: number;
-  scoresState: string;
-  scores: Record<string, number>;
-  percentages: Record<string, number>;
-  outcomePercentage: string;
-  outcomeEmoji: string;
-};
-
 export interface DateEvent {
   title: string;
   start: Date;
@@ -196,3 +202,8 @@ export interface GithubFileChange {
   path: string,
   contents: string
 }
+
+export type SnapshotVoteOptions = {
+  type: string,
+  choices: string[]
+};

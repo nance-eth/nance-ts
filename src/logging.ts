@@ -4,13 +4,8 @@ import {
   transports
 } from 'winston';
 import 'dotenv/config';
-import { Logtail } from '@logtail/node';
-import { LogtailTransport } from '@logtail/winston';
 
 if (process.env.CONSOLE_LOG !== 'on') console.log = function none() {};
-
-const logtail = new Logtail(process.env.LOGTAIL_KEY ?? '');
-const LOGTAIL_SILENT = process.env.NODE_ENV === 'dev';
 
 const logFormat = format.combine(
   format.colorize({ message: true }),
@@ -30,8 +25,6 @@ const logger = createLogger({
   level: 'silly',
   transports: [
     new transports.Console(),
-    new transports.File({ filename: 'logs.log' }),
-    new LogtailTransport(logtail, { silent: LOGTAIL_SILENT, format: format.json() })
   ]
 });
 

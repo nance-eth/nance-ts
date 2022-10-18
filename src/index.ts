@@ -28,10 +28,16 @@ async function scheduleCycle() {
   const calendar = new CalendarHandler(config.calendarPath);
   const cycle = calendar.getNextEvents();
   logger.debug(cycle);
+  const noEventsInProgress = cycle.filter((event) => { return event.inProgress === false; }).some((event) => {
+    return event.inProgress;
+  });
+  const executionOrDelayInProgress = cycle.filter((event) => {
+    return event.title === 'Execution' || event.title === 'Delay';
+  }).some((event) => {
+    return event.inProgress;
+  });
+  if (noEventsInProgress || executionOrDelayInProgress) { nance.setDiscussionInterval(30); }
   cycle.forEach((event) => {
-    if ((event.inProgress) && (event.title === 'Execution' || event.title === 'Delay Period')) {
-      nance.setDiscussionInterval(30);
-    }
     if (event.title === 'Temperature Check') {
       if (!event.inProgress) {
         // start reminder
@@ -41,6 +47,7 @@ async function scheduleCycle() {
         });
         schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
           nance.temperatureCheckSetup(event.end);
+          nance.clearDiscussionInterval();
         });
       }
       // end reminder

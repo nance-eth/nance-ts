@@ -3,10 +3,7 @@
 .DS_STORE
 
 node_modules/
-dist/
-
-*.log
-
-src/config/dev/dev.ics
 
 dist/
+
+src/config/waterbox/waterbox.ics

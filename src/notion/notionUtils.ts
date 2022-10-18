@@ -1,3 +1,5 @@
+import { SnapshotVoteOptions } from '../types';
+
 const NOTION_URL_PREFIX = 'www.notion.so';
 
 export const getTitle = (page:any) => {
@@ -38,6 +40,13 @@ export const getPublicURL = (page:any, publicUrlPrefix:any) => {
 
 export const getStatus = (page:any) => {
   return page.properties.Status.select.name;
+};
+
+export const getVoteSetup = (page:any): SnapshotVoteOptions => {
+  return {
+    type: page.properties['Vote Type'].select?.name,
+    choices: getRichText(page, 'Vote Choices').split(',')
+  };
 };
 
 export const getPropertyURL = (page:any, property:any) => {

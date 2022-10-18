@@ -100,13 +100,9 @@ export class Nance {
       await this.dialogHandler.setupPoll(threadId);
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
-      if (discussionProposals.length > 0) {
-        this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
-        logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
-        logger.info('===================================================================');
-      } else {
-        logger.warn(`${this.config.name}:no proposals to temperatureCheckSetup(). check database!`);
-      }
+      this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
+      logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
+      logger.info('===================================================================');
     }).catch((e) => {
       logger.error(`${this.config.name}: temperatureCheckSetup() error:`);
       logger.error(e);
@@ -138,13 +134,12 @@ export class Nance {
     });
   }
 
-  async votingSetup(startDate: Date, endDate: Date): Promise<Proposal[] | void> {
+  async votingSetup(startDate: Date, endDate: Date, proposals?: Proposal[]): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingSetup() begin...`);
-    this.clearDiscussionInterval();
-    const voteProposals = await this.proposalHandler.getVoteProposals();
+    const voteProposals = proposals || await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
-      const mdString = await this.proposalHandler.getContentMarkdown(proposal.hash);
-      proposal.body = mdString;
+      const { body } = await this.proposalHandler.getContentMarkdown(proposal.hash);
+      proposal.body = body;
       if (this.config.proposalDataBackup) {
         const ipfsCID = await this.proposalDataBackupHandler.pinProposal(proposal);
         proposal.ipfsURL = `${this.config.ipfsGateway}/${ipfsCID}`;
@@ -154,7 +149,8 @@ export class Nance {
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
         startDate,
-        endDate
+        endDate,
+        (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
       proposal.status = await this.proposalHandler.updateVoteAndIPFS(proposal);
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
