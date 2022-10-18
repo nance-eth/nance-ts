@@ -56,8 +56,7 @@ export const getJBFundingCycleDataStruct = (
   ballot: string
 ): JBFundingCycleDataStruct => {
   return {
-    // duration: data.duration,
-    duration: 1209600,
+    duration: data.duration,
     weight,
     discountRate: data.discountRate,
     ballot

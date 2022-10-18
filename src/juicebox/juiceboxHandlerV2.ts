@@ -63,7 +63,7 @@ export class JuiceboxHandlerV2 {
       3: getJB3DayReconfigurationBufferBallot(this.provider, { network: this.network }).address,
       7: getJB7DayReconfigurationBufferBallot(this.provider, { network: this.network }).address
     } as ReconfigurationBallotAddresses;
-    this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network }).address;
+    this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network });
   }
 
   currentConfiguration = async () => {
@@ -220,7 +220,7 @@ export class JuiceboxHandlerV2 {
     );
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
     const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
-      this.JBETHPaymentTerminal,
+      this.JBETHPaymentTerminal.address,
       TOKEN_ETH,
       distributionLimit,
       DISTRIBUTION_CURRENCY_USD,

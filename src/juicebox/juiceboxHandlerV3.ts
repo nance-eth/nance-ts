@@ -1,4 +1,5 @@
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { Wallet } from 'ethers';
 import {
   getJBFundingCycleStore,
   getJBController,
@@ -9,7 +10,6 @@ import {
   getJB7DayReconfigurationBufferBallot,
   getJBETHPaymentTerminal
 } from 'juice-sdk-v3';
-import fs from 'fs';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk-v3/dist/cjs/types/contracts/JBController';
 import { ONE_BILLION } from './juiceboxMath';
@@ -46,6 +46,7 @@ const CSV_HEADING = 'beneficiary,percent,preferClaimed,lockedUntil,projectId,all
 
 export class JuiceboxHandlerV3 {
   provider;
+  wallet;
   JBSplitsStore;
   JBController;
   JBReconfigurationBallotAddresses;
@@ -57,6 +58,7 @@ export class JuiceboxHandlerV3 {
   ) {
     const RPC_HOST = `https://${this.network}.infura.io/v3/${keys.INFURA_KEY}`;
     this.provider = new JsonRpcProvider(RPC_HOST);
+    this.wallet = new Wallet(keys.PRIVATE_KEY, this.provider);
     this.JBSplitsStore = getJBSplitsStore(this.provider, { network: this.network });
     this.JBController = getJBController(this.provider, { network: this.network });
     this.JBReconfigurationBallotAddresses = {
@@ -64,7 +66,7 @@ export class JuiceboxHandlerV3 {
       3: getJB3DayReconfigurationBufferBallot(this.provider, { network: this.network }).address,
       7: getJB7DayReconfigurationBufferBallot(this.provider, { network: this.network }).address
     } as ReconfigurationBallotAddresses;
-    this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network }).address;
+    this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network });
   }
 
   currentConfiguration = async () => {
@@ -215,13 +217,13 @@ export class JuiceboxHandlerV3 {
     const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(
       fundingCycle,
-      BigNumber.from('62536265658750000000000'),
+      BigNumber.from(DEFAULT_WEIGHT),
       // use queued ballot if none passed in
       (reconfigurationBallot) ? this.JBReconfigurationBallotAddresses[reconfigurationBallot] : fundingCycle.ballot
     );
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
     const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
-      this.JBETHPaymentTerminal,
+      this.JBETHPaymentTerminal.address,
       TOKEN_ETH,
       distributionLimit,
       DISTRIBUTION_CURRENCY_USD,
@@ -247,5 +249,24 @@ export class JuiceboxHandlerV3 {
     //   encodedReconfiguration
     // ), { depth: null });
     return { address: this.JBController.address, data: encodedReconfiguration };
+  }
+
+  async distributeFunds() {
+    const currentConfiguration = await this.currentConfiguration();
+    const distributionLimit = await this.JBController.distributionLimitOf(
+      this.projectId,
+      currentConfiguration,
+      this.JBETHPaymentTerminal.address,
+      TOKEN_ETH
+    );
+    const distribution = await getJBETHPaymentTerminal(this.wallet, { network: this.network }).distributePayoutsOf(
+      this.projectId,
+      distributionLimit[0],
+      DISTRIBUTION_CURRENCY_ETH,
+      TOKEN_ETH,
+      0,
+      DEFAULT_MEMO
+    );
+    console.log(await distribution.wait());
   }
 }
