@@ -312,7 +312,7 @@ export class NotionHandler implements DataContentHandler {
           },
           [this.config.notion.propertyKeys.treasuryVersion]: {
             rich_text: [
-              { text: { content: proposal.version } }
+              { text: { content: `V${proposal.version}` } }
             ]
           },
           [this.config.notion.propertyKeys.governanceCycle]: {
