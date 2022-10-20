@@ -32,6 +32,7 @@ export interface Proposal {
 export type Payout = {
   type?: 'address' | 'project';
   address: string;
+  project?: number;
   amountUSD: number;
   count: number;
 };

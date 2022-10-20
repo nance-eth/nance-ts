@@ -36,6 +36,7 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
     const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
     proposal.governanceCycle = currentGovernanceCycle;
   }
+  if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
   logger.debug(`[UPLOAD] space: ${space}`);
   logger.debug(proposal);
   await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
