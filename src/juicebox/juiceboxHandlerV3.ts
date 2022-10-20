@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { Wallet } from 'ethers';
+import { ContractTransaction, Wallet } from 'ethers';
 import {
   getJBFundingCycleStore,
   getJBController,
@@ -17,6 +17,7 @@ import {
   getJBFundingCycleDataStruct,
   getJBFundingCycleMetadataStruct,
   ReconfigureFundingCyclesOfData,
+  DistributePayoutsOfData,
   getJBFundAccessConstraintsStruct,
   ReconfigurationBallotAddresses,
   BallotKey,
@@ -251,7 +252,7 @@ export class JuiceboxHandlerV3 {
     return { address: this.JBController.address, data: encodedReconfiguration };
   }
 
-  async distributeFunds() {
+  async encodeDistributeFundsOf() {
     const currentConfiguration = await this.currentConfiguration();
     const distributionLimit = await this.JBController.distributionLimitOf(
       this.projectId,
@@ -259,14 +260,33 @@ export class JuiceboxHandlerV3 {
       this.JBETHPaymentTerminal.address,
       TOKEN_ETH
     );
-    const distribution = await getJBETHPaymentTerminal(this.wallet, { network: this.network }).distributePayoutsOf(
+    const distributePayoutsOfData: DistributePayoutsOfData = [
       this.projectId,
       distributionLimit[0],
       DISTRIBUTION_CURRENCY_ETH,
       TOKEN_ETH,
       0,
       DEFAULT_MEMO
+    ];
+    const encodedDistribution = this.JBETHPaymentTerminal.interface.encodeFunctionData(
+      'distributePayoutsOf',
+      distributePayoutsOfData
     );
-    console.log(await distribution.wait());
+    console.dir(this.JBETHPaymentTerminal.interface.decodeFunctionData(
+      'distributePayoutsOf',
+      encodedDistribution
+    ), { depth: null });
+    return { address: this.JBETHPaymentTerminal.address, bytes: encodedDistribution };
+  }
+
+  async sendDistributeFundsOf(d: DistributePayoutsOfData): Promise<ContractTransaction> {
+    return getJBETHPaymentTerminal(this.wallet, { network: this.network }).distributePayoutsOf(
+      d[0],
+      d[1],
+      d[2],
+      d[3],
+      d[4],
+      d[5]
+    );
   }
 }

@@ -50,6 +50,15 @@ export type ReconfigureFundingCyclesOfData = [
   string
 ];
 
+export type DistributePayoutsOfData = [
+  BigNumberish,
+  BigNumberish,
+  BigNumberish,
+  string,
+  BigNumberish,
+  string
+];
+
 export const getJBFundingCycleDataStruct = (
   data: JBFundingCycleStructOutput,
   weight: BigNumber,
