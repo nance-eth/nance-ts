@@ -280,13 +280,6 @@ export class JuiceboxHandlerV3 {
   }
 
   async sendDistributeFundsOf(d: DistributePayoutsOfData): Promise<ContractTransaction> {
-    return getJBETHPaymentTerminal(this.wallet, { network: this.network }).distributePayoutsOf(
-      d[0],
-      d[1],
-      d[2],
-      d[3],
-      d[4],
-      d[5]
-    );
+    return getJBETHPaymentTerminal(this.wallet, { network: this.network }).distributePayoutsOf(...d);
   }
 }

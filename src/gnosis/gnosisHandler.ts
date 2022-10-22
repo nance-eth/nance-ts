@@ -2,8 +2,9 @@ import { ethers, Wallet } from 'ethers';
 import axios from 'axios';
 import EthersAdapter from '@gnosis.pm/safe-ethers-lib';
 import { SafeTransactionDataPartial } from '@gnosis.pm/safe-core-sdk-types';
-import Safe, { SafeFactory } from '@gnosis.pm/safe-core-sdk';
+import Safe from '@gnosis.pm/safe-core-sdk';
 import { keys } from '../keys';
+import logger from '../logging';
 
 const headers = { 'Content-type': 'application/json' };
 
@@ -103,7 +104,7 @@ export class GnosisHandler {
     });
   }
 
-  async getCurrentNonce() {
+  async getCurrentNonce(queued = true) {
     return axios({
       method: 'get',
       url: `${this.TRANSACTION_API}/api/v1/safes/${this.safeAddress}/all-transactions`,
@@ -112,7 +113,7 @@ export class GnosisHandler {
         ordering: 'nonce',
         limit: 1,
         executed: false,
-        queued: true,
+        queued,
         trusted: true,
       },
     }).then((response) => {
@@ -125,7 +126,7 @@ export class GnosisHandler {
   async getGasEstimate(subTransaction: SafeTransactionDataPartial): Promise<any> {
     return axios({
       method: 'post',
-      url: `${this.RELAY_API}/api/v2/safes/${this.safeAddress}/transactions/estimate/`,
+      url: `${this.TRANSACTION_API}/api/v1/safes/${this.safeAddress}/multisig-transactions/estimations/`,
       headers,
       data: {
         ...subTransaction
@@ -137,27 +138,35 @@ export class GnosisHandler {
     });
   }
 
-  async sendTransaction(transactionInitial: SafeTransactionDataPartial) {
+  async sendTransaction(transactionInitial: SafeTransactionDataPartial, executeIt = false) {
     const transaction = await this.safe.createTransaction(transactionInitial);
-    const transactionHash = await this.safe.getTransactionHash(transaction);
-    const transactionSignature = await this.safe.signTransactionHash(transactionHash);
-    const data = {
-      ...transactionInitial,
-      sender: this.walletAddress,
-      contractTransactionHash: transactionHash,
-      signature: transactionSignature.data
-    };
-    console.log(data);
-    return axios({
-      method: 'post',
-      url: `${this.TRANSACTION_API}/api/v1/safes/${this.safeAddress}/multisig-transactions/`,
-      headers,
-      data
-    }).then((response) => {
-      return response.status;
+    // const transactionHash = await this.safe.getTransactionHash(transaction);
+    // const transactionSignature = await this.safe.signTransactionHash(transactionHash);
+    const transactionResponse = await this.safe.executeTransaction(transaction).then((response) => {
+      return response.transactionResponse;
     }).catch((e) => {
-      console.log(e.response.data);
+      logger.error(e);
       return Promise.reject(e);
     });
+    return transactionResponse;
+    // If we cant executeTransaction as a delegate do back to doing it way below
+    // const data = {
+    //   ...transactionInitial,
+    //   sender: this.walletAddress,
+    //   contractTransactionHash: transactionHash,
+    //   signature: transactionSignature.data
+    // };
+    // console.log(data);
+    // return axios({
+    //   method: 'post',
+    //   url: `${this.TRANSACTION_API}/api/v1/safes/${this.safeAddress}/multisig-transactions/`,
+    //   headers,
+    //   data
+    // }).then((response) => {
+    //   return response.status;
+    // }).catch((e) => {
+    //   logger.info(e.response.data);
+    //   return Promise.reject(e);
+    // });
   }
 }

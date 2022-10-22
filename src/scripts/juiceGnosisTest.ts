@@ -12,23 +12,21 @@ async function main() {
   const gnosis = await GnosisHandler.initializeSafe(config.juicebox.gnosisSafeAddress, config.juicebox.network);
  // const { address, bytes } = await treasury.V2encodeReconfigureFundingCyclesOf();
  const { address, bytes } = await treasury.juiceboxHandlerV3.encodeDistributeFundsOf();
-  const gnosisInfo = await gnosis.getGasEstimate({
-    to: address,
-    value: '0',
-    operation: 0,
-    data: bytes
-  }).catch((e) => { console.log(e) });
-  const nextNonce = Number(await gnosis.getCurrentNonce()) + 1;
+  // const gnosisInfo = await gnosis.getGasEstimate({
+  //   to: address,
+  //   value: '0',
+  //   operation: 0,
+  //   data: bytes
+  // }).catch((e) => { console.log(e) });
+  const nextNonce = Number(await gnosis.getCurrentNonce(false)) + 1;
   gnosis.sendTransaction({
     to: address,
     value: '0',
     data: bytes,
     operation: 0,
-    // gasToken: null,
     safeTxGas: 0,
     baseGas: 0,
     gasPrice: 0,
-    //refundReceiver: null,
     nonce: nextNonce
   }).catch((e) => { console.log(e) });
 }
