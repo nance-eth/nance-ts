@@ -41,16 +41,16 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
     proposal.governanceCycle = currentGovernanceCycle;
   }
   if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
-  logger.debug(`[UPLOAD] space: ${space}`);
-  logger.debug(proposal);
   const signatureGood = await checkSignature(signature);
   if (signatureGood) {
+    logger.debug(`[UPLOAD] space: ${space}, address: ${signature.address} good`);
     await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
       res.json({ success: true, data: { hash } });
     }).catch((e: any) => {
       res.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
     });
   } else {
+    logger.warn(`[UPLOAD] space: ${space}, address: ${signature.address} bad`);
     res.json({ success: false, error: '[NANCE ERROR]: bad signature' });
   }
 });
