@@ -6,6 +6,8 @@ import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import { SPACES } from '../config/map';
 import logger from '../logging';
+import { ProposalUploadRequest } from './models';
+import { checkSignature } from './helpers/signature';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -29,9 +31,11 @@ router.use(spacePrefix, async (req, res, next) => {
 router.post(`${spacePrefix}/upload`, async (req, res) => {
   const { space } = req.params;
   const {
-    proposal
-  } = req.body as Record<string, Proposal>;
-  if (!proposal) res.json({ success: false, error: '[NOTION ERROR]: proposal object validation fail' });
+    proposal,
+    signature
+  } = req.body as ProposalUploadRequest;
+  console.log(req.body);
+  if (!proposal) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
   if (!proposal.governanceCycle) {
     const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
     proposal.governanceCycle = currentGovernanceCycle;
@@ -39,11 +43,16 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
   if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
   logger.debug(`[UPLOAD] space: ${space}`);
   logger.debug(proposal);
-  await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
-    res.json({ success: true, data: { hash } });
-  }).catch((e: any) => {
-    res.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
-  });
+  const signatureGood = await checkSignature(signature);
+  if (signatureGood) {
+    await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
+      res.json({ success: true, data: { hash } });
+    }).catch((e: any) => {
+      res.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
+    });
+  } else {
+    res.json({ success: false, error: '[NANCE ERROR]: bad signature' });
+  }
 });
 
 router.get(`${spacePrefix}`, async (req, res) => {

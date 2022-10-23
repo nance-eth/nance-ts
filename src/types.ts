@@ -208,3 +208,10 @@ export type SnapshotVoteOptions = {
   type: string,
   choices: string[]
 };
+
+export interface Signature {
+  address: string;
+  signature: string;
+  timestamp: number;
+  typedValue: Record<string, string | number>
+}
