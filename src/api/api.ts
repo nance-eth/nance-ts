@@ -6,6 +6,8 @@ import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import { SPACES } from '../config/map';
 import logger from '../logging';
+import { ProposalUploadRequest, FetchReconfigureRequest } from './models';
+import { checkSignature } from './helpers/signature';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -28,21 +30,25 @@ router.use(spacePrefix, async (req, res, next) => {
 
 router.post(`${spacePrefix}/upload`, async (req, res) => {
   const { space } = req.params;
-  const {
-    proposal
-  } = req.body as Record<string, Proposal>;
-  if (!proposal) res.json({ success: false, error: '[NOTION ERROR]: proposal object validation fail' });
-  if (!proposal.governanceCycle) {
-    const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
-    proposal.governanceCycle = currentGovernanceCycle;
+  const { proposal, signature } = req.body as ProposalUploadRequest;
+  if (!proposal) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
+  const signatureGood = checkSignature(signature, space, 'upload', proposal);
+  if (signatureGood) {
+    logger.debug(`[UPLOAD] space: ${space}, address: ${signature.address} good`);
+    if (!proposal.governanceCycle) {
+      const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
+      proposal.governanceCycle = currentGovernanceCycle;
+    }
+    if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
+    await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
+      res.json({ success: true, data: { hash } });
+    }).catch((e: any) => {
+      res.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
+    });
+  } else {
+    logger.warn(`[UPLOAD] space: ${space}, address: ${signature.address} bad`);
+    res.json({ success: false, error: '[NANCE ERROR]: bad signature' });
   }
-  logger.debug(`[UPLOAD] space: ${space}`);
-  logger.debug(proposal);
-  await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
-    res.json({ success: true, data: { hash } });
-  }).catch((e: any) => {
-    res.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
-  });
 });
 
 router.get(`${spacePrefix}`, async (req, res) => {
@@ -83,6 +89,33 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const { version } = req.query;
   return res.send(
     await res.locals.treasury.fetchReconfiguration(version).then((data: any) => {
+      return { success: true, data };
+    }).catch((e: any) => {
+      return { success: false, error: e };
+    })
+  );
+});
+
+router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
+  console.log(req.body);
+  const { version } = req.query;
+  const { address, datetime } = req.body as FetchReconfigureRequest;
+  const memo = `submitted by ${address} at ${datetime} from juicetool & nance`;
+  return res.send(
+    await res.locals.treasury.fetchReconfiguration(version, memo).then((data: any) => {
+      return { success: true, data };
+    }).catch((e: any) => {
+      return { success: false, error: e };
+    })
+  );
+});
+
+router.post(`${spacePrefix}/reconfigure/submit`, async (req, res) => {
+  const { version } = req.query;
+  const { address, datetime } = req.body as FetchReconfigureRequest;
+  const memo = `submitted by ${address} at ${datetime} from juicetool & nance`;
+  return res.send(
+    await res.locals.treasury.fetchReconfiguration(version, memo).then((data: any) => {
       return { success: true, data };
     }).catch((e: any) => {
       return { success: false, error: e };

@@ -20,7 +20,7 @@ import {
   ReconfigurationBallotAddresses,
   BallotKey,
 } from './typesV2';
-import { Payout, Reserve, GnosisTransaction } from '../types';
+import { Payout, Reserve, BasicTransaction } from '../types';
 import { keys } from '../keys';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -210,7 +210,7 @@ export class JuiceboxHandlerV2 {
     ];
   }
 
-  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, reconfigurationBallot?: BallotKey): Promise<GnosisTransaction> {
+  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, memo = DEFAULT_MEMO, reconfigurationBallot?: BallotKey): Promise<BasicTransaction> {
     const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(
       fundingCycle,
@@ -235,7 +235,7 @@ export class JuiceboxHandlerV2 {
       mustStartAtOrAfter,
       groupedSplits,
       fundAccessConstraintsData,
-      DEFAULT_MEMO
+      memo
     ];
     const encodedReconfiguration = this.JBController.interface.encodeFunctionData(
       'reconfigureFundingCyclesOf',
