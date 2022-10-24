@@ -1,4 +1,4 @@
-import { Proposal } from '../types';
+import { Proposal, Signature } from '../types';
 
 interface APIResponse<T> {
   success: boolean;
@@ -35,4 +35,5 @@ export interface ProposalMarkdownRequest extends BaseRequest {
 
 export interface ProposalUploadRequest extends BaseRequest {
   proposal: Proposal;
+  signature: Signature
 }
