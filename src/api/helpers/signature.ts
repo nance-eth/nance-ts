@@ -1,10 +1,10 @@
 import { ethers } from 'ethers';
-import logger from '../../logging';
 import { DOMAIN, TYPES } from '../constants/Signature';
-import { Signature, Proposal } from '../../types';
+import { Signature } from '../../types';
 
 const getApiPath = () => {
-  return process.env.RAILWAY_STATIC_URL || 'http://localhost:3000';
+  console.log(process.env.RAILWAY_STATIC_URL);
+  return `https://${process.env.RAILWAY_STATIC_URL}` || 'http://localhost:3000';
 };
 
 export function checkSignature(signaturePacket: Signature, space: string, command: string, payload: any) {
