@@ -7,7 +7,6 @@ const getApiPath = () => {
 };
 
 export function checkSignature(signaturePacket: Signature, space: string, command: string, payload: any) {
-  console.log(getApiPath());
   const typedValue = {
     path: `${getApiPath()}/${space}/${command}`,
     timestamp: signaturePacket.timestamp,
