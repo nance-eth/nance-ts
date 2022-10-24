@@ -34,16 +34,15 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
     proposal,
     signature
   } = req.body as ProposalUploadRequest;
-  console.log(req.body);
   if (!proposal) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
-  if (!proposal.governanceCycle) {
-    const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
-    proposal.governanceCycle = currentGovernanceCycle;
-  }
-  if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
-  const signatureGood = await checkSignature(signature);
+  const signatureGood = checkSignature(signature, space, 'upload', proposal);
   if (signatureGood) {
     logger.debug(`[UPLOAD] space: ${space}, address: ${signature.address} good`);
+    if (!proposal.governanceCycle) {
+      const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
+      proposal.governanceCycle = currentGovernanceCycle;
+    }
+    if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
     await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
       res.json({ success: true, data: { hash } });
     }).catch((e: any) => {
