@@ -6,7 +6,7 @@ import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import { SPACES } from '../config/map';
 import logger from '../logging';
-import { ProposalUploadRequest } from './models';
+import { ProposalUploadRequest, FetchReconfigureRequest } from './models';
 import { checkSignature } from './helpers/signature';
 
 const router = express.Router();
@@ -30,10 +30,7 @@ router.use(spacePrefix, async (req, res, next) => {
 
 router.post(`${spacePrefix}/upload`, async (req, res) => {
   const { space } = req.params;
-  const {
-    proposal,
-    signature
-  } = req.body as ProposalUploadRequest;
+  const { proposal, signature } = req.body as ProposalUploadRequest;
   if (!proposal) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
   const signatureGood = checkSignature(signature, space, 'upload', proposal);
   if (signatureGood) {
@@ -92,6 +89,33 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const { version } = req.query;
   return res.send(
     await res.locals.treasury.fetchReconfiguration(version).then((data: any) => {
+      return { success: true, data };
+    }).catch((e: any) => {
+      return { success: false, error: e };
+    })
+  );
+});
+
+router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
+  console.log(req.body);
+  const { version } = req.query;
+  const { address, datetime } = req.body as FetchReconfigureRequest;
+  const memo = `submitted by ${address} at ${datetime} from juicetool & nance`;
+  return res.send(
+    await res.locals.treasury.fetchReconfiguration(version, memo).then((data: any) => {
+      return { success: true, data };
+    }).catch((e: any) => {
+      return { success: false, error: e };
+    })
+  );
+});
+
+router.post(`${spacePrefix}/reconfigure/submit`, async (req, res) => {
+  const { version } = req.query;
+  const { address, datetime } = req.body as FetchReconfigureRequest;
+  const memo = `submitted by ${address} at ${datetime} from juicetool & nance`;
+  return res.send(
+    await res.locals.treasury.fetchReconfiguration(version, memo).then((data: any) => {
       return { success: true, data };
     }).catch((e: any) => {
       return { success: false, error: e };

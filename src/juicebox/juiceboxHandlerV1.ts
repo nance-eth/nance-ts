@@ -18,7 +18,7 @@ import {
   reconfigurationBallotAddresses,
   PayoutAndTickets
 } from './typesV1';
-import { Payout, Reserve, GnosisTransaction } from '../types';
+import { Payout, Reserve, BasicTransaction } from '../types';
 import { keys } from '../keys';
 import { TEN_THOUSAND } from './juiceboxMath';
 
@@ -133,7 +133,7 @@ export class JuiceboxHandlerV1 {
     };
   }
 
-  async encodeGetReconfigureFundingCyclesOf(payoutMods: PayoutModStruct[], ticketMods: TicketModStruct[], distributionLimit: number, reconfigurationBallot?: BallotKey): Promise<GnosisTransaction> {
+  async encodeGetReconfigureFundingCyclesOf(payoutMods: PayoutModStruct[], ticketMods: TicketModStruct[], distributionLimit: number, reconfigurationBallot?: BallotKey): Promise<BasicTransaction> {
     const fundingCycle = await this.FundingCyclesStore.queuedOf(this.projectId);
     const configureFundingCycleProperties = getFundingCyclePropertiesStruct(
       fundingCycle,
