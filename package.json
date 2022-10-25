@@ -38,7 +38,7 @@
     "ics": "^2.35.0",
     "juice-sdk": "^2.1.0-alpha",
     "juice-sdk-v1": "^2.1.0-alpha",
-    "juice-sdk-v3": "",
+    "juice-sdk-v3-jigglyjams": "^1.0.1-alpha",
     "node-ical": "^0.15.1",
     "node-schedule": "^2.1.0",
     "notion-to-md": "^2.3.2",
