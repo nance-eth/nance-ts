@@ -32,6 +32,7 @@ export interface Proposal {
 export type Payout = {
   type?: 'address' | 'project';
   address: string;
+  project?: number;
   amountUSD: number;
   count: number;
 };
@@ -207,3 +208,9 @@ export type SnapshotVoteOptions = {
   type: string,
   choices: string[]
 };
+
+export interface Signature {
+  address: string;
+  signature: string;
+  timestamp: number;
+}
