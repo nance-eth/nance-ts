@@ -7,7 +7,7 @@ import {
   JBFundingCycleMetadataStructOutput,
   JBGroupedSplitsStruct,
   JBFundAccessConstraintsStruct,
-} from 'juice-sdk-v3-jigglyjams/dist/cjs/types/contracts/JBController';
+} from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
 
 export declare type JBFundingCycleMetadataStruct = {
   global: JBGlobalFundingCycleMetadataStruct;

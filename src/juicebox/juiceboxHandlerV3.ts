@@ -9,9 +9,9 @@ import {
   getJB3DayReconfigurationBufferBallot,
   getJB7DayReconfigurationBufferBallot,
   getJBETHPaymentTerminal
-} from 'juice-sdk-v3-jigglyjams';
+} from '@jigglyjams/juice-sdk-v3';
 import { BigNumber } from '@ethersproject/bignumber';
-import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk-v3-jigglyjams/dist/cjs/types/contracts/JBController';
+import { JBSplitStruct, JBGroupedSplitsStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
 import { ONE_BILLION } from './juiceboxMath';
 import {
   getJBFundingCycleDataStruct,
