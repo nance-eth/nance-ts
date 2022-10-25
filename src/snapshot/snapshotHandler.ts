@@ -29,7 +29,6 @@ export class SnapshotHandler {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();
-    console.log((options?.choices && options?.choices.length > 1) ? options?.choices : this.config.snapshot.choices);
     const voteHash = await this.snapshot.proposal(this.wallet, this.wallet.address, {
       space: this.config.snapshot.space,
       type: (options?.type === '') ? 'basic' : options?.type ?? 'basic',
