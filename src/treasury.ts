@@ -49,13 +49,20 @@ export class NanceTreasury {
   async payoutTableToGroupedSplitsStruct(version = 'V2') {
     const payouts = await this.proposalHandler.getPayoutsDb(version);
     const reserves = await this.proposalHandler.getReserveDb(version);
-    const newDistributionLimit = this.juiceboxHandlerV2.calculateNewDistributionLimit(payouts);
-    const JBGroupedSplitsStruct = await this.juiceboxHandlerV2.buildJBGroupedSplitsStruct(
-      newDistributionLimit,
-      payouts,
-      reserves
-    );
-    console.log(JBGroupedSplitsStruct);
+    const newDistributionLimit = (version === 'V2')
+      ? this.juiceboxHandlerV2.calculateNewDistributionLimit(payouts)
+      : this.juiceboxHandlerV3.calculateNewDistributionLimit(payouts);
+    const JBGroupedSplitsStruct = (version === 'V2')
+      ? await this.juiceboxHandlerV2.buildJBGroupedSplitsStruct(
+        newDistributionLimit,
+        payouts,
+        reserves
+      )
+      : await this.juiceboxHandlerV3.buildJBGroupedSplitsStruct(
+        newDistributionLimit,
+        payouts,
+        reserves
+      );
     return {
       groupedSplits: JBGroupedSplitsStruct,
       newDistributionLimit
@@ -78,9 +85,9 @@ export class NanceTreasury {
     };
   }
 
-  async V3encodeReconfigureFundingCyclesOf(reconfigurationBallot?: BallotKey) {
-    const { groupedSplits, newDistributionLimit } = await this.payoutTableToGroupedSplitsStruct();
-    const encoded = await this.juiceboxHandlerV3.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributionLimit, reconfigurationBallot);
+  async V3encodeReconfigureFundingCyclesOf(memo?: string, reconfigurationBallot?: BallotKey) {
+    const { groupedSplits, newDistributionLimit } = await this.payoutTableToGroupedSplitsStruct('V3');
+    const encoded = await this.juiceboxHandlerV3.encodeGetReconfigureFundingCyclesOf(groupedSplits, newDistributionLimit, memo, reconfigurationBallot);
     return encoded;
   }
 
@@ -99,12 +106,14 @@ export class NanceTreasury {
   async fetchReconfiguration(version: string, memo?: string): Promise<BasicTransaction> {
     if (version === 'V1') { return this.V1encodeReconfigureFundingCyclesOf(); }
     if (version === 'V2') { return this.V2encodeReconfigureFundingCyclesOf(memo); }
+    if (version === 'V3') { return this.V3encodeReconfigureFundingCyclesOf(memo); }
     return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
   }
 
   async fetchPayReserveDistribution(version: string) {
     if (version === 'V1') { return this.payoutTableToMods(); }
     if (version === 'V2') { return this.payoutTableToGroupedSplitsStruct(); }
+    if (version === 'V3') { return this.payoutTableToGroupedSplitsStruct(); }
     return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
   }
 }

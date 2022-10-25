@@ -199,10 +199,10 @@ export class JuiceboxHandlerV2 {
       };
     });
     return [
-      // {
-      //   group: GROUP_ETH_PAYOUT,
-      //   splits: distrubutionPayoutsJBSplitStruct
-      // },
+      {
+        group: GROUP_ETH_PAYOUT,
+        splits: distrubutionPayoutsJBSplitStruct
+      },
       {
         group: GROUP_RESERVED_TOKENS,
         splits: distrubutionReservedJBSplitStruct
@@ -237,10 +237,12 @@ export class JuiceboxHandlerV2 {
       fundAccessConstraintsData,
       memo
     ];
+    console.log(reconfigureFundingCyclesOfData);
     const encodedReconfiguration = this.JBController.interface.encodeFunctionData(
       'reconfigureFundingCyclesOf',
       reconfigureFundingCyclesOfData
     );
+    console.log(encodedReconfiguration);
     // console.dir(this.JBController.interface.decodeFunctionData(
     //   'reconfigureFundingCyclesOf',
     //   encodedReconfiguration

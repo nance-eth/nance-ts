@@ -26,7 +26,7 @@ import { Payout, Reserve } from '../types';
 import { keys } from '../keys';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-const PROJECT_PAYOUT_PREFIX = 'V2:';
+const PROJECT_PAYOUT_PREFIX = 'V3:';
 const TOKEN_ETH = '0x000000000000000000000000000000000000EEEe';
 const DEFAULT_MUST_START_AT_OR_AFTER = '1';
 const DEFAULT_WEIGHT = 0;
@@ -214,7 +214,7 @@ export class JuiceboxHandlerV3 {
     ];
   }
 
-  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, reconfigurationBallot?: BallotKey) {
+  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, memo = DEFAULT_MEMO, reconfigurationBallot?: BallotKey) {
     const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(
       fundingCycle,
@@ -239,7 +239,7 @@ export class JuiceboxHandlerV3 {
       mustStartAtOrAfter,
       groupedSplits,
       fundAccessConstraintsData,
-      DEFAULT_MEMO
+      memo
     ];
     const encodedReconfiguration = this.JBController.interface.encodeFunctionData(
       'reconfigureFundingCyclesOf',
@@ -249,7 +249,7 @@ export class JuiceboxHandlerV3 {
     //   'reconfigureFundingCyclesOf',
     //   encodedReconfiguration
     // ), { depth: null });
-    return { address: this.JBController.address, data: encodedReconfiguration };
+    return { address: this.JBController.address, bytes: encodedReconfiguration };
   }
 
   async encodeDistributeFundsOf() {

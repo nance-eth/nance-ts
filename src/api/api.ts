@@ -105,7 +105,7 @@ router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
     await res.locals.treasury.fetchReconfiguration(version, memo).then((data: any) => {
       return { success: true, data };
     }).catch((e: any) => {
-      return { success: false, error: e };
+      return { success: false, error: e.reason };
     })
   );
 });

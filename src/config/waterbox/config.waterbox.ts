@@ -20,12 +20,12 @@ const config: NanceConfig = {
     }
   },
   juicebox: {
-    // network: 'mainnet',
-    // projectId: '188',
-    // gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199',
-    network: 'goerli' as 'mainnet',
-    projectId: '37',
-    gnosisSafeAddress: '0x4f136b4e0997EBbe1851eA0BDd63145A2ebeEB73'
+    network: 'mainnet',
+    projectId: '188',
+    gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199',
+    // network: 'goerli' as 'mainnet',
+    // projectId: '37',
+    // gnosisSafeAddress: '0x4f136b4e0997EBbe1851eA0BDd63145A2ebeEB73'
   },
   discord: {
     API_KEY: process.env.DISCORD_KEY_WATERBOX ?? '',
@@ -202,6 +202,13 @@ config.notion.filters = {
     property: 'JB DAO Treasury',
     rich_text: {
       contains: 'V2'
+    }
+  },
+
+  payoutsV3: {
+    property: 'JB DAO Treasury',
+    rich_text: {
+      contains: 'V3'
     }
   },
 
