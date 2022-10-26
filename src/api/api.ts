@@ -21,11 +21,11 @@ router.use(spacePrefix, async (req, res, next) => {
   const spaceQuery = (Number.isNaN(query)) ? space : SPACES[query];
   try {
     const config = await getConfig(spaceQuery);
+    logger.info(space);
     res.locals.notion = new NotionHandler(config);
     res.locals.treasury = new NanceTreasury(config, res.locals.notion);
     res.locals.spaceName = spaceQuery;
     res.locals.config = config;
-    logger.info(space);
     next();
   } catch (e) {
     res.json({ success: false, error: `space ${space} not found!` });
