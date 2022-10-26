@@ -21,9 +21,8 @@ router.use(spacePrefix, async (req, res, next) => {
   const spaceQuery = (Number.isNaN(query)) ? space : SPACES[query];
   try {
     const config = await getConfig(spaceQuery);
-    logger.info(space);
     res.locals.notion = new NotionHandler(config);
-    res.locals.treasury = new NanceTreasury(config, res.locals.notion);
+    // res.locals.treasury = new NanceTreasury(config, res.locals.notion);
     res.locals.spaceName = spaceQuery;
     res.locals.config = config;
     next();
@@ -93,8 +92,9 @@ router.get(`${spacePrefix}/query`, async (req, res) => {
 
 router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const { version } = req.query;
+  const treasury = new NanceTreasury(res.locals.config, res.locals.notion);
   return res.send(
-    await res.locals.treasury.fetchReconfiguration(version).then((data: any) => {
+    await treasury.fetchReconfiguration(version as string).then((data: any) => {
       return { success: true, data };
     }).catch((e: any) => {
       return { success: false, error: e };
@@ -109,9 +109,10 @@ router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
   const { gnosisSafeAddress, network } = res.locals.config.juicebox;
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
   const gnosis = await GnosisHandler.initializeSafe(gnosisSafeAddress, network);
+  const treasury = new NanceTreasury(res.locals.config, res.locals.notion);
   const nonce = Number(await gnosis.getCurrentNonce() + 1).toString();
   return res.send(
-    await res.locals.treasury.fetchReconfiguration(version, memo).then((txn: any) => {
+    await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
       return { success: true, data: { transaction: txn, nonce } };
     }).catch((e: any) => {
       return { success: false, error: e.reason };
