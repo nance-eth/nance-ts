@@ -46,5 +46,6 @@ export interface FetchReconfigureRequest extends BaseRequest {
 
 export interface SubmitTransactionRequest extends BaseRequest {
   version: string;
+  datetime: string;
   signature: Signature
 }

@@ -6,8 +6,10 @@ import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import { SPACES } from '../config/map';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest } from './models';
+import { ProposalUploadRequest, FetchReconfigureRequest, SubmitTransactionRequest } from './models';
 import { checkSignature } from './helpers/signature';
+import { GnosisHandler } from '../gnosis/gnosisHandler';
+import { getENS } from './helpers/ens';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -22,6 +24,7 @@ router.use(spacePrefix, async (req, res, next) => {
     res.locals.notion = new NotionHandler(config);
     res.locals.treasury = new NanceTreasury(config, res.locals.notion);
     res.locals.spaceName = spaceQuery;
+    res.locals.config = config;
     next();
   } catch (e) {
     res.json({ success: false, error: `space ${space} not found!` });
@@ -32,8 +35,8 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
   const { space } = req.params;
   const { proposal, signature } = req.body as ProposalUploadRequest;
   if (!proposal) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
-  const signatureGood = checkSignature(signature, space, 'upload', proposal);
-  if (signatureGood) {
+  const { valid, typedValue } = checkSignature(signature, space, 'upload', proposal);
+  if (valid) {
     logger.debug(`[UPLOAD] space: ${space}, address: ${signature.address} good`);
     if (!proposal.governanceCycle) {
       const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
@@ -47,6 +50,8 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
     });
   } else {
     logger.warn(`[UPLOAD] space: ${space}, address: ${signature.address} bad`);
+    logger.warn(signature);
+    logger.warn(typedValue);
     res.json({ success: false, error: '[NANCE ERROR]: bad signature' });
   }
 });
@@ -97,13 +102,16 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
 });
 
 router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
-  console.log(req.body);
   const { version } = req.query;
   const { address, datetime } = req.body as FetchReconfigureRequest;
-  const memo = `submitted by ${address} at ${datetime} from juicetool & nance`;
+  const ens = await getENS(address);
+  const { gnosisSafeAddress, network } = res.locals.config.juicebox;
+  const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
+  const gnosis = await GnosisHandler.initializeSafe(gnosisSafeAddress, network);
+  const nonce = Number(await gnosis.getCurrentNonce() + 1).toString();
   return res.send(
-    await res.locals.treasury.fetchReconfiguration(version, memo).then((data: any) => {
-      return { success: true, data };
+    await res.locals.treasury.fetchReconfiguration(version, memo).then((txn: any) => {
+      return { success: true, data: { transaction: txn, nonce } };
     }).catch((e: any) => {
       return { success: false, error: e.reason };
     })
@@ -112,15 +120,15 @@ router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
 
 router.post(`${spacePrefix}/reconfigure/submit`, async (req, res) => {
   const { version } = req.query;
-  const { address, datetime } = req.body as FetchReconfigureRequest;
-  const memo = `submitted by ${address} at ${datetime} from juicetool & nance`;
-  return res.send(
-    await res.locals.treasury.fetchReconfiguration(version, memo).then((data: any) => {
-      return { success: true, data };
-    }).catch((e: any) => {
-      return { success: false, error: e };
-    })
-  );
+  const { space } = req.params;
+  const { datetime, signature } = req.body as SubmitTransactionRequest;
+  const ens = await getENS(signature.address);
+  const { gnosisSafeAddress, network } = res.locals.config.juicebox;
+  const gnosis = await GnosisHandler.initializeSafe(gnosisSafeAddress, network);
+  const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
+  res.locals.treasury.fetchReconfiguration(version, memo).then((txn: any) => {
+    const { valid } = checkSignature(signature, space, 'reconfigure/submit', txn);
+  });
 });
 
 router.get(`${spacePrefix}/payouts`, async (req, res) => {

@@ -237,12 +237,10 @@ export class JuiceboxHandlerV2 {
       fundAccessConstraintsData,
       memo
     ];
-    console.log(reconfigureFundingCyclesOfData);
     const encodedReconfiguration = this.JBController.interface.encodeFunctionData(
       'reconfigureFundingCyclesOf',
       reconfigureFundingCyclesOfData
     );
-    console.log(encodedReconfiguration);
     // console.dir(this.JBController.interface.decodeFunctionData(
     //   'reconfigureFundingCyclesOf',
     //   encodedReconfiguration
