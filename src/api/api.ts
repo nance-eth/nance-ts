@@ -25,6 +25,7 @@ router.use(spacePrefix, async (req, res, next) => {
     res.locals.treasury = new NanceTreasury(config, res.locals.notion);
     res.locals.spaceName = spaceQuery;
     res.locals.config = config;
+    logger.info(space);
     next();
   } catch (e) {
     res.json({ success: false, error: `space ${space} not found!` });
