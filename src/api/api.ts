@@ -22,7 +22,6 @@ router.use(spacePrefix, async (req, res, next) => {
   try {
     const config = await getConfig(spaceQuery);
     res.locals.notion = new NotionHandler(config);
-    // res.locals.treasury = new NanceTreasury(config, res.locals.notion);
     res.locals.spaceName = spaceQuery;
     res.locals.config = config;
     next();
@@ -113,7 +112,7 @@ router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
   const nonce = Number(await gnosis.getCurrentNonce() + 1).toString();
   return res.send(
     await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
-      return { success: true, data: { transaction: txn, nonce } };
+      return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
     }).catch((e: any) => {
       return { success: false, error: e.reason };
     })
