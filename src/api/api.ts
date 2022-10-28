@@ -103,11 +103,11 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
 
 router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
   const { version } = req.query;
-  const { address, datetime } = req.body as FetchReconfigureRequest;
+  const { address, datetime, network } = req.body as FetchReconfigureRequest;
   const ens = await getENS(address);
-  const { gnosisSafeAddress, network } = res.locals.config.juicebox;
+  const { gnosisSafeAddress } = res.locals.config.juicebox;
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
-  const gnosis = await GnosisHandler.initializeSafe(gnosisSafeAddress, network);
+  const gnosis = await GnosisHandler.initializeSafe(gnosisSafeAddress, network as 'mainnet' | 'rinkeby');
   const treasury = new NanceTreasury(res.locals.config, res.locals.notion);
   const nonce = Number(await gnosis.getCurrentNonce() + 1).toString();
   return res.send(
@@ -117,19 +117,6 @@ router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
       return { success: false, error: e.reason };
     })
   );
-});
-
-router.post(`${spacePrefix}/reconfigure/submit`, async (req, res) => {
-  const { version } = req.query;
-  const { space } = req.params;
-  const { datetime, signature } = req.body as SubmitTransactionRequest;
-  const ens = await getENS(signature.address);
-  const { gnosisSafeAddress, network } = res.locals.config.juicebox;
-  const gnosis = await GnosisHandler.initializeSafe(gnosisSafeAddress, network);
-  const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
-  res.locals.treasury.fetchReconfiguration(version, memo).then((txn: any) => {
-    const { valid } = checkSignature(signature, space, 'reconfigure/submit', txn);
-  });
 });
 
 router.get(`${spacePrefix}/payouts`, async (req, res) => {
