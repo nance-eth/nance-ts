@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { ContractTransaction, Wallet } from 'ethers';
+import { ContractTransaction, ethers, Wallet } from 'ethers';
 import {
   getJBFundingCycleStore,
   getJBController,
@@ -59,7 +59,7 @@ export class JuiceboxHandlerV3 {
   ) {
     const RPC_HOST = `https://${this.network}.infura.io/v3/${keys.INFURA_KEY}`;
     this.provider = new JsonRpcProvider(RPC_HOST);
-    this.wallet = new Wallet(keys.PRIVATE_KEY, this.provider);
+    this.wallet = (keys.PRIVATE_KEY) ? new Wallet(keys.PRIVATE_KEY, this.provider) : new Wallet(ethers.Wallet.createRandom());
     this.JBSplitsStore = getJBSplitsStore(this.provider, { network: this.network });
     this.JBController = getJBController(this.provider, { network: this.network });
     this.JBReconfigurationBallotAddresses = {
