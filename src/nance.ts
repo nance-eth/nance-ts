@@ -134,7 +134,7 @@ export class Nance {
     });
   }
 
-  async votingSetup(startDate: Date, endDate: Date, proposals?: Proposal[]): Promise<Proposal[] | void> {
+  async votingSetup(startDate: Date, endDate: Date, proposals?: Proposal[] | undefined): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingSetup() begin...`);
     const voteProposals = proposals || await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {

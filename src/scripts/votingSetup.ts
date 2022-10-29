@@ -13,9 +13,9 @@ async function getConfigs() {
   const nextEvents = calendar.getNextEvents();
   const nextVote = nextEvents.filter((event) => { return event.title === 'Snapshot Vote' })[0];
   console.log(nextVote);
-  const proposal = await nance.proposalHandler.pageIdToProposal(pageId);
+  const proposal = (pageId !== '') ? [await nance.proposalHandler.pageIdToProposal(pageId)] : undefined;
   console.log(proposal);
-  nance.votingSetup(new Date(), nextVote.end, [proposal]);
+  nance.votingSetup(new Date(), nextVote.end, proposal);
 }
 
 getConfigs();

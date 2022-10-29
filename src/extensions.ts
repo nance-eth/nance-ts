@@ -105,12 +105,12 @@ export class NanceExtensions {
       proposal.governanceCycle = nextCycle;
       const translation = await this.translationHandler.translate(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        proposal.body!.split('```\n\n')[1], // cut out proposal header
+        proposal.body!,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.nance.config.translation!.targetLanguage
       );
       proposal.translation = {
-        body: translation.replace('∮∮', '## '),
+        body: translation,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         language: this.nance.config.translation!.targetLanguage
       };
