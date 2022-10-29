@@ -12,8 +12,9 @@ const app = express();
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: false }));
 app.use(cors({
+  methods: ['POST'],
   origin: 'https://juicetool-24ahx8sqh-jigglyjams.vercel.app',
-  maxAge: 86400,
+  optionsSuccessStatus: 200
 }));
 app.use('/', api);
 
