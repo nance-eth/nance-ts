@@ -89,17 +89,17 @@ router.get(`${spacePrefix}/query`, async (req, res) => {
   );
 });
 
-router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
-  const { version } = req.query;
-  const treasury = new NanceTreasury(res.locals.config, res.locals.notion);
-  return res.send(
-    await treasury.fetchReconfiguration(version as string).then((data: any) => {
-      return { success: true, data };
-    }).catch((e: any) => {
-      return { success: false, error: e };
-    })
-  );
-});
+// router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
+//   const { version } = req.query;
+//   const treasury = new NanceTreasury(res.locals.config, res.locals.notion);
+//   return res.send(
+//     await treasury.fetchReconfiguration(version as string).then((data: any) => {
+//       return { success: true, data };
+//     }).catch((e: any) => {
+//       return { success: false, error: e };
+//     })
+//   );
+// });
 
 router.post(`${spacePrefix}/reconfigure`, async (req, res) => {
   const { version } = req.query;
