@@ -6,7 +6,10 @@ import Safe from '@gnosis.pm/safe-core-sdk';
 import { keys } from '../keys';
 import logger from '../logging';
 
-const headers = { 'Content-type': 'application/json' };
+const headers = {
+  'Content-type': 'application/json',
+  'Access-Control-Allow-Origin': '*'
+};
 
 export class GnosisHandler {
   private TRANSACTION_API;
