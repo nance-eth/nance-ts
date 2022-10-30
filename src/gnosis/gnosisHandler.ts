@@ -20,9 +20,7 @@ export class GnosisHandler {
   ) {
     this.safeAddress = ethers.utils.getAddress(safeAddress.toLowerCase());
     this.walletAddress = ethers.utils.getAddress(this.wallet.address.toLowerCase());
-    this.TRANSACTION_API = (network === 'mainnet')
-      ? 'https://safe-transaction.gnosis.io'
-      : `https://safe-transaction.${network}.gnosis.io`;
+    this.TRANSACTION_API = `https://safe-transaction-${network}.safe.global`;
   }
 
   static async initializeSafe(safeAddress: string, network = 'mainnet' as 'mainnet' | 'rinkeby' | 'goerli') {
@@ -107,7 +105,7 @@ export class GnosisHandler {
       headers,
       params: {
         ordering: 'nonce',
-        limit: 1,
+        limit: 10,
         executed: false,
         queued,
         trusted: true,
@@ -120,22 +118,21 @@ export class GnosisHandler {
   }
 
   static async getCurrentNonce(safeAddress: string, network: string, queued = true) {
-    const TRANSACTION_API = (network === 'mainnet')
-      ? 'https://safe-transaction.gnosis.io'
-      : `https://safe-transaction.${network}.gnosis.io`;
+    const TRANSACTION_API = `https://safe-transaction-${network}.safe.global`;
     return axios({
       method: 'get',
       url: `${TRANSACTION_API}/api/v1/safes/${safeAddress}/all-transactions`,
       headers,
       params: {
         ordering: 'nonce',
-        limit: 1,
+        limit: 10,
         executed: false,
         queued,
         trusted: true,
       },
     }).then((response) => {
-      return (response.data.results.length > 0) ? response.data.results[0].nonce : null;
+      const { nonce } = response.data.results.find((txn: any) => { return txn.nonce; });
+      return nonce;
     }).catch((e) => {
       return Promise.reject(e);
     });
