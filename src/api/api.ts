@@ -92,7 +92,6 @@ router.get(`${spacePrefix}/query`, async (req, res) => {
 
 router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const { version, address, datetime, network } = req.query as unknown as FetchReconfigureRequest;
-  logger.info(`\naddress: ${address}, network: ${network}, version: ${version}`);
   const ens = await getENS(address);
   const { gnosisSafeAddress } = res.locals.config.juicebox;
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
