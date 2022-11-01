@@ -6,6 +6,7 @@ import { SPACES } from '../config/map';
 import config from '../config/juicebox/config.juicebox';
 import config2 from '../config/waterbox/config.waterbox';
 import config3 from '../config/slice/config.slice';
+import config4 from '../config/jigglyjams/config.jigglyjams';
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));

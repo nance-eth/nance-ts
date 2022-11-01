@@ -46,7 +46,7 @@ const config: NanceConfig = {
   notion: {
     API_KEY: process.env.NOTION_KEY_WATERBOX ?? '',
     publicURLPrefix: 'foil-flat-c43.notion.site',
-    database_id: '',
+    database_id: '8f5a93009a364c4ebf69757ff98be405',
     current_cycle_block_id: 'a09ccc388d2c442fbbd7b9ad3f851e16',
     payouts_database_id: 'f1c5c3cd266b48dcbe2e6ba3dba41f28',
     reserves_database_id: '8677be28e19b4960b460656c53465a76',

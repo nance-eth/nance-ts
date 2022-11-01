@@ -1,4 +1,5 @@
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { ContractTransaction, ethers, Wallet } from 'ethers';
 import {
   getJBFundingCycleStore,
   getJBController,
@@ -8,23 +9,24 @@ import {
   getJB3DayReconfigurationBufferBallot,
   getJB7DayReconfigurationBufferBallot,
   getJBETHPaymentTerminal
-} from 'juice-sdk';
+} from '@jigglyjams/juice-sdk-v3';
 import { BigNumber } from '@ethersproject/bignumber';
-import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
+import { JBSplitStruct, JBGroupedSplitsStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
 import { ONE_BILLION } from './juiceboxMath';
 import {
   getJBFundingCycleDataStruct,
   getJBFundingCycleMetadataStruct,
   ReconfigureFundingCyclesOfData,
+  DistributePayoutsOfData,
   getJBFundAccessConstraintsStruct,
   ReconfigurationBallotAddresses,
   BallotKey,
-} from './typesV2';
-import { Payout, Reserve, BasicTransaction } from '../types';
+} from './typesV3';
+import { Payout, Reserve } from '../types';
 import { keys } from '../keys';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-const PROJECT_PAYOUT_PREFIX = 'V2:';
+const PROJECT_PAYOUT_PREFIX = 'V3:';
 const TOKEN_ETH = '0x000000000000000000000000000000000000EEEe';
 const DEFAULT_MUST_START_AT_OR_AFTER = '1';
 const DEFAULT_WEIGHT = 0;
@@ -43,8 +45,9 @@ const DEFAULT_MEMO = 'yours truly ~nance~';
 
 const CSV_HEADING = 'beneficiary,percent,preferClaimed,lockedUntil,projectId,allocator';
 
-export class JuiceboxHandlerV2 {
+export class JuiceboxHandlerV3 {
   provider;
+  wallet;
   JBSplitsStore;
   JBController;
   JBReconfigurationBallotAddresses;
@@ -52,10 +55,11 @@ export class JuiceboxHandlerV2 {
 
   constructor(
     protected projectId: string,
-    protected network = 'mainnet' as 'mainnet' | 'rinkeby'
+    protected network = 'mainnet' as 'mainnet' | 'goerli'
   ) {
     const RPC_HOST = `https://${this.network}.infura.io/v3/${keys.INFURA_KEY}`;
     this.provider = new JsonRpcProvider(RPC_HOST);
+    this.wallet = (keys.PRIVATE_KEY) ? new Wallet(keys.PRIVATE_KEY, this.provider) : new Wallet(ethers.Wallet.createRandom());
     this.JBSplitsStore = getJBSplitsStore(this.provider, { network: this.network });
     this.JBController = getJBController(this.provider, { network: this.network });
     this.JBReconfigurationBallotAddresses = {
@@ -170,12 +174,12 @@ export class JuiceboxHandlerV2 {
 
   async buildJBGroupedSplitsStruct(
     distributionLimit: number,
-    distributionPayouts: Payout[],
+    distrubutionPayouts: Payout[],
     distributionReserved: Reserve[]
   ): Promise<JBGroupedSplitsStruct[]> {
     // project owner is default beneficiary address for project routed payouts (check on this)
     const owner = await this.getProjectOwner();
-    const distrubutionPayoutsJBSplitStruct = distributionPayouts.map((payout): JBSplitStruct => {
+    const distrubutionPayoutsJBSplitStruct = distrubutionPayouts.map((payout): JBSplitStruct => {
       const projectPayout = (payout.address.includes(PROJECT_PAYOUT_PREFIX)) ? payout.address.split(PROJECT_PAYOUT_PREFIX)[1] : undefined;
       return {
         preferClaimed: DEFAULT_PREFER_CLAIMED,
@@ -210,7 +214,7 @@ export class JuiceboxHandlerV2 {
     ];
   }
 
-  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, memo = DEFAULT_MEMO, reconfigurationBallot?: BallotKey): Promise<BasicTransaction> {
+  async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, memo = DEFAULT_MEMO, reconfigurationBallot?: BallotKey) {
     const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(
       fundingCycle,
@@ -246,5 +250,36 @@ export class JuiceboxHandlerV2 {
     //   encodedReconfiguration
     // ), { depth: null });
     return { address: this.JBController.address, bytes: encodedReconfiguration };
+  }
+
+  async encodeDistributeFundsOf() {
+    const currentConfiguration = await this.currentConfiguration();
+    const distributionLimit = await this.JBController.distributionLimitOf(
+      this.projectId,
+      currentConfiguration,
+      this.JBETHPaymentTerminal.address,
+      TOKEN_ETH
+    );
+    const distributePayoutsOfData: DistributePayoutsOfData = [
+      this.projectId,
+      distributionLimit[0],
+      DISTRIBUTION_CURRENCY_ETH,
+      TOKEN_ETH,
+      0,
+      DEFAULT_MEMO
+    ];
+    const encodedDistribution = this.JBETHPaymentTerminal.interface.encodeFunctionData(
+      'distributePayoutsOf',
+      distributePayoutsOfData
+    );
+    console.dir(this.JBETHPaymentTerminal.interface.decodeFunctionData(
+      'distributePayoutsOf',
+      encodedDistribution
+    ), { depth: null });
+    return { address: this.JBETHPaymentTerminal.address, bytes: encodedDistribution };
+  }
+
+  async sendDistributeFundsOf(d: DistributePayoutsOfData): Promise<ContractTransaction> {
+    return getJBETHPaymentTerminal(this.wallet, { network: this.network }).distributePayoutsOf(...d);
   }
 }

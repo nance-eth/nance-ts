@@ -20,9 +20,12 @@ const config: NanceConfig = {
     }
   },
   juicebox: {
-    network: 'mainnet',
-    projectId: '188',
-    gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199',
+    // network: 'mainnet',
+    // projectId: '188',
+    // gnosisSafeAddress: '0x32533f602527024EBC64FEbF05F18D32105fB199',
+    network: 'goerli' as 'mainnet',
+    projectId: '37',
+    gnosisSafeAddress: '0x4f136b4e0997EBbe1851eA0BDd63145A2ebeEB73'
   },
   discord: {
     API_KEY: process.env.DISCORD_KEY_WATERBOX ?? '',
@@ -44,7 +47,7 @@ const config: NanceConfig = {
     API_KEY: process.env.NOTION_KEY_WATERBOX ?? '',
     publicURLPrefix: 'foil-flat-c43.notion.site',
     database_id: '8f5a93009a364c4ebf69757ff98be405',
-    current_cycle_block_id: '8458fa50e1724d7aa721275a195dece3',
+    current_cycle_block_id: 'a09ccc388d2c442fbbd7b9ad3f851e16',
     payouts_database_id: '5f2b501f8e724af2879f4e440548da72',
     reserves_database_id: '5e62c3b048944801bee6bf48b48896ba',
     propertyKeys: {
@@ -199,6 +202,13 @@ config.notion.filters = {
     property: 'JB DAO Treasury',
     rich_text: {
       contains: 'V2'
+    }
+  },
+
+  payoutsV3: {
+    property: 'JB DAO Treasury',
+    rich_text: {
+      contains: 'V3'
     }
   },
 

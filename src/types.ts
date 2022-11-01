@@ -66,7 +66,7 @@ export type VoteResults = {
   outcomeEmoji: string;
 };
 
-export type GnosisTransaction = {
+export type BasicTransaction = {
   address: string;
   bytes: string;
 };
