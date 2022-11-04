@@ -101,7 +101,7 @@ const config: NanceConfig = {
     },
   },
   snapshot: {
-    base: 'https://snapshot.org/#',
+    base: 'https://juicetool.xyz/snapshot',
     space: 'jigglyjams.eth',
     choices: ['For', 'Against', 'Abstain'],
     minTokenPassingAmount: 1,

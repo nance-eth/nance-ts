@@ -98,7 +98,7 @@ const config: NanceConfig = {
     },
   },
   snapshot: {
-    base: 'https://snapshot.org/#',
+    base: 'https://juicetool.xyz/snapshot',
     space: 'jbdao.eth',
     choices: ['For', 'Against', 'Abstain'],
     minTokenPassingAmount: 80E6,

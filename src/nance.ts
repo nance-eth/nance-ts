@@ -148,7 +148,7 @@ export class Nance {
       proposal.body = markdownWithAdditions;
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
-        startDate,
+        new Date(),
         endDate,
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
