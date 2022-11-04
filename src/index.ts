@@ -28,9 +28,7 @@ async function scheduleCycle() {
   const calendar = new CalendarHandler(config.calendarPath);
   const cycle = calendar.getNextEvents();
   logger.debug(cycle);
-  const noEventsInProgress = cycle.filter((event) => { return event.inProgress === false; }).some((event) => {
-    return event.inProgress;
-  });
+  const noEventsInProgress = cycle.filter((event) => { return event.inProgress === false; }).length > 0;
   const executionOrDelayInProgress = cycle.filter((event) => {
     return event.title === 'Execution' || event.title === 'Delay';
   }).some((event) => {
