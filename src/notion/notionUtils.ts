@@ -1,6 +1,6 @@
 import { SnapshotVoteOptions } from '../types';
 
-const uuidRegex = /[^-]+([a-z]*[1-9])/i;
+const uuidRegex = /[^-]([a-zA-Z0-9]*[a-zA-Z0-9])$/;
 
 export const getTitle = (page:any) => {
   // notion api sometimes splits out the title into
