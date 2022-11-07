@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import {
   Client as DiscordClient,
   Collection,
@@ -54,6 +55,7 @@ export class DiscordHandler {
   }
 
   async startDiscussion(proposal: Proposal): Promise<string> {
+    proposal.url = discordTemplates.juiceToolUrl(proposal, this.config.name);
     const message = discordTemplates.startDiscussionMessage(proposal);
     const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
@@ -72,7 +74,7 @@ export class DiscordHandler {
   }
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
-    const message = discordTemplates.temperatureCheckRollUpMessage(proposals, endDate);
+    const message = discordTemplates.temperatureCheckRollUpMessage(proposals, this.config.name, endDate);
     message.description += ` <@&${this.config.discord.alertRole}>`;
     await this.getAlertChannel().send({ embeds: [message] });
   }
@@ -81,6 +83,7 @@ export class DiscordHandler {
     const message = discordTemplates.voteRollUpMessage(
       `${this.config.snapshot.base}/${this.config.snapshot.space}`,
       proposals,
+      this.config.name,
       endDate
     );
     message.description += ` <@&${this.config.discord.alertRole}>`;

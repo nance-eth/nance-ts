@@ -1,5 +1,6 @@
 import { SnapshotVoteOptions } from '../types';
 
+const NOTION_URL_PREFIX = 'www.notion.so';
 const uuidRegex = /[^-]([a-zA-Z0-9]*[a-zA-Z0-9])$/;
 
 export const getTitle = (page:any) => {
@@ -35,8 +36,7 @@ export const getURL = (page:any) => {
 };
 
 export const getPublicURL = (page:any, publicUrlPrefix:any) => {
-  const uuid = page.url.match(uuidRegex)[0];
-  return `https://${publicUrlPrefix}/${uuid}`;
+  return page.url.replace(NOTION_URL_PREFIX, publicUrlPrefix);
 };
 
 export const getStatus = (page:any) => {

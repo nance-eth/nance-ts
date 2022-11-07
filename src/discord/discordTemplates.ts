@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable max-len */
 /* eslint-disable newline-per-chained-call */
 import {
@@ -6,6 +7,10 @@ import {
 import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
+
+export const juiceToolUrl = (proposal: Proposal, space: string) => {
+  return `https://juicetool.xyz/nance/${space}/proposal/${proposal.hash}`;
+};
 
 export const startDiscussionMessage = (proposal: Proposal) => {
   return new MessageEmbed().setTitle(`📃 ${proposal.title}`).setURL(proposal.url);
@@ -23,11 +28,12 @@ export const setupPollMessage = (messageObj: Message) => {
   `;
 };
 
-export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Date) => {
+export const temperatureCheckRollUpMessage = (proposals: Proposal[], space: string, endDate: Date) => {
   return new MessageEmbed().setColor('#c1272d').setTitle(
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(`${String(proposals.length)} proposals`).addFields(
     proposals.map((proposal: Proposal) => {
+      proposal.url = juiceToolUrl(proposal, space);
       const proposalLinks = (proposal.translationURL)
         ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
         : `[proposal](${proposal.url})`;
@@ -41,12 +47,13 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], endDate: Da
   );
 };
 
-export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], endDate: Date) => {
+export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], space: string, endDate: Date) => {
   return new MessageEmbed().setColor('#009460').setTitle(
     `Voting is open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
+        proposal.url = juiceToolUrl(proposal, space);
         const proposalLinks = (proposal.translationURL)
           ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
           : `[proposal](${proposal.url})`;
