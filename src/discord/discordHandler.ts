@@ -17,6 +17,7 @@ import * as discordTemplates from './discordTemplates';
 
 export class DiscordHandler {
   private discord;
+  private roleTag;
 
   constructor(
     private config: any
@@ -36,6 +37,7 @@ export class DiscordHandler {
       logger.error('discord auth failed!');
       logger.error(e);
     });
+    this.roleTag = `<@&${this.config.discord.alertRole}>`;
   }
 
   ready() {
@@ -75,8 +77,7 @@ export class DiscordHandler {
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
     const message = discordTemplates.temperatureCheckRollUpMessage(proposals, this.config.name, endDate);
-    message.description += ` <@&${this.config.discord.alertRole}>`;
-    await this.getAlertChannel().send({ embeds: [message] });
+    await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
   }
 
   async sendVoteRollup(proposals: Proposal[], endDate: Date) {
@@ -86,8 +87,7 @@ export class DiscordHandler {
       this.config.name,
       endDate
     );
-    message.description += ` <@&${this.config.discord.alertRole}>`;
-    await this.getAlertChannel().send({ embeds: [message] });
+    await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
   }
 
   async sendVoteResultsRollup(proposals: Proposal[]) {
@@ -95,7 +95,7 @@ export class DiscordHandler {
       this.config.votingResultsDashboard,
       proposals
     );
-    await this.getAlertChannel().send({ embeds: [message] });
+    await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
   }
 
   async sendReminder(event: string, date: Date, type: string, url = '', deleteTimeOut = 60 * 65) {
@@ -110,8 +110,7 @@ export class DiscordHandler {
         date,
         url
       );
-    message.description += ` \n<@&${this.config.discord.alertRole}>`;
-    await this.getAlertChannel().send({ embeds: [message] }).then((messageObj) => {
+    await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
       setTimeout(
         () => { messageObj.delete().catch((e) => { logger.error(e); }); },
         deleteTimeOut * 1000
@@ -159,7 +158,7 @@ export class DiscordHandler {
       }
     );
     const sendChannel = this.discord.channels.cache.get(threadId) as TextChannel;
-    await sendChannel.send({ embeds: [message] });
+    await sendChannel.send({ content: this.roleTag, embeds: [message] });
   }
 
   async sendPollResultsEmoji(pass: boolean, threadId: string) {
