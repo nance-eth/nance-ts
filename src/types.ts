@@ -79,7 +79,6 @@ export interface NanceConfig {
   nameId: string;
   name: string;
   calendarPath: string;
-  scheme: string[];
   proposalDataBackup: string;
   ipfsGateway: string;
   votingResultsDashboard: string;

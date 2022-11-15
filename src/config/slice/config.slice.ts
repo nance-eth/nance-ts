@@ -7,7 +7,6 @@ const config: NanceConfig = {
   nameId: 'slice',
   name: 'slice',
   calendarPath: `${__dirname}/${NAME}.ics`,
-  scheme: ['github', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   votingResultsDashboard: '',

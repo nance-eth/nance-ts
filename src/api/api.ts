@@ -1,11 +1,9 @@
 /* eslint-disable object-curly-newline */
-/* eslint-disable no-nested-ternary */
 import express from 'express';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
 import { getConfig } from '../configLoader';
 import { Proposal } from '../types';
-import { SPACES } from '../config/map';
 import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, SubmitTransactionRequest } from './models';
 import { checkSignature } from './helpers/signature';
@@ -17,13 +15,10 @@ const spacePrefix = '/:space';
 
 router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
-  // fetch space by projectId stored in SPACES enum or by space name string
-  const query = Number(space);
-  const spaceQuery = (Number.isNaN(query)) ? space : SPACES[query];
   try {
-    const config = await getConfig(spaceQuery);
+    const config = await getConfig(space);
     res.locals.notion = new NotionHandler(config);
-    res.locals.spaceName = spaceQuery;
+    res.locals.spaceName = space;
     res.locals.config = config;
     next();
   } catch (e) {

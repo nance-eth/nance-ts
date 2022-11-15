@@ -25,7 +25,8 @@ async function setup() {
 }
 
 async function scheduleCycle() {
-  const calendar = new CalendarHandler(config.calendarPath);
+  const calendarPath = `${__dirname}/config/${config.name}/${config.name}.ics`;
+  const calendar = new CalendarHandler(calendarPath);
   const cycle = calendar.getNextEvents();
   logger.debug(cycle);
   const noEventsInProgress = cycle.filter((event) => { return event.inProgress === false; }).length > 0;

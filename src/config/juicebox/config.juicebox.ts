@@ -7,7 +7,6 @@ const config: NanceConfig = {
   nameId: 'juiceboxDAO',
   name: 'juiceboxDAO',
   calendarPath: `${__dirname}/${NAME}.ics`,
-  scheme: ['notion', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   votingResultsDashboard: '',

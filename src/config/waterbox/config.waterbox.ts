@@ -7,7 +7,6 @@ const config: NanceConfig = {
   nameId: 'waterbox',
   name: 'waterbox',
   calendarPath: `${__dirname}/${NAME}.ics`,
-  scheme: ['github', 'discord', 'snapshot'],
   proposalDataBackup: 'ipfs',
   ipfsGateway: 'https://gateway.pinata.cloud/ipfs',
   votingResultsDashboard: '',

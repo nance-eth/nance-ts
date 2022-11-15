@@ -28,7 +28,7 @@ export class NotionHandler implements DataContentHandler {
   constructor(
     private config: NanceConfig
   ) {
-    this.notion = new NotionClient({ auth: this.config.notion.API_KEY });
+    this.notion = new NotionClient({ auth: process.env[this.config.notion.API_KEY] });
     this.notionToMd = new NotionToMarkdown({ notionClient: this.notion });
   }
 
