@@ -29,7 +29,7 @@ export class DiscordHandler {
         Intents.FLAGS.GUILD_MESSAGE_REACTIONS
       ]
     });
-    this.discord.login(this.config.discord.API_KEY).then(async () => {
+    this.discord.login(process.env[this.config.discord.API_KEY]).then(async () => {
       this.discord.on('ready', async (discord) => {
         logger.info(`Ready! Logged in as ${discord.user.username}`);
       });

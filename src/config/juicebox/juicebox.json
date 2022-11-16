@@ -1,0 +1,96 @@
+{
+  "name": "juicebox",
+  "proposalDataBackup": "ipfs",
+  "ipfsGateway": "https://gateway.pinata.cloud/ipfs",
+  "translation": {
+    "api": "deepl",
+    "targetLanguage": "zh",
+    "storage": {
+      "user": "jigglyjams",
+      "repo": "juicebox-governance"
+    }
+  },
+  "juicebox": {
+    "network": "mainnet",
+    "projectId": "1",
+    "gnosisSafeAddress": "0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e"
+  },
+  "discord": {
+    "API_KEY": "DISCORD_KEY_JUICEBOX",
+    "guildId": "775859454780244028",
+    "channelId": "873248745771372584",
+    "alertRole": "953865172764729404",
+    "poll": {
+      "voteYesEmoji": "👍",
+      "voteNoEmoji": "👎",
+      "voteGoVoteEmoji": "🗳",
+      "votePassEmoji": "✅",
+      "voteCancelledEmoji": "❌",
+      "minYesVotes": 10,
+      "yesNoRatio": 0.3,
+      "showResults": true
+    }
+  },
+  "notion": {
+    "API_KEY": "NOTION_KEY_JUICEBOX",
+    "publicURLPrefix": "juicebox.notion.site",
+    "database_id": "9d126f9148dc42ee83317d5cd74e4db4",
+    "current_cycle_block_id": "7e88ba32f5484ea9900a5fb00426bc9a",
+    "payouts_database_id": "c51c3d59c21445988f17c9332b7163dc",
+    "reserves_database_id": "b7276b64a43643d2bb8ee355376dd4fa",
+    "propertyKeys": {
+      "proposalId": "Juicebox Proposal ID",
+      "status": "Status",
+      "statusTemperatureCheck": "Temperature Check",
+      "statusVoting": "Voting",
+      "statusApproved": "Approved",
+      "statusCancelled": "Cancelled",
+      "proposalIdPrefix": "JBP-",
+      "discussionThread": "Discussion Thread",
+      "ipfs": "IPFS",
+      "vote": "Snapshot",
+      "type": "Category",
+      "typeRecurringPayout": "Recurring Payment",
+      "typePayout": "Payout",
+      "governanceCycle": "Funding Cycle",
+      "governanceCyclePrefix": "FC#",
+      "payoutAmountUSD": "USD Payout Amount",
+      "payoutAddress": "Payout Address",
+      "payoutCount": "Number of Payouts",
+      "reservePercentage": "Percentage",
+      "treasuryVersion": "JB DAO Treasury",
+      "payoutFirstFC": "First FC",
+      "payoutLastFC": "Last FC",
+      "payoutRenewalFC": "Renewal FC",
+      "payoutProposalLink": "Proposal",
+      "payoutType": "Type of payout",
+      "payoutName": "ENS"
+    }
+  },
+  "github": {
+    "user": "jigglyjams",
+    "repo": "juicebox-governance",
+    "propertyKeys": {
+      "title": "Name",
+      "proposalId": "Juicebox Proposal ID",
+      "status": "Status",
+      "statusTemperatureCheck": "Temperature Check",
+      "statusVoting": "Voting",
+      "statusApproved": "Approved",
+      "statusCancelled": "Cancelled",
+      "proposalIdPrefix": "JBP-",
+      "discussionThread": "Discussion Thread",
+      "ipfs": "Data Backup",
+      "vote": "Voting",
+      "type": "Category",
+      "governanceCycle": "Funding Cycle"
+    }
+  },
+  "snapshot": {
+    "base": "https://juicetool.xyz/snapshot",
+    "space": "jbdao.eth",
+    "choices": ["For", "Against", "Abstain"],
+    "minTokenPassingAmount": 80E6,
+    "passingRatio": 0.66
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "name": "",
+  "proposalDataBackup": "ipfs",
+  "ipfsGateway": "https://gateway.pinata.cloud/ipfs",
+  "translation": {
+    "api": "",
+    "targetLanguage": "",
+    "storage": {
+      "user": "",
+      "repo": ""
+    }
+  },
+  "juicebox": {
+    "network": "",
+    "projectId": "",
+    "gnosisSafeAddress": ""
+  },
+  "discord": {
+    "API_KEY": "",
+    "guildId": "",
+    "channelId": "",
+    "alertRole": "",
+    "poll": {
+      "voteYesEmoji": "👍",
+      "voteNoEmoji": "👎",
+      "voteGoVoteEmoji": "🗳",
+      "votePassEmoji": "✅",
+      "voteCancelledEmoji": "❌",
+      "minYesVotes": "",
+      "yesNoRatio": "",
+      "showResults": true
+    }
+  },
+  "notion": {
+    "API_KEY": "",
+    "publicURLPrefix": "",
+    "database_id": "",
+    "current_cycle_block_id": "",
+    "payouts_database_id": "",
+    "reserves_database_id": "",
+    "propertyKeys": {
+      "proposalId": "",
+      "status": "",
+      "statusTemperatureCheck": "",
+      "statusVoting": "",
+      "statusApproved": "",
+      "statusCancelled": "",
+      "proposalIdPrefix": "",
+      "discussionThread": "",
+      "ipfs": "",
+      "vote": "",
+      "type": "",
+      "typeRecurringPayout": "",
+      "typePayout": "",
+      "governanceCycle": "",
+      "governanceCyclePrefix": "",
+      "payoutAmountUSD": "",
+      "payoutAddress": "",
+      "payoutCount": "",
+      "reservePercentage": "",
+      "treasuryVersion": "",
+      "payoutFirstFC": "",
+      "payoutLastFC": "",
+      "payoutRenewalFC": "",
+      "payoutProposalLink": "",
+      "payoutType": "",
+      "payoutName": ""
+    }
+  },
+  "github": {
+    "user": "",
+    "repo": "",
+    "propertyKeys": {
+      "title": "",
+      "proposalId": "",
+      "status": "Status",
+      "statusTemperatureCheck": "",
+      "statusVoting": "",
+      "statusApproved": "",
+      "statusCancelled": "",
+      "proposalIdPrefix": "",
+      "discussionThread": "",
+      "ipfs": "",
+      "vote": "",
+      "type": "",
+      "governanceCycle": ""
+    }
+  },
+  "snapshot": {
+    "base": "https://juicetool.xyz/snapshot",
+    "space": "",
+    "choices": ["For", "Against", "Abstain"],
+    "minTokenPassingAmount": "",
+    "passingRatio": ""
+  }
+}

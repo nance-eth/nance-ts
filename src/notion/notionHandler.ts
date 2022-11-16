@@ -8,10 +8,11 @@ import {
   UpdatePageResponse,
   GetDatabaseResponse,
   GetPageResponse,
-  CreatePageParameters,
+  CreatePageParameters
 } from '@notionhq/client/build/src/api-endpoints';
 import {
-  DataContentHandler
+  DataContentHandler,
+  SimplePropertyFilter
 } from './notionTypes';
 import {
   NanceConfig,
@@ -24,12 +25,14 @@ import * as notionUtils from './notionUtils';
 export class NotionHandler implements DataContentHandler {
   private notion;
   private notionToMd;
+  private filters;
 
   constructor(
     private config: NanceConfig
   ) {
-    this.notion = new NotionClient({ auth: this.config.notion.API_KEY });
+    this.notion = new NotionClient({ auth: process.env[this.config.notion.API_KEY] });
     this.notionToMd = new NotionToMarkdown({ notionClient: this.notion });
+    this.filters = notionUtils.filters(this.config);
   }
 
   private toProposal(
@@ -165,35 +168,35 @@ export class NotionHandler implements DataContentHandler {
 
   async getToDiscuss(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.config.notion.filters.preDiscussion
+      notionUtils.filters(this.config).preDiscussion
     );
     return proposals;
   }
 
   async getDiscussionProposals(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.config.notion.filters.discussion
+      this.filters.discussion
     );
     return proposals;
   }
 
   async getTemperatureCheckProposals(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.config.notion.filters.temperatureCheck
+      this.filters.temperatureCheck
     );
     return proposals;
   }
 
   async getVoteProposals(): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.config.notion.filters.voting
+      this.filters.voting
     );
     return proposals;
   }
 
   async getApprovedRecurringPaymentProposals(governanceCycle: string): Promise<Proposal[]> {
     // add filter by governance cycle (this changes so must push it in here)
-    this.config.notion.filters.approvedRecurringPayment.and.push(
+    this.filters.approvedRecurringPayment.and.push(
       {
         property: this.config.notion.propertyKeys.governanceCycle,
         rich_text: {
@@ -202,10 +205,10 @@ export class NotionHandler implements DataContentHandler {
       }
     );
     const proposals = await this.queryNotionDb(
-      this.config.notion.filters.approvedRecurringPayment,
+      this.filters.approvedRecurringPayment,
       true // include payout data
     );
-    this.config.notion.filters.approvedRecurringPayment.and.pop();
+    this.filters.approvedRecurringPayment.and.pop();
     return proposals;
   }
 
@@ -338,7 +341,7 @@ export class NotionHandler implements DataContentHandler {
 
   async getNextProposalIdNumber(): Promise<number> {
     const proposals = await this.queryNotionDb(
-      this.config.notion.filters.proposalId,
+      this.filters.proposalId,
       false,
       'descending'
     );
@@ -456,11 +459,11 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async getPayoutsDb(version: string): Promise<Payout[]> {
-    return this.queryNotionPayoutDb(this.config.notion.filters[`payouts${version}`]);
+    return this.queryNotionPayoutDb(this.filters[`payouts${version as 'V1' | 'V2'}`]);
   }
 
   async getReserveDb(version: string): Promise<Reserve[]> {
-    return this.queryNotionReserveDb(this.config.notion.filters.reservedIsNotOwner);
+    return this.queryNotionReserveDb(this.filters.reservedIsNotOwner);
   }
 
   async getCurrentGovernanceCycle(): Promise<number> {
