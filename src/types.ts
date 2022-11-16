@@ -201,8 +201,8 @@ export interface GithubFileChange {
 }
 
 export type SnapshotVoteOptions = {
-  type: string,
-  choices: string[]
+  type?: string,
+  choices?: string[]
 };
 
 export interface Signature {

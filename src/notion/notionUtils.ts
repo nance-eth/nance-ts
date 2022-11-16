@@ -45,9 +45,11 @@ export const getStatus = (page:any) => {
 };
 
 export const getVoteSetup = (page:any): SnapshotVoteOptions => {
+  const choicesParsed = getRichText(page, 'Vote Choices').split(',').map((entry) => { return entry.trim(); });
+  const choices = (choicesParsed[0] !== '') ? choicesParsed : undefined;
   return {
     type: page.properties['Vote Type'].select?.name,
-    choices: getRichText(page, 'Vote Choices').split(',').map((entry) => { return entry.trim(); })
+    choices
   };
 };
 
