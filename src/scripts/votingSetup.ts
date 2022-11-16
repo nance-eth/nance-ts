@@ -1,21 +1,22 @@
 import { getConfig, calendarPath } from '../configLoader';
 import { Nance } from '../nance';
-import logger from '../logging';
 import { CalendarHandler } from '../calendar/CalendarHandler';
-import { Proposal } from '../types';
+import { addSecondsToDate } from '../utils';
 
 const pageId = '';
 
 async function getConfigs() {
   const config = await getConfig()
   const nance = new Nance(config);
-  const calendar = new CalendarHandler(calendarPath);
+  const calendar = new CalendarHandler(calendarPath(config));
   const nextEvents = calendar.getNextEvents();
   const nextVote = nextEvents.filter((event) => { return event.title === 'Snapshot Vote' })[0];
   console.log(nextVote);
   const proposal = (pageId !== '') ? [await nance.proposalHandler.pageIdToProposal(pageId)] : undefined;
   console.log(proposal);
-  nance.votingSetup(new Date(), nextVote.end, proposal);
+  const now = new Date();
+  const voteEnd = (nextVote.end < now) ? addSecondsToDate(now, 60 * 5) : nextVote.end
+  nance.votingSetup(new Date(), voteEnd, proposal);
 }
 
 getConfigs();

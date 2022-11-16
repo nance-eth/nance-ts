@@ -6,7 +6,7 @@ import {
 import { Nance } from './nance';
 import { NanceExtensions } from './extensions';
 import logger from './logging';
-import { getConfig } from './configLoader';
+import { getConfig, calendarPath } from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
 import { NanceConfig } from './types';
 
@@ -25,8 +25,7 @@ async function setup() {
 }
 
 async function scheduleCycle() {
-  const calendarPath = `${__dirname}/config/${config.name}/${config.name}.ics`;
-  const calendar = new CalendarHandler(calendarPath);
+  const calendar = new CalendarHandler(calendarPath(config));
   const cycle = calendar.getNextEvents();
   logger.debug(cycle);
   const noEventsInProgress = cycle.filter((event) => { return event.inProgress === false; }).length > 0;

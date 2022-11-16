@@ -17,7 +17,7 @@ async function notionToGithubDB() {
   const config  = await getConfig();
   const nance = new Nance(config);
   await sleep(1000);
-  const nanceExt = new NanceExtensions(config);
+  const nanceExt = new NanceExtensions(nance);
   
   const approvedProposals = await nance.proposalHandler.queryNotionDb(approvedFilter);
   const voteProposalIdStrings = approvedProposals.map((proposal) => {

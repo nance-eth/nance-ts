@@ -1,4 +1,5 @@
-import { SnapshotVoteOptions } from '../types';
+import { NanceConfig, SnapshotVoteOptions } from '../types';
+import { SimplePropertyFilter } from './notionTypes';
 
 const NOTION_URL_PREFIX = 'www.notion.so';
 const uuidRegex = /[^-]([a-zA-Z0-9]*[a-zA-Z0-9])$/;
@@ -46,7 +47,7 @@ export const getStatus = (page:any) => {
 export const getVoteSetup = (page:any): SnapshotVoteOptions => {
   return {
     type: page.properties['Vote Type'].select?.name,
-    choices: getRichText(page, 'Vote Choices').split(',')
+    choices: getRichText(page, 'Vote Choices').split(',').map((entry) => { return entry.trim(); })
   };
 };
 
@@ -56,4 +57,104 @@ export const getPropertyURL = (page:any, property:any) => {
 
 export const getDate = (page:any) => {
   return (page.properties.Date.date) ? page.properties.Date.date.start : '';
+};
+
+export const filters = (config: NanceConfig) => {
+  return {
+    preDiscussion: {
+      and: [
+        {
+          property: 'Status',
+          select: {
+            equals: 'Discussion',
+          },
+        },
+        {
+          property: config.notion.propertyKeys.discussionThread,
+          url: {
+            is_empty: true,
+          }
+        },
+        {
+          property: 'Name',
+          title: {
+            is_not_empty: true
+          }
+        }],
+    },
+    discussion: {
+      and: [
+        {
+          property: 'Status',
+          select: {
+            equals: 'Discussion',
+          },
+        },
+        {
+          property: config.notion.propertyKeys.discussionThread,
+          url: {
+            is_not_empty: true,
+          },
+        },
+        {
+          property: 'Name',
+          title: {
+            is_not_empty: true
+          }
+        }],
+    },
+    proposalId: {
+      property: config.notion.propertyKeys.proposalId,
+      rich_text: {
+        contains: config.notion.propertyKeys.proposalIdPrefix,
+      }
+    },
+    temperatureCheck: {
+      property: 'Status',
+      select: {
+        equals: 'Temperature Check',
+      }
+    },
+
+    voting: {
+      property: 'Status',
+      select: {
+        equals: 'Voting',
+      }
+    },
+    approvedRecurringPayment: {
+      and: [
+        {
+          property: 'Status',
+          select: {
+            equals: 'Approved',
+          }
+        },
+        {
+          property: config.notion.propertyKeys.type,
+          multi_select: {
+            contains: config.notion.propertyKeys.typeRecurringPayout
+          }
+        }
+      ] as SimplePropertyFilter[]
+    },
+    payoutsV1: {
+      property: 'JB DAO Treasury',
+      rich_text: {
+        contains: 'V1'
+      }
+    },
+    payoutsV2: {
+      property: 'JB DAO Treasury',
+      rich_text: {
+        contains: 'V2'
+      }
+    },
+    reservedIsNotOwner: {
+      property: 'isOwner',
+      rich_text: {
+        contains: 'false'
+      }
+    }
+  };
 };

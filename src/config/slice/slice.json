@@ -1,0 +1,96 @@
+{
+  "name": "slice",
+  "proposalDataBackup": "ipfs",
+  "ipfsGateway": "https://gateway.pinata.cloud/ipfs",
+  "translation": {
+    "api": "deepl",
+    "targetLanguage": "zh",
+    "storage": {
+      "user": "jigglyjams",
+      "repo": "slice-governance"
+    }
+  },
+  "juicebox": {
+    "network": "mainnet",
+    "projectId": "168",
+    "gnosisSafeAddress": "0x73965F5165bA91d5cdC950a9d35c8c6b7Fd1DbC7"
+  },
+  "discord": {
+    "API_KEY": "DISCORD_KEY_SLICE",
+    "guildId": "849297623310532628",
+    "channelId": "915779800579342396",
+    "alertRole": "930603842628882472",
+    "poll": {
+      "voteYesEmoji": "👍",
+      "voteNoEmoji": "👎",
+      "voteGoVoteEmoji": "🗳",
+      "votePassEmoji": "✅",
+      "voteCancelledEmoji": "❌",
+      "minYesVotes": 6,
+      "yesNoRatio": 0,
+      "showResults": true
+    }
+  },
+  "notion": {
+    "API_KEY": "NOTION_KEY_SLICE",
+    "publicURLPrefix": "slicedao.notion.site",
+    "database_id": "6f5e82e9f6b047fcbb79d147ec0de342",
+    "current_cycle_block_id": "9c92fff40830423fb9c1941851e51753",
+    "payouts_database_id": "",
+    "reserves_database_id": "",
+    "propertyKeys": {
+      "proposalId": "Slice Proposal Number",
+      "status": "Status",
+      "statusTemperatureCheck": "Temp Check (Do we even vote on it)",
+      "statusVoting": "Voting",
+      "statusApproved": "Approved",
+      "statusCancelled": "Cancelled",
+      "proposalIdPrefix": "SL-",
+      "discussionThread": "Discussion Thread",
+      "ipfs": "IPFS",
+      "vote": "Snapshot",
+      "type": "Category",
+      "typeRecurringPayout": "Treasury",
+      "typePayout": "Treasury",
+      "governanceCycle": "Funding Cycle",
+      "governanceCyclePrefix": "FC#",
+      "payoutAmountUSD": "USD Payout Amount",
+      "payoutAddress": "Payout Address",
+      "payoutCount": "Number of Payouts",
+      "reservePercentage": "Percentage",
+      "treasuryVersion": "Juicebox Treasury Version",
+      "payoutFirstFC": "First FC",
+      "payoutLastFC": "Last FC",
+      "payoutRenewalFC": "Renewal FC",
+      "payoutProposalLink": "Proposal",
+      "payoutType": "Type of payout",
+      "payoutName": "ENS"
+    }
+  },
+  "github": {
+    "user": "jigglyjams",
+    "repo": "slice-governance",
+    "propertyKeys": {
+      "title": "Name",
+      "proposalId": "Slice Proposal ID",
+      "status": "Status",
+      "statusTemperatureCheck": "Temperature Check",
+      "statusVoting": "Voting",
+      "statusApproved": "Approved",
+      "statusCancelled": "Cancelled",
+      "proposalIdPrefix": "SL-",
+      "discussionThread": "Discussion Thread",
+      "ipfs": "Data Backup",
+      "vote": "Voting",
+      "type": "Category",
+      "governanceCycle": "Funding Cycle"
+    }
+  },
+  "snapshot": {
+    "base": "https://juicetool.xyz/snapshot",
+    "space": "slice-so.eth",
+    "choices": ["For", "Against", "Abstain"],
+    "minTokenPassingAmount": 1,
+    "passingRatio": 0.66
+  }
+}

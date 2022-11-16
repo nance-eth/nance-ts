@@ -14,3 +14,7 @@ export async function getConfig(query?: string): Promise<NanceConfig> {
   });
   return config;
 }
+
+export const calendarPath = (config: NanceConfig) => {
+  return `${__dirname}/config/${config.name}/${config.name}.ics`;
+};

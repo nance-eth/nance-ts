@@ -9,7 +9,7 @@ const DELAY_SEND_SECONDS = (process.argv[2] === '') ? 30 : Number(process.argv[2
 async function main() {
   const config = await getConfig();
   const nance = new Nance(config);
-  const calendar = new CalendarHandler(calendarPath);
+  const calendar = new CalendarHandler(calendarPath(config));
   const nextEvents = calendar.getNextEvents();
   const nextTemperatureCheck = nextEvents.filter((event) => { return event.title === 'Temperature Check' })[0];
   logger.debug(nextTemperatureCheck);

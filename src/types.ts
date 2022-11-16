@@ -76,9 +76,7 @@ export type ProposalNoHash = Omit<Proposal, 'hash'>;
 export type ProposalStore = Record<string, ProposalNoHash>;
 
 export interface NanceConfig {
-  nameId: string;
   name: string;
-  calendarPath: string;
   proposalDataBackup: string;
   ipfsGateway: string;
   votingResultsDashboard: string;
@@ -146,7 +144,6 @@ export interface NanceConfig {
       payoutRenewalFC: string;
       payoutProposalLink: string;
     };
-    filters: any;
   };
   github: {
     user: string;
