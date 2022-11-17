@@ -12,6 +12,7 @@
   },
   "juicebox": {
     "network": "mainnet",
+    "network": "",
     "projectId": "",
     "gnosisSafeAddress": ""
   },
