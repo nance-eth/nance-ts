@@ -30,7 +30,7 @@ async function scheduleCycle() {
   logger.debug(cycle);
   const noEventsInProgress = cycle.filter((event) => { return event.inProgress === true; }).length === 0;
   const executionOrDelayInProgress = cycle.filter((event) => {
-    return event.title === 'Execution' || event.title === 'Delay';
+    return event.title === 'Execution' || event.title === 'Delay Period';
   }).some((event) => {
     return event.inProgress;
   });
