@@ -44,6 +44,10 @@ export class DiscordHandler {
     return this.discord.isReady();
   }
 
+  logout() {
+    this.discord.destroy();
+  }
+
   private getAlertChannel(): TextChannel {
     return this.discord.channels.cache.get(this.config.discord.channelId) as TextChannel;
   }

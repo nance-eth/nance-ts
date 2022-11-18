@@ -28,13 +28,7 @@ async function scheduleCycle() {
   const calendar = new CalendarHandler(calendarPath(config));
   const cycle = calendar.getNextEvents();
   logger.debug(cycle);
-  const noEventsInProgress = cycle.filter((event) => { return event.inProgress === true; }).length === 0;
-  const executionOrDelayInProgress = cycle.filter((event) => {
-    return event.title === 'Execution' || event.title === 'Delay Period';
-  }).some((event) => {
-    return event.inProgress;
-  });
-  if (noEventsInProgress || executionOrDelayInProgress) { nance.setDiscussionInterval(30); }
+  if (CalendarHandler.shouldSendDiscussion(cycle)) { nance.setDiscussionInterval(30); }
   cycle.forEach((event) => {
     if (event.title === 'Temperature Check') {
       if (!event.inProgress) {

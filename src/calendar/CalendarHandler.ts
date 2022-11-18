@@ -40,4 +40,14 @@ export class CalendarHandler {
     });
     return sortedNextDates;
   }
+
+  static shouldSendDiscussion(nextEvents: DateEvent[]) {
+    const noEventsInProgress = nextEvents.filter((event) => { return event.inProgress === true; }).length === 0;
+    const executionOrDelayInProgress = nextEvents.filter((event) => {
+      return event.title === 'Execution' || event.title === 'Delay Period';
+    }).some((event) => {
+      return event.inProgress;
+    });
+    return (noEventsInProgress || executionOrDelayInProgress);
+  }
 }

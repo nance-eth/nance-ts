@@ -1,14 +1,17 @@
 /* eslint-disable object-curly-newline */
 import express from 'express';
+import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
-import { getConfig } from '../configLoader';
+import { calendarPath, getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, SubmitTransactionRequest } from './models';
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
+import { sleep } from '../utils';
+import { CalendarHandler } from '../calendar/CalendarHandler';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -24,6 +27,25 @@ router.use(spacePrefix, async (req, res, next) => {
   } catch (e) {
     res.json({ success: false, error: `space ${space} not found!` });
   }
+});
+
+router.get(`${spacePrefix}/discussionHook`, async (req, res) => {
+  const nance = new Nance(res.locals.config);
+  const calendar = new CalendarHandler(calendarPath(res.locals.config));
+  const shouldSendDiscussion = CalendarHandler.shouldSendDiscussion(calendar.getNextEvents());
+  if (!shouldSendDiscussion) {
+    res.json({ success: false, error: 'out of phase to send' });
+    return;
+  }
+  // eslint-disable-next-line no-await-in-loop
+  while (!nance.dialogHandler.ready()) { await sleep(50); }
+  nance.queryAndSendDiscussions().then((discussions) => {
+    nance.dialogHandler.logout();
+    res.json({ success: true, data: discussions });
+  }).catch((e) => {
+    nance.dialogHandler.logout();
+    res.json({ success: false, error: e });
+  });
 });
 
 router.post(`${spacePrefix}/upload`, async (req, res) => {

@@ -78,16 +78,17 @@ export class Nance {
   }
 
   async queryAndSendDiscussions() {
-    try {
-      const proposalsToDiscuss = await this.proposalHandler.getToDiscuss();
-      proposalsToDiscuss.forEach(async (proposal: Proposal) => {
+    return this.proposalHandler.getToDiscuss().then((proposalsToDiscuss) => {
+      return Promise.all(proposalsToDiscuss.map(async (proposal) => {
         proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
         this.proposalHandler.updateDiscussionURL(proposal);
         logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
-      });
-    } catch (e) {
+        return proposal.discussionThreadURL;
+      }));
+    }).catch(() => {
       logger.error(`${this.config.name}: queryAndSendDiscussions() issue`);
-    }
+      return [];
+    });
   }
 
   async temperatureCheckSetup(endDate: Date) {

@@ -11,8 +11,7 @@ import {
   CreatePageParameters
 } from '@notionhq/client/build/src/api-endpoints';
 import {
-  DataContentHandler,
-  SimplePropertyFilter
+  DataContentHandler
 } from './notionTypes';
 import {
   NanceConfig,
