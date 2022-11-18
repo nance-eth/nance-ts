@@ -14,7 +14,7 @@ export class PinataHandler {
   ) {
     this.pinata = pinataSDK(pinataKey.KEY, pinataKey.SECRET);
     this.pinata.testAuthentication().then((response) => {
-      logger.info(`pinataSDK auth: ${response.authenticated}`);
+      logger.debug(`pinataSDK auth: ${response.authenticated}`);
     }).catch(() => {
       logger.error('pinataSDK auth failed!');
     });

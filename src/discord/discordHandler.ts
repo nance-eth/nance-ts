@@ -31,7 +31,7 @@ export class DiscordHandler {
     });
     this.discord.login(process.env[this.config.discord.API_KEY]).then(async () => {
       this.discord.on('ready', async (discord) => {
-        logger.info(`Ready! Logged in as ${discord.user.username}`);
+        logger.debug(`Ready! Logged in as ${discord.user.username}`);
       });
     }).catch((e) => {
       logger.error('discord auth failed!');

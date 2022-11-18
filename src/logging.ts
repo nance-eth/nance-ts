@@ -22,7 +22,7 @@ const logFormat = format.combine(
 const logger = createLogger({
   format:
     logFormat,
-  level: 'silly',
+  level: process.env.LOG_LEVEL,
   transports: [
     new transports.Console(),
   ]
