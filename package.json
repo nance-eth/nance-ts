@@ -10,8 +10,8 @@
     "test:watch": "export NODE_ENV='dev' && jest --watch",
     "test:coverage": "export NODE_ENV='dev' && jest --coverage",
     "test:gov": "export NODE_ENV='dev' && export CONFIG='waterbox' && ts-node src/scripts/createCalendar.ts && ts-node src/index.ts",
-    "start:api": "export CONSOLE_LOG=on && export LOG_LEVEL=silly && node ./dist/api/index.js",
-    "dev:api": "export CONSOLE_LOG=on && nodemon ./src/api/index.ts",
+    "start:api": "export CONSOLE_LOG=on && node ./dist/api/index.js",
+    "dev:api": "export CONSOLE_LOG=on && export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
     "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 && cp -r ./src/config/ ./dist/config/"
   },
   "dependencies": {
