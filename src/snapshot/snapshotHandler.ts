@@ -19,7 +19,7 @@ export class SnapshotHandler {
     private config: any
   ) {
     this.provider = new ethers.providers.AlchemyProvider('mainnet', providerKey);
-    this.wallet = new ethers.Wallet(privateKey, this.provider);
+    this.wallet = (privateKey === '') ? ethers.Wallet.createRandom() : new ethers.Wallet(privateKey, this.provider);
 
     this.hub = 'https://hub.snapshot.org';
     this.snapshot = new snapshot.Client712(this.hub);
