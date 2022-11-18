@@ -162,7 +162,7 @@ export class DiscordHandler {
       }
     );
     const sendChannel = this.discord.channels.cache.get(threadId) as TextChannel;
-    await sendChannel.send({ content: this.roleTag, embeds: [message] });
+    await sendChannel.send({ embeds: [message] });
   }
 
   async sendPollResultsEmoji(pass: boolean, threadId: string) {
