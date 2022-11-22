@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export const sleep = (milliseconds: number) => {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds); });
 };
@@ -94,4 +96,8 @@ export function numToPrettyString(num: number | undefined) {
 export function omitKey(object: object, key: string) {
   const { [key as keyof object]: unused, ...newObject } = object;
   return newObject;
+}
+
+export function uuid(hyphen = false): string {
+  return uuidv4().replaceAll('-', '');
 }
