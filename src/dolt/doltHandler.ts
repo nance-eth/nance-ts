@@ -32,13 +32,24 @@ export class DoltHandler {
       'basic',
       '["For", "Against", "Abstain"]'
     )`;
-    return this.dolt.write(query);
+    return this.dolt.write(`GC${proposal.governanceCycle}`, query);
+  }
+
+  updateStatus(proposal: any, status: string) {
+    const now = new Date().toISOString();
+    const query = oneLine`
+      UPDATE ${proposalsTable} SET
+      proposalStatus = '${status}',
+      lastEditedTime = '${now}'
+      WHERE uuid = '${proposal.hash}'
+    `;
+    return this.dolt.write(proposal.governanceCycle?.toString() ?? '', query);
   }
 
   getToDiscuss() {
     return this.dolt.query(`
       SELECT * FROM proposals WHERE
-      proposalStatus = 'Discussion'
+      proposalStatus = 'Discussion
       AND
       discussionURL = NULL
     `);

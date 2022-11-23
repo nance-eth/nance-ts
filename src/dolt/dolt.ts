@@ -35,7 +35,7 @@ export class Dolt {
     }).then((res) => {
       return res.data;
     }).catch((e) => {
-      return Promise.reject(e.response.data);
+      return e.response.data;
     });
   }
 
@@ -48,7 +48,7 @@ export class Dolt {
     }).then((res) => {
       return res.data;
     }).catch((e) => {
-      return Promise.reject(e);
+      return e;
     });
   }
 
@@ -60,8 +60,7 @@ export class Dolt {
     return this.reader(undefined, { q });
   }
 
-  async write(q: string) {
-    const branch = Date.now();
+  async write(branch: string, q: string) {
     return this.writer(`main/${branch}`, q);
   }
 
