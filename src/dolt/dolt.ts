@@ -1,7 +1,9 @@
+/* eslint-disable no-await-in-loop */
 import axios from 'axios';
 import { request as gqlRequest } from 'graphql-request';
 import { mutationDeleteBranch } from './doltGQL';
-import { ReadResponse, WriteResponse } from './types';
+import { ReadResponse, WriteResponse, PollResponse } from './types';
+import { sleep } from '../utils';
 
 const API = 'https://www.dolthub.com/api/v1alpha1/';
 const GRAPHQL_API = 'https://www.dolthub.com/graphql';
@@ -31,6 +33,7 @@ export class Dolt {
     return axios({
       method: 'get',
       url: (endpoint) ? `${this.DOLT}/${endpoint}` : `${this.DOLT}`,
+      headers: this.headers,
       params
     }).then((res) => {
       return res.data;
@@ -69,7 +72,14 @@ export class Dolt {
   }
 
   async poll(operationName: string) {
-    return this.reader('write', { operationName });
+    let res;
+    let done = false;
+    while (!done) {
+      res = await this.reader('write', { operationName }) as unknown as PollResponse;
+      done = res.done;
+      sleep(500);
+    }
+    return res;
   }
 
   async delete(branch: string) {

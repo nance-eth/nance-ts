@@ -19,3 +19,16 @@ export type ReadResponse = {
   schema: any[],
   rows: any[]
 };
+
+export type PollResponse = {
+  _id: string;
+  done: boolean;
+  res_details: {
+    query_execution_status: string;
+    query_execution_message: string;
+    owner_name: string;
+    repository_name: string;
+    from_commit_id: string;
+    to_commit_id: string;
+  }
+};
