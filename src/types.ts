@@ -93,6 +93,12 @@ export interface NanceConfig {
     projectId: string;
     gnosisSafeAddress: string;
   };
+  reminder: {
+    channelIds: string[];
+    imagesCID: string;
+    images: string[];
+    links: Record<string, string>;
+  }
   discord: {
     API_KEY: string;
     guildId: string;

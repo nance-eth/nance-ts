@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 /* eslint-disable newline-per-chained-call */
 import {
-  Message, MessageEmbed, ThreadChannel,
+  Message, MessageAttachment, MessageEmbed, ThreadChannel,
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
@@ -125,4 +125,21 @@ export const pollResultsMessage = (
 
 export const threadToURL = (thread: ThreadChannel) => {
   return `https://discord.com/channels/${thread.guildId}/${thread.parentId}/${thread.id}`;
+};
+
+export const dailyImageReminder = (day: string, governanceCycle: string, type: string) => {
+  const baseDir = './src/tmp';
+  const thumbnail = new MessageAttachment(`${baseDir}/day${day}/thumbnail.png`, 'thumbnail.png');
+  const image = new MessageAttachment(`${baseDir}/day${day}/${day}.png`, 'image.png');
+  const message = new MessageEmbed().setTitle('Governance Status').setDescription(
+    `Today is day ${Number(day)} of GC#${governanceCycle}`
+  ).setThumbnail(
+    'attachment://thumbnail.png'
+  ).setImage(
+    'attachment://image.png'
+  );
+  return {
+    message,
+    attachments: [thumbnail, image]
+  };
 };

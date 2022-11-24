@@ -11,7 +11,7 @@ import {
 } from 'discord.js';
 import logger from '../logging';
 import { limitLength } from '../utils';
-import { Proposal, PollResults } from '../types';
+import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
 
@@ -20,7 +20,7 @@ export class DiscordHandler {
   private roleTag;
 
   constructor(
-    private config: any
+    private config: NanceConfig
   ) {
     this.discord = new DiscordClient({
       intents: [
@@ -50,6 +50,12 @@ export class DiscordHandler {
 
   private getAlertChannel(): TextChannel {
     return this.discord.channels.cache.get(this.config.discord.channelId) as TextChannel;
+  }
+
+  private getDailyUpdateChannels(): TextChannel[] {
+    return this.config.reminder.channelIds.map((channelId) => {
+      return this.discord.channels.cache.get(channelId) as TextChannel;
+    });
   }
 
   async sendEmbed(text: string, channelId: string): Promise<Message<boolean>> {
@@ -122,6 +128,15 @@ export class DiscordHandler {
     });
   }
 
+  async sendImageReminder(day: string, governanceCycle: string, type: string) {
+    const { message, attachments } = discordTemplates.dailyImageReminder(day, governanceCycle, type);
+    Promise.all(
+      this.getDailyUpdateChannels().map((channel) => {
+        return channel.send({ embeds: [message], files: attachments });
+      })
+    );
+  }
+
   private static async getUserReactions(
     messageObj: Message,
     emoji: string
@@ -169,5 +184,9 @@ export class DiscordHandler {
     const messageObj = await this.getAlertChannel().messages.fetch(threadId);
     if (pass) messageObj.react(this.config.discord.poll.voteGoVoteEmoji);
     else messageObj.react(this.config.discord.poll.voteCancelledEmoji);
+  }
+
+  async setStatus() {
+    this.discord.user?.setActivity(' ');
   }
 }

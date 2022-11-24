@@ -15,6 +15,11 @@
     "projectId": "37",
     "gnosisSafeAddress": "0x4f136b4e0997EBbe1851eA0BDd63145A2ebeEB73"
   },
+  "reminder": {
+    "channelIds": ["889377541675159605", "964601032703352873"],
+    "imagesCID": "https://nance.mypinata.cloud/ipfs/QmWfKSTSGFQN7qwc2e9vwYro1nJ3XhmqLkUjn3M5MbEoPA",
+    "images": ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13"]
+  },
   "discord": {
     "API_KEY": "DISCORD_KEY_WATERBOX",
     "guildId": "889377541675159602",

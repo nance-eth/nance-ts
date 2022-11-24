@@ -1,3 +1,6 @@
+import axios from 'axios';
+import fs from 'fs';
+
 export const sleep = (milliseconds: number) => {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds); });
 };
@@ -94,4 +97,32 @@ export function numToPrettyString(num: number | undefined) {
 export function omitKey(object: object, key: string) {
   const { [key as keyof object]: unused, ...newObject } = object;
   return newObject;
+}
+
+export async function downloadImages(baseURL: string, images: string[]) {
+  const baseDir = './src/tmp';
+  if (!fs.existsSync(`${baseDir}`)) {
+    fs.mkdirSync(`${baseDir}`);
+  }
+  Promise.all(images.map(async (day) => {
+    if (!fs.existsSync(`${baseDir}/day${day}`)) {
+      fs.mkdirSync(`${baseDir}/day${day}`);
+    }
+    axios({
+      method: 'get',
+      url: `${baseURL}/day${day}/${day}.png`,
+      responseType: 'stream'
+    }).then((res) => {
+      res.data.pipe(fs.createWriteStream(`${baseDir}/day${day}/${day}.png`));
+    });
+
+    axios({
+      method: 'get',
+      url: `${baseURL}/day${day}/thumbnail.png`,
+      responseType: 'stream'
+    }).then((res) => {
+      res.data.pipe(fs.createWriteStream(`${baseDir}/day${day}/thumbnail.png`));
+    });
+  }));
+  return Promise.resolve();
 }
