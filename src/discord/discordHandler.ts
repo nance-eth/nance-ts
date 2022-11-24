@@ -10,8 +10,8 @@ import {
   ThreadAutoArchiveDuration,
 } from 'discord.js';
 import logger from '../logging';
-import { limitLength } from '../utils';
-import { Proposal, PollResults } from '../types';
+import { addSecondsToDate, dateToUnixTimeStamp, limitLength } from '../utils';
+import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
 
@@ -20,7 +20,7 @@ export class DiscordHandler {
   private roleTag;
 
   constructor(
-    private config: any
+    private config: NanceConfig
   ) {
     this.discord = new DiscordClient({
       intents: [
@@ -50,6 +50,12 @@ export class DiscordHandler {
 
   private getAlertChannel(): TextChannel {
     return this.discord.channels.cache.get(this.config.discord.channelId) as TextChannel;
+  }
+
+  private getDailyUpdateChannels(): TextChannel[] {
+    return this.config.reminder.channelIds.map((channelId) => {
+      return this.discord.channels.cache.get(channelId) as TextChannel;
+    });
   }
 
   async sendEmbed(text: string, channelId: string): Promise<Message<boolean>> {
@@ -122,6 +128,26 @@ export class DiscordHandler {
     });
   }
 
+  async sendImageReminder(day: string, governanceCycle: string, type: string) {
+    // delete old messages
+    Promise.all(
+      this.getDailyUpdateChannels().map((channel) => {
+        channel.messages.fetch({ limit: 20 }).then((messages) => {
+          messages.filter((m) => { return m.author === this.discord.user && m.embeds[0].title === 'Governance Status'; }).map((me) => {
+            return me.delete();
+          });
+        });
+        return null;
+      })
+    );
+    const { message, attachments } = discordTemplates.dailyImageReminder(day, governanceCycle, type, this.config.reminder.links[type], this.config.reminder.links.process);
+    Promise.all(
+      this.getDailyUpdateChannels().map((channel) => {
+        return channel.send({ embeds: [message], files: attachments });
+      })
+    );
+  }
+
   private static async getUserReactions(
     messageObj: Message,
     emoji: string
@@ -130,7 +156,7 @@ export class DiscordHandler {
     const pollReactionsCollection = messageObj.reactions.cache.get(emoji);
     let users = [''];
     if (pollReactionsCollection !== undefined) {
-      users = <string[]> await pollReactionsCollection.users.fetch()
+      users = await pollReactionsCollection.users.fetch()
         .then((results: Collection<string, User>) => {
           return results.filter((user): boolean => { return !user.bot; })
             .map((user) => { return user.tag; });
@@ -169,5 +195,9 @@ export class DiscordHandler {
     const messageObj = await this.getAlertChannel().messages.fetch(threadId);
     if (pass) messageObj.react(this.config.discord.poll.voteGoVoteEmoji);
     else messageObj.react(this.config.discord.poll.voteCancelledEmoji);
+  }
+
+  async setStatus() {
+    this.discord.user?.setActivity(' ');
   }
 }

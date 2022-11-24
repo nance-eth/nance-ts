@@ -15,6 +15,18 @@
     "projectId": "1",
     "gnosisSafeAddress": "0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e"
   },
+  "reminder": {
+    "channelIds": ["964601032703352873", "889377541675159605"],
+    "imagesCID": "https://nance.mypinata.cloud/ipfs/QmWfKSTSGFQN7qwc2e9vwYro1nJ3XhmqLkUjn3M5MbEoPA",
+    "images": ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13"],
+    "links": {
+      "process": "https://info.juicebox.money/dao/process",
+      "temperature check": "https://discord.com/channels/775859454780244028/873248745771372584",
+      "vote": "https://juicetool.xyz/snapshot/jbdao.eth",
+      "execution": "https://juicetool.xyz/juicebox",
+      "delay": "https://juicetool.xyz/nance/juicebox/new?type=Payout&version=2&project=1"
+    }
+  },
   "discord": {
     "API_KEY": "DISCORD_KEY_JUICEBOX",
     "guildId": "775859454780244028",

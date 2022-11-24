@@ -37,6 +37,11 @@ export class Nance {
     logger.info(`${this.config.name}: clearDiscussionInterval()`);
   }
 
+  async sendImageReminder(day: string, type: string) {
+    const governanceCycle = await this.proposalHandler.getCurrentGovernanceCycle();
+    this.dialogHandler.sendImageReminder(day, governanceCycle.toString(), type);
+  }
+
   pollPassCheck(yesCount: number, noCount: number) {
     const ratio = yesCount / (yesCount + noCount);
     if (yesCount >= this.config.discord.poll.minYesVotes
