@@ -98,6 +98,11 @@
       "governanceCycle": "Funding Cycle"
     }
   },
+  "dolt": {
+    "API_KEY": "DOLT_KEY", 
+    "owner": "jigglyjams",
+    "repo": "juicebox-governance"
+  },
   "snapshot": {
     "base": "https://juicetool.xyz/snapshot",
     "space": "jigglyjams.eth",

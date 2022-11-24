@@ -1,5 +1,5 @@
 import { oneLine } from 'common-tags';
-import { Proposal } from '../types';
+import { Proposal, DoltConfig } from '../types';
 import { Dolt } from './dolt';
 import { uuid } from '../utils';
 
@@ -15,7 +15,7 @@ export class DoltHandler {
     this.dolt = new Dolt(owner, repo, DOLT_KEY);
   }
 
-  addProposalToDb(proposal: any) {
+  async addProposalToDb(proposal: any) {
     const now = new Date().toISOString();
     const query = oneLine`
       INSERT IGNORE INTO ${proposalsTable}
@@ -35,7 +35,7 @@ export class DoltHandler {
     return this.dolt.write(`GC${proposal.governanceCycle}`, query);
   }
 
-  updateStatus(proposal: any, status: string) {
+  async updateStatus(proposal: any, status: string) {
     const now = new Date().toISOString();
     const query = oneLine`
       UPDATE ${proposalsTable} SET
@@ -46,12 +46,19 @@ export class DoltHandler {
     return this.dolt.write(proposal.governanceCycle?.toString() ?? '', query);
   }
 
-  getToDiscuss() {
+  async getToDiscuss() {
     return this.dolt.query(`
       SELECT * FROM proposals WHERE
-      proposalStatus = 'Discussion
+      proposalStatus = 'Discussion'
       AND
       discussionURL = NULL
+    `);
+  }
+
+  async getTemperatureCheckProposals() {
+    return this.dolt.query(`
+      SELECT * FROM proposals WHERE
+      proposalStatus = 'Temperature Check'
     `);
   }
 }

@@ -170,6 +170,7 @@ export interface NanceConfig {
       governanceCycle: string;
     },
   },
+  dolt: DoltConfig,
   snapshot: {
     base: string;
     space: string;
@@ -178,6 +179,12 @@ export interface NanceConfig {
     passingRatio: number;
   };
 }
+
+export type DoltConfig = {
+  API_KEY: string;
+  owner: string;
+  repo: string;
+};
 
 export interface DateEvent {
   title: string;

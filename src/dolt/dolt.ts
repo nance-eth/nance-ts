@@ -32,8 +32,8 @@ export class Dolt {
   private async reader(endpoint?: string, params?: any): Promise<ReadResponse> {
     return axios({
       method: 'get',
-      url: (endpoint) ? `${this.DOLT}/${endpoint}` : `${this.DOLT}`,
-      headers: this.headers,
+      url: (endpoint) ? `${this.DOLT}/${endpoint}` : `${this.DOLT}/GC36`,
+      headers: (endpoint === 'write') ? this.headers : undefined,
       params
     }).then((res) => {
       return res.data;
