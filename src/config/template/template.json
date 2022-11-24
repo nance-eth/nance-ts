@@ -15,6 +15,18 @@
     "projectId": "",
     "gnosisSafeAddress": ""
   },
+  "reminder": {
+    "channelIds": "",
+    "imagesCID": "",
+    "images": [""],
+    "links": {
+      "process": "",
+      "temperature check": "",
+      "vote": "",
+      "execution": "",
+      "delay": ""
+    }
+  },
   "discord": {
     "API_KEY": "",
     "guildId": "",

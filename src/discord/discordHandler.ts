@@ -10,7 +10,7 @@ import {
   ThreadAutoArchiveDuration,
 } from 'discord.js';
 import logger from '../logging';
-import { limitLength } from '../utils';
+import { addSecondsToDate, dateToUnixTimeStamp, limitLength } from '../utils';
 import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
@@ -129,7 +129,18 @@ export class DiscordHandler {
   }
 
   async sendImageReminder(day: string, governanceCycle: string, type: string) {
-    const { message, attachments } = discordTemplates.dailyImageReminder(day, governanceCycle, type);
+    // delete old messages
+    Promise.all(
+      this.getDailyUpdateChannels().map((channel) => {
+        channel.messages.fetch({ limit: 20 }).then((messages) => {
+          messages.filter((m) => { return m.author === this.discord.user && m.embeds[0].title === 'Governance Status'; }).map((me) => {
+            return me.delete();
+          });
+        });
+        return null;
+      })
+    );
+    const { message, attachments } = discordTemplates.dailyImageReminder(day, governanceCycle, type, this.config.reminder.links[type], this.config.reminder.links.process);
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {
         return channel.send({ embeds: [message], files: attachments });
@@ -145,7 +156,7 @@ export class DiscordHandler {
     const pollReactionsCollection = messageObj.reactions.cache.get(emoji);
     let users = [''];
     if (pollReactionsCollection !== undefined) {
-      users = <string[]> await pollReactionsCollection.users.fetch()
+      users = await pollReactionsCollection.users.fetch()
         .then((results: Collection<string, User>) => {
           return results.filter((user): boolean => { return !user.bot; })
             .map((user) => { return user.tag; });

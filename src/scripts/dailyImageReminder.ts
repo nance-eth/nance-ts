@@ -12,7 +12,7 @@ async function main() {
   const config = await getConfig();
   const nance = new Nance(config);
   await sleep(1000);
-  nance.dialogHandler.sendImageReminder('05', '36', 'vote');
+  nance.dialogHandler.sendImageReminder('06', '36', 'temperature check');
 } 
 
 download().then(() => {
