@@ -99,9 +99,9 @@
     }
   },
   "dolt": {
-    "API_KEY": "DOLT_KEY", 
+    "API_KEY": "DOLT_KEY",
     "owner": "jigglyjams",
-    "repo": "juicebox-governance"
+    "repo": "waterbox-governance"
   },
   "snapshot": {
     "base": "https://juicetool.xyz/snapshot",
