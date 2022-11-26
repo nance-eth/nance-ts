@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { request as gqlRequest } from 'graphql-request';
 import { mutationDeleteBranch } from './doltGQL';
-import { ReadResponse, WriteResponse, PollResponse } from './types';
+import { DoltReadOptions, ReadResponse, WriteResponse, PollResponse } from './types';
 import { sleep } from '../utils';
 
 const API = 'https://www.dolthub.com/api/v1alpha1/';
@@ -29,16 +29,16 @@ export class Dolt {
     };
   }
 
-  private async reader(endpoint?: string, params?: any): Promise<ReadResponse> {
+  private async reader(options?: DoltReadOptions): Promise<ReadResponse> {
     return axios({
       method: 'get',
-      url: (endpoint) ? `${this.DOLT}/${endpoint}` : `${this.DOLT}/GC36`,
-      headers: (endpoint === 'write') ? this.headers : undefined,
-      params
+      url: (options?.endpoint) ? `${this.DOLT}/${options?.endpoint}` : `${this.DOLT}/${options?.branch}`,
+      headers: (options?.endpoint === 'write') ? this.headers : undefined,
+      params: options?.params
     }).then((res) => {
       return res.data;
     }).catch((e) => {
-      return e.response.data;
+      Promise.reject(e.response.data);
     });
   }
 
@@ -51,7 +51,7 @@ export class Dolt {
     }).then((res) => {
       return res.data;
     }).catch((e) => {
-      return e;
+      return Promise.reject(e);
     });
   }
 
@@ -59,8 +59,8 @@ export class Dolt {
     return this.reader();
   }
 
-  async query(q: string) {
-    return this.reader(undefined, { q });
+  async query(query: string, branch?: string) {
+    return this.reader({ branch, params: { q: query } });
   }
 
   async write(branch: string, q: string) {
@@ -71,13 +71,13 @@ export class Dolt {
     return this.writer(`${branch}/main`);
   }
 
-  async poll(operationName: string) {
+  async poll(operationName: string, branch?: string) {
     let res;
     let done = false;
     while (!done) {
-      res = await this.reader('write', { operationName }) as unknown as PollResponse;
+      res = await this.reader({ branch, endpoint: 'write', params: { operationName } }) as unknown as PollResponse;
       done = res.done;
-      sleep(500);
+      await sleep(500);
     }
     return res;
   }

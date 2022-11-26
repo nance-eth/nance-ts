@@ -32,3 +32,9 @@ export type PollResponse = {
     to_commit_id: string;
   }
 };
+
+export type DoltReadOptions = {
+  branch?: string;
+  endpoint?: string;
+  params?: Record<string, string>
+};

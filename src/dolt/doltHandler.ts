@@ -43,22 +43,59 @@ export class DoltHandler {
       lastEditedTime = '${now}'
       WHERE uuid = '${proposal.hash}'
     `;
-    return this.dolt.write(proposal.governanceCycle?.toString() ?? '', query);
+    return this.dolt.write(proposal.governanceCycle?.toString() ?? undefined, query);
   }
 
-  async getToDiscuss() {
+  async queryDb(query: string, governanceCycle: string) {
+    return this.dolt.query(query, governanceCycle).then((res) => {
+      if (res.query_execution_status === 'Success') return res;
+      return Promise.reject(res.query_execution_message);
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async getToDiscuss(governanceCycle: string) {
+    return this.queryDb(`
+      SELECT * FROM proposals WHERE
+      proposalStatus = 'Discussion'
+      AND
+      discussionURL IS NULL
+    `, governanceCycle);
+  }
+
+  async getDiscussionProposals(governanceCycle: string) {
     return this.dolt.query(`
       SELECT * FROM proposals WHERE
       proposalStatus = 'Discussion'
       AND
-      discussionURL = NULL
-    `);
+      discussionURL IS NOT NULL
+      AND title IS NOT NULL
+    `, governanceCycle);
   }
 
-  async getTemperatureCheckProposals() {
-    return this.dolt.query(`
+  async getTemperatureCheckProposals(governanceCycle: string) {
+    return this.queryDb(`
       SELECT * FROM proposals WHERE
       proposalStatus = 'Temperature Check'
-    `);
+    `, governanceCycle);
+  }
+
+  async getVoteProposals(governanceCycle: string) {
+    return this.queryDb(`
+      SELECT * FROM proposals WHERE
+      proposalStatus = 'Voting'
+    `, governanceCycle);
+  }
+
+  async getNextProposalId(governanceCycle: string) {
+    return this.queryDb(`
+      SELECT proposalId FROM proposals
+      ORDER BY proposalId DESC
+      LIMIT 1
+    `,
+    governanceCycle).then((res) => {
+      return Number(res.rows[0].proposalId) + 1;
+    });
   }
 }

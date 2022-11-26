@@ -9,7 +9,12 @@ async function main() {
     config.dolt.repo,
     keys.DOLT_KEY
   );
-  console.log(await dolt.getTemperatureCheckProposals());
+  dolt.getTemperatureCheckProposals('GC36').then((res) => {
+    console.log(res);
+  }).catch((e) => {
+    console.error(e);
+  });
+  console.log(await dolt.getNextProposalId('GC36'));
 }
 
 main();
