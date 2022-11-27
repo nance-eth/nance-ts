@@ -30,6 +30,7 @@ CREATE TABLE proposals (
 );
 
 CREATE TABLE payouts (
+  hashId CHAR(40) NOT NULL,
   uuidOfProposal VARCHAR(35) NOT NULL,
   treasuryVersion INT NOT NULL,
   governanceCycleStart INT NOT NULL,
@@ -37,14 +38,15 @@ CREATE TABLE payouts (
   lockedUntil INT,
   amount INT NOT NULL,
   currency VARCHAR(10) NOT NULL,
+  PayName VARCHAR(255),
   payAddress CHAR(42),
   payProject INT,
   payStatus ENUM('voting', 'active', 'complete', 'cancelled'),
-  PRIMARY KEY (uuidOfProposal),
-  FOREIGN KEY (uuidOfProposal) REFERENCES proposals(uuid),
+  PRIMARY KEY (hashId),
   INDEX payAddress (payAddress),
   INDEX payProject (payProject),
-  INDEX governanceCycleStart (governanceCycleStart)
+  INDEX governanceCycleStart (governanceCycleStart),
+  INDEX payName (payName)
 );
 
 CREATE TABLE reserves (

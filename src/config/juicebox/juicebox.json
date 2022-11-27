@@ -17,8 +17,8 @@
   },
   "reminder": {
     "channelIds": ["903035787682131998", "879851197857677372"],
-    "imagesCID": "https://nance.mypinata.cloud/ipfs/QmWfKSTSGFQN7qwc2e9vwYro1nJ3XhmqLkUjn3M5MbEoPA",
-    "images": ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13"],
+    "imagesCID": "https://nance.mypinata.cloud/ipfs/QmYYjE7tST6QRBHcKScFATjcZSgq1xQPytNAvxCgHMSvbs",
+    "images": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"],
     "links": {
       "process": "https://info.juicebox.money/dao/process",
       "temperature check": "https://discord.com/channels/775859454780244028/873248745771372584",
