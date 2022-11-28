@@ -63,7 +63,7 @@ export class Dolt {
     return this.reader({ branch, params: { q: query } });
   }
 
-  async write(branch: string, q: string) {
+  async write(q: string, branch: string) {
     return this.writer(`main/${branch}`, q);
   }
 

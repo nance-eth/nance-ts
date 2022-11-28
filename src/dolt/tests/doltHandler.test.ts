@@ -1,21 +1,44 @@
 import { keys } from '../../keys';
 import { DoltHandler } from '../doltHandler';
+import { getConfig } from '../../configLoader';
+import { Proposal } from '../../types';
 
-const dolt = new DoltHandler('jigglyjams', 'waterbox-governance', keys.DOLT_KEY);
+let config;
+let dolt: DoltHandler;
+
+async function setup() {
+  config = await getConfig();
+  dolt = new DoltHandler('jigglyjams', 'waterbox-governance', keys.DOLT_KEY, config.propertyKeys);
+}
 
 async function metadata() {
   console.log(await dolt.dolt.metadata());
 }
 
 async function main() {
-  const res = await dolt.addProposalToDb({
-    title: 'hihi',
-    body: 'things',
-    type: 'Payout',
-    governanceCycle: 33,
-    status: 'Draft'
-  });
-  console.log(res);
+  await setup();
+  // const res = await dolt.addProposalToDb({
+  //   title: 'hihi',
+  //   body: 'things',
+  //   type: 'Payout',
+  //   governanceCycle: 33,
+  //   status: 'Draft'
+  // });
+  // console.log(res);
+  dolt.currentGovernanceCycle = 33;
+  const proposals = [
+    {
+      hash: '1b873d52cce54113942ba27d5ec24f5a',
+      status: 'Temperature Check',
+      discussionThreadURL: 'wdfwdf'
+    },
+    {
+      hash: '5b9e15e19f12475e802e6b4ff07a43a7',
+      status: 'Cancelled',
+      discussionThreadURL: 'wdfwdf'
+    }
+  ];
+  dolt.updateStatusTemperatureCheckAndProposalId(proposals as Proposal[]);
 }
 
 async function updateStatusTo(status: string) {
@@ -30,4 +53,4 @@ async function updateStatusTo(status: string) {
   }
 }
 
-updateStatusTo('Discussion');
+main();

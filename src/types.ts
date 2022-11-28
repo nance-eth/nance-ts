@@ -75,6 +75,35 @@ export type ProposalNoHash = Omit<Proposal, 'hash'>;
 
 export type ProposalStore = Record<string, ProposalNoHash>;
 
+export type PropertyKeys = {
+  proposalId: string;
+  status: string;
+  statusTemperatureCheck: string;
+  statusVoting: string;
+  statusApproved: string;
+  statusCancelled: string;
+  proposalIdPrefix: string;
+  discussionThread: string;
+  ipfs: string;
+  vote: string;
+  type: string;
+  typeRecurringPayout: string;
+  typePayout: string;
+  governanceCycle: string;
+  governanceCyclePrefix: string;
+  reservePercentage: string;
+  payoutName: string;
+  payoutType: string;
+  payoutAmountUSD: string;
+  payoutAddress: string;
+  payoutCount: string;
+  treasuryVersion: string;
+  payoutFirstFC: string;
+  payoutLastFC: string;
+  payoutRenewalFC: string;
+  payoutProposalLink: string;
+};
+
 export interface NanceConfig {
   name: string;
   proposalDataBackup: string;
@@ -115,6 +144,7 @@ export interface NanceConfig {
       showResults: boolean;
     };
   };
+  propertyKeys: PropertyKeys;
   notion: {
     API_KEY: string;
     publicURLPrefix: string;
@@ -122,34 +152,6 @@ export interface NanceConfig {
     current_cycle_block_id: string;
     payouts_database_id: string;
     reserves_database_id: string;
-    propertyKeys: {
-      proposalId: string;
-      status: string;
-      statusTemperatureCheck: string;
-      statusVoting: string;
-      statusApproved: string;
-      statusCancelled: string;
-      proposalIdPrefix: string;
-      discussionThread: string;
-      ipfs: string;
-      vote: string;
-      type: string;
-      typeRecurringPayout: string;
-      typePayout: string;
-      governanceCycle: string;
-      governanceCyclePrefix: string;
-      reservePercentage: string;
-      payoutName: string;
-      payoutType: string;
-      payoutAmountUSD: string;
-      payoutAddress: string;
-      payoutCount: string;
-      treasuryVersion: string;
-      payoutFirstFC: string;
-      payoutLastFC: string;
-      payoutRenewalFC: string;
-      payoutProposalLink: string;
-    };
   };
   github: {
     user: string;

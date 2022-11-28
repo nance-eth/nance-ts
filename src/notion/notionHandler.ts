@@ -46,50 +46,50 @@ export class NotionHandler implements DataContentHandler {
       status: notionUtils.getStatus(unconvertedProposal),
       proposalId: notionUtils.getRichText(
         unconvertedProposal,
-        this.config.notion.propertyKeys.proposalId
+        this.config.propertyKeys.proposalId
       ),
       discussionThreadURL: notionUtils.getPropertyURL(
         unconvertedProposal,
-        this.config.notion.propertyKeys.discussionThread
+        this.config.propertyKeys.discussionThread
       ),
       ipfsURL: notionUtils.getPropertyURL(
         unconvertedProposal,
-        this.config.notion.propertyKeys.ipfs
+        this.config.propertyKeys.ipfs
       ),
       voteURL: notionUtils.getPropertyURL(
         unconvertedProposal,
-        this.config.notion.propertyKeys.vote
+        this.config.propertyKeys.vote
       ),
       date: notionUtils.getDate(unconvertedProposal),
       governanceCycle: Number(
         notionUtils.getRichText(
           unconvertedProposal,
-          this.config.notion.propertyKeys.governanceCycle
-        ).split(this.config.notion.propertyKeys.governanceCyclePrefix)[1] ?? ''
+          this.config.propertyKeys.governanceCycle
+        ).split(this.config.propertyKeys.governanceCyclePrefix)[1] ?? ''
       ),
       version: notionUtils.getRichText(
         unconvertedProposal,
-        this.config.notion.propertyKeys.treasuryVersion
+        this.config.propertyKeys.treasuryVersion
       ),
       voteSetup: notionUtils.getVoteSetup(unconvertedProposal)
     };
     if (getExtendedData) {
       if (
-        cleanProposal.type === this.config.notion.propertyKeys.typeRecurringPayout
-        || cleanProposal.type === this.config.notion.propertyKeys.typePayout
+        cleanProposal.type === this.config.propertyKeys.typeRecurringPayout
+        || cleanProposal.type === this.config.propertyKeys.typePayout
       ) {
         cleanProposal.payout = {
           address: notionUtils.getRichText(
             unconvertedProposal,
-            this.config.notion.propertyKeys.payoutAddress
+            this.config.propertyKeys.payoutAddress
           ),
           amountUSD: notionUtils.getNumber(
             unconvertedProposal,
-            this.config.notion.propertyKeys.payoutAmountUSD
+            this.config.propertyKeys.payoutAmountUSD
           ),
           count: notionUtils.getNumber(
             unconvertedProposal,
-            this.config.notion.propertyKeys.payoutCount
+            this.config.propertyKeys.payoutCount
           )
         };
       }
@@ -99,8 +99,8 @@ export class NotionHandler implements DataContentHandler {
 
   private toPayout(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Payout {
     return {
-      address: notionUtils.getRichText(unconvertedPayout, this.config.notion.propertyKeys.payoutAddress),
-      amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.notion.propertyKeys.payoutAmountUSD),
+      address: notionUtils.getRichText(unconvertedPayout, this.config.propertyKeys.payoutAddress),
+      amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.propertyKeys.payoutAmountUSD),
       count:
         notionUtils.getNumber(unconvertedPayout, 'Last FC') - notionUtils.getNumber(unconvertedPayout, 'First FC') + 1
     };
@@ -108,8 +108,8 @@ export class NotionHandler implements DataContentHandler {
 
   private toReserve(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Reserve {
     return {
-      address: notionUtils.getRichText(unconvertedPayout, this.config.notion.propertyKeys.payoutAddress),
-      percentage: notionUtils.getNumber(unconvertedPayout, this.config.notion.propertyKeys.reservePercentage),
+      address: notionUtils.getRichText(unconvertedPayout, this.config.propertyKeys.payoutAddress),
+      percentage: notionUtils.getNumber(unconvertedPayout, this.config.propertyKeys.reservePercentage),
     };
   }
 
@@ -128,8 +128,8 @@ export class NotionHandler implements DataContentHandler {
       return this.toProposal(data as GetDatabaseResponse, extendedData);
     }).sort((a, b) => {
       // sort ascending by proposalId
-      return Number(a.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1])
-        - Number(b.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1]);
+      return Number(a.proposalId.split(this.config.propertyKeys.proposalIdPrefix)[1])
+        - Number(b.proposalId.split(this.config.propertyKeys.proposalIdPrefix)[1]);
     });
   }
 
@@ -139,7 +139,7 @@ export class NotionHandler implements DataContentHandler {
         database_id: this.config.notion.payouts_database_id,
         filter: filters,
         sorts: [{
-          property: this.config.notion.propertyKeys.payoutAddress,
+          property: this.config.propertyKeys.payoutAddress,
           direction: 'descending'
         }]
       } as QueryDatabaseParameters
@@ -155,7 +155,7 @@ export class NotionHandler implements DataContentHandler {
         database_id: this.config.notion.reserves_database_id,
         filter: filters,
         sorts: [{
-          property: this.config.notion.propertyKeys.payoutAddress,
+          property: this.config.propertyKeys.payoutAddress,
           direction: 'descending'
         }]
       } as QueryDatabaseParameters
@@ -197,9 +197,9 @@ export class NotionHandler implements DataContentHandler {
     // add filter by governance cycle (this changes so must push it in here)
     this.filters.approvedRecurringPayment.and.push(
       {
-        property: this.config.notion.propertyKeys.governanceCycle,
+        property: this.config.propertyKeys.governanceCycle,
         rich_text: {
-          equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
+          equals: `${this.config.propertyKeys.governanceCyclePrefix}${governanceCycle}`
         }
       }
     );
@@ -215,9 +215,9 @@ export class NotionHandler implements DataContentHandler {
     const filter = {
       and: [
         {
-          property: this.config.notion.propertyKeys.governanceCycle,
+          property: this.config.propertyKeys.governanceCycle,
           rich_text: {
-            equals: `${this.config.notion.propertyKeys.governanceCyclePrefix}${governanceCycle}`
+            equals: `${this.config.propertyKeys.governanceCyclePrefix}${governanceCycle}`
           }
         }
       ]
@@ -236,43 +236,43 @@ export class NotionHandler implements DataContentHandler {
           database_id: this.config.notion.payouts_database_id,
         },
         properties: {
-          [this.config.notion.propertyKeys.payoutName]: {
+          [this.config.propertyKeys.payoutName]: {
             title: [
               {
                 text: { content: payoutTitle },
               }
             ]
           },
-          [this.config.notion.propertyKeys.payoutAddress]: {
+          [this.config.propertyKeys.payoutAddress]: {
             rich_text: [
               {
                 text: { content: proposal.payout.address }
               }
             ]
           },
-          [this.config.notion.propertyKeys.payoutAmountUSD]: {
+          [this.config.propertyKeys.payoutAmountUSD]: {
             number: proposal.payout.amountUSD
           },
-          [this.config.notion.propertyKeys.treasuryVersion]: {
+          [this.config.propertyKeys.treasuryVersion]: {
             rich_text: [
               {
                 text: { content: proposal.version }
               }
             ]
           },
-          [this.config.notion.propertyKeys.payoutType]: {
+          [this.config.propertyKeys.payoutType]: {
             select: { name: 'NANCE' } // mark as nance for now so its easy to identify and supplement manually
           },
-          [this.config.notion.propertyKeys.payoutProposalLink]: {
+          [this.config.propertyKeys.payoutProposalLink]: {
             url: proposal.voteURL
           },
-          [this.config.notion.propertyKeys.payoutFirstFC]: {
+          [this.config.propertyKeys.payoutFirstFC]: {
             number: proposal.governanceCycle
           },
-          [this.config.notion.propertyKeys.payoutLastFC]: {
+          [this.config.propertyKeys.payoutLastFC]: {
             number: proposal.governanceCycle + proposal.payout.count
           },
-          [this.config.notion.propertyKeys.payoutRenewalFC]: {
+          [this.config.propertyKeys.payoutRenewalFC]: {
             number: (proposal.governanceCycle + proposal.payout.count + 1)
           }
         }
@@ -296,33 +296,33 @@ export class NotionHandler implements DataContentHandler {
               { text: { content: proposal.title } }
             ]
           },
-          [this.config.notion.propertyKeys.type]: {
+          [this.config.propertyKeys.type]: {
             multi_select: [
               { name: proposal.type }
             ]
           },
-          [this.config.notion.propertyKeys.payoutAddress]: {
+          [this.config.propertyKeys.payoutAddress]: {
             rich_text: [
               { text: { content: proposal.payout?.address || proposal.reserve?.address || '' } }
             ]
           },
-          [this.config.notion.propertyKeys.payoutCount]: {
+          [this.config.propertyKeys.payoutCount]: {
             number: proposal.payout?.count || null
           },
-          [this.config.notion.propertyKeys.payoutAmountUSD]: {
+          [this.config.propertyKeys.payoutAmountUSD]: {
             number: proposal.payout?.amountUSD || null
           },
-          [this.config.notion.propertyKeys.treasuryVersion]: {
+          [this.config.propertyKeys.treasuryVersion]: {
             rich_text: [
               { text: { content: `V${proposal.version}` } }
             ]
           },
-          [this.config.notion.propertyKeys.governanceCycle]: {
+          [this.config.propertyKeys.governanceCycle]: {
             rich_text: [
-              { text: { content: `${this.config.notion.propertyKeys.governanceCyclePrefix}${String(proposal.governanceCycle)}` } }
+              { text: { content: `${this.config.propertyKeys.governanceCyclePrefix}${String(proposal.governanceCycle)}` } }
             ]
           },
-          [this.config.notion.propertyKeys.status]: {
+          [this.config.propertyKeys.status]: {
             select: { name: 'Draft' }
           },
           Date: {
@@ -345,7 +345,7 @@ export class NotionHandler implements DataContentHandler {
       'descending'
     );
     const sortProposalsById = proposals.map((proposal) => {
-      return Number(proposal.proposalId.split(this.config.notion.propertyKeys.proposalIdPrefix)[1]);
+      return Number(proposal.proposalId.split(this.config.propertyKeys.proposalIdPrefix)[1]);
     }).sort((a:number, b:number) => { return b - a; });
     const nextProposalId = sortProposalsById[0] + 1;
     return (Number.isNaN(nextProposalId) ? 1 : nextProposalId);
@@ -355,7 +355,7 @@ export class NotionHandler implements DataContentHandler {
     const nextProposalIdNumber = await this.getNextProposalIdNumber();
     proposals.forEach((proposal, index) => {
       if (proposal.proposalId === '') {
-        proposal.proposalId = `${this.config.notion.propertyKeys.proposalIdPrefix}${nextProposalIdNumber + index}`;
+        proposal.proposalId = `${this.config.propertyKeys.proposalIdPrefix}${nextProposalIdNumber + index}`;
       }
     });
     return proposals;
@@ -378,16 +378,16 @@ export class NotionHandler implements DataContentHandler {
   async updateDiscussionURL(proposal: Proposal) {
     await this.updateMetaData(
       proposal.hash,
-      { [this.config.notion.propertyKeys.discussionThread]: { url: proposal.discussionThreadURL || '' } }
+      { [this.config.propertyKeys.discussionThread]: { url: proposal.discussionThreadURL || '' } }
     );
   }
 
   async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
     this.updateMetaData(proposal.hash, {
-      [this.config.notion.propertyKeys.status]: {
-        select: { name: this.config.notion.propertyKeys.statusTemperatureCheck }
+      [this.config.propertyKeys.status]: {
+        select: { name: this.config.propertyKeys.statusTemperatureCheck }
       },
-      [this.config.notion.propertyKeys.proposalId]: {
+      [this.config.propertyKeys.proposalId]: {
         rich_text: [
           {
             type: 'text',
@@ -400,39 +400,39 @@ export class NotionHandler implements DataContentHandler {
 
   async updateStatusVoting(pageId: string) {
     this.updateMetaData(pageId, {
-      [this.config.notion.propertyKeys.status]: {
-        select: { name: this.config.notion.propertyKeys.statusVoting }
+      [this.config.propertyKeys.status]: {
+        select: { name: this.config.propertyKeys.statusVoting }
       }
     });
   }
 
   async updateStatusApproved(pageId: string): Promise<string> {
     this.updateMetaData(pageId, {
-      [this.config.notion.propertyKeys.status]: {
-        select: { name: this.config.notion.propertyKeys.statusApproved }
+      [this.config.propertyKeys.status]: {
+        select: { name: this.config.propertyKeys.statusApproved }
       }
     });
-    return this.config.notion.propertyKeys.statusApproved;
+    return this.config.propertyKeys.statusApproved;
   }
 
   async updateStatusCancelled(pageId: string): Promise<string> {
     this.updateMetaData(pageId, {
-      [this.config.notion.propertyKeys.status]: {
-        select: { name: this.config.notion.propertyKeys.statusCancelled }
+      [this.config.propertyKeys.status]: {
+        select: { name: this.config.propertyKeys.statusCancelled }
       }
     });
-    return this.config.notion.propertyKeys.statusCancelled;
+    return this.config.propertyKeys.statusCancelled;
   }
 
   async updateVoteAndIPFS(proposal: Proposal) {
     this.updateMetaData(
       proposal.hash,
       {
-        [this.config.notion.propertyKeys.vote]: { url: proposal.voteURL },
-        [this.config.notion.propertyKeys.ipfs]: { url: proposal.ipfsURL }
+        [this.config.propertyKeys.vote]: { url: proposal.voteURL },
+        [this.config.propertyKeys.ipfs]: { url: proposal.ipfsURL }
       }
     );
-    return this.config.notion.propertyKeys.vote;
+    return this.config.propertyKeys.vote;
   }
 
   async getContentMarkdown(pageId: string): Promise<Proposal> {
