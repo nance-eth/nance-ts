@@ -38,7 +38,8 @@ export class Nance {
   }
 
   async sendImageReminder(day: string, type: string) {
-    const governanceCycle = await this.proposalHandler.getCurrentGovernanceCycle();
+    let governanceCycle = await this.proposalHandler.getCurrentGovernanceCycle();
+    if (type === 'execution' || type === 'delay') { governanceCycle -= 1; }
     this.dialogHandler.sendImageReminder(day, governanceCycle.toString(), type);
   }
 
