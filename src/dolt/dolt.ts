@@ -38,7 +38,7 @@ export class Dolt {
     }).then((res) => {
       return res.data;
     }).catch((e) => {
-      Promise.reject(e.response.data);
+      return Promise.reject(e.response.data);
     });
   }
 
@@ -77,7 +77,7 @@ export class Dolt {
     while (!done) {
       res = await this.reader({ branch, endpoint: 'write', params: { operationName } }) as unknown as PollResponse;
       done = res.done;
-      await sleep(500);
+      await sleep(1000);
     }
     return res;
   }

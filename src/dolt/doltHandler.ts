@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { Proposal, PropertyKeys } from '../types';
+import { sqlQueryValues, allKeys } from './doltSQL';
 import { Dolt } from './dolt';
 import { uuid } from '../utils';
 
@@ -20,44 +21,57 @@ export class DoltHandler {
     this.propertyKeys = propertyKeys;
   }
 
+  async queryDb(query: string, governanceCycle: number) {
+    return this.dolt.query(query, `GC${governanceCycle.toString()}`).then((res) => {
+      if (res.query_execution_status === 'Success') return res.rows;
+      return Promise.reject(res.query_execution_message);
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async writeDb(query: string, governanceCycle: number) {
+    return this.dolt.write(query, `GC${governanceCycle.toString()}`).then(async (res) => {
+      return this.dolt.poll(res.operation_name).then((poll) => {
+        if (poll?.res_details.query_execution_status === 'Success') return 'Success';
+        return Promise.reject(poll?.res_details.query_execution_message);
+      });
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
   async addProposalToDb(proposal: any) {
     const now = new Date().toISOString();
+    const governanceCycle = (proposal.governanceCycle === 0) ? this.currentGovernanceCycle : proposal.governanceCycle;
     const query = oneLine`
       INSERT IGNORE INTO ${proposalsTable}
-      (uuid, createdTime, lastEditedTime, title, body, category, governanceCycle, proposalStatus, voteType, choices)
+      (uuid, createdTime, lastEditedTime, title, body, category, governanceCycle, proposalStatus, voteType, choices, discussionURL)
       VALUES(
-      '${uuid()}',
+      '${proposal.hash || uuid()}',
       '${now}',
       '${now}',
       '${proposal.title}',
       '${proposal.body}',
       '${proposal.type}',
-      '${proposal.governanceCycle}',
+      '${governanceCycle}',
       '${proposal.status}',
       'basic',
-      '["For", "Against", "Abstain"]'
+      '["For", "Against", "Abstain"]',
+      '${proposal.discussionThreadURL}'
     )`;
-    return this.dolt.write(`GC${proposal.governanceCycle}`, query);
+    return this.writeDb(query, this.currentGovernanceCycle);
   }
 
-  async updateStatus(proposal: any, status: string) {
+  async updateStatus(hash: string, status: string) {
     const now = new Date().toISOString();
     const query = oneLine`
       UPDATE ${proposalsTable} SET
       proposalStatus = '${status}',
       lastEditedTime = '${now}'
-      WHERE uuid = '${proposal.hash}'
+      WHERE uuid = '${hash}'
     `;
-    return this.dolt.write(proposal.governanceCycle?.toString() || this.currentGovernanceCycle.toString(), query);
-  }
-
-  async queryDb(query: string, governanceCycle: number) {
-    return this.dolt.query(query, `${this.propertyKeys.governanceCycle}${governanceCycle.toString()}`).then((res) => {
-      if (res.query_execution_status === 'Success') return res;
-      return Promise.reject(res.query_execution_message);
-    }).catch((e) => {
-      return Promise.reject(e);
-    });
+    return this.writeDb(query, this.currentGovernanceCycle);
   }
 
   async getToDiscuss(governanceCycle: number) {
@@ -97,7 +111,7 @@ export class DoltHandler {
       ORDER BY proposalId DESC
       LIMIT 1
     `, governanceCycle || this.currentGovernanceCycle).then((res) => {
-      return Number(res.rows[0].proposalId) + 1;
+      return Number(res[0].proposalId) + 1;
     });
   }
 
@@ -110,54 +124,28 @@ export class DoltHandler {
   }
 
   async assignProposalIds(proposals: Proposal[]) {
-    const nextProposalId = await this.getNextProposalId(proposals[0].governanceCycle);
+    const nextProposalId = await this.getNextProposalId() ?? 1;
     proposals.forEach((proposal, index) => {
-      if (!proposal.governanceCycle) {
-        proposal.proposalId = `${this.propertyKeys.proposalIdPrefix}${nextProposalId + index}`;
+      if (!proposal.proposalId) {
+        proposal.proposalId = (nextProposalId + index).toString();
       }
     });
+    return proposals;
   }
 
-  static sqlUpdateValues = (proposals: Proposal[], values: (keyof Proposal)[]) => {
-    const dDate = new Date().toISOString();
-    const dString = 'dummy';
-    const dNumber = 0;
-    const dJSON: any[] = [];
-    values.push('hash'); // always include hash aka uuid
-    return proposals.map((proposal) => {
-      const p = Object.fromEntries(values.filter((key) => { return key in proposal; }).map((key) => { return [key, proposal[key as keyof Proposal]]; }));
-      return oneLine`(
-        '${p.hash}',
-        '${dDate}',
-        '${dDate}',
-        '${p.title ?? dString}',
-        '${p.body ?? dString}',
-        '${p.type ?? dString}',
-        ${p.governanceCycle ?? dNumber},
-        '${p.status ?? dString}',
-        ${p.proposalId ?? dNumber},
-        '${p.discussionThreadURL ?? dString}',
-        '${p.voteURL ?? dString}',
-        '${dString}',
-        '[${dJSON}]',
-        '[${dJSON}]'
-      )`;
-    }).join(', ');
-  };
-
   async updateStatusTemperatureCheckAndProposalId(proposals: Proposal[]) {
-    const query = DoltHandler.sqlUpdateValues(proposals, ['status', 'discussionThreadURL']);
-    console.log(query);
-    return this.dolt.write(`
+    const { query, values } = sqlQueryValues(proposals, ['status', 'proposalId']);
+    const fullQuery = `INSERT INTO ${proposalsTable} ${allKeys} VALUES ${query} ON DUPLICATE KEY UPDATE ${values}`;
+    return this.writeDb(fullQuery, this.currentGovernanceCycle);
+  }
+
+  async updateProposalStatuses(proposals: Proposal[]) {
+    const { query, values } = sqlQueryValues(proposals, ['status']);
+    return this.writeDb(`
       INSERT INTO ${proposalsTable}
-      (uuid, createdTime, lastEditedTime, title, body, category, governanceCycle, proposalStatus, proposalId, discussionURL, snapshotId, voteType, choices, snapshotVotes)
+      ${allKeys}
       VALUES ${query} ON DUPLICATE KEY UPDATE
-        proposalStatus = VALUES(proposalStatus),
-        discussionURL = VALUES(discussionURL)
-    `, `GC${this.currentGovernanceCycle.toString()}`).then((res) => {
-      this.dolt.poll(res.operation_name).then((ress) => {
-        console.log(ress);
-      });
-    });
+        ${values}
+    `, this.currentGovernanceCycle);
   }
 }

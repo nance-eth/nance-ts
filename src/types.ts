@@ -17,7 +17,7 @@ export interface Proposal {
   governanceCycle?: number;
   date?: string,
   translationURL?: string;
-  type?: ProposalType;
+  type?: string;
   status: string;
   proposalId: string;
   author?: string;
@@ -27,6 +27,11 @@ export interface Proposal {
   voteSetup?: SnapshotVoteOptions;
   voteResults?: VoteResults;
   version?: string;
+  authorAddress?: string;
+  authorDiscordId?: string;
+  temperatureCheckVotes?: number[];
+  createdTime?: Date;
+  lastEditedTime?: Date;
 }
 
 export type Payout = {

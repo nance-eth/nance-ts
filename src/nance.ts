@@ -10,21 +10,27 @@ import logger from './logging';
 import { NanceConfig, Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { PinataHandler } from './pinata/pinataHandler';
+import { DoltHandler } from './dolt/doltHandler';
 
 export class Nance {
   proposalHandler;
   proposalDataBackupHandler;
   dialogHandler;
   votingHandler;
+  dProposalHandler;
   private discussionInterval: any;
 
   constructor(
     public config: NanceConfig
   ) {
-    this.proposalHandler = new NotionHandler(this.config);
+    this.proposalHandler = new NotionHandler(config);
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
-    this.dialogHandler = new DiscordHandler(this.config);
+    this.dialogHandler = new DiscordHandler(config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
+    this.dProposalHandler = new DoltHandler(config.dolt.owner, config.dolt.repo, keys.DOLT_KEY, config.propertyKeys);
+    this.proposalHandler.getCurrentGovernanceCycle().then((res) => {
+      this.dProposalHandler.currentGovernanceCycle = res;
+    });
   }
 
   async setDiscussionInterval(seconds: number) {
@@ -88,6 +94,8 @@ export class Nance {
       return Promise.all(proposalsToDiscuss.map(async (proposal) => {
         proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
         this.proposalHandler.updateDiscussionURL(proposal);
+        proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
+        this.dProposalHandler.addProposalToDb(proposal);
         logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
         return proposal.discussionThreadURL;
       }));
@@ -105,11 +113,18 @@ export class Nance {
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       const threadId = getIdFromURL(proposal.discussionThreadURL);
       await this.dialogHandler.setupPoll(threadId);
+      proposal.status = this.config.propertyKeys.statusTemperatureCheck;
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
       this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
       logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
       logger.info('===================================================================');
+      this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(discussionProposals).then((res) => {
+        logger.info(`${this.config.name}: dolt update ${res}`);
+      }).catch((e) => {
+        logger.error(`${this.config.name}: dolt update error:`);
+        logger.error(e);
+      });
     }).catch((e) => {
       logger.error(`${this.config.name}: temperatureCheckSetup() error:`);
       logger.error(e);
@@ -145,8 +160,7 @@ export class Nance {
     logger.info(`${this.config.name}: votingSetup() begin...`);
     const voteProposals = proposals || await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
-      const { body } = await this.proposalHandler.getContentMarkdown(proposal.hash);
-      proposal.body = body;
+      proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
       if (this.config.proposalDataBackup) {
         const ipfsCID = await this.proposalDataBackupHandler.pinProposal(proposal);
         proposal.ipfsURL = `${this.config.ipfsGateway}/${ipfsCID}`;
