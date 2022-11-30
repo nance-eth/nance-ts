@@ -1,69 +1,81 @@
-import { oneLine } from 'common-tags';
-import { Proposal } from '../types';
-import { getLastSlash } from '../utils';
+/* eslint-disable @typescript-eslint/quotes */
+import mysql, { RowDataPacket } from 'mysql2';
+import { DBConfig, DoltBranch } from './types';
 
-// mappings from notion property keys to sql columns
-export const keyMappings = {
-  hash: 'uuid',
-  title: 'title',
-  body: 'body',
-  discussionThreadURL: 'discussionURL',
-  governanceCycle: 'governanceCycle',
-  date: 'createdTime',
-  type: 'category',
-  status: 'proposalStatus',
-  proposalId: 'proposalId',
-  author: 'authorAddress',
-  voteURL: 'snapshotId',
-  version: 'treasuryVersion',
-  voteResults: 'snapshotVotes'
+// DB DEFAULTS
+const HOST = '127.0.0.1';
+const USER = 'root';
+const PASSWORD = '';
+
+const status = (res: any) => {
+  return (<RowDataPacket>res[0])[0].status;
 };
 
-export const allKeys = oneLine`(
-  uuid, createdTime, lastEditedTime, title, body, authorAddress, authorDiscordId, category, proposalStatus,
-  proposalId, temperatureCheckVotes, snapshotId, voteType, choices, snapshotVotes, governanceCycle, discussionURL
-)`;
-
-// form sql queries such that they can used with INSERT INTO ... ON DUPLICATE KEY UPDATE
-export const sqlQueryValues = (proposals: Proposal[], keysToUpdate: (keyof Proposal)[]) => {
-  const dDate = new Date().toISOString();
-  const dString = 'dummy';
-  const dStringAddress = '0'.repeat(42);
-  const dStringDiscordId = '0'.repeat(18);
-  const dNumber = 0;
-  const dJSON: string[] = [];
-  keysToUpdate.unshift('hash'); // always include hash aka uuid at beginning of keysToUpdate
-
-  const query: string[] = [];
-  proposals.forEach((proposal) => {
-    const p: Partial<Proposal> = Object.fromEntries(keysToUpdate.filter((key) => { return key in proposal; }).map((key) => {
-      return [key, proposal[key]];
-    }));
-    query.push(oneLine`(
-      '${p.hash}',
-      '${dDate}',
-      '${dDate}',
-      '${p.title ?? dString}',
-      '${p.body ?? dString}',
-      '${p.authorAddress ?? dStringAddress}',
-      '${p.authorDiscordId ?? dStringDiscordId}',
-      '${p.type ?? dString}',
-      '${p.status ?? dString}',
-      ${Number(p.proposalId?.split('JBP-')[1] ?? dNumber)},
-      '[${p.temperatureCheckVotes || dJSON}]',
-      '${getLastSlash(p.voteURL ?? '') || dString}',
-      '${p.voteSetup?.type || dString}',
-      '[${Object.values(p.voteSetup?.choices ?? '') || dJSON}]',
-      '[${Object.values(p.voteResults?.scores ?? '') || dJSON}]',
-      ${p.governanceCycle ?? dNumber},
-      '${p.discussionThreadURL ?? dString}'
-    )`);
-  });
-  const values = (keysToUpdate.map((key) => {
-    return `${keyMappings[key as keyof typeof keyMappings]} = VALUES(${keyMappings[key as keyof typeof keyMappings]})`;
-  }).join(', '));
-  return {
-    query: query.join(', '),
-    values
-  };
+const clean = (res: any) => {
+  return (<RowDataPacket>res[0])[0];
 };
+export class DoltSQL {
+  private db;
+  constructor(
+    options: DBConfig,
+  ) {
+    const { host = HOST, user = USER, password = PASSWORD, database } = options;
+    this.db = mysql.createPool({ host, user, password, database }).promise();
+  }
+
+  async testConnection() {
+    return this.db.getConnection().then((res) => {
+      return res.config.database;
+    }).catch((e) => {
+      throw Error(e);
+    });
+  }
+
+  async viewRemotes(): Promise<string[]> {
+    return this.db.query('SELECT * FROM dolt_remotes').then((res) => {
+      return (<RowDataPacket[]>res[0]).map((remote: any) => { return remote.url; });
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async createBranch(newBranch: string, fromBranch = 'main') {
+    return this.db.query(`CALL DOLT_BRANCH('${newBranch}', '${fromBranch}')`).then((res) => {
+      return status(res[0]);
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async deleteBranch(branch: string) {
+    return this.db.query(`CALL DOLT_BRANCH('-d', '${branch}')`).then((res) => {
+      return status(res);
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async showBranches(): Promise<DoltBranch[]> {
+    return this.db.query('SELECT * from DOLT_BRANCHES').then((res) => {
+      return res[0] as DoltBranch[];
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async checkout(branch: string): Promise<string> {
+    return this.db.query(`CALL DOLT_CHECKOUT('${branch}')`).then((res) => {
+      return status(res);
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async showActiveBranch(): Promise<string> {
+    return this.db.query('SELECT active_branch()').then((res) => {
+      return clean(res)['active_branch()'];
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+}

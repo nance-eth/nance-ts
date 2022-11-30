@@ -1,8 +1,8 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { Proposal, PropertyKeys } from '../types';
-import { sqlQueryValues, allKeys } from './doltSQL';
-import { Dolt } from './dolt';
+import { sqlQueryValues, allKeys } from './doltSQLHelpers';
+import { Dolt } from './doltAPI';
 import { uuid } from '../utils';
 
 const proposalsTable = 'proposals';

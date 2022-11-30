@@ -6,7 +6,7 @@
   "scripts": {
     "start": "export NODE_ENV='prod' && export CONFIG='juicebox' && ts-node src/index.ts",
     "dev": "export LOG_LEVEL=silly && nodemon src/index.ts",
-    "update-start":"pm2 stop all && git pull && pm2 start process.json",
+    "update-start": "pm2 stop all && git pull && pm2 start process.json",
     "test": "export NODE_ENV='dev' && jest",
     "test:watch": "export NODE_ENV='dev' && jest --watch",
     "test:coverage": "export NODE_ENV='dev' && jest --coverage",
@@ -40,6 +40,7 @@
     "ics": "^2.35.0",
     "juice-sdk": "^2.1.0-alpha",
     "juice-sdk-v1": "^2.1.0-alpha",
+    "mysql2": "^2.3.3",
     "node-ical": "^0.15.1",
     "node-schedule": "^2.1.0",
     "notion-to-md": "^2.3.2",
