@@ -1,7 +1,8 @@
 import schedule from 'node-schedule';
 import {
   sleep,
-  addSecondsToDate
+  addSecondsToDate,
+  downloadImages
 } from './utils';
 import { Nance } from './nance';
 import { NanceExtensions } from './extensions';
@@ -24,12 +25,24 @@ async function setup() {
   nanceExt = new NanceExtensions(nance);
 }
 
+async function getReminderImages() {
+  downloadImages(config.reminder.imagesCID, config.reminder.images);
+}
+
 async function scheduleCycle() {
   const calendar = new CalendarHandler(calendarPath(config));
   const cycle = calendar.getNextEvents();
   logger.debug(cycle);
   if (CalendarHandler.shouldSendDiscussion(cycle)) { nance.setDiscussionInterval(30); }
+  const now = new Date();
   cycle.forEach((event) => {
+    if (event.start <= now && event.end <= now) { return; }
+    if (event.title.includes('Reminder:')) {
+      const [, day, type] = event.title.split(':');
+      schedule.scheduleJob(`Day ${day} ${type} reminder`, event.start, () => {
+        nance.sendImageReminder(day, type);
+      });
+    }
     if (event.title === 'Temperature Check') {
       if (!event.inProgress) {
         // start reminder
@@ -83,6 +96,7 @@ function listScheduledJobs() {
 }
 
 setup().then(() => {
+  getReminderImages();
   scheduleCycle().then(async () => {
     await sleep(1000);
     listScheduledJobs();

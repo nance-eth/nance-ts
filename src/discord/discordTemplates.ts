@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 /* eslint-disable newline-per-chained-call */
 import {
-  Message, MessageEmbed, ThreadChannel,
+  Message, MessageAttachment, MessageEmbed, ThreadChannel,
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
@@ -125,4 +125,31 @@ export const pollResultsMessage = (
 
 export const threadToURL = (thread: ThreadChannel) => {
   return `https://discord.com/channels/${thread.guildId}/${thread.parentId}/${thread.id}`;
+};
+
+export const dailyImageReminder = (day: string, governanceCycle: string, type: string, contentLink: string, processLink: string) => {
+  const baseDir = './src/tmp';
+  const thumbnail = new MessageAttachment(`${baseDir}/day${day}/thumbnail.png`, 'thumbnail.png');
+  const image = new MessageAttachment(`${baseDir}/day${day}/${day}.png`, 'image.png');
+  const preamble = () => {
+    if (type === 'delay') { return 'Submit a proposal'; }
+    if (type === 'execution') { return 'Multisig members assemble and configure the next funding cycle'; }
+    if (type === 'temperature check') { return 'Take part in the temperature checks'; }
+    if (type === 'vote') { return 'Take part in the voting'; }
+    return undefined;
+  };
+  const message = new MessageEmbed().setTitle('Governance Status').setDescription(
+    stripIndents`
+    Today is day ${Number(day)} of GC#${governanceCycle}\n
+    ${preamble()} [here](${contentLink})!\n
+    Read about our governance process [here](${processLink})`
+  ).setThumbnail(
+    'attachment://thumbnail.png'
+  ).setImage(
+    'attachment://image.png'
+  );
+  return {
+    message,
+    attachments: [thumbnail, image]
+  };
 };
