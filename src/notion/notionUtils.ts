@@ -72,7 +72,7 @@ export const filters = (config: NanceConfig) => {
           },
         },
         {
-          property: config.notion.propertyKeys.discussionThread,
+          property: config.propertyKeys.discussionThread,
           url: {
             is_empty: true,
           }
@@ -93,7 +93,7 @@ export const filters = (config: NanceConfig) => {
           },
         },
         {
-          property: config.notion.propertyKeys.discussionThread,
+          property: config.propertyKeys.discussionThread,
           url: {
             is_not_empty: true,
           },
@@ -106,9 +106,9 @@ export const filters = (config: NanceConfig) => {
         }],
     },
     proposalId: {
-      property: config.notion.propertyKeys.proposalId,
+      property: config.propertyKeys.proposalId,
       rich_text: {
-        contains: config.notion.propertyKeys.proposalIdPrefix,
+        contains: config.propertyKeys.proposalIdPrefix,
       }
     },
     temperatureCheck: {
@@ -133,9 +133,9 @@ export const filters = (config: NanceConfig) => {
           }
         },
         {
-          property: config.notion.propertyKeys.type,
+          property: config.propertyKeys.type,
           multi_select: {
-            contains: config.notion.propertyKeys.typeRecurringPayout
+            contains: config.propertyKeys.typeRecurringPayout
           }
         }
       ] as SimplePropertyFilter[]
