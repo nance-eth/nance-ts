@@ -48,6 +48,17 @@ router.get(`${spacePrefix}/discussionHook`, async (req, res) => {
   });
 });
 
+router.get(`${spacePrefix}/editDiscussionTitles`, async (req, res) => {
+  const nance = new Nance(res.locals.config);
+  // eslint-disable-next-line no-await-in-loop
+  while (!nance.dialogHandler.ready()) { await sleep(50); }
+  nance.editTitles().then((data) => {
+    res.json({ success: true, data });
+  }).catch((e) => {
+    res.json({ success: false, error: e });
+  });
+});
+
 router.post(`${spacePrefix}/upload`, async (req, res) => {
   const { space } = req.params;
   const { proposal, signature } = req.body as ProposalUploadRequest;
