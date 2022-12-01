@@ -17,7 +17,7 @@ export interface Proposal {
   governanceCycle?: number;
   date?: string,
   translationURL?: string;
-  type?: ProposalType;
+  type?: string;
   status: string;
   proposalId: string;
   author?: string;
@@ -27,6 +27,11 @@ export interface Proposal {
   voteSetup?: SnapshotVoteOptions;
   voteResults?: VoteResults;
   version?: string;
+  authorAddress?: string;
+  authorDiscordId?: string;
+  temperatureCheckVotes?: number[];
+  createdTime?: Date;
+  lastEditedTime?: Date;
 }
 
 export type Payout = {
@@ -75,6 +80,35 @@ export type ProposalNoHash = Omit<Proposal, 'hash'>;
 
 export type ProposalStore = Record<string, ProposalNoHash>;
 
+export type PropertyKeys = {
+  proposalId: string;
+  status: string;
+  statusTemperatureCheck: string;
+  statusVoting: string;
+  statusApproved: string;
+  statusCancelled: string;
+  proposalIdPrefix: string;
+  discussionThread: string;
+  ipfs: string;
+  vote: string;
+  type: string;
+  typeRecurringPayout: string;
+  typePayout: string;
+  governanceCycle: string;
+  governanceCyclePrefix: string;
+  reservePercentage: string;
+  payoutName: string;
+  payoutType: string;
+  payoutAmountUSD: string;
+  payoutAddress: string;
+  payoutCount: string;
+  treasuryVersion: string;
+  payoutFirstFC: string;
+  payoutLastFC: string;
+  payoutRenewalFC: string;
+  payoutProposalLink: string;
+};
+
 export interface NanceConfig {
   name: string;
   proposalDataBackup: string;
@@ -93,6 +127,12 @@ export interface NanceConfig {
     projectId: string;
     gnosisSafeAddress: string;
   };
+  reminder: {
+    channelIds: string[];
+    imagesCID: string;
+    images: string[];
+    links: Record<string, string>;
+  }
   discord: {
     API_KEY: string;
     guildId: string;
@@ -109,6 +149,7 @@ export interface NanceConfig {
       showResults: boolean;
     };
   };
+  propertyKeys: PropertyKeys;
   notion: {
     API_KEY: string;
     publicURLPrefix: string;
@@ -116,34 +157,6 @@ export interface NanceConfig {
     current_cycle_block_id: string;
     payouts_database_id: string;
     reserves_database_id: string;
-    propertyKeys: {
-      proposalId: string;
-      status: string;
-      statusTemperatureCheck: string;
-      statusVoting: string;
-      statusApproved: string;
-      statusCancelled: string;
-      proposalIdPrefix: string;
-      discussionThread: string;
-      ipfs: string;
-      vote: string;
-      type: string;
-      typeRecurringPayout: string;
-      typePayout: string;
-      governanceCycle: string;
-      governanceCyclePrefix: string;
-      reservePercentage: string;
-      payoutName: string;
-      payoutType: string;
-      payoutAmountUSD: string;
-      payoutAddress: string;
-      payoutCount: string;
-      treasuryVersion: string;
-      payoutFirstFC: string;
-      payoutLastFC: string;
-      payoutRenewalFC: string;
-      payoutProposalLink: string;
-    };
   };
   github: {
     user: string;
@@ -164,6 +177,7 @@ export interface NanceConfig {
       governanceCycle: string;
     },
   },
+  dolt: DoltConfig,
   snapshot: {
     base: string;
     space: string;
@@ -172,6 +186,12 @@ export interface NanceConfig {
     passingRatio: number;
   };
 }
+
+export type DoltConfig = {
+  API_KEY: string;
+  owner: string;
+  repo: string;
+};
 
 export interface DateEvent {
   title: string;
