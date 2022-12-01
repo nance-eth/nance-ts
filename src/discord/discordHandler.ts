@@ -5,12 +5,11 @@ import {
   User,
   Intents,
   Message,
-  MessageEmbed,
   TextChannel,
   ThreadAutoArchiveDuration,
 } from 'discord.js';
 import logger from '../logging';
-import { addSecondsToDate, dateToUnixTimeStamp, limitLength } from '../utils';
+import { limitLength, getLastSlash } from '../utils';
 import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
@@ -56,14 +55,6 @@ export class DiscordHandler {
     return this.config.reminder.channelIds.map((channelId) => {
       return this.discord.channels.cache.get(channelId) as TextChannel;
     });
-  }
-
-  async sendEmbed(text: string, channelId: string): Promise<Message<boolean>> {
-    const message = new MessageEmbed()
-      .setTitle(text);
-    const channel = this.discord.channels.cache.get(channelId) as TextChannel;
-    const sentMessage = await channel.send({ embeds: [message] });
-    return sentMessage;
   }
 
   async startDiscussion(proposal: Proposal): Promise<string> {
@@ -199,5 +190,15 @@ export class DiscordHandler {
 
   async setStatus() {
     this.discord.user?.setActivity(' ');
+  }
+
+  async editDiscussionTitle(proposal: Proposal) {
+    const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
+    proposal.url = discordTemplates.juiceToolUrl(proposal, this.config.name);
+    const message = discordTemplates.startDiscussionMessage(proposal);
+    if (messageObj.embeds[0].title !== message.title) {
+      messageObj.edit({ embeds: [message] });
+      messageObj.thread?.edit({ name: limitLength(proposal.title) });
+    }
   }
 }

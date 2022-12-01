@@ -105,6 +105,13 @@ export class Nance {
     });
   }
 
+  async editTitles() {
+    const proposals = await this.proposalHandler.getDiscussionProposals();
+    proposals.forEach((proposal) => {
+      this.dialogHandler.editDiscussionTitle(proposal);
+    });
+  }
+
   async temperatureCheckSetup(endDate: Date) {
     logger.info(`${this.config.name}: temperatureCheckSetup() begin...`);
     const discussionProposals = await this.proposalHandler.assignProposalIds(
