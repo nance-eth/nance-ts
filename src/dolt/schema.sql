@@ -38,7 +38,7 @@ CREATE TABLE payouts (
   lockedUntil INT,
   amount INT NOT NULL,
   currency VARCHAR(10) NOT NULL,
-  PayName VARCHAR(255),
+  payName VARCHAR(255),
   payAddress CHAR(42),
   payProject INT,
   payStatus ENUM('voting', 'active', 'complete', 'cancelled'),
@@ -65,11 +65,11 @@ CREATE TABLE reserves (
 );
 
 CREATE TABLE reconfigurations (
-  uuidOfProposal VARCHAR(35) NOT NULL,
+  hashId CHAR(40) NOT NULL,
+  uuidOfProposal VARCHAR(35),
   JBFundingCycleData JSON NOT NULL,
   JBFundingCycleMetaData JSON NOT NULL,
-  PRIMARY KEY (uuidOfProposal),
-  FOREIGN KEY (uuidOfProposal) REFERENCES proposals(uuid),
+  PRIMARY KEY (hashId)
 );
 
 CREATE TABLE governanceCycles (

@@ -62,6 +62,7 @@
     "payoutAmountUSD": "USD Payout Amount",
     "payoutAddress": "Payout Address",
     "payoutCount": "Number of Payouts",
+    "payName": "Pay Name",
     "reservePercentage": "Percentage",
     "treasuryVersion": "JB DAO Treasury",
     "payoutFirstFC": "First FC",
@@ -101,7 +102,7 @@
   "dolt": {
     "API_KEY": "DOLT_KEY",
     "owner": "jigglyjams",
-    "repo": "juicebox-governance"
+    "repo": "juicebox_governance"
   },
   "snapshot": {
     "base": "https://juicetool.xyz/snapshot",

@@ -1,66 +1,78 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
+import * as objectHash from 'object-hash';
 import { Proposal, PropertyKeys } from '../types';
-import { sqlQueryValues, allKeys } from './doltSQLHelpers';
-import { Dolt } from './doltAPI';
+// import { Dolt } from './doltAPI';
+import { DoltSQL } from './doltSQL';
 import { uuid } from '../utils';
 
 const proposalsTable = 'proposals';
+const payoutsTable = 'payouts';
 
 export class DoltHandler {
-  dolt;
+  localDolt;
+  propertyKeys;
   public currentGovernanceCycle = 0;
 
   constructor(
-    owner: string,
     repo: string,
-    DOLT_KEY: string,
-    private propertyKeys: PropertyKeys
+    propertyKeys: PropertyKeys
   ) {
-    this.dolt = new Dolt(owner, repo, DOLT_KEY);
+    this.localDolt = new DoltSQL({ database: repo });
     this.propertyKeys = propertyKeys;
   }
 
-  async queryDb(query: string, governanceCycle: number) {
-    return this.dolt.query(query, `GC${governanceCycle.toString()}`).then((res) => {
-      if (res.query_execution_status === 'Success') return res.rows;
-      return Promise.reject(res.query_execution_message);
+  async queryDb(query: string) {
+    return this.localDolt.query(query).then((res) => {
+      return res;
     }).catch((e) => {
       return Promise.reject(e);
     });
   }
 
-  async writeDb(query: string, governanceCycle: number) {
-    return this.dolt.write(query, `GC${governanceCycle.toString()}`).then(async (res) => {
-      return this.dolt.poll(res.operation_name).then((poll) => {
-        if (poll?.res_details.query_execution_status === 'Success') return 'Success';
-        return Promise.reject(poll?.res_details.query_execution_message);
-      });
+  async setCurrentGovernanceCycle(governanceCycle: number) {
+    return this.localDolt.checkout(`GC${governanceCycle}`).then((res) => {
+      if (res === 0) { return true; }
+      return false;
     }).catch((e) => {
       return Promise.reject(e);
     });
   }
 
-  async addProposalToDb(proposal: any) {
+  async addProposalToDb(proposal: Proposal) {
     const now = new Date().toISOString();
     const governanceCycle = (proposal.governanceCycle === 0) ? this.currentGovernanceCycle : proposal.governanceCycle;
-    const query = oneLine`
-      INSERT IGNORE INTO ${proposalsTable}
-      (uuid, createdTime, lastEditedTime, title, body, category, governanceCycle, proposalStatus, voteType, choices, discussionURL)
-      VALUES(
-      '${proposal.hash || uuid()}',
-      '${now}',
-      '${now}',
-      '${proposal.title}',
-      '${proposal.body}',
-      '${proposal.type}',
-      '${governanceCycle}',
-      '${proposal.status}',
-      'basic',
-      '["For", "Against", "Abstain"]',
-      '${proposal.discussionThreadURL}'
-    )`;
-    return this.writeDb(query, this.currentGovernanceCycle);
+    const voteType = proposal.voteSetup?.type || 'basic';
+    const voteChoices = proposal.voteSetup?.choices || '["For", "Against", "Abstain"]';
+    const proposalId = Number(proposal.proposalId.split(this.propertyKeys.proposalIdPrefix)[1]) || null;
+    this.localDolt.db.query(oneLine`
+      REPLACE INTO ${proposalsTable}
+      (uuid, createdTime, lastEditedTime, title, body, authorAddress, category, governanceCycle, proposalStatus, proposalId, voteType, choices)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, [
+      proposal.hash || uuid(), now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, governanceCycle, proposal.status, proposalId, voteType, voteChoices
+    ]);
+    if (proposal.type?.toLowerCase().includes('pay')) {
+      console.log(proposal.payout);
+      const treasuryVersion = proposal.version?.split('V')[1];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      let payAddress: string | null = proposal.payout!.address;
+      let payProject;
+      if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
+      const payName = proposal.payout?.payName;
+      const governanceStart = proposal.governanceCycle;
+      const numberOfPayouts = proposal.payout?.count;
+      const amount = proposal.payout?.amountUSD;
+      const currency = 'usd';
+      const payStatus = 'voting';
+      const hashId = objectHash.default({ payAddress, payProject, payName, numberOfPayouts, governanceStart, uuidOfProposal: proposal.hash });
+      this.localDolt.db.query(oneLine`
+        REPLACE INTO ${payoutsTable}
+        (hashId, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
+        amount, currency, payAddress, payProject, payStatus, payName)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?)`, [
+        hashId, proposal.hash, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName
+      ]);
+    }
   }
 
   async updateStatus(hash: string, status: string) {
@@ -71,47 +83,47 @@ export class DoltHandler {
       lastEditedTime = '${now}'
       WHERE uuid = '${hash}'
     `;
-    return this.writeDb(query, this.currentGovernanceCycle);
+    return this.queryDb(query);
   }
 
-  async getToDiscuss(governanceCycle: number) {
+  async getToDiscuss() {
     return this.queryDb(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Discussion'
       AND discussionURL IS NULL
-    `, governanceCycle || this.currentGovernanceCycle);
+    `);
   }
 
-  async getDiscussionProposals(governanceCycle: number) {
+  async getDiscussionProposals() {
     return this.queryDb(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Discussion'
       AND discussionURL IS NOT NULL
       AND title IS NOT NULL
-    `, governanceCycle || this.currentGovernanceCycle);
+    `);
   }
 
-  async getTemperatureCheckProposals(governanceCycle: number) {
+  async getTemperatureCheckProposals() {
     return this.queryDb(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Temperature Check'
-    `, governanceCycle || this.currentGovernanceCycle);
+    `);
   }
 
-  async getVoteProposals(governanceCycle?: number) {
+  async getVoteProposals() {
     return this.queryDb(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Voting'
-    `, governanceCycle || this.currentGovernanceCycle);
+    `);
   }
 
-  async getNextProposalId(governanceCycle?: number) {
+  async getNextProposalId() {
     return this.queryDb(`
       SELECT proposalId FROM ${proposalsTable}
       ORDER BY proposalId DESC
       LIMIT 1
-    `, governanceCycle || this.currentGovernanceCycle).then((res) => {
-      return Number(res[0].proposalId) + 1;
+    `).then((res) => {
+      return Number(res) + 1;
     });
   }
 
@@ -120,7 +132,7 @@ export class DoltHandler {
       UPDATE ${proposalsTable} SET
       discussionURL = '${proposal.discussionThreadURL}'
       WHERE uuid = '${proposal.hash}'
-    `, proposal.governanceCycle || this.currentGovernanceCycle);
+    `);
   }
 
   async assignProposalIds(proposals: Proposal[]) {
@@ -133,19 +145,16 @@ export class DoltHandler {
     return proposals;
   }
 
-  async updateStatusTemperatureCheckAndProposalId(proposals: Proposal[]) {
-    const { query, values } = sqlQueryValues(proposals, ['status', 'proposalId']);
-    const fullQuery = `INSERT INTO ${proposalsTable} ${allKeys} VALUES ${query} ON DUPLICATE KEY UPDATE ${values}`;
-    return this.writeDb(fullQuery, this.currentGovernanceCycle);
+  async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
+    const query = `
+      UPDATE ${proposalsTable} SET
+      proposalStatus = '${proposal.status}', proposalId = ${proposal.proposalId}
+      WHERE uuid = '${proposal.hash}'`;
+    return this.queryDb(query);
   }
 
-  async updateProposalStatuses(proposals: Proposal[]) {
-    const { query, values } = sqlQueryValues(proposals, ['status']);
-    return this.writeDb(`
-      INSERT INTO ${proposalsTable}
-      ${allKeys}
-      VALUES ${query} ON DUPLICATE KEY UPDATE
-        ${values}
-    `, this.currentGovernanceCycle);
+  async updateProposalStatus(proposal: Proposal) {
+    const query = `UPDATE ${proposalsTable} SET proposalStatus = ${proposal.status}`;
+    return this.queryDb(query);
   }
 }

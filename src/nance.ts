@@ -27,7 +27,7 @@ export class Nance {
     this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
     this.dialogHandler = new DiscordHandler(config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
-    this.dProposalHandler = new DoltHandler(config.dolt.owner, config.dolt.repo, keys.DOLT_KEY, config.propertyKeys);
+    this.dProposalHandler = new DoltHandler(config.dolt.repo, this.config.propertyKeys);
     this.proposalHandler.getCurrentGovernanceCycle().then((res) => {
       this.dProposalHandler.currentGovernanceCycle = res;
     });
@@ -122,16 +122,11 @@ export class Nance {
       await this.dialogHandler.setupPoll(threadId);
       proposal.status = this.config.propertyKeys.statusTemperatureCheck;
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
+      await this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
       this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
       logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
       logger.info('===================================================================');
-      this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(discussionProposals).then((res) => {
-        logger.info(`${this.config.name}: dolt update ${res}`);
-      }).catch((e) => {
-        logger.error(`${this.config.name}: dolt update error:`);
-        logger.error(e);
-      });
     }).catch((e) => {
       logger.error(`${this.config.name}: temperatureCheckSetup() error:`);
       logger.error(e);

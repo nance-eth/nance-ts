@@ -7,15 +7,15 @@ const HOST = '127.0.0.1';
 const USER = 'root';
 const PASSWORD = '';
 
-const status = (res: any) => {
+const status = (res: any): number => {
   return (<RowDataPacket>res[0])[0].status;
 };
 
-const clean = (res: any) => {
+const cleanSingleRes = (res: any) => {
   return (<RowDataPacket>res[0])[0];
 };
 export class DoltSQL {
-  private db;
+  db;
   constructor(
     options: DBConfig,
   ) {
@@ -63,8 +63,32 @@ export class DoltSQL {
     });
   }
 
-  async checkout(branch: string): Promise<string> {
+  async checkout(branch: string) {
     return this.db.query(`CALL DOLT_CHECKOUT('${branch}')`).then((res) => {
+      return status(res);
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async commit(message: string) {
+    return this.db.query(`CALL DOLT_COMMIT('-a', '-m', '${message}')`).then((res) => {
+      return status(res);
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async push(branch: string) {
+    return this.db.query(`CALL DOLT_PUSH('origin', '${branch}')`).then((res) => {
+      return status(res);
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async merge(branch: string) {
+    return this.db.query(`CALL DOLT_MERGE('${branch}')`).then((res) => {
       return status(res);
     }).catch((e) => {
       return Promise.reject(e);
@@ -73,7 +97,15 @@ export class DoltSQL {
 
   async showActiveBranch(): Promise<string> {
     return this.db.query('SELECT active_branch()').then((res) => {
-      return clean(res)['active_branch()'];
+      return cleanSingleRes(res)['active_branch()'];
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async query(query: string) {
+    return this.db.query(query).then((res) => {
+      return res[0];
     }).catch((e) => {
       return Promise.reject(e);
     });

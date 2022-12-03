@@ -40,6 +40,7 @@ export type Payout = {
   project?: number;
   amountUSD: number;
   count: number;
+  payName: string;
 };
 
 type Notification = {
@@ -102,6 +103,7 @@ export type PropertyKeys = {
   payoutAmountUSD: string;
   payoutAddress: string;
   payoutCount: string;
+  payName: string;
   treasuryVersion: string;
   payoutFirstFC: string;
   payoutLastFC: string;

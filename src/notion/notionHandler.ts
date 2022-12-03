@@ -90,6 +90,10 @@ export class NotionHandler implements DataContentHandler {
           count: notionUtils.getNumber(
             unconvertedProposal,
             this.config.propertyKeys.payoutCount
+          ),
+          payName: notionUtils.getRichText(
+            unconvertedProposal,
+            this.config.propertyKeys.payName
           )
         };
       }
@@ -102,7 +106,8 @@ export class NotionHandler implements DataContentHandler {
       address: notionUtils.getRichText(unconvertedPayout, this.config.propertyKeys.payoutAddress),
       amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.propertyKeys.payoutAmountUSD),
       count:
-        notionUtils.getNumber(unconvertedPayout, 'Last FC') - notionUtils.getNumber(unconvertedPayout, 'First FC') + 1
+        notionUtils.getNumber(unconvertedPayout, 'Last FC') - notionUtils.getNumber(unconvertedPayout, 'First FC') + 1,
+      payName: notionUtils.getRichText(unconvertedPayout, this.config.propertyKeys.payoutName)
     };
   }
 
@@ -165,30 +170,34 @@ export class NotionHandler implements DataContentHandler {
     });
   }
 
-  async getToDiscuss(): Promise<Proposal[]> {
+  async getToDiscuss(extendedData = false): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      notionUtils.filters(this.config).preDiscussion
+      notionUtils.filters(this.config).preDiscussion,
+      extendedData
     );
     return proposals;
   }
 
-  async getDiscussionProposals(): Promise<Proposal[]> {
+  async getDiscussionProposals(extendedData = false): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.filters.discussion
+      this.filters.discussion,
+      extendedData
     );
     return proposals;
   }
 
-  async getTemperatureCheckProposals(): Promise<Proposal[]> {
+  async getTemperatureCheckProposals(extendedData = false): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.filters.temperatureCheck
+      this.filters.temperatureCheck,
+      extendedData
     );
     return proposals;
   }
 
-  async getVoteProposals(): Promise<Proposal[]> {
+  async getVoteProposals(extendedData = false): Promise<Proposal[]> {
     const proposals = await this.queryNotionDb(
-      this.filters.voting
+      this.filters.voting,
+      extendedData
     );
     return proposals;
   }
@@ -439,7 +448,7 @@ export class NotionHandler implements DataContentHandler {
     return this.notion.pages.retrieve({ page_id: pageId }).then(async (unconvertedProposal: GetDatabaseResponse | GetPageResponse) => {
       const mdBlocks = await this.notionToMd.pageToMarkdown(pageId);
       const mdString = this.notionToMd.toMarkdownString(mdBlocks);
-      const proposal = this.toProposal(unconvertedProposal);
+      const proposal = this.toProposal(unconvertedProposal, true);
       return {
         ...proposal,
         body: mdString

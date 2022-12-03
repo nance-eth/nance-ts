@@ -7,14 +7,15 @@ async function main() {
   const dolt = new DoltHandler(
     config.dolt.owner,
     config.dolt.repo,
-    keys.DOLT_KEY
+    keys.DOLT_KEY,
+    config.propertyKeys
   );
-  dolt.getTemperatureCheckProposals('GC36').then((res) => {
+  dolt.getTemperatureCheckProposals(36).then((res) => {
     console.log(res);
   }).catch((e) => {
     console.error(e);
   });
-  console.log(await dolt.getNextProposalId('GC36'));
+  console.log(await dolt.getNextProposalId(36));
 }
 
 main();
