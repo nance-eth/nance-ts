@@ -201,4 +201,12 @@ export class DiscordHandler {
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
     }
   }
+
+  async editRollupMessage(proposals: Proposal[], messageId: string) {
+    const messageObj = await this.getAlertChannel().messages.fetch(messageId);
+    const message = discordTemplates.temperatureCheckRollUpMessage(proposals, this.config.name, new Date());
+    const edittedMessage = messageObj.embeds[0];
+    edittedMessage.fields = message.fields;
+    messageObj.edit({ embeds: [edittedMessage] });
+  }
 }

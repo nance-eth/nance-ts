@@ -95,7 +95,7 @@ export class Nance {
         proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
         this.proposalHandler.updateDiscussionURL(proposal);
         proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
-        this.dProposalHandler.addProposalToDb(proposal);
+        try { this.dProposalHandler.addProposalToDb(proposal); } catch (e) { logger.error('no dDB'); }
         logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
         return proposal.discussionThreadURL;
       }));
@@ -105,11 +105,14 @@ export class Nance {
     });
   }
 
-  async editTitles() {
-    const proposals = await this.proposalHandler.getDiscussionProposals();
+  async editTitles(status: string, rollupMessageId?: string) {
+    let proposals: Proposal[] = [];
+    if (status === 'discussion') { proposals = await this.proposalHandler.getDiscussionProposals(); }
+    if (status === 'temperatureCheck') { proposals = await this.proposalHandler.getTemperatureCheckProposals(); }
     proposals.forEach((proposal) => {
       this.dialogHandler.editDiscussionTitle(proposal);
     });
+    if (rollupMessageId) { this.dialogHandler.editRollupMessage(proposals, rollupMessageId); }
   }
 
   async temperatureCheckSetup(endDate: Date) {
@@ -122,7 +125,7 @@ export class Nance {
       await this.dialogHandler.setupPoll(threadId);
       proposal.status = this.config.propertyKeys.statusTemperatureCheck;
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
-      await this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
+      try { await this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(proposal); } catch (e) { logger.error('no dDB'); }
     })).then(() => {
       this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
       logger.info(`${this.config.name}: temperatureCheckSetup() complete`);

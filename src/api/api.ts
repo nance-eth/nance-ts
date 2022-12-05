@@ -48,11 +48,14 @@ router.get(`${spacePrefix}/discussionHook`, async (req, res) => {
   });
 });
 
-router.get(`${spacePrefix}/editDiscussionTitles`, async (req, res) => {
+router.get(`${spacePrefix}/editTitles/:status`, async (req, res) => {
+  const { status } = req.params;
+  const { message } = req.query;
+  console.log(message);
   const nance = new Nance(res.locals.config);
   // eslint-disable-next-line no-await-in-loop
   while (!nance.dialogHandler.ready()) { await sleep(50); }
-  nance.editTitles().then((data) => {
+  nance.editTitles(status, message as string).then((data) => {
     res.json({ success: true, data });
   }).catch((e) => {
     res.json({ success: false, error: e });
