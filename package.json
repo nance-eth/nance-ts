@@ -10,7 +10,7 @@
     "test": "export NODE_ENV='dev' && jest",
     "test:watch": "export NODE_ENV='dev' && jest --watch",
     "test:coverage": "export NODE_ENV='dev' && jest --coverage",
-    "test:gov": "export NODE_ENV='dev' && export CONFIG='waterbox' && ts-node src/scripts/createCalendar.ts && ts-node src/index.ts",
+    "test:gov": "dolt sql-server --config src/dolt/config.yml & export NODE_ENV='dev' && export CONFIG='waterbox' && ts-node src/scripts/createCalendar.ts && ts-node src/index.ts",
     "start:api": "export CONSOLE_LOG=on && node ./dist/api/index.js",
     "dev:api": "export CONSOLE_LOG=on && export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
     "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 && cp -r ./src/config/ ./dist/config/"
@@ -22,8 +22,6 @@
     "@gnosis.pm/safe-core-sdk-types": "^1.4.0",
     "@gnosis.pm/safe-ethers-lib": "^1.4.0",
     "@jigglyjams/juice-sdk-v3": "^2.1.0-alpha",
-    "@logtail/node": "^0.1.12",
-    "@logtail/winston": "^0.1.13",
     "@notionhq/client": "^1.0.4",
     "@pinata/sdk": "^1.1.24",
     "@snapshot-labs/snapshot.js": "^0.3.96",

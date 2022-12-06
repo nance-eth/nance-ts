@@ -52,27 +52,30 @@ export class DoltHandler {
       proposal.hash || uuid(), now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, governanceCycle, proposal.status, proposalId, voteType, voteChoices
     ]);
     if (proposal.type?.toLowerCase().includes('pay')) {
-      console.log(proposal.payout);
-      const treasuryVersion = proposal.version?.split('V')[1];
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      let payAddress: string | null = proposal.payout!.address;
-      let payProject;
-      if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
-      const payName = proposal.payout?.payName;
-      const governanceStart = proposal.governanceCycle;
-      const numberOfPayouts = proposal.payout?.count;
-      const amount = proposal.payout?.amountUSD;
-      const currency = 'usd';
-      const payStatus = 'voting';
-      const hashId = objectHash.default({ payAddress, payProject, payName, numberOfPayouts, governanceStart, uuidOfProposal: proposal.hash });
-      this.localDolt.db.query(oneLine`
-        REPLACE INTO ${payoutsTable}
-        (hashId, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
-        amount, currency, payAddress, payProject, payStatus, payName)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?)`, [
-        hashId, proposal.hash, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName
-      ]);
+      this.addPayoutToDb(proposal);
     }
+  }
+
+  async addPayoutToDb(proposal: Proposal) {
+    const treasuryVersion = proposal.version?.split('V')[1];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    let payAddress: string | null = proposal.payout!.address;
+    let payProject;
+    if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
+    const payName = proposal.payout?.payName;
+    const governanceStart = proposal.governanceCycle;
+    const numberOfPayouts = proposal.payout?.count;
+    const amount = proposal.payout?.amountUSD;
+    const currency = 'usd';
+    const payStatus = 'voting';
+    const hashId = objectHash.default({ payAddress, payProject, payName, numberOfPayouts, governanceStart, uuidOfProposal: proposal.hash });
+    this.localDolt.db.query(oneLine`
+      REPLACE INTO ${payoutsTable}
+      (hashId, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
+      amount, currency, payAddress, payProject, payStatus, payName)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?)`, [
+      hashId, proposal.hash, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName
+    ]);
   }
 
   async updateStatus(hash: string, status: string) {
@@ -155,6 +158,18 @@ export class DoltHandler {
 
   async updateProposalStatus(proposal: Proposal) {
     const query = `UPDATE ${proposalsTable} SET proposalStatus = ${proposal.status}`;
+    return this.queryDb(query);
+  }
+
+  async updateAfterTemperatureCheck(proposal: Proposal) {
+    const query = `
+      UPDATE ${proposalsTable} SET
+      temperatureCheckVotes = '[${proposal.temperatureCheckVotes}]',
+      proposalStatus = '${proposal.status}',
+      title = '${proposal.title}',
+      body = '${proposal.body}'
+      WHERE uuid = '${proposal.hash}'
+    `;
     return this.queryDb(query);
   }
 }

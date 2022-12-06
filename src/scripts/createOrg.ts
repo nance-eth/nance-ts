@@ -9,9 +9,9 @@ function initOrg(org: string) {
   output.name = org;
   output.discord.API_KEY = `DISCORD_KEY_${org.toUpperCase()}`;
   output.notion.API_KEY = `NOTION_KEY_${org.toUpperCase()}`;
-  output.notion.propertyKeys.proposalId = template.notion.propertyKeys.proposalId.replace('${NAME}', org);
+  output.propertyKeys.proposalId = template.propertyKeys.proposalId.replace('${NAME}', org);
   output.github.propertyKeys.proposalId = template.github.propertyKeys.proposalId.replace('${NAME}', org);
-  output.notion.propertyKeys.proposalIdPrefix = org.slice(0, 2);
+  output.propertyKeys.proposalIdPrefix = org.slice(0, 2);
   output.snapshot.space = `${org}.eth`;
 
   fs.writeFileSync(`${configPath}/${org}/${org}.json`, JSON.stringify(output, null, 2));

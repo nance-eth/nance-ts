@@ -142,6 +142,7 @@ export class Nance {
     await Promise.all(temperatureCheckProposals.map(async (proposal: Proposal) => {
       const threadId = getIdFromURL(proposal.discussionThreadURL);
       const pollResults = await this.dialogHandler.getPollVoters(threadId);
+      proposal.temperatureCheckVotes = [pollResults.voteYesUsers.length, pollResults.voteNoUsers.length];
       const pass = this.pollPassCheck(
         pollResults.voteYesUsers.length,
         pollResults.voteNoUsers.length
@@ -152,6 +153,7 @@ export class Nance {
       this.dialogHandler.sendPollResultsEmoji(pass, threadId);
       if (pass) await this.proposalHandler.updateStatusVoting(proposal.hash);
       else await this.proposalHandler.updateStatusCancelled(proposal.hash);
+      try { await this.dProposalHandler.updateAfterTemperatureCheck(proposal); } catch (e) { logger.error('no dDB'); }
     })).then(() => {
       logger.info(`${this.config.name}: temperatureCheckClose() complete`);
       logger.info('===================================================================');
