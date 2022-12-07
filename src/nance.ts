@@ -153,7 +153,7 @@ export class Nance {
       this.dialogHandler.sendPollResultsEmoji(pass, threadId);
       if (pass) await this.proposalHandler.updateStatusVoting(proposal.hash);
       else await this.proposalHandler.updateStatusCancelled(proposal.hash);
-      try { await this.dProposalHandler.updateAfterTemperatureCheck(proposal); } catch (e) { logger.error('no dDB'); }
+      try { await this.dProposalHandler.updateTemperatureCheckClose(proposal); } catch (e) { logger.error('no dDB'); }
     })).then(() => {
       logger.info(`${this.config.name}: temperatureCheckClose() complete`);
       logger.info('===================================================================');
@@ -181,6 +181,7 @@ export class Nance {
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
       proposal.status = await this.proposalHandler.updateVoteAndIPFS(proposal);
+      try { await this.dProposalHandler.updateVotingSetup(proposal); } catch (e) { logger.error('no dDB'); }
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
     })).then(() => {
       if (voteProposals.length > 0) {
@@ -223,6 +224,7 @@ export class Nance {
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
         }
+        try { await this.dProposalHandler.updateVotingClose(proposalMatch); } catch (e) { logger.error('no dDB'); }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
     })).then(() => {
       this.dialogHandler.sendVoteResultsRollup(voteProposals);

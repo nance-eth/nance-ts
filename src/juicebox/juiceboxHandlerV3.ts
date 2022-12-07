@@ -78,10 +78,10 @@ export class JuiceboxHandlerV3 {
   };
 
   queuedConfiguration = async () => {
-    return (await getJBFundingCycleStore(
+    return getJBFundingCycleStore(
       this.provider,
       { network: this.network }
-    ).queuedOf(this.projectId)).start;
+    ).queuedOf(this.projectId);
   };
 
   // eslint-disable-next-line class-methods-use-this
@@ -153,7 +153,7 @@ export class JuiceboxHandlerV3 {
     projectId = this.projectId,
     domain = 0
   ) {
-    const configuration = (domain === 0) ? await this.queuedConfiguration() : domain;
+    const configuration = (domain === 0) ? (await this.queuedConfiguration()).start : domain;
     console.log(configuration);
     return this.JBSplitsStore.interface.encodeFunctionData(
       'set',

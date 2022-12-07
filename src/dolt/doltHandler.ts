@@ -4,11 +4,15 @@ import * as objectHash from 'object-hash';
 import { Proposal, PropertyKeys } from '../types';
 // import { Dolt } from './doltAPI';
 import { DoltSQL } from './doltSQL';
-import { uuid } from '../utils';
+import { getLastSlash, uuid } from '../utils';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
+const governanceCyclesTable = 'governanceCycles';
 
+type LinkedFundingCycles = { v1?: number, v2?: number, v3?: number };
+
+// we are mixing abstracted queries, use direct mysql2 queries when there are potential NULL values in query
 export class DoltHandler {
   localDolt;
   propertyKeys;
@@ -161,7 +165,7 @@ export class DoltHandler {
     return this.queryDb(query);
   }
 
-  async updateAfterTemperatureCheck(proposal: Proposal) {
+  async updateTemperatureCheckClose(proposal: Proposal) {
     const query = `
       UPDATE ${proposalsTable} SET
       temperatureCheckVotes = '[${proposal.temperatureCheckVotes}]',
@@ -171,5 +175,33 @@ export class DoltHandler {
       WHERE uuid = '${proposal.hash}'
     `;
     return this.queryDb(query);
+  }
+
+  async updateVotingSetup(proposal: Proposal) {
+    const query = `
+      UPDATE ${proposalsTable} SET
+      snapshotId = '${getLastSlash(proposal.voteURL)}'
+      WHERE uuid = '${proposal.hash}'
+    `;
+    return this.queryDb(query);
+  }
+
+  async updateVotingClose(proposal: Proposal) {
+    const query = `
+      UPDATE ${proposalsTable} SET
+      snapshotChoices = '[${Object.keys(proposal.voteResults?.scores ?? '')}]',
+      snapshotVotes = '[${Object.values(proposal.voteResults?.scores ?? '')}]'
+      WHERE uuid = '${proposal.hash}'
+    `;
+    return this.queryDb(query);
+  }
+
+  async addGovernanceCycle(cycle: number, start: Date, end: Date, linkedFundingCycles: LinkedFundingCycles) {
+    this.localDolt.db.query(oneLine`
+      INSERT INTO ${governanceCyclesTable}
+      (cycleNumber, startDatetime, endDatetime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle)
+      VALUES
+      (?,?,?,?,?,?)`, [cycle, start, end, linkedFundingCycles?.v1, linkedFundingCycles?.v2, linkedFundingCycles?.v3]
+    );
   }
 }

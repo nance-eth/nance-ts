@@ -76,5 +76,8 @@ CREATE TABLE governanceCycles (
   cycleNumber INT NOT NULL,
   startDatetime DATETIME NOT NULL,
   endDatetime DATETIME NOT NULL,
+  jbV1FundingCycle INT,
+  jbV2FundingCycle INT,
+  jbV3FundingCycle INT,
   PRIMARY KEY (cycleNumber)
 );

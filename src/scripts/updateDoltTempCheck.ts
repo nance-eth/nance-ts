@@ -12,7 +12,7 @@ async function main() {
     const pollResults = await nance.dialogHandler.getPollVoters(threadId);
     proposal.temperatureCheckVotes = [pollResults.voteYesUsers.length, pollResults.voteNoUsers.length];
     console.log(proposal.title, proposal.temperatureCheckVotes);
-    console.log(await nance.dProposalHandler.updateAfterTemperatureCheck(proposal));
+    console.log(await nance.dProposalHandler.updateTemperatureCheckClose(proposal));
   }));
 }
 
