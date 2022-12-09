@@ -16,18 +16,6 @@ export const startDiscussionMessage = (proposal: Proposal) => {
   return new MessageEmbed().setTitle(`📃 ${proposal.title}`).setURL(proposal.url);
 };
 
-export const setupPollMessage = (messageObj: Message) => {
-  const additionalText = 'Temperature Check poll is now open!';
-  // in the event we have to run this twice, don't add additionalText again
-  if (messageObj.content.includes(additionalText)) {
-    return messageObj.content;
-  }
-  return stripIndents`
-    ${messageObj.content}\n
-    ${additionalText}
-  `;
-};
-
 export const temperatureCheckRollUpMessage = (proposals: Proposal[], space: string, endDate: Date) => {
   return new MessageEmbed().setColor('#c1272d').setTitle(
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`

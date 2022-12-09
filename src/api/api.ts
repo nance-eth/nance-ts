@@ -6,12 +6,14 @@ import { NanceTreasury } from '../treasury';
 import { calendarPath, getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest, SubmitTransactionRequest } from './models';
+import { ProposalUploadRequest, FetchReconfigureRequest } from './models';
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
 import { sleep } from '../utils';
 import { CalendarHandler } from '../calendar/CalendarHandler';
+import { DoltHandler } from '../dolt/doltHandler';
+import { DiscordHandler } from '../discord/discordHandler';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -20,7 +22,8 @@ router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
     const config = await getConfig(space);
-    res.locals.notion = new NotionHandler(config);
+    res.locals.proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(config.dolt.repo, config.propertyKeys);
+    res.locals.proposalHandlerBeta = (config.notion.enabled && config.dolt.enabled) ? new DoltHandler(config.dolt.repo, config.propertyKeys) : undefined;
     res.locals.spaceName = space;
     res.locals.config = config;
     next();
@@ -70,14 +73,26 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
   if (valid) {
     logger.debug(`[UPLOAD] space: ${space}, address: ${signature.address} good`);
     if (!proposal.governanceCycle) {
-      const currentGovernanceCycle = await res.locals.notion.getCurrentGovernanceCycle();
+      const currentGovernanceCycle = await res.locals.proposalHandlerMain.getCurrentGovernanceCycle();
       proposal.governanceCycle = currentGovernanceCycle;
     }
     if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
-    await res.locals.notion.addProposalToDb(proposal).then((hash: string) => {
+
+    res.locals.proposalHandlerMain.addProposalToDb(proposal).then(async (hash: string) => {
+      if (res.locals.proposalHandlerBeta) { res.locals.proposalHandlerBeta.addProposalToDb(proposal); }
+
+      // if notion is not enabled then send proposal discussion to dialog handler, otherwise it will get picked up by cron job checking notion
+      if (!res.locals.config.notion.enabled && res.locals.config.dolt.enabled) {
+        const dialogHandler = new DiscordHandler(res.locals.config);
+        // eslint-disable-next-line no-await-in-loop
+        while (!dialogHandler.ready()) { await sleep(50); }
+        dialogHandler.startDiscussion(proposal).then((discussionThreadURL) => {
+          res.locals.proposalHandlerMain.updateDiscussionURL({ ...proposal, discussionThreadURL });
+        });
+      }
       res.json({ success: true, data: { hash } });
     }).catch((e: any) => {
-      res.json({ success: false, error: `[NOTION ERROR]: ${JSON.parse(e.body).message}` });
+      res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
     });
   } else {
     logger.warn(`[UPLOAD] space: ${space}, address: ${signature.address} bad`);
@@ -89,7 +104,7 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
 
 router.get(`${spacePrefix}`, async (req, res) => {
   return res.send(
-    await res.locals.notion.getCurrentGovernanceCycle().then((currentCycle: string) => {
+    await res.locals.proposalHandlerMain.getCurrentGovernanceCycle().then((currentCycle: string) => {
       return { sucess: true, data: { name: res.locals.spaceName, currentCycle } };
     }).catch((e: any) => {
       return { success: false, error: `[NOTION ERROR]: ${e}` };
@@ -101,7 +116,7 @@ router.get(`${spacePrefix}`, async (req, res) => {
 router.get(`${spacePrefix}/proposal`, async (req, res) => {
   const { hash } = req.query;
   return res.send(
-    await res.locals.notion.getContentMarkdown(hash).then((proposal: string) => {
+    await res.locals.proposalHandlerMain.getContentMarkdown(hash).then((proposal: string) => {
       return { sucess: true, data: proposal };
     }).catch((e: any) => {
       return { success: false, error: `[NOTION ERROR]: ${e}` };
@@ -111,9 +126,9 @@ router.get(`${spacePrefix}/proposal`, async (req, res) => {
 
 router.get(`${spacePrefix}/query`, async (req, res) => {
   const { cycle } = req.query;
-  const cycleSearch: string = cycle || await res.locals.notion.getCurrentGovernanceCycle();
+  const cycleSearch: string = cycle || await res.locals.proposalHandlerMain.getCurrentGovernanceCycle();
   return res.send(
-    await res.locals.notion.getProposalsByGovernanceCycle(cycleSearch).then((proposals: Proposal[]) => {
+    await res.locals.proposalHandlerMain.getProposalsByGovernanceCycle(cycleSearch).then((proposals: Proposal[]) => {
       return { success: true, data: proposals };
     }).catch((e: any) => {
       return { success: false, error: `[NOTION ERROR]: ${e}` };

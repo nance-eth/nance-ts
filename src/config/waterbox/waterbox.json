@@ -50,7 +50,7 @@
     "statusVoting": "Voting",
     "statusApproved": "Approved",
     "statusCancelled": "Cancelled",
-    "proposalIdPrefix": "JBP-",
+    "proposalIdPrefix": "WBP-",
     "discussionThread": "Discussion Thread",
     "ipfs": "IPFS",
     "vote": "Snapshot",
@@ -74,6 +74,7 @@
   },
   "notion": {
     "API_KEY": "NOTION_KEY_WATERBOX",
+    "enabled": false,
     "publicURLPrefix": "foil-flat-c43.notion.site",
     "database_id": "8f5a93009a364c4ebf69757ff98be405",
     "current_cycle_block_id": "8458fa50e1724d7aa721275a195dece3",
@@ -101,6 +102,7 @@
   },
   "dolt": {
     "API_KEY": "DOLT_KEY",
+    "enabled": true,
     "owner": "jigglyjams",
     "repo": "waterbox"
   },

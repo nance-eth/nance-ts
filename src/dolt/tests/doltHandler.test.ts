@@ -13,11 +13,12 @@ async function setup() {
 }
 
 async function main() {
-  const proposals = await nance.proposalHandler.getDiscussionProposals(true);
-  proposals.forEach(async (proposal) => {
-    proposal = await nance.proposalHandler.getContentMarkdown(proposal.hash);
-    await nance.dProposalHandler.addProposalToDb(proposal);
-  });
+  // const proposals = await nance.proposalHandler.getDiscussionProposals(true);
+  // proposals.forEach(async (proposal) => {
+  //   proposal = await nance.proposalHandler.getContentMarkdown(proposal.hash);
+  //   await nance.dProposalHandler.addProposalToDb(proposal);
+  // });
+  console.log(await nance.dProposalHandler.getCurrentGovernanceCycle());
 }
 
 setup().then(() => {

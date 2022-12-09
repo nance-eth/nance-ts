@@ -41,6 +41,7 @@ export type Payout = {
   amountUSD: number;
   count: number;
   payName: string;
+  uuid?: string;
 };
 
 type Notification = {
@@ -154,6 +155,7 @@ export interface NanceConfig {
   propertyKeys: PropertyKeys;
   notion: {
     API_KEY: string;
+    enabled: boolean;
     publicURLPrefix: string;
     database_id: string;
     current_cycle_block_id: string;
@@ -191,6 +193,7 @@ export interface NanceConfig {
 
 export type DoltConfig = {
   API_KEY: string;
+  enabled: boolean;
   owner: string;
   repo: string;
 };

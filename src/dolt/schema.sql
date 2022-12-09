@@ -30,7 +30,7 @@ CREATE TABLE proposals (
 );
 
 CREATE TABLE payouts (
-  hashId CHAR(40) NOT NULL,
+  uuid VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35) NOT NULL,
   treasuryVersion INT NOT NULL,
   governanceCycleStart INT NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE payouts (
   payAddress CHAR(42),
   payProject INT,
   payStatus ENUM('voting', 'active', 'complete', 'cancelled'),
-  PRIMARY KEY (hashId),
+  PRIMARY KEY (uuid),
   INDEX payAddress (payAddress),
   INDEX payProject (payProject),
   INDEX governanceCycleStart (governanceCycleStart),
@@ -50,7 +50,7 @@ CREATE TABLE payouts (
 );
 
 CREATE TABLE reserves (
-  hashId CHAR(40) NOT NULL,
+  uuid VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
   governanceCycleStart INT NOT NULL,
   lockedUntil INT,
@@ -58,22 +58,23 @@ CREATE TABLE reserves (
   reservePercentage INT,
   reserveAddress CHAR(42) NOT NULL,
   reserveStatus ENUM('voting', 'active', 'cancelled'),
-  PRIMARY KEY(hashId),
+  PRIMARY KEY(uuid),
   INDEX reserveAddress (reserveAddress),
   INDEX reserveStatus (reserveStatus),
   INDEX governanceCycleStart (governanceCycleStart)
 );
 
 CREATE TABLE reconfigurations (
-  hashId CHAR(40) NOT NULL,
+  uuid VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
   JBFundingCycleData JSON NOT NULL,
   JBFundingCycleMetaData JSON NOT NULL,
-  PRIMARY KEY (hashId)
+  PRIMARY KEY (uuid)
 );
 
 CREATE TABLE governanceCycles (
   cycleNumber INT NOT NULL,
+  cycleStatus ENUM('active', 'complete', 'future') NOT NULL,
   startDatetime DATETIME NOT NULL,
   endDatetime DATETIME NOT NULL,
   jbV1FundingCycle INT,

@@ -90,7 +90,7 @@ export class Nance {
   }
 
   async queryAndSendDiscussions() {
-    return this.proposalHandler.getToDiscuss().then((proposalsToDiscuss) => {
+    return this.proposalHandler.getToDiscuss(true).then((proposalsToDiscuss) => {
       return Promise.all(proposalsToDiscuss.map(async (proposal) => {
         proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
         this.proposalHandler.updateDiscussionURL(proposal);
@@ -214,13 +214,11 @@ export class Nance {
         proposalMatch.voteResults = vote;
         proposalMatch.voteResults.percentages = this.getVotePercentages(vote);
         if (this.votePassCheck(proposalMatch.voteResults)) {
-          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
-            .voteResults.percentages[this.config.snapshot.choices[0]]);
+          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch.voteResults.percentages[this.config.snapshot.choices[0]]);
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusApproved(proposalHash);
         } else {
-          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
-            .voteResults.percentages[this.config.snapshot.choices[1]]);
+          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch.voteResults.percentages[this.config.snapshot.choices[1]]);
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
         }
