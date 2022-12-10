@@ -467,7 +467,7 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async getPayoutsDb(version: string): Promise<Payout[]> {
-    return this.queryNotionPayoutDb(this.filters[`payouts${version as 'V1' | 'V2'}`]);
+    return this.queryNotionPayoutDb(this.filters[`payouts${version as 'V1' | 'V2' | 'V3'}`]);
   }
 
   async getReserveDb(version: string): Promise<Reserve[]> {

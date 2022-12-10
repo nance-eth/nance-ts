@@ -172,6 +172,22 @@ export const filters = (config: NanceConfig) => {
         }
       ]
     },
+    payoutsV3: {
+      and: [
+        {
+          property: 'JB DAO Treasury',
+          rich_text: {
+            contains: 'V3'
+          }
+        },
+        {
+          property: config.propertyKeys.payoutAddress,
+          rich_text: {
+            is_not_empty: true
+          }
+        }
+      ]
+    },
     reservedIsNotOwner: {
       property: 'isOwner',
       rich_text: {
