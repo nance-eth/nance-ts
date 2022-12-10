@@ -132,7 +132,6 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const treasury = new NanceTreasury(res.locals.config, res.locals.notion);
   return res.send(
     await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
-      console.log(txn);
       return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
     }).catch((e: any) => {
       return { success: false, error: e.reason };
