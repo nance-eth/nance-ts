@@ -150,7 +150,9 @@ export const filters = (config: NanceConfig) => {
         },
         {
           property: config.propertyKeys.payoutAddress,
-          is_not_empty: true
+          rich_text: {
+            is_not_empty: true
+          }
         }
       ]
     },
@@ -164,7 +166,9 @@ export const filters = (config: NanceConfig) => {
         },
         {
           property: config.propertyKeys.payoutAddress,
-          is_not_empty: true
+          rich_text: {
+            is_not_empty: true
+          }
         }
       ]
     },
