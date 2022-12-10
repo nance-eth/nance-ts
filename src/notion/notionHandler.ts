@@ -107,7 +107,7 @@ export class NotionHandler implements DataContentHandler {
       amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.propertyKeys.payoutAmountUSD),
       count:
         notionUtils.getNumber(unconvertedPayout, 'Last FC') - notionUtils.getNumber(unconvertedPayout, 'First FC') + 1,
-      payName: notionUtils.getRichText(unconvertedPayout, this.config.propertyKeys.payoutName)
+      payName: ''
     };
   }
 

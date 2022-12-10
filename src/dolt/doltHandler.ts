@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
-import * as objectHash from 'object-hash';
 import { Proposal, PropertyKeys } from '../types';
 // import { Dolt } from './doltAPI';
 import { DoltSQL } from './doltSQL';
@@ -72,13 +71,12 @@ export class DoltHandler {
     const amount = proposal.payout?.amountUSD;
     const currency = 'usd';
     const payStatus = 'voting';
-    const hashId = objectHash.default({ payAddress, payProject, payName, numberOfPayouts, governanceStart, uuidOfProposal: proposal.hash });
     this.localDolt.db.query(oneLine`
       REPLACE INTO ${payoutsTable}
       (hashId, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
       amount, currency, payAddress, payProject, payStatus, payName)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)`, [
-      hashId, proposal.hash, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName
+      null, proposal.hash, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName
     ]);
   }
 
