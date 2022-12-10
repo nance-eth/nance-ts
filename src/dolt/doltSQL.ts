@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/quotes */
-import mysql, { RowDataPacket } from 'mysql2';
+import mysql, { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { DBConfig, DoltBranch } from './types';
 
 // DB DEFAULTS
@@ -106,6 +106,14 @@ export class DoltSQL {
   async query(query: string) {
     return this.db.query(query).then((res) => {
       return res[0];
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async queryResults(query: string) {
+    return this.db.query(query).then((res) => {
+      return res[0] as unknown as ResultSetHeader;
     }).catch((e) => {
       return Promise.reject(e);
     });

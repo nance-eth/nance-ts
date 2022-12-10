@@ -1,27 +1,23 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { Proposal, Signature } from '../../types';
+import { Signature, Proposal } from '../../types';
 import { DOMAIN, TYPES } from '../constants/Signature';
-import {
-  ProposalMarkdownResponse,
-  APIErrorResponse
-} from '../models';
+import { keys } from '../../keys';
 
 const API_STAGING = 'https://api.staging.nance.app';
 const API_MAIN = 'https://api.nance.app';
 const API_LOCAL = 'http://localhost:3000';
 const API = API_LOCAL;
 
-const SPACE = 'waterbox';
 const PROPOSAL: Proposal = {
-  hash: '',
-  status: 'Draft',
+  hash: '998bb74aab644546a29a4b603f31bca9',
+  status: 'Discussion',
   type: 'Payout',
   governanceCycle: undefined,
   proposalId: '',
   author: '',
   version: '1',
-  title: 'Wiggly wiggly woo',
+  title: 'DO the thing to the woo',
   // eslint-disable-next-line max-len
   body: 'Status: Draft\n\n```\nAuthor:\nDate: (YYYY-MM-DD)\n```\n\n## Synopsis\n\n*State what the proposal does in one sentence.*\n\n## Motivation\n\n*What problem does this solve? Why now?* \n\n## Specification\n\n*How exactly will this be executed? Be specific and leave no ambiguity.* \n\n## Rationale\n\n*Why is this specification appropriate?*\n\n## Risks\n\n*What might go wrong?*\n\n## Timeline\n\n*When exactly should this proposal take effect? When exactly should this proposal end?*',
   discussionThreadURL: '',
@@ -30,10 +26,10 @@ const PROPOSAL: Proposal = {
   url: '',
   payout: {
     type: 'address',
-    count: 3,
-    amountUSD: 1800,
+    count: 2,
+    amountUSD: 2800,
     address: '0x25910143C255828F623786f46fe9A8941B7983bB',
-    payName: 'testing123 payout'
+    payName: 'testing123 payout editted'
   }
 };
 
@@ -45,7 +41,8 @@ async function signPayload(space: string, command: string, payload: any): Promis
     timestamp,
     payload: ethers.utils.solidityKeccak256(['string'], [JSON.stringify(payload)])
   };
-  const wallet = ethers.Wallet.createRandom();
+  const wallet = new ethers.Wallet(keys.PRIVATE_KEY);
+  console.log(typedValue);
   // eslint-disable-next-line no-underscore-dangle
   return wallet._signTypedData(DOMAIN, TYPES, typedValue).then((signature) => {
     return {
@@ -56,18 +53,9 @@ async function signPayload(space: string, command: string, payload: any): Promis
   });
 }
 
-async function uploadProposal(space: string, proposal: Proposal): Promise<ProposalMarkdownResponse | APIErrorResponse> {
-  const signature = await signPayload(space, 'upload', proposal);
-  return axios.post(`${API}/${space}/upload`, {
-    signature,
-    proposal
-  }).then((response) => {
-    return response.data;
-  });
+async function main(space: string, proposal: Proposal) {
+  const signature = await signPayload(space, 'edit', proposal);
+  console.log((await axios.put(`${API}/${space}/edit`, { signature, proposal })).data);
 }
 
-// upload
-console.log('Upload proposal...');
-uploadProposal(SPACE, PROPOSAL).then((res) => {
-  console.log(res);
-});
+main('waterbox', PROPOSAL);
