@@ -141,16 +141,32 @@ export const filters = (config: NanceConfig) => {
       ] as SimplePropertyFilter[]
     },
     payoutsV1: {
-      property: 'JB DAO Treasury',
-      rich_text: {
-        contains: 'V1'
-      }
+      and: [
+        {
+          property: 'JB DAO Treasury',
+          rich_text: {
+            contains: 'V1'
+          }
+        },
+        {
+          property: config.propertyKeys.payoutAddress,
+          is_not_empty: true
+        }
+      ]
     },
     payoutsV2: {
-      property: 'JB DAO Treasury',
-      rich_text: {
-        contains: 'V2'
-      }
+      and: [
+        {
+          property: 'JB DAO Treasury',
+          rich_text: {
+            contains: 'V2'
+          }
+        },
+        {
+          property: config.propertyKeys.payoutAddress,
+          is_not_empty: true
+        }
+      ]
     },
     reservedIsNotOwner: {
       property: 'isOwner',
