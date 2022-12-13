@@ -33,6 +33,17 @@ export class DoltHandler {
     });
   }
 
+  async queryProposals(query: string): Promise<Proposal[]> {
+    return this.localDolt.queryRows(query).then((res) => {
+      console.log(res);
+      return res.map((r) => {
+        return this.toProposal(r as SQLProposal);
+      });
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
   async queryDbResults(query: string) {
     return this.localDolt.queryResults(query).then((res) => {
       return res;
@@ -42,7 +53,7 @@ export class DoltHandler {
   }
 
   toProposal(proposal: SQLProposal): Proposal {
-    const voteURL = (proposal.snapshotId) ? `/${proposal.snapshotId}` : ''; // add slash for notion legacy reasons
+    const voteURL = proposal.snapshotId ?? '';
     const proposalId = (proposal.proposalId) ? `${this.propertyKeys.proposalIdPrefix}${proposal.proposalId}` : '';
     return {
       hash: proposal.uuid,
@@ -108,7 +119,7 @@ export class DoltHandler {
   async addPayoutToDb(proposal: Proposal) {
     const treasuryVersion = proposal.version?.split('V')[1] ?? proposal.version;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    let payAddress: string | null = proposal.payout!.address;
+    let payAddress: string | null = proposal.payout?.address ?? '';
     let payProject;
     if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
     const payName = proposal.payout?.payName;
@@ -136,7 +147,7 @@ export class DoltHandler {
     const numberOfPayouts = proposal.payout?.count;
     const amount = proposal.payout?.amountUSD;
     const currency = 'usd';
-    const payStatus = 'voting';
+    const payStatus = proposal.status;
     this.localDolt.db.query(oneLine`
       UPDATE ${payoutsTable} SET
       treasuryVersion = ?, governanceCycleStart = ?, numberOfPayouts = ?, amount = ?,
@@ -200,7 +211,7 @@ export class DoltHandler {
   }
 
   async getVoteProposals() {
-    return this.queryDb(`
+    return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Voting'
       AND governanceCycle = '${this.currentGovernanceCycle}'
@@ -276,10 +287,9 @@ export class DoltHandler {
   }
 
   async updateVotingSetup(proposal: Proposal) {
-    const query = `
+    const query = oneLine`
       UPDATE ${proposalsTable} SET
       title = '${proposal.title}',
-      body = '${proposal.body}',
       snapshotId = '${getLastSlash(proposal.voteURL)}'
       WHERE uuid = '${proposal.hash}'
     `;
@@ -287,12 +297,12 @@ export class DoltHandler {
   }
 
   async updateVotingClose(proposal: Proposal) {
-    this.localDolt.db.query(`
+    this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
-      snapshotChoices = [?],
-      snapshotVotes = [?]
+      choices = '${JSON.stringify(Object.keys(proposal.voteResults?.scores ?? ''))}',
+      snapshotVotes = "[${Object.values(proposal.voteResults?.scores ?? '')}]"
       WHERE uuid = ?
-    `, [Object.keys(proposal.voteResults?.scores ?? ''), Object.values(proposal.voteResults?.scores ?? ''), proposal.hash]);
+    `, [proposal.hash]);
     if (proposal.type?.toLowerCase().includes('pay')) {
       this.updatePayoutStatus(proposal);
     }

@@ -104,7 +104,7 @@
     "API_KEY": "DOLT_KEY",
     "enabled": true,
     "owner": "jigglyjams",
-    "repo": "juicebox_governance"
+    "repo": "juicebox"
   },
   "snapshot": {
     "base": "https://juicetool.xyz/snapshot",

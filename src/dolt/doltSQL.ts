@@ -111,6 +111,14 @@ export class DoltSQL {
     });
   }
 
+  async queryRows(query: string) {
+    return this.db.query(query).then((res) => {
+      return res[0] as RowDataPacket[];
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
   async queryResults(query: string) {
     return this.db.query(query).then((res) => {
       return res[0] as unknown as ResultSetHeader;
