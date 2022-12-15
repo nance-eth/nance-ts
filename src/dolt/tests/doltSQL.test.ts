@@ -1,7 +1,7 @@
 import { DoltSQL } from '../doltSQL';
 
 async function main() {
-  const dolt = new DoltSQL({ database: 'juicebox_governance' });
+  const dolt = new DoltSQL({ database: 'juicebox' });
   console.log(await dolt.testConnection());
   console.log(await dolt.viewRemotes());
   console.log(await dolt.showBranches());

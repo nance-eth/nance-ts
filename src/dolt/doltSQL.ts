@@ -63,8 +63,8 @@ export class DoltSQL {
     });
   }
 
-  async checkout(branch: string) {
-    return this.db.query(`CALL DOLT_CHECKOUT('${branch}')`).then((res) => {
+  async checkout(branch: string, dash_b?: boolean) {
+    return this.db.query(`CALL DOLT_CHECKOUT(${(dash_b) ? `'-b',` : ''}'${branch}')`).then((res) => {
       return status(res);
     }).catch((e) => {
       return Promise.reject(e);

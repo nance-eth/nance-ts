@@ -1,15 +1,13 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { Proposal, PropertyKeys } from '../types';
-import { SQLProposal } from './schema';
+import { GovernanceCycle, SQLProposal } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
 const governanceCyclesTable = 'governanceCycles';
-
-type LinkedFundingCycles = { v1?: number, v2?: number, v3?: number };
 
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
 export class DoltHandler {
@@ -35,7 +33,6 @@ export class DoltHandler {
 
   async queryProposals(query: string): Promise<Proposal[]> {
     return this.localDolt.queryRows(query).then((res) => {
-      console.log(res);
       return res.map((r) => {
         return this.toProposal(r as SQLProposal);
       });
@@ -71,14 +68,17 @@ export class DoltHandler {
 
   async getCurrentGovernanceCycle() {
     const currentCycle = (await this.queryDb(`
-      SELECT cycleNumber from ${governanceCyclesTable} WHERE cycleStatus = 'active'
+      SELECT cycleNumber from ${governanceCyclesTable} WHERE acceptingProposals = 1 ORDER BY ABS(DATEDIFF(startDatetime, NOW()))
     `) as unknown as Array<{ cycleNumber: number }>)[0];
     if (!currentCycle) { return 1; }
     return currentCycle.cycleNumber;
   }
 
   async setCurrentGovernanceCycle(governanceCycle: number) {
-    return this.localDolt.checkout(`GC${governanceCycle}`).then((res) => {
+    const branches = await this.localDolt.showBranches();
+    const branchExists = branches.some((branch) => { return branch.name === (`GC${governanceCycle}`); });
+    return this.localDolt.checkout(`GC${governanceCycle}`, !branchExists).then((res) => {
+      this.currentGovernanceCycle = governanceCycle;
       if (res === 0) { return true; }
       return false;
     }).catch((e) => {
@@ -98,19 +98,19 @@ export class DoltHandler {
     const proposalId = (proposal.proposalId) ? this.proposalIdNumber(proposal.proposalId) : null;
     proposal.status = proposal.status || 'Draft';
     proposal.hash = proposal.hash || uuid();
-    this.localDolt.db.query(oneLine`
+    await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, category, governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
       ON DUPLICATE KEY UPDATE
       lastEditedTime = VALUES(lastEditedTime), title = VALUES(title), body = VALUES(body), category = VALUES(category), governanceCycle = VALUES(governanceCycle),
       proposalStatus = VALUES(proposalStatus), voteType = VALUES(voteType), choices = VALUES(choices)`,
-    [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposalId, proposal.discussionThreadURL, voteType, voteChoices]);
+    [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices)]);
     if (proposal.type?.toLowerCase().includes('pay')) {
       if (edit) {
-        this.editPayout(proposal);
+        await this.editPayout(proposal);
       } else {
-        this.addPayoutToDb(proposal);
+        await this.addPayoutToDb(proposal);
       }
     }
     return proposal.hash;
@@ -317,12 +317,19 @@ export class DoltHandler {
   `, [payStatus, proposal.hash]);
   }
 
-  async addGovernanceCycle(cycle: number, start: Date, end: Date, linkedFundingCycles: LinkedFundingCycles) {
-    this.localDolt.db.query(oneLine`
+  async addGovernanceCycleToDb(g: GovernanceCycle) {
+    return this.localDolt.db.query(oneLine`
       INSERT INTO ${governanceCyclesTable}
-      (cycleNumber, startDatetime, endDatetime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle)
-      VALUES
-      (?,?,?,?,?,?)`, [cycle, start, end, linkedFundingCycles?.v1, linkedFundingCycles?.v2, linkedFundingCycles?.v3]
-    );
+      (cycleNumber, startDateTime, endDateTime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle, acceptingProposals)
+      VALUES(?,?,?,?,?,?,?)`, [g.cycleNumber, g.startDatetime, g.endDatetime, g.jbV1FundingCycle, g.jbV2FundingCycle, g.jbV3FundingCycle, true]
+    ).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async pushProposal(proposal: Proposal) {
+    return this.localDolt.commit(`Add proposal ${proposal.hash.substring(0, 7)}...${proposal.hash.substring(proposal.hash.length - 7)}`).then((res) => {
+      return this.localDolt.push(`GC${this.currentGovernanceCycle}`);
+    });
   }
 }

@@ -18,7 +18,7 @@ export type SQLProposal = {
   discussionURL?: string;
 };
 
-export type Payouts = {
+export type Payout = {
   uuid: string;
   uuidOfProposal: string;
   treasuryVersion: number;
@@ -33,12 +33,12 @@ export type Payouts = {
   payStatus?: string;
 };
 
-export type GovernanceCycles = {
+export type GovernanceCycle = {
   cycleNumber: number;
-  cycleStatus: string;
   startDatetime: Date;
   endDatetime: Date;
   jbV1FundingCycle?: number,
   jbV2FundingCycle?: number;
   jbV3FundingCycle?: number;
+  acceptingProposals: boolean;
 };

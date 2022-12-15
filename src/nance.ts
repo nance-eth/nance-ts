@@ -29,7 +29,11 @@ export class Nance {
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
     this.dProposalHandler = new DoltHandler(config.dolt.repo, this.config.propertyKeys);
     this.proposalHandler.getCurrentGovernanceCycle().then((res) => {
-      this.dProposalHandler.currentGovernanceCycle = res;
+      this.dProposalHandler.setCurrentGovernanceCycle(res).then(() => {
+        this.dProposalHandler.localDolt.showActiveBranch().then((branch) => {
+          logger.info(`[DOLT] confirming dolt checkout branch: ${branch}`);
+        });
+      });
     });
   }
 
@@ -95,7 +99,13 @@ export class Nance {
         proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
         this.proposalHandler.updateDiscussionURL(proposal);
         proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
-        try { this.dProposalHandler.addProposalToDb(proposal); } catch (e) { logger.error('no dDB'); }
+        try {
+          this.dProposalHandler.addProposalToDb(proposal).then(() => {
+            this.dProposalHandler.pushProposal(proposal).then((res) => {
+              logger.info(`[DOLT]: proposal push status: ${res ? 'success' : 'failed'}`);
+            });
+          });
+        } catch (e) { logger.error('no dDB'); }
         logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
         return proposal.discussionThreadURL;
       }));
