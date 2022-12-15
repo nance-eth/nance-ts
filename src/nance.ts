@@ -102,7 +102,7 @@ export class Nance {
         try {
           this.dProposalHandler.addProposalToDb(proposal).then(() => {
             this.dProposalHandler.pushProposal(proposal).then((res) => {
-              logger.info(`[DOLT]: proposal push status: ${res ? 'success' : 'failed'}`);
+              logger.info(`[DOLT]: proposal push status: ${(res === 1) ? 'success' : 'failed'}`);
             });
           });
         } catch (e) { logger.error('no dDB'); }

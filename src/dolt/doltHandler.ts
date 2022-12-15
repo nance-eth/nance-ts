@@ -91,10 +91,11 @@ export class DoltHandler {
   };
 
   async addProposalToDb(proposal: Proposal, edit = false) {
+    await this.localDolt.checkout(`GC${this.currentGovernanceCycle}`); // ensure proper branch is checked out
     const now = new Date().toISOString();
     proposal.governanceCycle = (proposal.governanceCycle === 0) ? this.currentGovernanceCycle : proposal.governanceCycle ?? this.currentGovernanceCycle;
     const voteType = proposal.voteSetup?.type || 'basic';
-    const voteChoices = proposal.voteSetup?.choices || '["For", "Against", "Abstain"]';
+    const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
     const proposalId = (proposal.proposalId) ? this.proposalIdNumber(proposal.proposalId) : null;
     proposal.status = proposal.status || 'Draft';
     proposal.hash = proposal.hash || uuid();

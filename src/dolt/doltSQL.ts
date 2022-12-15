@@ -6,6 +6,7 @@ import { DBConfig, DoltBranch } from './types';
 const HOST = '127.0.0.1';
 const USER = 'root';
 const PASSWORD = '';
+const PORT = 3306;
 
 const status = (res: any): number => {
   return (<RowDataPacket>res[0])[0].status;
@@ -16,11 +17,13 @@ const cleanSingleRes = (res: any) => {
 };
 export class DoltSQL {
   db;
+  options;
   constructor(
     options: DBConfig,
   ) {
-    const { host = HOST, user = USER, password = PASSWORD, database } = options;
-    this.db = mysql.createPool({ host, user, password, database }).promise();
+    this.options = options;
+    const { host = HOST, user = USER, password = PASSWORD, database, port = PORT } = options;
+    this.db = mysql.createPool({ host, user, password, database, port }).promise();
   }
 
   async testConnection() {
