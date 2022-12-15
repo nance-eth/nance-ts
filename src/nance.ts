@@ -100,10 +100,9 @@ export class Nance {
         this.proposalHandler.updateDiscussionURL(proposal);
         proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
         try {
-          this.dProposalHandler.addProposalToDb(proposal).then(() => {
-            this.dProposalHandler.pushProposal(proposal).then((res) => {
-              logger.info(`[DOLT]: proposal push status: ${(res === 1) ? 'success' : 'failed'}`);
-            });
+          await this.dProposalHandler.addProposalToDb(proposal);
+          await this.dProposalHandler.pushProposal(proposal).then((res) => {
+            logger.info(`[DOLT]: proposal push status: ${(res === 1) ? 'success' : 'failed'}`);
           });
         } catch (e) { logger.error('no dDB'); }
         logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
