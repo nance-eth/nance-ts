@@ -129,7 +129,7 @@ export class DoltHandler {
     const amount = proposal.payout?.amountUSD;
     const currency = 'usd';
     const payStatus = 'voting';
-    this.localDolt.db.query(oneLine`
+    await this.localDolt.db.query(oneLine`
       INSERT INTO ${payoutsTable}
       (uuid, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
       amount, currency, payAddress, payProject, payStatus, payName)
@@ -328,8 +328,8 @@ export class DoltHandler {
     });
   }
 
-  async pushProposal(proposal: Proposal) {
-    return this.localDolt.commit(`Add proposal ${proposal.hash.substring(0, 7)}...${proposal.hash.substring(proposal.hash.length - 7)}`).then((res) => {
+  async pushProposal(proposal: Proposal): Promise<number> {
+    return this.localDolt.commit(`Add proposal ${proposal.hash.substring(0, 7)}...${proposal.hash.substring(proposal.hash.length - 7)}`).then(() => {
       return this.localDolt.push(`GC${this.currentGovernanceCycle}`);
     });
   }

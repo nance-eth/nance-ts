@@ -68,15 +68,15 @@ export class DoltSQL {
 
   async checkout(branch: string, dash_b?: boolean) {
     return this.db.query(`CALL DOLT_CHECKOUT(${(dash_b) ? `'-b',` : ''}'${branch}')`).then((res) => {
-      return status(res);
+      return cleanSingleRes(res).hash;
     }).catch((e) => {
       return Promise.reject(e);
     });
   }
 
-  async commit(message: string) {
+  async commit(message: string): Promise<string> {
     return this.db.query(`CALL DOLT_COMMIT('-a', '-m', '${message}')`).then((res) => {
-      return status(res);
+      return cleanSingleRes(res).hash;
     }).catch((e) => {
       return Promise.reject(e);
     });
@@ -84,7 +84,7 @@ export class DoltSQL {
 
   async push(branch: string) {
     return this.db.query(`CALL DOLT_PUSH('origin', '${branch}')`).then((res) => {
-      return status(res);
+      return cleanSingleRes(res).success;
     }).catch((e) => {
       return Promise.reject(e);
     });
