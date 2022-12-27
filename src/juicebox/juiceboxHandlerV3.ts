@@ -177,14 +177,17 @@ export class JuiceboxHandlerV3 {
     distrubutionPayouts: Payout[],
     distributionReserved: Reserve[]
   ): Promise<JBGroupedSplitsStruct[]> {
-    // project owner is default beneficiary address for project routed payouts (check on this)
     const owner = await this.getProjectOwner();
+    let runningTotal = 0;
     const distrubutionPayoutsJBSplitStruct = distrubutionPayouts.map((payout): JBSplitStruct => {
       const projectPayout = (payout.address.includes(PROJECT_PAYOUT_PREFIX)) ? payout.address.split(PROJECT_PAYOUT_PREFIX)[1] : undefined;
+      let percent = Math.round((payout.amountUSD / distributionLimit) * ONE_BILLION);
+      runningTotal += percent;
+      if (runningTotal > ONE_BILLION) percent -= 1; // overflow hack
       return {
         preferClaimed: DEFAULT_PREFER_CLAIMED,
         preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
-        percent: Math.floor((payout.amountUSD / distributionLimit) * ONE_BILLION),
+        percent,
         projectId: projectPayout || DEFAULT_PROJECT_ID,
         beneficiary: (projectPayout) ? owner : payout.address,
         lockedUntil: DEFAULT_LOCKED_UNTIL,

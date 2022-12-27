@@ -15,6 +15,7 @@ import { CalendarHandler } from '../calendar/CalendarHandler';
 
 const router = express.Router();
 const spacePrefix = '/:space';
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
@@ -122,7 +123,7 @@ router.get(`${spacePrefix}/query`, async (req, res) => {
 });
 
 router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
-  const { version, address, datetime, network } = req.query as unknown as FetchReconfigureRequest;
+  const { version = 'V3', address = ZERO_ADDRESS, datetime = new Date(), network = 'mainnet' } = req.query as unknown as FetchReconfigureRequest;
   const ens = await getENS(address);
   const { gnosisSafeAddress } = res.locals.config.juicebox;
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
