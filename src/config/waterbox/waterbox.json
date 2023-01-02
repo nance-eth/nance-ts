@@ -1,7 +1,7 @@
 {
   "name": "waterbox",
   "proposalDataBackup": "ipfs",
-  "ipfsGateway": "https://gateway.pinata.cloud/ipfs",
+  "ipfsGateway": "ipfs.nftstorage.link",
   "translation": {
     "api": "deepl",
     "targetLanguage": "zh",
@@ -17,7 +17,7 @@
   },
   "reminder": {
     "channelIds": ["889377541675159605", "964601032703352873"],
-    "imagesCID": "https://nance.mypinata.cloud/ipfs/QmYYjE7tST6QRBHcKScFATjcZSgq1xQPytNAvxCgHMSvbs",
+    "imagesCID": "https://bafybeig7vxzaytiiskcvgpdjp5jr5ifrp5r2bio5ei3c6bx7wsltotvdfe.ipfs.nftstorage.link",
     "images": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"],
     "links": {
       "process": "https://info.juicebox.money/dao/process",

@@ -1,7 +1,7 @@
 {
   "name": "slice",
   "proposalDataBackup": "ipfs",
-  "ipfsGateway": "https://gateway.pinata.cloud/ipfs",
+  "ipfsGateway": "ipfs.nftstorage.link",
   "translation": {
     "api": "deepl",
     "targetLanguage": "zh",

@@ -53,7 +53,9 @@ export class DoltHandler {
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, category, governanceCycle, proposalStatus, proposalId, voteType, choices)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, [
       proposal.hash || uuid(), now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, governanceCycle, proposal.status, proposalId, voteType, voteChoices
-    ]);
+    ]).catch((e) => {
+      return Promise.reject(e);
+    });
     if (proposal.type?.toLowerCase().includes('pay')) {
       this.addPayoutToDb(proposal);
     }
