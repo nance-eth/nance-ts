@@ -68,7 +68,7 @@ export class DoltHandler {
 
   async getCurrentGovernanceCycle() {
     const currentCycle = (await this.queryDb(`
-      SELECT cycleNumber from ${governanceCyclesTable} WHERE acceptingProposals = 1 ORDER BY ABS(DATEDIFF(startDatetime, NOW()))
+      SELECT MAX(cycleNumber) as cycleNumber from ${governanceCyclesTable}
     `) as unknown as Array<{ cycleNumber: number }>)[0];
     if (!currentCycle) { return 1; }
     return currentCycle.cycleNumber;

@@ -50,4 +50,11 @@ export class CalendarHandler {
     });
     return (noEventsInProgress || executionOrDelayInProgress);
   }
+
+  getCurrentEvent() {
+    const now = new Date();
+    const nextEvents = this.getNextEvents().filter((event) => { return event.start <= now && event.end > now; });
+    const currentEvent = nextEvents[0].title;
+    return currentEvent;
+  }
 }

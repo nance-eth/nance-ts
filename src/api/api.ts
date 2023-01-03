@@ -34,14 +34,15 @@ router.use(spacePrefix, async (req, res, next) => {
 });
 
 router.get(`${spacePrefix}`, async (req, res) => {
-  const { proposalHandlerMain, spaceName } = res.locals;
-  return res.send(
-    await proposalHandlerMain.getCurrentGovernanceCycle().then((currentCycle: string) => {
-      return { sucess: true, data: { name: spaceName, currentCycle } };
-    }).catch((e: any) => {
-      return { success: false, error: `[NOTION ERROR]: ${e}` };
-    })
-  );
+  const { proposalHandlerMain, spaceName, config } = res.locals;
+  try {
+    const calendar = new CalendarHandler(calendarPath(config));
+    const currentEvent = calendar.getCurrentEvent();
+    const currentCycle = await proposalHandlerMain.getCurrentGovernanceCycle();
+    return res.send({ sucess: true, data: { name: spaceName, currentCycle, currentEvent } });
+  } catch (e) {
+    return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
+  }
 });
 
 router.get(`${spacePrefix}/discussionHook`, async (req, res) => {

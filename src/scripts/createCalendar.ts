@@ -76,20 +76,20 @@ export function createCalendar(newOrg?: string, TEST?: boolean) {
 
   const eventDateTimes: EventDateTimes = {
     temperatureCheck: {
-      start: [2022, 9, 22, 16, 0, 0],
-      end: [2022, 9, 24, 16, 0, 0]
+      start: [2023, 1, 1, 16, 0, 0],
+      end: [2023, 1, 3, 16, 0, 0]
     },
     vote: {
-      start: [2022, 9, 25, 16, 0, 0],
-      end: [2022, 9, 28, 16, 0, 0]
+      start: [2023, 1, 3, 16, 0, 0],
+      end: [2023, 1, 7, 16, 0, 0]
     },
     execution: {
-      start: [2022, 9, 29, 16, 0, 0],
-      end: [2022, 10, 2, 16, 0, 0]
+      start: [2023, 1, 7, 16, 0, 0],
+      end: [2023, 1, 10, 16, 0, 0]
     },
     delay: {
-      start: [2022, 10, 3, 16, 0, 0],
-      end: [2022, 10, 5, 16, 0, 0]
+      start: [2023, 1, 10, 16, 0, 0],
+      end: [2023, 1, 14, 16, 0, 0]
     }
   };
   
