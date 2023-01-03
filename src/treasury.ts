@@ -1,4 +1,5 @@
 /* eslint-disable prefer-promise-reject-errors */
+import { DoltHandler } from './dolt/doltHandler';
 import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
 import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
 import { JuiceboxHandlerV3 } from './juicebox/juiceboxHandlerV3';
@@ -14,7 +15,8 @@ export class NanceTreasury {
 
   constructor(
     protected config: NanceConfig,
-    protected proposalHandler: NotionHandler
+    protected proposalHandler: NotionHandler,
+    protected dProposalHandler?: DoltHandler
   ) {
     this.juiceboxHandlerV1 = new JuiceboxHandlerV1(
       config.juicebox.projectId,
@@ -114,6 +116,18 @@ export class NanceTreasury {
     if (version === 'V1') { return this.payoutTableToMods(); }
     if (version === 'V2') { return this.payoutTableToGroupedSplitsStruct(); }
     if (version === 'V3') { return this.payoutTableToGroupedSplitsStruct(); }
+    return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
+  }
+
+  async getQueuedConfiguration(version: string) {
+    if (version === 'V2') { return this.juiceboxHandlerV2.queuedConfiguration(); }
+    if (version === 'V3') { return this.juiceboxHandlerV3.queuedConfiguration(); }
+    return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
+  }
+
+  async getCurrentConfiguration(version: string) {
+    if (version === 'V2') { return this.juiceboxHandlerV2.currentConfiguration(); }
+    if (version === 'V3') { return this.juiceboxHandlerV3.currentConfiguration(); }
     return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
   }
 }

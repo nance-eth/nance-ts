@@ -1,4 +1,4 @@
-import { Proposal, Signature, BasicTransaction } from '../types';
+import { Proposal, Signature } from '../types';
 
 interface APIResponse<T> {
   success: boolean;
@@ -35,6 +35,11 @@ export interface ProposalMarkdownRequest extends BaseRequest {
 
 export interface ProposalUploadRequest extends BaseRequest {
   proposal: Proposal;
+  signature: Signature
+}
+
+export interface ProposalDeleteRequest extends BaseRequest {
+  uuid: string;
   signature: Signature
 }
 

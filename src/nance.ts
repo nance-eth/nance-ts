@@ -29,7 +29,11 @@ export class Nance {
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
     this.dProposalHandler = new DoltHandler(config.dolt.repo, this.config.propertyKeys);
     this.proposalHandler.getCurrentGovernanceCycle().then((res) => {
-      this.dProposalHandler.currentGovernanceCycle = res;
+      this.dProposalHandler.setCurrentGovernanceCycle(res).then(() => {
+        this.dProposalHandler.localDolt.showActiveBranch().then((branch) => {
+          logger.info(`[DOLT] confirming dolt checkout branch: ${branch}`);
+        });
+      });
     });
   }
 
@@ -90,12 +94,16 @@ export class Nance {
   }
 
   async queryAndSendDiscussions() {
-    return this.proposalHandler.getToDiscuss().then((proposalsToDiscuss) => {
+    return this.proposalHandler.getToDiscuss(true).then((proposalsToDiscuss) => {
       return Promise.all(proposalsToDiscuss.map(async (proposal) => {
         proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
         this.proposalHandler.updateDiscussionURL(proposal);
         proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
-        // try { this.dProposalHandler.addProposalToDb(proposal); } catch (e) { logger.error('no dDB'); }
+        try {
+          await this.dProposalHandler.addProposalToDb(proposal);
+          const pushed = await this.dProposalHandler.pushProposal(proposal);
+          logger.info(`[DOLT]: proposal push status: ${(pushed === 1) ? 'success' : 'failed'}`);
+        } catch (e) { logger.error('no dDB'); }
         logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
         return proposal.discussionThreadURL;
       }));
@@ -214,20 +222,18 @@ export class Nance {
         proposalMatch.voteResults = vote;
         proposalMatch.voteResults.percentages = this.getVotePercentages(vote);
         if (this.votePassCheck(proposalMatch.voteResults)) {
-          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
-            .voteResults.percentages[this.config.snapshot.choices[0]]);
+          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch.voteResults.percentages[this.config.snapshot.choices[0]]);
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusApproved(proposalHash);
         } else {
-          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch
-            .voteResults.percentages[this.config.snapshot.choices[1]]);
+          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch.voteResults.percentages[this.config.snapshot.choices[1]]);
           proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
         }
         try { await this.dProposalHandler.updateVotingClose(proposalMatch); } catch (e) { logger.error('no dDB'); }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
     })).then(() => {
-      this.dialogHandler.sendVoteResultsRollup(voteProposals);
+      // this.dialogHandler.sendVoteResultsRollup(voteProposals);
       logger.info(`${this.config.name}: votingClose() complete`);
       logger.info('===================================================================');
       return voteProposals;

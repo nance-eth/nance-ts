@@ -12,7 +12,7 @@
   },
   "juicebox": {
     "network": "mainnet",
-    "projectId": "",
+    "projectId": "311",
     "gnosisSafeAddress": ""
   },
   "discord": {

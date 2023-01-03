@@ -73,6 +73,7 @@
   },
   "notion": {
     "API_KEY": "",
+    "enabled": false,
     "publicURLPrefix": "",
     "database_id": "",
     "current_cycle_block_id": "",
@@ -97,6 +98,12 @@
       "type": "Category",
       "governanceCycle": "Funding Cycle"
     }
+  },
+  "dolt": {
+    "API_KEY": "DOLT_KEY",
+    "enabled": true,
+    "owner": "jigglyjams",
+    "repo": "${NAME}"
   },
   "snapshot": {
     "base": "https://juicetool.xyz/snapshot",

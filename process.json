@@ -2,7 +2,7 @@
   "apps": [
     { 
       "name": "juicebox",
-      "script": "export CONFIG=juicebox && export LOG_LEVEL=silly && ts-node src/index.ts",
+      "script": "dolt sql-server --config src/dolt/config.yml & export CONFIG=juicebox && export LOG_LEVEL=silly && ts-node src/index.ts",
       "watch": true
     }
   ]

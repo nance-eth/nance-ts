@@ -67,10 +67,10 @@ export class JuiceboxHandlerV2 {
   }
 
   currentConfiguration = async () => {
-    return (await getJBFundingCycleStore(
+    return getJBFundingCycleStore(
       this.provider,
       { network: this.network }
-    ).currentOf(this.projectId)).configuration;
+    ).currentOf(this.projectId);
   };
 
   queuedConfiguration = async () => {
@@ -95,7 +95,7 @@ export class JuiceboxHandlerV2 {
   };
 
   async getPayoutDistribution() {
-    const currentConfiguration = await this.currentConfiguration();
+    const currentConfiguration = (await this.currentConfiguration()).configuration;
     const fundingDistribution = await getJBSplitsStore(
       this.provider,
       { network: this.network }
@@ -112,7 +112,7 @@ export class JuiceboxHandlerV2 {
   }
 
   async getReserveDistribution() {
-    const currentConfiguration = await this.currentConfiguration();
+    const currentConfiguration = (await this.currentConfiguration()).configuration;
     const reservedDistribution = await getJBSplitsStore(
       this.provider,
       { network: this.network }
@@ -129,7 +129,7 @@ export class JuiceboxHandlerV2 {
   }
 
   async getDistributionLimit() {
-    const currentConfiguration = await this.currentConfiguration();
+    const currentConfiguration = (await this.currentConfiguration()).configuration;
     const terminal = await getJBDirectory(this.provider, { network: this.network }).terminalsOf(this.projectId);
     const distributionLimit = await this.JBController.distributionLimitOf(
       this.projectId,

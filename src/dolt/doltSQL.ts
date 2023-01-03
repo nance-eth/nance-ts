@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/quotes */
-import mysql, { RowDataPacket } from 'mysql2';
+import mysql, { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { DBConfig, DoltBranch } from './types';
 
 // DB DEFAULTS
 const HOST = '127.0.0.1';
 const USER = 'root';
 const PASSWORD = '';
+const PORT = 3306;
 
 const status = (res: any): number => {
   return (<RowDataPacket>res[0])[0].status;
@@ -16,11 +17,13 @@ const cleanSingleRes = (res: any) => {
 };
 export class DoltSQL {
   db;
+  options;
   constructor(
     options: DBConfig,
   ) {
-    const { host = HOST, user = USER, password = PASSWORD, database } = options;
-    this.db = mysql.createPool({ host, user, password, database }).promise();
+    this.options = options;
+    const { host = HOST, user = USER, password = PASSWORD, database, port = PORT } = options;
+    this.db = mysql.createPool({ host, user, password, database, port }).promise();
   }
 
   async testConnection() {
@@ -63,17 +66,17 @@ export class DoltSQL {
     });
   }
 
-  async checkout(branch: string) {
-    return this.db.query(`CALL DOLT_CHECKOUT('${branch}')`).then((res) => {
-      return status(res);
+  async checkout(branch: string, dash_b?: boolean) {
+    return this.db.query(`CALL DOLT_CHECKOUT(${(dash_b) ? `'-b',` : ''}'${branch}')`).then((res) => {
+      return cleanSingleRes(res).hash;
     }).catch((e) => {
       return Promise.reject(e);
     });
   }
 
-  async commit(message: string) {
+  async commit(message: string): Promise<string> {
     return this.db.query(`CALL DOLT_COMMIT('-a', '-m', '${message}')`).then((res) => {
-      return status(res);
+      return cleanSingleRes(res).hash;
     }).catch((e) => {
       return Promise.reject(e);
     });
@@ -81,7 +84,7 @@ export class DoltSQL {
 
   async push(branch: string) {
     return this.db.query(`CALL DOLT_PUSH('origin', '${branch}')`).then((res) => {
-      return status(res);
+      return cleanSingleRes(res).success;
     }).catch((e) => {
       return Promise.reject(e);
     });
@@ -106,6 +109,22 @@ export class DoltSQL {
   async query(query: string) {
     return this.db.query(query).then((res) => {
       return res[0];
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async queryRows(query: string) {
+    return this.db.query(query).then((res) => {
+      return res[0] as RowDataPacket[];
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
+  async queryResults(query: string) {
+    return this.db.query(query).then((res) => {
+      return res[0] as unknown as ResultSetHeader;
     }).catch((e) => {
       return Promise.reject(e);
     });

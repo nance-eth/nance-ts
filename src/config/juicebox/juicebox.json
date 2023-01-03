@@ -74,6 +74,7 @@
   },
   "notion": {
     "API_KEY": "NOTION_KEY_JUICEBOX",
+    "enabled": true,
     "publicURLPrefix": "juicebox.notion.site",
     "database_id": "9d126f9148dc42ee83317d5cd74e4db4",
     "current_cycle_block_id": "7e88ba32f5484ea9900a5fb00426bc9a",
@@ -101,8 +102,9 @@
   },
   "dolt": {
     "API_KEY": "DOLT_KEY",
+    "enabled": true,
     "owner": "jigglyjams",
-    "repo": "juicebox_governance"
+    "repo": "juicebox"
   },
   "snapshot": {
     "base": "https://juicetool.xyz/snapshot",

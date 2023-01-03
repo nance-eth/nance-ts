@@ -1,5 +1,5 @@
 {
-  "name": "waterbox",
+  "name": "jigglyjams",
   "proposalDataBackup": "ipfs",
   "ipfsGateway": "ipfs.nftstorage.link",
   "translation": {
@@ -33,6 +33,7 @@
   },
   "notion": {
     "API_KEY": "NOTION_KEY_WATERBOX",
+    "enabled": false,
     "publicURLPrefix": "foil-flat-c43.notion.site",
     "database_id": "8f5a93009a364c4ebf69757ff98be405",
     "current_cycle_block_id": "8458fa50e1724d7aa721275a195dece3",
@@ -85,6 +86,12 @@
       "type": "Category",
       "governanceCycle": "Funding Cycle"
     }
+  },
+  "dolt": {
+    "API_KEY": "DOLT_KEY",
+    "enabled": true,
+    "owner": "jigglyjams",
+    "repo": "waterbox"
   },
   "snapshot": {
     "base": "https://juicetool.xyz/snapshot",
