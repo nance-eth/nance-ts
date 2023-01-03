@@ -117,7 +117,7 @@ export async function downloadImages(baseURL: string, images: string[]) {
       responseType: 'stream'
     }).then((res) => {
       res.data.pipe(fs.createWriteStream(`${baseDir}/day${day}/${day}.png`));
-    });
+    }).catch((e) => { console.log(e); });
 
     axios({
       method: 'get',
@@ -125,11 +125,15 @@ export async function downloadImages(baseURL: string, images: string[]) {
       responseType: 'stream'
     }).then((res) => {
       res.data.pipe(fs.createWriteStream(`${baseDir}/day${day}/thumbnail.png`));
-    });
+    }).catch((e) => { console.log(e); });
   }));
   return Promise.resolve();
 }
 
 export function uuid(hyphen = false): string {
   return uuidv4().replaceAll('-', '');
+}
+
+export function cidToLink(cid: string, gateway: string) {
+  return (cid.startsWith('Qm') ? `${gateway}/${cid}` : `https://${cid}.${gateway}`);
 }

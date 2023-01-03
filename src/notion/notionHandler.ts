@@ -107,7 +107,7 @@ export class NotionHandler implements DataContentHandler {
       amountUSD: notionUtils.getNumber(unconvertedPayout, this.config.propertyKeys.payoutAmountUSD),
       count:
         notionUtils.getNumber(unconvertedPayout, 'Last FC') - notionUtils.getNumber(unconvertedPayout, 'First FC') + 1,
-      payName: notionUtils.getRichText(unconvertedPayout, this.config.propertyKeys.payoutName)
+      payName: ''
     };
   }
 
@@ -467,7 +467,7 @@ export class NotionHandler implements DataContentHandler {
   }
 
   async getPayoutsDb(version: string): Promise<Payout[]> {
-    return this.queryNotionPayoutDb(this.filters[`payouts${version as 'V1' | 'V2'}`]);
+    return this.queryNotionPayoutDb(this.filters[`payouts${version as 'V1' | 'V2' | 'V3'}`]);
   }
 
   async getReserveDb(version: string): Promise<Reserve[]> {

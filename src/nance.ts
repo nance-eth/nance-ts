@@ -4,17 +4,18 @@ import { NotionHandler } from './notion/notionHandler';
 import { keys } from './keys';
 import {
   getLastSlash as getIdFromURL,
-  floatToPercentage
+  floatToPercentage,
+  cidToLink,
+  addSecondsToDate
 } from './utils';
 import logger from './logging';
 import { NanceConfig, Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
-import { PinataHandler } from './pinata/pinataHandler';
+import { pinProposal } from './storage/storageHandler';
 import { DoltHandler } from './dolt/doltHandler';
 
 export class Nance {
   proposalHandler;
-  proposalDataBackupHandler;
   dialogHandler;
   votingHandler;
   dProposalHandler;
@@ -24,7 +25,6 @@ export class Nance {
     public config: NanceConfig
   ) {
     this.proposalHandler = new NotionHandler(config);
-    this.proposalDataBackupHandler = new PinataHandler(keys.PINATA_KEY);
     this.dialogHandler = new DiscordHandler(config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
     this.dProposalHandler = new DoltHandler(config.dolt.repo, this.config.propertyKeys);
@@ -177,14 +177,14 @@ export class Nance {
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
       if (this.config.proposalDataBackup) {
-        const ipfsCID = await this.proposalDataBackupHandler.pinProposal(proposal);
-        proposal.ipfsURL = `${this.config.ipfsGateway}/${ipfsCID}`;
+        const ipfsCID = await pinProposal(proposal);
+        proposal.ipfsURL = cidToLink(ipfsCID, this.config.ipfsGateway);
       }
       const markdownWithAdditions = this.proposalHandler.appendProposal(proposal);
       proposal.body = markdownWithAdditions;
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
-        new Date(),
+        addSecondsToDate(new Date(), -1),
         endDate,
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
