@@ -40,6 +40,7 @@ CREATE TABLE payouts (
   currency VARCHAR(10) NOT NULL,
   payName VARCHAR(255),
   payAddress CHAR(42),
+  payAllocator CHAR(42),
   payProject INT,
   payStatus VARCHAR(35),
   PRIMARY KEY (uuid),

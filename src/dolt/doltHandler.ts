@@ -320,7 +320,7 @@ export class DoltHandler {
 
   async addGovernanceCycleToDb(g: GovernanceCycle) {
     return this.localDolt.db.query(oneLine`
-      INSERT INTO ${governanceCyclesTable}
+      REPLACE INTO ${governanceCyclesTable}
       (cycleNumber, startDateTime, endDateTime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle, acceptingProposals)
       VALUES(?,?,?,?,?,?,?)`, [g.cycleNumber, g.startDatetime, g.endDatetime, g.jbV1FundingCycle, g.jbV2FundingCycle, g.jbV3FundingCycle, true]
     ).catch((e) => {

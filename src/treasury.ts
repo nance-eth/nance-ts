@@ -124,4 +124,10 @@ export class NanceTreasury {
     if (version === 'V3') { return this.juiceboxHandlerV3.queuedConfiguration(); }
     return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
   }
+
+  async getCurrentConfiguration(version: string) {
+    if (version === 'V2') { return this.juiceboxHandlerV2.currentConfiguration(); }
+    if (version === 'V3') { return this.juiceboxHandlerV3.currentConfiguration(); }
+    return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
+  }
 }

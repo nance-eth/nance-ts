@@ -53,6 +53,7 @@ export const minutesToDays = (minutes: number) => {
 };
 
 export function getLastSlash(url: string) {
+  if (!url) return '';
   if (!url.includes('/')) return url;
   const split = url.split('/');
   return split[split.length - 1].trim();
