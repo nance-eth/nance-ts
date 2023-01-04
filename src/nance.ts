@@ -27,7 +27,7 @@ export class Nance {
     this.proposalHandler = new NotionHandler(config);
     this.dialogHandler = new DiscordHandler(config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
-    this.dProposalHandler = new DoltHandler(config.dolt.repo, this.config.propertyKeys);
+    this.dProposalHandler = new DoltHandler({ database: config.dolt.repo }, this.config.propertyKeys);
     this.proposalHandler.getCurrentGovernanceCycle().then((res) => {
       this.dProposalHandler.setCurrentGovernanceCycle(res).then(() => {
         this.dProposalHandler.localDolt.showActiveBranch().then((branch) => {

@@ -4,6 +4,7 @@ import { Proposal, PropertyKeys } from '../types';
 import { GovernanceCycle, SQLProposal } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
+import { DBConfig } from './types';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
@@ -16,10 +17,10 @@ export class DoltHandler {
   public currentGovernanceCycle = 0;
 
   constructor(
-    repo: string,
+    options: DBConfig,
     propertyKeys: PropertyKeys
   ) {
-    this.localDolt = new DoltSQL({ database: repo });
+    this.localDolt = new DoltSQL(options);
     this.propertyKeys = propertyKeys;
   }
 

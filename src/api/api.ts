@@ -14,6 +14,7 @@ import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { keys } from '../keys';
+import { DBConfig } from '../dolt/types';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -23,8 +24,9 @@ router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
     const config = await getConfig(space);
-    res.locals.proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(config.dolt.repo, config.propertyKeys);
-    res.locals.proposalHandlerBeta = (config.notion.enabled && config.dolt.enabled) ? new DoltHandler(config.dolt.repo, config.propertyKeys) : undefined;
+    const dbOptions: DBConfig = { database: config.dolt.repo, host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT) };
+    res.locals.proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions, config.propertyKeys);
+    res.locals.proposalHandlerBeta = (config.notion.enabled && config.dolt.enabled) ? new DoltHandler(dbOptions, config.propertyKeys) : undefined;
     res.locals.spaceName = space;
     res.locals.config = config;
     next();
