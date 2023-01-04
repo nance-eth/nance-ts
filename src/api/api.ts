@@ -24,7 +24,7 @@ router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
     const config = await getConfig(space);
-    const dbOptions: DBConfig = { user: process.env.DOLT_USER, password: process.env.DOLT_PASSWORD, database: config.dolt.repo, host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT) };
+    const dbOptions: DBConfig = { database: config.dolt.repo, host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT) };
     res.locals.proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions, config.propertyKeys);
     res.locals.proposalHandlerBeta = (config.notion.enabled && config.dolt.enabled) ? new DoltHandler(dbOptions, config.propertyKeys) : undefined;
     res.locals.spaceName = space;
