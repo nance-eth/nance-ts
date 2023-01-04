@@ -202,7 +202,6 @@ export interface DateEvent {
   title: string;
   start: Date;
   end: Date;
-  inProgress: boolean;
 }
 
 export interface PollResults {

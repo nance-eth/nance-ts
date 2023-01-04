@@ -33,7 +33,7 @@ export class Nance {
         this.dProposalHandler.localDolt.showActiveBranch().then((branch) => {
           logger.info(`[DOLT] confirming dolt checkout branch: ${branch}`);
         });
-      });
+      }).catch(() => { logger.error('no dDB'); });
     });
   }
 

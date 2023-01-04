@@ -15,6 +15,11 @@ export class CalendarHandler {
     this.events = await ical.fromURL(icsURL);
   }
 
+  static inProgress = (event: DateEvent) => {
+    const now = new Date();
+    return event.start <= now && event.end > now;
+  };
+
   getNextEvents(): DateEvent[] {
     const nextDates: DateEvent[] = [];
     // look back 4 days in case this runs in middle of event
@@ -27,12 +32,10 @@ export class CalendarHandler {
       const eventDateStartUTC = formatUTCTime(eventDateStart);
       const eventDateEndUTC = new Date(eventDateStartUTC.valueOf() + originalEventLength);
       const now = new Date();
-      const eventInProgress = eventDateStartUTC <= now && eventDateEndUTC > now;
       nextDates.push({
         title: event.summary,
         start: eventDateStartUTC,
         end: eventDateEndUTC,
-        inProgress: eventInProgress
       });
     });
     const sortedNextDates = nextDates.sort((a: DateEvent, b: DateEvent) => {
@@ -42,18 +45,18 @@ export class CalendarHandler {
   }
 
   static shouldSendDiscussion(nextEvents: DateEvent[]) {
-    const noEventsInProgress = nextEvents.filter((event) => { return event.inProgress === true; }).length === 0;
+    const noEventsInProgress = nextEvents.filter((event) => { return CalendarHandler.inProgress(event); }).length === 0;
     const executionOrDelayInProgress = nextEvents.filter((event) => {
       return event.title === 'Execution' || event.title === 'Delay Period';
     }).some((event) => {
-      return event.inProgress;
+      return CalendarHandler.inProgress(event);
     });
     return (noEventsInProgress || executionOrDelayInProgress);
   }
 
   getCurrentEvent() {
     const now = new Date();
-    const nextEvents = this.getNextEvents().filter((event) => { return event.start <= now && event.end > now; });
+    const nextEvents = this.getNextEvents().filter((event) => { return CalendarHandler.inProgress(event); });
     const currentEvent = nextEvents[0];
     return currentEvent;
   }

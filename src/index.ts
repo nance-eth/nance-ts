@@ -44,33 +44,29 @@ async function scheduleCycle() {
       });
     }
     if (event.title === 'Temperature Check') {
-      if (!event.inProgress) {
-        // start reminder
-        const reminderDate = addSecondsToDate(event.start, -ONE_HOUR_SECONDS);
-        schedule.scheduleJob('temperatureCheckSetup REMINDER', reminderDate, () => {
-          nance.reminder(event.title, event.start, 'start');
-        });
-        schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
-          nance.temperatureCheckSetup(event.end);
-          nance.clearDiscussionInterval();
-        });
-      }
+      // start reminder
+      const reminderDateStart = addSecondsToDate(event.start, -ONE_HOUR_SECONDS);
+      schedule.scheduleJob('temperatureCheckSetup REMINDER', reminderDateStart, () => {
+        nance.reminder(event.title, event.start, 'start');
+      });
+      schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
+        nance.temperatureCheckSetup(event.end);
+        nance.clearDiscussionInterval();
+      });
       // end reminder
-      const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
-      schedule.scheduleJob('temperatureCheckClose REMINDER', reminderDate, () => {
+      const reminderDateEnd = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
+      schedule.scheduleJob('temperatureCheckClose REMINDER', reminderDateEnd, () => {
         nance.reminder(event.title, event.end, 'end');
       });
       schedule.scheduleJob('temperatureCheckClose', event.end, () => {
         nance.temperatureCheckClose();
       });
     } else if (event.title === 'Snapshot Vote') {
-      if (!event.inProgress) {
-        schedule.scheduleJob('voteSetup', addSecondsToDate(event.start, PADDING_VOTE_START_SECONDS), () => {
-          nance.votingSetup(event.start, event.end).then((proposals) => {
-            if (proposals) nanceExt.pushNewCycle(proposals);
-          });
+      schedule.scheduleJob('voteSetup', addSecondsToDate(event.start, PADDING_VOTE_START_SECONDS), () => {
+        nance.votingSetup(event.start, event.end).then((proposals) => {
+          if (proposals) nanceExt.pushNewCycle(proposals);
         });
-      }
+      });
       // end reminder
       const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
       schedule.scheduleJob('voteClose REMINDER', reminderDate, () => {
