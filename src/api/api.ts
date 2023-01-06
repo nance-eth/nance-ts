@@ -191,6 +191,7 @@ router.get(`${spacePrefix}/query`, async (req, res) => {
       const cycleSearch: string = cycle || await proposalHandlerMain.getCurrentGovernanceCycle();
       data = await proposalHandlerBeta.getProposalsByGovernanceCycle(cycleSearch);
     }
+    if (!keyword && cycle) { data = await proposalHandlerBeta.getProposalsByGovernanceCycle(cycle); }
     if (keyword && !cycle) { data = await proposalHandlerBeta.getProposalsByKeyword(keyword); }
     if (keyword && cycle) { data = await proposalHandlerBeta.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
     return res.send({ success: true, data });
