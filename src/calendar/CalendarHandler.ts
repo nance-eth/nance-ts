@@ -23,7 +23,7 @@ export class CalendarHandler {
   getNextEvents(): DateEvent[] {
     const nextDates: DateEvent[] = [];
     // look back 4 days in case this runs in middle of event
-    const daysPast = addDaysToDate(new Date(), -4);
+    const daysPast = addDaysToDate(new Date(), -5);
     Object.keys(this.events).forEach((key:string) => {
       const event = this.events[key] as VEvent;
       if (event.type !== 'VEVENT' || !event.rrule) return;

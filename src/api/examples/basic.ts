@@ -9,7 +9,7 @@ import {
 const API_STAGING = 'https://nance-ts-staging.up.railway.app';
 const API_MAIN = 'https://api.nance.app';
 const API_LOCAL = 'http://localhost:3000';
-const API = API_STAGING;
+const API = API_LOCAL;
 
 const SPACE = 'waterbox';
 const PROPOSAL_HASH = 'd2ef2ae69d2a4cff945c2677b73186b9';

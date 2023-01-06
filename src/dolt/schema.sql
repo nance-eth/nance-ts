@@ -1,4 +1,4 @@
-CREATE TABLE proposals (
+CREATE TABLE IF NOT EXISTS proposals (
   uuid VARCHAR(35) NOT NULL,
   createdTime DATETIME NOT NULL,
   lastEditedTime DATETIME NOT NULL,
@@ -16,20 +16,10 @@ CREATE TABLE proposals (
   snapshotVotes JSON,
   governanceCycle INT,
   discussionURL VARCHAR(500),
-  PRIMARY KEY (uuid),
-  INDEX title (title),
-  INDEX createdTime (createdTime),
-  INDEX authorAddress (authorAddress),
-  INDEX authorDiscordId (authorDiscordId),
-  INDEX category (category),
-  INDEX proposalStatus (proposalStatus),
-  INDEX proposalId (proposalId),
-  INDEX snapshotId (snapshotId),
-  INDEX voteType (voteType),
-  INDEX governanceCycle (governanceCycle)
+  PRIMARY KEY (uuid)
 );
 
-CREATE TABLE payouts (
+CREATE TABLE IF NOT EXISTS payouts (
   uuid VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35) NOT NULL,
   treasuryVersion INT NOT NULL,
@@ -43,14 +33,10 @@ CREATE TABLE payouts (
   payAllocator CHAR(42),
   payProject INT,
   payStatus VARCHAR(35),
-  PRIMARY KEY (uuid),
-  INDEX payAddress (payAddress),
-  INDEX payProject (payProject),
-  INDEX governanceCycleStart (governanceCycleStart),
-  INDEX payName (payName)
+  PRIMARY KEY (uuid)
 );
 
-CREATE TABLE reserves (
+CREATE TABLE IF NOT EXISTS reserves (
   uuid VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
   governanceCycleStart INT NOT NULL,
@@ -59,13 +45,10 @@ CREATE TABLE reserves (
   reservePercentage INT,
   reserveAddress CHAR(42) NOT NULL,
   reserveStatus VARCHAR(35),
-  PRIMARY KEY(uuid),
-  INDEX reserveAddress (reserveAddress),
-  INDEX reserveStatus (reserveStatus),
-  INDEX governanceCycleStart (governanceCycleStart)
+  PRIMARY KEY(uuid)
 );
 
-CREATE TABLE reconfigurations (
+CREATE TABLE IF NOT EXISTS reconfigurations (
   uuid VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
   JBFundingCycleData JSON NOT NULL,
@@ -73,10 +56,10 @@ CREATE TABLE reconfigurations (
   PRIMARY KEY (uuid)
 );
 
-CREATE TABLE governanceCycles (
+CREATE TABLE IF NOT EXISTS governanceCycles (
   cycleNumber INT NOT NULL,
-  startDatetime DATETIME NOT NULL,
-  endDatetime DATETIME NOT NULL,
+  startDatetime DATETIME,
+  endDatetime DATETIME,
   jbV1FundingCycle INT,
   jbV2FundingCycle INT,
   jbV3FundingCycle INT,

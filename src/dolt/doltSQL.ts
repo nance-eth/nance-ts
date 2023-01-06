@@ -74,6 +74,14 @@ export class DoltSQL {
     });
   }
 
+  async add(tables = '-A'): Promise<string> {
+    return this.db.query(`CALL DOLT_ADD('${tables}')`).then((res) => {
+      return cleanSingleRes(res).hash;
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
   async commit(message: string): Promise<string> {
     return this.db.query(`CALL DOLT_COMMIT('-a', '-m', '${message}')`).then((res) => {
       return cleanSingleRes(res).hash;

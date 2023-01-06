@@ -5,7 +5,7 @@ import { NanceTreasury } from '../treasury';
 import { calendarPath, getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest } from './models';
+import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest } from './models';
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getAddressFromPrivateKey, getENS } from './helpers/ens';
@@ -105,7 +105,7 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
     if (proposalHandlerBeta) { proposalHandlerBeta.addProposalToDb(proposal); }
 
     // if notion is not enabled then send proposal discussion to dialog handler, otherwise it will get picked up by cron job checking notion
-    if (!config.notion.enabled && config.dolt.enabled) {
+    if (!config.notion.enabled && config.dolt.enabled && config.discord.guildId) {
       const dialogHandler = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!dialogHandler.ready()) { await sleep(50); }
@@ -153,6 +153,22 @@ router.put(`${spacePrefix}/delete`, async (req, res) => {
   }
 });
 
+router.put(`${spacePrefix}/incrementGC`, async (req, res) => {
+  const { space } = req.params;
+  const { governanceCycle, signature } = req.body as IncrementGovernanceCycleRequest;
+  const { config, proposalHandlerMain } = res.locals;
+  const { valid } = checkSignature(signature, space, 'incrementGC', { governanceCycle });
+  if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
+  if (signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+    logger.info(`INCREMENT GC by ${signature.address}`);
+    proposalHandlerMain.incrementGovernanceCycle().then((affectedRows: number) => {
+      res.json({ success: true, data: { affectedRows } });
+    }).catch((e: any) => {
+      res.json({ success: false, error: e });
+    });
+  }
+});
+
 // juicebox/markdown?hash=6bb92c83571245949ecf1e495793e66b
 router.get(`${spacePrefix}/proposal`, async (req, res) => {
   const { hash } = req.query;
@@ -167,16 +183,20 @@ router.get(`${spacePrefix}/proposal`, async (req, res) => {
 });
 
 router.get(`${spacePrefix}/query`, async (req, res) => {
-  const { cycle } = req.query;
-  const { proposalHandlerMain } = res.locals;
-  const cycleSearch: string = cycle || await proposalHandlerMain.getCurrentGovernanceCycle();
-  return res.send(
-    await proposalHandlerMain.getProposalsByGovernanceCycle(cycleSearch).then((proposals: Proposal[]) => {
-      return { success: true, data: proposals };
-    }).catch((e: any) => {
-      return { success: false, error: `[NOTION ERROR]: ${e}` };
-    })
-  );
+  const { cycle, keyword } = req.query;
+  const { proposalHandlerMain, proposalHandlerBeta } = res.locals;
+  let data;
+  try {
+    if (!keyword && !cycle) {
+      const cycleSearch: string = cycle || await proposalHandlerMain.getCurrentGovernanceCycle();
+      data = await proposalHandlerBeta.getProposalsByGovernanceCycle(cycleSearch);
+    }
+    if (keyword && !cycle) { data = await proposalHandlerBeta.getProposalsByKeyword(keyword); }
+    if (keyword && cycle) { data = await proposalHandlerBeta.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
+    return res.send({ success: true, data });
+  } catch (e) {
+    return res.send({ success: false, error: `[NANCE] ${e}` });
+  }
 });
 
 router.get(`${spacePrefix}/reconfigure`, async (req, res) => {

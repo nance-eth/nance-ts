@@ -43,6 +43,11 @@ export interface ProposalDeleteRequest extends BaseRequest {
   signature: Signature
 }
 
+export interface IncrementGovernanceCycleRequest extends BaseRequest {
+  governanceCycle: string;
+  signature: Signature
+}
+
 export interface FetchReconfigureRequest extends BaseRequest {
   version: string;
   address: string;
