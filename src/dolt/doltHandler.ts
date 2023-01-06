@@ -80,7 +80,7 @@ export class DoltHandler {
   async setCurrentGovernanceCycle(governanceCycle: number) {
     const branches = await this.localDolt.showBranches();
     const branchExists = branches.some((branch) => { return branch.name === (`GC${governanceCycle}`); });
-    return this.localDolt.checkout(`GC${governanceCycle}`, !branchExists).then(async (res) => {
+    return this.localDolt.checkout(`GC${governanceCycle}`, !branchExists).then((res) => {
       this.currentGovernanceCycle = governanceCycle;
       if (res === 0) { return true; }
       return false;
@@ -242,6 +242,27 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable}
       WHERE governanceCycle = ${Number(governanceCycle)}
+    `);
+  }
+
+  async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
+    const search = keyword.replaceAll('%20', ' ');
+    return this.queryProposals(`
+      SELECT * FROM ${proposalsTable}
+      WHERE
+      governanceCycle = ${governanceCycle}
+      AND body like '%${search}%'
+      OR title like '%${search}%'
+    `);
+  }
+
+  async getProposalsByKeyword(keyword: string) {
+    const search = keyword.replaceAll('%20', ' ');
+    return this.queryProposals(`
+      SELECT * FROM ${proposalsTable}
+      WHERE
+      body like '%${search}%'
+      OR title like '%${search}%'
     `);
   }
 

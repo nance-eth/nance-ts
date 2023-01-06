@@ -183,16 +183,20 @@ router.get(`${spacePrefix}/proposal`, async (req, res) => {
 });
 
 router.get(`${spacePrefix}/query`, async (req, res) => {
-  const { cycle } = req.query;
-  const { proposalHandlerMain } = res.locals;
-  const cycleSearch: string = cycle || await proposalHandlerMain.getCurrentGovernanceCycle();
-  return res.send(
-    await proposalHandlerMain.getProposalsByGovernanceCycle(cycleSearch).then((proposals: Proposal[]) => {
-      return { success: true, data: proposals };
-    }).catch((e: any) => {
-      return { success: false, error: `[NOTION ERROR]: ${e}` };
-    })
-  );
+  const { cycle, keyword } = req.query;
+  const { proposalHandlerMain, proposalHandlerBeta } = res.locals;
+  let data;
+  try {
+    if (!keyword && !cycle) {
+      const cycleSearch: string = cycle || await proposalHandlerMain.getCurrentGovernanceCycle();
+      data = await proposalHandlerBeta.getProposalsByGovernanceCycle(cycleSearch);
+    }
+    if (keyword && !cycle) { data = await proposalHandlerBeta.getProposalsByKeyword(keyword); }
+    if (keyword && cycle) { data = await proposalHandlerBeta.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
+    return res.send({ success: true, data });
+  } catch (e) {
+    return res.send({ success: false, error: `[NANCE] ${e}` });
+  }
 });
 
 router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
