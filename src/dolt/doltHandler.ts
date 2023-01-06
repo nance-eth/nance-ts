@@ -68,17 +68,19 @@ export class DoltHandler {
   }
 
   async getCurrentGovernanceCycle() {
-    const currentCycle = (await this.queryDb(`
-      SELECT MAX(cycleNumber) as cycleNumber from ${governanceCyclesTable}
+    let { cycleNumber } = (await this.queryDb(`
+    SELECT MAX(cycleNumber) as cycleNumber from ${governanceCyclesTable}
     `) as unknown as Array<{ cycleNumber: number }>)[0];
-    if (!currentCycle) { return 1; }
-    return currentCycle.cycleNumber;
+    cycleNumber ||= 1;
+    this.setCurrentGovernanceCycle(cycleNumber);
+    await this.localDolt.showActiveBranch(); // need to showActiveBranch() to get dolt to properly checkout, maybe a bug in dolt???
+    return cycleNumber;
   }
 
   async setCurrentGovernanceCycle(governanceCycle: number) {
     const branches = await this.localDolt.showBranches();
     const branchExists = branches.some((branch) => { return branch.name === (`GC${governanceCycle}`); });
-    return this.localDolt.checkout(`GC${governanceCycle}`, !branchExists).then((res) => {
+    return this.localDolt.checkout(`GC${governanceCycle}`, !branchExists).then(async (res) => {
       this.currentGovernanceCycle = governanceCycle;
       if (res === 0) { return true; }
       return false;
@@ -87,12 +89,19 @@ export class DoltHandler {
     });
   }
 
+  async incrementGovernanceCycle() {
+    return this.queryDbResults(`
+      INSERT INTO ${governanceCyclesTable} (cycleNumber)
+      SELECT COALESCE(MAX(cycleNumber) + 1, 1) FROM ${governanceCyclesTable}
+    `);
+  }
+
   proposalIdNumber = (proposalId: string): number => {
     return Number(proposalId.split(this.propertyKeys.proposalIdPrefix)[1]);
   };
 
   async addProposalToDb(proposal: Proposal, edit = false) {
-    await this.localDolt.checkout(`GC${proposal.governanceCycle}`); // ensure proper branch is checked out
+    await this.setCurrentGovernanceCycle(proposal.governanceCycle ?? 0); // ensure proper branch is checked out
     const now = new Date().toISOString();
     const voteType = proposal.voteSetup?.type || 'basic';
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
@@ -185,7 +194,7 @@ export class DoltHandler {
   }
 
   async getToDiscuss() {
-    return this.queryDb(`
+    return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Discussion'
       AND governanceCycle = '${this.currentGovernanceCycle}'
@@ -194,7 +203,7 @@ export class DoltHandler {
   }
 
   async getDiscussionProposals() {
-    return this.queryDb(`
+    return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Discussion'
       AND governanceCycle = '${this.currentGovernanceCycle}'
@@ -204,7 +213,7 @@ export class DoltHandler {
   }
 
   async getTemperatureCheckProposals() {
-    return this.queryDb(`
+    return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Temperature Check'
       AND governanceCycle = '${this.currentGovernanceCycle}'
@@ -230,13 +239,10 @@ export class DoltHandler {
   }
 
   async getProposalsByGovernanceCycle(governanceCycle: string) {
-    const proposals = await this.queryDb(`
+    return this.queryProposals(`
       SELECT * FROM ${proposalsTable}
       WHERE governanceCycle = ${Number(governanceCycle)}
-    `) as SQLProposal[];
-    return proposals.map((proposal) => {
-      return this.toProposal(proposal);
-    });
+    `);
   }
 
   async getContentMarkdown(hash: string) {

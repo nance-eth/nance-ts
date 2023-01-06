@@ -5,7 +5,7 @@ import { NanceTreasury } from '../treasury';
 import { calendarPath, getConfig } from '../configLoader';
 import { Proposal } from '../types';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest } from './models';
+import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest } from './models';
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getAddressFromPrivateKey, getENS } from './helpers/ens';
@@ -105,7 +105,7 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
     if (proposalHandlerBeta) { proposalHandlerBeta.addProposalToDb(proposal); }
 
     // if notion is not enabled then send proposal discussion to dialog handler, otherwise it will get picked up by cron job checking notion
-    if (!config.notion.enabled && config.dolt.enabled) {
+    if (!config.notion.enabled && config.dolt.enabled && config.discord.guildId) {
       const dialogHandler = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!dialogHandler.ready()) { await sleep(50); }
@@ -146,6 +146,22 @@ router.put(`${spacePrefix}/delete`, async (req, res) => {
   if (signature.address === proposalByUuid.authorAddress || getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
     logger.info(`DELETE issued by ${signature.address}`);
     proposalHandlerMain.deleteProposal(uuid).then((affectedRows: number) => {
+      res.json({ success: true, data: { affectedRows } });
+    }).catch((e: any) => {
+      res.json({ success: false, error: e });
+    });
+  }
+});
+
+router.put(`${spacePrefix}/incrementGC`, async (req, res) => {
+  const { space } = req.params;
+  const { governanceCycle, signature } = req.body as IncrementGovernanceCycleRequest;
+  const { config, proposalHandlerMain } = res.locals;
+  const { valid } = checkSignature(signature, space, 'incrementGC', { governanceCycle });
+  if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
+  if (signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+    logger.info(`INCREMENT GC by ${signature.address}`);
+    proposalHandlerMain.incrementGovernanceCycle().then((affectedRows: number) => {
       res.json({ success: true, data: { affectedRows } });
     }).catch((e: any) => {
       res.json({ success: false, error: e });

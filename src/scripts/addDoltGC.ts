@@ -8,7 +8,7 @@ import { GovernanceCycle } from '../dolt/schema';
 async function main(){
   const config = await getConfig();
   const notion = new NotionHandler(config);
-  const dolt = new DoltHandler(config.dolt.repo, config.propertyKeys);
+  const dolt = new DoltHandler({ database: config.dolt.repo }, config.propertyKeys);
   const treasury = new NanceTreasury(config, notion, dolt);
   const { number: numberV2} = await treasury.getCurrentConfiguration('V2');
   const { number: numberV3, start: startV3, duration: durationV3 } = await treasury.getCurrentConfiguration('V3');
