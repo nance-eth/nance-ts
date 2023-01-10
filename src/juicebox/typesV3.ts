@@ -8,6 +8,7 @@ import {
   JBGroupedSplitsStruct,
   JBFundAccessConstraintsStruct,
 } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
+import { MAX_DISTRIBUTION_LIMIT } from './juiceboxMath';
 
 export declare type JBFundingCycleMetadataStruct = {
   global: JBGlobalFundingCycleMetadataStruct;
@@ -104,15 +105,18 @@ export const getJBFundingCycleMetadataStruct = (
 export const getJBFundAccessConstraintsStruct = (
   terminal: string,
   token: string,
-  distributionLimit: number,
+  distributionLimitIn: number,
   distributionLimitCurrency: number,
   overflowAllowance: number,
   overflowAllowanceCurrency: number
 ): JBFundAccessConstraintsStruct[] => {
+  const distributionLimit = (distributionLimitIn === 100)
+    ? MAX_DISTRIBUTION_LIMIT
+    : BigNumber.from(distributionLimitIn).mul(BigNumber.from(10).pow(DISTRIBUTION_PAYOUT_SCALAR));
   return [{
     terminal,
     token,
-    distributionLimit: BigNumber.from(distributionLimit).mul(BigNumber.from(10).pow(DISTRIBUTION_PAYOUT_SCALAR)),
+    distributionLimit,
     distributionLimitCurrency,
     overflowAllowance,
     overflowAllowanceCurrency

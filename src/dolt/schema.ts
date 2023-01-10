@@ -18,7 +18,7 @@ export type SQLProposal = {
   discussionURL?: string;
 };
 
-export type Payout = {
+export type SQLPayout = {
   uuid: string;
   uuidOfProposal: string;
   treasuryVersion: number;
@@ -26,11 +26,23 @@ export type Payout = {
   numberOfPayouts: number;
   lockedUntil: number;
   amount: number;
-  currency: number;
+  currency: string;
   payName?: string;
   payAddress?: string,
   payProject?: number;
   payStatus?: string;
+  payAllocator?: string;
+};
+
+export type SQLReserve = {
+  uuid: string;
+  uuidOfProposal: string;
+  governanceCycleStart: number;
+  lockedUntil: number;
+  reserveName: string;
+  reservePercentage: number;
+  reserveAddress: string;
+  reserveStatus?: string;
 };
 
 export type GovernanceCycle = {

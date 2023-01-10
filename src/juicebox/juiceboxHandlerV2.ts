@@ -11,7 +11,7 @@ import {
 } from 'juice-sdk';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JBSplitStruct, JBGroupedSplitsStruct } from 'juice-sdk/dist/cjs/types/contracts/JBController';
-import { ONE_BILLION } from './juiceboxMath';
+import { ONE_BILLION, ONE_MILLION } from './juiceboxMath';
 import {
   getJBFundingCycleDataStruct,
   getJBFundingCycleMetadataStruct,
@@ -20,11 +20,11 @@ import {
   ReconfigurationBallotAddresses,
   BallotKey,
 } from './typesV2';
-import { Payout, Reserve, BasicTransaction } from '../types';
+import { Reserve, BasicTransaction } from '../types';
+import { SQLPayout, SQLReserve } from '../dolt/schema';
 import { keys } from '../keys';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-const PROJECT_PAYOUT_PREFIX = 'V2:';
 const TOKEN_ETH = '0x000000000000000000000000000000000000EEEe';
 const DEFAULT_MUST_START_AT_OR_AFTER = '1';
 const DEFAULT_WEIGHT = 0;
@@ -162,42 +162,43 @@ export class JuiceboxHandlerV2 {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  calculateNewDistributionLimit(distrubutionPayouts: Payout[]) {
+  calculateNewDistributionLimit(distrubutionPayouts: SQLPayout[]) {
     return distrubutionPayouts.reduce((total, payout) => {
-      return total + payout.amountUSD;
+      return total + payout.amount;
     }, 0);
   }
 
   async buildJBGroupedSplitsStruct(
     distributionLimit: number,
-    distributionPayouts: Payout[],
-    distributionReserved: Reserve[]
+    distributionPayouts: SQLPayout[],
+    distributionReserved: SQLReserve[]
   ): Promise<JBGroupedSplitsStruct[]> {
     const owner = await this.getProjectOwner();
     let runningTotal = 0;
+    const percentageBasedPayouts = distributionPayouts.some((payout) => { return payout.currency === 'percent'; });
     const distrubutionPayoutsJBSplitStruct = distributionPayouts.map((payout): JBSplitStruct => {
-      const projectPayout = (payout.address.includes(PROJECT_PAYOUT_PREFIX)) ? payout.address.split(PROJECT_PAYOUT_PREFIX)[1] : undefined;
-      let percent = Math.round((payout.amountUSD / distributionLimit) * ONE_BILLION);
+      let percent = (percentageBasedPayouts) ? payout.amount * ONE_MILLION * 10 : Math.round((payout.amount / distributionLimit) * ONE_BILLION);
       runningTotal += percent;
       if (runningTotal > ONE_BILLION) percent -= 1; // overflow hack
+      if (runningTotal === ONE_BILLION - 1) percent += 1; // overflow hack
       return {
         preferClaimed: DEFAULT_PREFER_CLAIMED,
         preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
         percent,
-        projectId: projectPayout || DEFAULT_PROJECT_ID,
-        beneficiary: (projectPayout) ? owner : payout.address,
+        projectId: payout.payProject || DEFAULT_PROJECT_ID,
+        beneficiary: payout.payAddress || owner,
         lockedUntil: DEFAULT_LOCKED_UNTIL,
-        allocator: DEFAULT_ALLOCATOR
+        allocator: payout.payAllocator || DEFAULT_ALLOCATOR
       };
     });
     const distrubutionReservedJBSplitStruct = distributionReserved.map((reserve): JBSplitStruct => {
       return {
         preferClaimed: DEFAULT_PREFER_CLAIMED,
         preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
-        percent: reserve.percentage * 1E7,
+        percent: reserve.reservePercentage,
         projectId: DEFAULT_PROJECT_ID,
-        beneficiary: reserve.address,
-        lockedUntil: DEFAULT_LOCKED_UNTIL,
+        beneficiary: reserve.reserveAddress,
+        lockedUntil: reserve.lockedUntil || DEFAULT_LOCKED_UNTIL,
         allocator: DEFAULT_ALLOCATOR
       };
     });

@@ -4,7 +4,7 @@ import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
 import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
 import { JuiceboxHandlerV3 } from './juicebox/juiceboxHandlerV3';
 import { BallotKey } from './juicebox/typesV2';
-import { NotionHandler } from './notion/notionHandler';
+import { MAX_DISTRIBUTION_LIMIT } from './juicebox/juiceboxMath';
 import { BasicTransaction, NanceConfig } from './types';
 
 export class NanceTreasury {
@@ -15,8 +15,7 @@ export class NanceTreasury {
 
   constructor(
     protected config: NanceConfig,
-    protected proposalHandler: NotionHandler,
-    protected dProposalHandler?: DoltHandler
+    protected proposalHandler: DoltHandler
   ) {
     this.juiceboxHandlerV1 = new JuiceboxHandlerV1(
       config.juicebox.projectId,
@@ -37,20 +36,20 @@ export class NanceTreasury {
   //
   // }
 
-  async updatePayoutTableFromProposals(governanceCycle: string) {
-    const approvedReccuringPayoutProposals = await this.proposalHandler.getApprovedRecurringPaymentProposals(governanceCycle);
-    approvedReccuringPayoutProposals.map((payoutProposal) => {
-      const payoutTitle = payoutProposal.title.toLowerCase().match(/[a-z1-9]*.eth/)?.[0] ?? payoutProposal.title;
-      return this.proposalHandler.addPayoutToDb(
-        payoutTitle,
-        payoutProposal
-      );
-    });
-  }
+  // async updatePayoutTableFromProposals(governanceCycle: string) {
+  //   const approvedReccuringPayoutProposals = await this.proposalHandler.getApprovedRecurringPaymentProposals(governanceCycle);
+  //   approvedReccuringPayoutProposals.map((payoutProposal) => {
+  //     const payoutTitle = payoutProposal.title.toLowerCase().match(/[a-z1-9]*.eth/)?.[0] ?? payoutProposal.title;
+  //     return this.proposalHandler.addPayoutToDb(
+  //       payoutTitle,
+  //       payoutProposal
+  //     );
+  //   });
+  // }
 
   async payoutTableToGroupedSplitsStruct(version = 'V2') {
     const payouts = await this.proposalHandler.getPayoutsDb(version);
-    const reserves = await this.proposalHandler.getReserveDb(version);
+    const reserves = await this.proposalHandler.getReserveDb();
     const newDistributionLimit = (version === 'V2')
       ? this.juiceboxHandlerV2.calculateNewDistributionLimit(payouts)
       : this.juiceboxHandlerV3.calculateNewDistributionLimit(payouts);
@@ -73,7 +72,7 @@ export class NanceTreasury {
 
   async payoutTableToMods(version = 'V1') {
     const payouts = await this.proposalHandler.getPayoutsDb(version);
-    const reserves = await this.proposalHandler.getReserveDb(version);
+    const reserves = await this.proposalHandler.getReserveDb();
     const newDistributionLimit = this.juiceboxHandlerV1.calculateNewDistributionLimit(payouts);
     const { payoutMods, ticketMods } = await this.juiceboxHandlerV1.buildModsStruct(
       newDistributionLimit,
@@ -115,7 +114,7 @@ export class NanceTreasury {
   async fetchPayReserveDistribution(version: string) {
     if (version === 'V1') { return this.payoutTableToMods(); }
     if (version === 'V2') { return this.payoutTableToGroupedSplitsStruct(); }
-    if (version === 'V3') { return this.payoutTableToGroupedSplitsStruct(); }
+    if (version === 'V3') { return this.payoutTableToGroupedSplitsStruct('V3'); }
     return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
   }
 

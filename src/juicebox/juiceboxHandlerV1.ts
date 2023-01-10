@@ -18,12 +18,12 @@ import {
   reconfigurationBallotAddresses,
   PayoutAndTickets
 } from './typesV1';
-import { Payout, Reserve, BasicTransaction } from '../types';
+import { BasicTransaction } from '../types';
+import { SQLPayout, SQLReserve } from '../dolt/schema';
 import { keys } from '../keys';
 import { TEN_THOUSAND } from './juiceboxMath';
 
 const V1Fee = 0.025; // 2.5% = 0.025
-const PROJECT_PAYOUT_PREFIX = 'V1:';
 const DISTRIBUTION_CURRENCY_USD = 1;
 const DISTRIBUTION_CURRENCY_ETH = 0;
 const DEFAULT_PREFER_UNSTAKED = false;
@@ -100,31 +100,30 @@ export class JuiceboxHandlerV1 {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  calculateNewDistributionLimit(distrubutionPayouts: Payout[]) {
+  calculateNewDistributionLimit(distrubutionPayouts: SQLPayout[]) {
     return Math.round(distrubutionPayouts.reduce((total, payout) => {
-      return total + this.withFees(payout.amountUSD);
+      return total + this.withFees(payout.amount);
     }, 0));
   }
 
-  async buildModsStruct(distributionLimit: number, distributionPayouts: Payout[], distributionReserved: Reserve[]): Promise<PayoutAndTickets> {
+  async buildModsStruct(distributionLimit: number, distributionPayouts: SQLPayout[], distributionReserved: SQLReserve[]): Promise<PayoutAndTickets> {
     const owner = await this.getProjectOwner();
     const distributionPayoutModStruct = distributionPayouts.map((payout): PayoutModStruct => {
-      const projectPayout = (payout.address.includes(PROJECT_PAYOUT_PREFIX)) ? payout.address.split(PROJECT_PAYOUT_PREFIX)[1] : undefined;
       return {
         preferUnstaked: DEFAULT_PREFER_UNSTAKED,
-        percent: Math.floor((payout.amountUSD / this.withOutFees(distributionLimit)) * TEN_THOUSAND),
+        percent: Math.floor((payout.amount / this.withOutFees(distributionLimit)) * TEN_THOUSAND),
         lockedUntil: DEFAULT_LOCKED_UNTIL,
-        beneficiary: (projectPayout) ? owner : payout.address,
-        allocator: DEFAULT_ALLOCATOR,
-        projectId: projectPayout || DEFAULT_PROJECT_ID
+        beneficiary: payout.payAddress || owner,
+        allocator: payout.payAllocator || DEFAULT_ALLOCATOR,
+        projectId: payout.payProject || DEFAULT_PROJECT_ID
       };
     });
     const distributionTicketModStruct = distributionReserved.map((reserve): TicketModStruct => {
       return {
         preferUnstaked: DEFAULT_PREFER_UNSTAKED,
-        percent: reserve.percentage * 100,
+        percent: reserve.reservePercentage / 100_000,
         lockedUntil: DEFAULT_LOCKED_UNTIL,
-        beneficiary: reserve.address
+        beneficiary: reserve.reserveAddress
       };
     });
     return {
