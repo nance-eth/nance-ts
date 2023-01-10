@@ -3,7 +3,6 @@ import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
 import { calendarPath, getConfig } from '../configLoader';
-import { Proposal } from '../types';
 import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest } from './models';
 import { checkSignature } from './helpers/signature';
@@ -96,7 +95,7 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
   logger.debug(`[UPLOAD] space: ${space}, address: ${signature.address} good`);
   if (!proposal.governanceCycle) {
     const currentGovernanceCycle = await proposalHandlerMain.getCurrentGovernanceCycle();
-    proposal.governanceCycle = currentGovernanceCycle;
+    proposal.governanceCycle = currentGovernanceCycle + 1;
   }
   if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
   if (!proposal.authorAddress) { proposal.authorAddress = signature.address; }
