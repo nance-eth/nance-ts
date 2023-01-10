@@ -1,13 +1,14 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { Proposal, PropertyKeys } from '../types';
-import { GovernanceCycle, SQLProposal } from './schema';
+import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
 import { DBConfig } from './types';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
+const reservesTable = 'reserves';
 const governanceCyclesTable = 'governanceCycles';
 
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
@@ -72,8 +73,6 @@ export class DoltHandler {
     SELECT MAX(cycleNumber) as cycleNumber from ${governanceCyclesTable}
     `) as unknown as Array<{ cycleNumber: number }>)[0];
     cycleNumber ||= 1;
-    this.setCurrentGovernanceCycle(cycleNumber);
-    await this.localDolt.showActiveBranch(); // need to showActiveBranch() to get dolt to properly checkout, maybe a bug in dolt???
     return cycleNumber;
   }
 
@@ -101,7 +100,6 @@ export class DoltHandler {
   };
 
   async addProposalToDb(proposal: Proposal, edit = false) {
-    await this.setCurrentGovernanceCycle(proposal.governanceCycle ?? 0); // ensure proper branch is checked out
     const now = new Date().toISOString();
     const voteType = proposal.voteSetup?.type || 'basic';
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
@@ -355,9 +353,27 @@ export class DoltHandler {
     });
   }
 
-  async pushProposal(proposal: Proposal): Promise<number> {
+  async pushProposals(proposal: Proposal): Promise<number> {
     return this.localDolt.commit(`Add proposal ${proposal.hash.substring(0, 7)}...${proposal.hash.substring(proposal.hash.length - 7)}`).then(() => {
       return this.localDolt.push(`GC${this.currentGovernanceCycle}`);
     });
+  }
+
+  async getPayoutsDb(version: string): Promise<SQLPayout[]> {
+    const treasuryVersion = Number(version.split('V')[1]);
+    const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
+    return this.queryDb(`
+      SELECT * from ${payoutsTable}
+      WHERE treasuryVersion = ${treasuryVersion} AND
+      payStatus = 'active' AND
+      governanceCycleStart + numberOfPayouts >= ${currentGovernanceCycle}
+    `) as unknown as SQLPayout[];
+  }
+
+  async getReserveDb(): Promise<SQLReserve[]> {
+    return this.queryDb(`
+      SELECT * from ${reservesTable}
+      WHERE reserveStatus = 'active'
+    `) as unknown as SQLReserve[];
   }
 }
