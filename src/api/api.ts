@@ -102,6 +102,7 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
   if (!proposal.authorAddress) { proposal.authorAddress = signature.address; }
 
   proposalHandlerMain.addProposalToDb(proposal).then(async (hash: string) => {
+    proposal.hash = hash;
     if (proposalHandlerBeta) { proposalHandlerBeta.addProposalToDb(proposal); }
 
     // if notion is not enabled then send proposal discussion to dialog handler, otherwise it will get picked up by cron job checking notion
