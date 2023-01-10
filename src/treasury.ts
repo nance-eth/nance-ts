@@ -4,7 +4,6 @@ import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
 import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
 import { JuiceboxHandlerV3 } from './juicebox/juiceboxHandlerV3';
 import { BallotKey } from './juicebox/typesV2';
-import { MAX_DISTRIBUTION_LIMIT } from './juicebox/juiceboxMath';
 import { BasicTransaction, NanceConfig } from './types';
 
 export class NanceTreasury {

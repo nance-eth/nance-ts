@@ -202,14 +202,14 @@ router.get(`${spacePrefix}/query`, async (req, res) => {
 
 router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const { version = 'V3', address = ZERO_ADDRESS, datetime = new Date(), network = 'mainnet' } = req.query as unknown as FetchReconfigureRequest;
-  const { config, proposalHandlerMain } = res.locals;
+  const { config, proposalHandlerBeta } = res.locals;
   const ens = await getENS(address);
   const { gnosisSafeAddress } = config.juicebox;
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
   const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network);
   if (!currentNonce) { return res.json({ success: false, error: 'safe not found' }); }
   const nonce = (Number(currentNonce) + 1).toString();
-  const treasury = new NanceTreasury(config, proposalHandlerMain);
+  const treasury = new NanceTreasury(config, proposalHandlerBeta);
   return res.send(
     await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
       return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
