@@ -9,7 +9,7 @@ async function main() {
   console.log(await dolt.localDolt.showActiveBranch());
   const treasury = new NanceTreasury(config, dolt);
   const output = await treasury.payoutTableToGroupedSplitsStruct('V3');
-  // console.log(output.groupedSplits[0]);
+  console.log(output.groupedSplits[0]);
   // console.log(output.groupedSplits[1]);
   const outputSum = output.groupedSplits[0].splits.map((split) => {
     return split.percent;
@@ -19,8 +19,8 @@ async function main() {
   // console.log(`outputSum = ${outputSum}, ${outputSum === ONE_BILLION}`);
   // console.log(`distributionLimit = ${output.newDistributionLimit}`);
   // process.stdout.write(JSON.stringify(await treasury.V2encodeReconfigureFundingCyclesOf('V3')));
-  const v1output = await treasury.payoutTableToMods();
-  console.log(v1output.payoutMods);
+  // const v1output = await treasury.payoutTableToMods();
+  // console.log(v1output.payoutMods);
 }
 
 main();

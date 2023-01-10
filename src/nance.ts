@@ -96,6 +96,8 @@ export class Nance {
     return this.proposalHandler.getToDiscuss(true).then((proposalsToDiscuss) => {
       return Promise.all(proposalsToDiscuss.map(async (proposal) => {
         proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
+        const threadId = getIdFromURL(proposal.discussionThreadURL);
+        await this.dialogHandler.setupPoll(threadId);
         this.proposalHandler.updateDiscussionURL(proposal);
         proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
         try {
@@ -128,8 +130,6 @@ export class Nance {
       await this.proposalHandler.getDiscussionProposals()
     );
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
-      const threadId = getIdFromURL(proposal.discussionThreadURL);
-      await this.dialogHandler.setupPoll(threadId);
       proposal.status = this.config.propertyKeys.statusTemperatureCheck;
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
       try { await this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(proposal); } catch (e) { logger.error('no dDB'); }
