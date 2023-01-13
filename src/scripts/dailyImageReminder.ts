@@ -10,7 +10,7 @@ async function main() {
   console.log(config.reminder.channelIds.map((c) => {
     console.log(c);
   }));
-  nance.dialogHandler.sendImageReminder('9', '36', 'vote');
+  nance.dialogHandler.sendImageReminder('14', '39', 'delay');
 } 
 
 main();
