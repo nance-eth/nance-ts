@@ -332,7 +332,7 @@ export class NotionHandler implements DataContentHandler {
             ]
           },
           [this.config.propertyKeys.status]: {
-            select: { name: 'Draft' }
+            select: { name: 'Discussion' }
           },
           Date: {
             date: { start: new Date().toISOString().split('T')[0] }

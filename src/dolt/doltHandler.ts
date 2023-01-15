@@ -104,7 +104,7 @@ export class DoltHandler {
     const voteType = proposal.voteSetup?.type || 'basic';
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
     const proposalId = (proposal.proposalId) ? this.proposalIdNumber(proposal.proposalId) : null;
-    proposal.status = proposal.status || 'Draft';
+    proposal.status = proposal.status || 'Discussion';
     proposal.hash = proposal.hash || uuid();
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
