@@ -240,6 +240,7 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable}
       WHERE governanceCycle = ${Number(governanceCycle)}
+      ORDER BY proposalId ASC
     `);
   }
 
@@ -251,6 +252,7 @@ export class DoltHandler {
       governanceCycle = ${governanceCycle}
       AND body like '%${search}%'
       OR title like '%${search}%'
+      ORDER BY proposalId ASC
     `);
   }
 
@@ -261,6 +263,7 @@ export class DoltHandler {
       WHERE
       body like '%${search}%'
       OR title like '%${search}%'
+      ORDER BY proposalId ASC
     `);
   }
 
@@ -313,13 +316,10 @@ export class DoltHandler {
   }
 
   async updateVotingSetup(proposal: Proposal) {
-    const query = oneLine`
+    return this.localDolt.db.query(`
       UPDATE ${proposalsTable} SET
-      title = '${proposal.title}',
-      snapshotId = '${getLastSlash(proposal.voteURL)}'
-      WHERE uuid = '${proposal.hash}'
-    `;
-    return this.queryDb(query);
+      title = ?, proposalStatus = ?, snapshotId = ?, WHERE uuid = ?
+    `, [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.hash]);
   }
 
   async updateVotingClose(proposal: Proposal) {
