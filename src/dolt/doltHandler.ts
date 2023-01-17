@@ -95,8 +95,9 @@ export class DoltHandler {
     `);
   }
 
-  proposalIdNumber = (proposalId: string): number => {
-    return Number(proposalId.split(this.propertyKeys.proposalIdPrefix)[1]);
+  proposalIdNumber = (proposalId: string): number | null => {
+    const value = Number(proposalId.split(this.propertyKeys.proposalIdPrefix)[1]);
+    return (Number.isNaN(value)) ? null : value;
   };
 
   async addProposalToDb(proposal: Proposal, edit = false) {
