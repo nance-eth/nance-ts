@@ -117,10 +117,11 @@ export class Nance {
     let proposals: Proposal[] = [];
     if (status === 'discussion') { proposals = await this.proposalHandler.getDiscussionProposals(); }
     if (status === 'temperatureCheck') { proposals = await this.proposalHandler.getTemperatureCheckProposals(); }
+    if (status === 'vote') { proposals = await this.proposalHandler.getVoteProposals(); }
     proposals.forEach((proposal) => {
       this.dialogHandler.editDiscussionTitle(proposal);
     });
-    if (rollupMessageId) { this.dialogHandler.editRollupMessage(proposals, rollupMessageId); }
+    if (rollupMessageId) { this.dialogHandler.editRollupMessage(proposals, status, rollupMessageId); }
   }
 
   async temperatureCheckSetup(endDate: Date) {

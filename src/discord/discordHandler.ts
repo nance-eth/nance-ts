@@ -7,6 +7,7 @@ import {
   Message,
   TextChannel,
   ThreadAutoArchiveDuration,
+  MessageEmbed,
 } from 'discord.js';
 import logger from '../logging';
 import { limitLength, getLastSlash } from '../utils';
@@ -202,11 +203,20 @@ export class DiscordHandler {
     }
   }
 
-  async editRollupMessage(proposals: Proposal[], messageId: string) {
+  async editRollupMessage(proposals: Proposal[], status: string, messageId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
-    const message = discordTemplates.temperatureCheckRollUpMessage(proposals, this.config.name, new Date());
+    let message = new MessageEmbed();
+    if (status === 'temperatureCheck') { message = discordTemplates.temperatureCheckRollUpMessage(proposals, this.config.name, new Date()); }
+    if (status === 'vote') {
+      message = discordTemplates.voteRollUpMessage(
+        `${this.config.snapshot.base}/${this.config.snapshot.space}`,
+        proposals,
+        this.config.snapshot.space,
+        new Date());
+    }
     const edittedMessage = messageObj.embeds[0];
     edittedMessage.fields = message.fields;
+    edittedMessage.description = message.description;
     messageObj.edit({ embeds: [edittedMessage] });
   }
 }
