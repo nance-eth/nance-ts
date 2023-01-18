@@ -284,7 +284,7 @@ export class DoltHandler {
     } if (hashOrId.includes(this.propertyKeys.proposalIdPrefix)) {
       where = `WHERE proposalId = ${this.proposalIdNumber(hashOrId)}`;
     } if (hashOrId.startsWith('0x')) {
-      where = `WHERE snapshotId = ${hashOrId}`;
+      where = `WHERE snapshotId = '${hashOrId}'`;
     }
     return this.queryProposals(`
       SELECT * from ${proposalsTable} ${where}
