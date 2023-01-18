@@ -277,6 +277,20 @@ export class DoltHandler {
     return this.toProposal(proposal[0]);
   }
 
+  async getProposalByAnyId(hashOrId: string) {
+    let where = '';
+    if (hashOrId.length === 32) {
+      where = `WHERE uuid = '${hashOrId}'`;
+    } if (hashOrId.includes(this.propertyKeys.proposalIdPrefix)) {
+      where = `WHERE proposalId = ${this.proposalIdNumber(hashOrId)}`;
+    } if (hashOrId.startsWith('0x')) {
+      where = `WHERE snapshotId = ${hashOrId}`;
+    }
+    return this.queryProposals(`
+      SELECT * from ${proposalsTable} ${where}
+    `);
+  }
+
   async updateDiscussionURL(proposal: Proposal) {
     return this.queryDb(`
       UPDATE ${proposalsTable} SET
