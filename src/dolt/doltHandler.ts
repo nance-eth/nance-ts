@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { Proposal, PropertyKeys } from '../types';
-import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve } from './schema';
+import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
 import { DBConfig } from './types';
@@ -36,7 +36,7 @@ export class DoltHandler {
   async queryProposals(query: string): Promise<Proposal[]> {
     return this.localDolt.queryRows(query).then((res) => {
       return res.map((r) => {
-        return this.toProposal(r as SQLProposal);
+        return this.toProposal(r as SQLProposal & SQLPayout);
       });
     }).catch((e) => {
       return Promise.reject(e);
@@ -51,21 +51,32 @@ export class DoltHandler {
     });
   }
 
-  toProposal(proposal: SQLProposal): Proposal {
+  toProposal(proposal: SQLExtended): Proposal {
     const voteURL = proposal.snapshotId ?? '';
     const proposalId = (proposal.proposalId) ? `${this.propertyKeys.proposalIdPrefix}${proposal.proposalId}` : '';
-    return {
+    const cleanProposal: Proposal = {
       hash: proposal.uuid,
       title: proposal.title,
       body: proposal.body,
+      type: proposal.category,
       status: proposal.proposalStatus,
       proposalId,
+      discussionThreadURL: proposal.discussionURL ?? '',
       url: '',
       ipfsURL: '',
       voteURL,
-      discussionThreadURL: proposal.discussionURL ?? '',
-      type: proposal.category
+      date: proposal.createdTime.toDateString(),
+      governanceCycle: proposal.governanceCycle,
     };
+    if (proposal.amount) {
+      cleanProposal.payout = {
+        address: proposal.payAddress ?? '',
+        amountUSD: proposal.amount,
+        count: proposal.numberOfPayouts,
+        payName: proposal.payName ?? ''
+      };
+    }
+    return cleanProposal;
   }
 
   async getCurrentGovernanceCycle() {
@@ -113,7 +124,7 @@ export class DoltHandler {
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
       ON DUPLICATE KEY UPDATE
       lastEditedTime = VALUES(lastEditedTime), title = VALUES(title), body = VALUES(body), category = VALUES(category), governanceCycle = VALUES(governanceCycle),
-      proposalStatus = VALUES(proposalStatus), voteType = VALUES(voteType), choices = VALUES(choices)`,
+      discussionURL = VALUES(discussionURL), proposalStatus = VALUES(proposalStatus), voteType = VALUES(voteType), choices = VALUES(choices)`,
     [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices)]);
     if (proposal.type?.toLowerCase().includes('pay')) {
       if (edit) {
@@ -175,8 +186,8 @@ export class DoltHandler {
         DELETE FROM ${payoutsTable}
         WHERE uuidOfProposal = '${hash}'
       `;
-      return this.queryDbResults(queryPayouts).then(() => {
-        return res.affectedRows;
+      return this.queryDbResults(queryPayouts).then((payRes) => {
+        return (res.affectedRows + payRes.affectedRows);
       }).catch((e) => { return Promise.reject(e); });
     }).catch((e) => { return Promise.reject(e); });
   }
@@ -272,7 +283,7 @@ export class DoltHandler {
     const proposal = await this.queryDb(`
       SELECT * FROM ${proposalsTable}
       WHERE uuid = '${hash}'
-    `) as SQLProposal[];
+    `) as SQLExtended[];
     if (proposal.length === 0) return [];
     return this.toProposal(proposal[0]);
   }
@@ -280,11 +291,11 @@ export class DoltHandler {
   async getProposalByAnyId(hashOrId: string) {
     let where = '';
     if (hashOrId.length === 32) {
-      where = `WHERE uuid = '${hashOrId}'`;
+      where = `WHERE ${proposalsTable}.uuid = '${hashOrId}'`;
     } if (hashOrId.includes(this.propertyKeys.proposalIdPrefix)) {
-      where = `WHERE proposalId = ${this.proposalIdNumber(hashOrId)}`;
+      where = `WHERE ${proposalsTable}.proposalId = ${this.proposalIdNumber(hashOrId)}`;
     } if (hashOrId.startsWith('0x')) {
-      where = `WHERE snapshotId = '${hashOrId}'`;
+      where = `WHERE ${proposalsTable}.snapshotId = '${hashOrId}'`;
     }
     return this.queryProposals(`
       SELECT * from ${proposalsTable} ${where}

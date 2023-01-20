@@ -131,15 +131,15 @@ router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
 
 // edit single proposal
 router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
-  const { space } = req.params;
+  const { space, pid } = req.params;
   const { proposal, signature } = req.body as ProposalUploadRequest;
-  const { proposalHandlerMain } = res.locals;
+  const { proposalHandlerBeta } = res.locals;
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = proposalHandlerMain.getContentMarkdown(proposal.hash);
+  const proposalByUuid = proposalHandlerBeta.getContentMarkdown(pid);
   if (signature.address === proposalByUuid.authorAddress || getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
     logger.info(`EDIT issued by ${signature.address}`);
-    proposalHandlerMain.addProposalToDb(proposal, true).then((hash: string) => {
+    proposalHandlerBeta.addProposalToDb(proposal, true).then((hash: string) => {
       res.json({ success: true, data: { hash } });
     }).catch((e: any) => {
       res.json({ success: false, error: e });
@@ -148,16 +148,16 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
 });
 
 // delete single proposal
-router.delete(`${spacePrefix}/proposal/:pid`, async (req, res) => {
-  const { space, pid } = req.params;
-  const { uuid, signature } = req.body as ProposalDeleteRequest;
-  const { proposalHandlerMain } = res.locals;
+router.delete(`${spacePrefix}/proposal/:uuid`, async (req, res) => {
+  const { space, uuid } = req.params;
+  const { signature } = req.body as ProposalDeleteRequest;
+  const { proposalHandlerBeta } = res.locals;
   const { valid } = checkSignature(signature, space, 'delete', { uuid });
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = proposalHandlerMain.getContentMarkdown(uuid);
+  const proposalByUuid = proposalHandlerBeta.getContentMarkdown(uuid);
   if (signature.address === proposalByUuid.authorAddress || getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
     logger.info(`DELETE issued by ${signature.address}`);
-    proposalHandlerMain.deleteProposal(uuid).then((affectedRows: number) => {
+    proposalHandlerBeta.deleteProposal(uuid).then(async (affectedRows: number) => {
       res.json({ success: true, data: { affectedRows } });
     }).catch((e: any) => {
       res.json({ success: false, error: e });
