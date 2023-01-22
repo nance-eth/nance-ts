@@ -122,7 +122,7 @@ router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { proposalHandlerBeta } = res.locals;
   return res.send(
     await proposalHandlerBeta.getProposalByAnyId(pid).then((proposal: string) => {
-      return { sucess: true, data: proposal };
+      return { sucess: true, data: proposal[0] };
     }).catch((e: any) => {
       return { success: false, error: `[NOTION ERROR]: ${e}` };
     })
