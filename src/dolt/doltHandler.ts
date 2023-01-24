@@ -324,12 +324,16 @@ export class DoltHandler {
   }
 
   async updateVotingClose(proposal: Proposal) {
+    const voteChoices = (proposal.voteResults) ? JSON.stringify(Object.keys(proposal.voteResults.scores)) : null;
+    const voteResults = (proposal.voteResults) ? JSON.stringify(Object.values(proposal.voteResults.scores)) : null;
+    console.log(voteResults);
     this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
-      choices = '${JSON.stringify(Object.keys(proposal.voteResults?.scores ?? ''))}',
-      snapshotVotes = "[${Object.values(proposal.voteResults?.scores ?? '')}]"
+      choices = ?,
+      snapshotVotes = ?,
+      proposalStatus = ?
       WHERE uuid = ?
-    `, [proposal.hash]);
+    `, [voteChoices, voteResults, proposal.status, proposal.hash]);
     if (proposal.type?.toLowerCase().includes('pay')) {
       this.updatePayoutStatus(proposal);
     }
@@ -367,6 +371,7 @@ export class DoltHandler {
       SELECT * from ${payoutsTable}
       WHERE treasuryVersion = ${treasuryVersion} AND
       payStatus = 'active' AND
+      governanceCycleStart <= ${currentGovernanceCycle} AND
       governanceCycleStart + numberOfPayouts >= ${currentGovernanceCycle}
     `) as unknown as SQLPayout[];
   }

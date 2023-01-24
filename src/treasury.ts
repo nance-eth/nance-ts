@@ -28,7 +28,7 @@ export class NanceTreasury {
       config.juicebox.projectId,
       config.juicebox.network as 'mainnet' | 'goerli'
     );
-    this.provider = this.juiceboxHandlerV2.provider;
+    this.provider = this.juiceboxHandlerV3.provider;
   }
 
   // async removeStalePayouts() {
