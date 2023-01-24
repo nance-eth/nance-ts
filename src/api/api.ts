@@ -136,8 +136,8 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { proposalHandlerBeta } = res.locals;
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = proposalHandlerBeta.getContentMarkdown(pid);
-  if (signature.address === proposalByUuid.authorAddress || getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+  const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid);
+  if (signature.address === proposalByUuid.authorAddress || signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
     logger.info(`EDIT issued by ${signature.address}`);
     proposalHandlerBeta.addProposalToDb(proposal, true).then((hash: string) => {
       res.json({ success: true, data: { hash } });
@@ -148,21 +148,21 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
 });
 
 // delete single proposal
-router.delete(`${spacePrefix}/proposal/:uuid`, async (req, res) => {
-  const { space, uuid } = req.params;
+router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
+  const { space, hash } = req.params;
   const { signature } = req.body as ProposalDeleteRequest;
   const { proposalHandlerBeta } = res.locals;
-  const { valid } = checkSignature(signature, space, 'delete', { uuid });
+  const { valid } = checkSignature(signature, space, 'delete', { hash });
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = proposalHandlerBeta.getContentMarkdown(uuid);
-  if (signature.address === proposalByUuid.authorAddress || getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+  const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(hash);
+  if (signature.address === proposalByUuid.authorAddress || signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
     logger.info(`DELETE issued by ${signature.address}`);
-    proposalHandlerBeta.deleteProposal(uuid).then(async (affectedRows: number) => {
+    proposalHandlerBeta.deleteProposal(hash).then(async (affectedRows: number) => {
       res.json({ success: true, data: { affectedRows } });
     }).catch((e: any) => {
       res.json({ success: false, error: e });
     });
-  }
+  } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to delete proposal' }); }
 });
 
 // ==================================== //

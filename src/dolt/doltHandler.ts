@@ -67,6 +67,7 @@ export class DoltHandler {
       voteURL,
       date: proposal.createdTime.toDateString(),
       governanceCycle: proposal.governanceCycle,
+      authorAddress: proposal.authorAddress
     };
     if (proposal.amount) {
       cleanProposal.payout = {
