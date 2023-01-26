@@ -229,3 +229,5 @@ export interface Signature {
   signature: string;
   timestamp: number;
 }
+
+export type Network = 'mainnet' | 'goerli';

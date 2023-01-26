@@ -1,9 +1,8 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
-import { Proposal, VoteResults, SnapshotVoteOptions } from '../types';
-import logger from '../logging';
-import { dateToUnixTimeStamp } from '../utils';
+import { Proposal, VoteResults, SnapshotVoteOptions, NanceConfig } from '../types';
+import { dateToUnixTimeStamp, myProvider } from '../utils';
 
 // console.log = function noConsole() {};
 
@@ -15,10 +14,9 @@ export class SnapshotHandler {
 
   constructor(
     private privateKey: string,
-    private providerKey: string,
-    private config: any
+    private config: NanceConfig
   ) {
-    this.provider = new ethers.providers.AlchemyProvider('mainnet', providerKey);
+    this.provider = myProvider('mainnet');
     this.wallet = (privateKey === '') ? ethers.Wallet.createRandom() : new ethers.Wallet(privateKey, this.provider);
 
     this.hub = 'https://hub.snapshot.org';
