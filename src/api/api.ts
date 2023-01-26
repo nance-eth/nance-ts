@@ -8,7 +8,7 @@ import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, 
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getAddressFromPrivateKey, getENS } from './helpers/ens';
-import { sleep } from '../utils';
+import { myProvider, sleep } from '../utils';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
@@ -178,7 +178,7 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network);
   if (!currentNonce) { return res.json({ success: false, error: 'safe not found' }); }
   const nonce = (Number(currentNonce) + 1).toString();
-  const treasury = new NanceTreasury(config, proposalHandlerBeta);
+  const treasury = new NanceTreasury(config, proposalHandlerBeta, myProvider(config.juicebox.network));
   return res.send(
     await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
       return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
