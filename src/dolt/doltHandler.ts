@@ -368,7 +368,8 @@ export class DoltHandler {
     const treasuryVersion = Number(version.split('V')[1]);
     const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
     return this.queryDb(`
-      SELECT * from ${payoutsTable}
+      SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
+      INNER JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
       WHERE treasuryVersion = ${treasuryVersion} AND
       payStatus = 'active' AND
       governanceCycleStart <= ${currentGovernanceCycle} AND
