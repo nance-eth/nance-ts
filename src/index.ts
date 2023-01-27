@@ -54,7 +54,7 @@ async function scheduleCycle() {
       });
       // increment governanceCycle 90 seconds before tempertureCheck starts
       const governanceCycleIncTime = addSecondsToDate(event.start, -90);
-      schedule.scheduleJob('increment governanceCycle', event.start, async () => {
+      schedule.scheduleJob('increment governanceCycle', governanceCycleIncTime, async () => {
         const governanceCycle = await treasury.getCycleInformation();
         nance.incrementGovernanceCycle(governanceCycle);
       });
