@@ -1,10 +1,12 @@
 /* eslint-disable prefer-promise-reject-errors */
 import { DoltHandler } from './dolt/doltHandler';
+import { GovernanceCycle } from './dolt/schema';
 import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
 import { JuiceboxHandlerV2 } from './juicebox/juiceboxHandlerV2';
 import { JuiceboxHandlerV3 } from './juicebox/juiceboxHandlerV3';
 import { BallotKey } from './juicebox/typesV2';
 import { BasicTransaction, NanceConfig } from './types';
+import { addSecondsToDate } from './utils';
 
 export class NanceTreasury {
   juiceboxHandlerV1;
@@ -127,5 +129,22 @@ export class NanceTreasury {
     if (version === 'V2') { return this.juiceboxHandlerV2.currentConfiguration(); }
     if (version === 'V3') { return this.juiceboxHandlerV3.currentConfiguration(); }
     return Promise.reject(`[NANCE ERROR]: version ${version} not supported`);
+  }
+
+  async getCycleInformation(): Promise<GovernanceCycle> {
+    const { number: numberV2 } = await this.getQueuedConfiguration('V2');
+    const { number: numberV3, start: startV3, duration: durationV3 } = await this.getQueuedConfiguration('V3');
+    const startDatetime = addSecondsToDate(new Date(startV3.toNumber() * 1000), durationV3.toNumber());
+    const cycleNumber = await this.proposalHandler.getCurrentGovernanceCycle() + 1;
+    const governance: GovernanceCycle = {
+      cycleNumber,
+      startDatetime,
+      endDatetime: addSecondsToDate(startDatetime, durationV3.toNumber()),
+      jbV1FundingCycle: cycleNumber,
+      jbV2FundingCycle: numberV2.toNumber() + 1,
+      jbV3FundingCycle: numberV3.toNumber() + 1,
+      acceptingProposals: true
+    };
+    return governance;
   }
 }

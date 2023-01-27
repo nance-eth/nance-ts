@@ -13,6 +13,7 @@ import { NanceConfig, Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { pinProposal } from './storage/storageHandler';
 import { DoltHandler } from './dolt/doltHandler';
+import { GovernanceCycle } from './dolt/schema';
 
 export class Nance {
   proposalHandler;
@@ -49,6 +50,11 @@ export class Nance {
   async sendImageReminder(day: string, type: string) {
     const governanceCycle = await this.proposalHandler.getCurrentGovernanceCycle();
     this.dialogHandler.sendImageReminder(day, governanceCycle.toString(), type);
+  }
+
+  async incrementGovernanceCycle(governanceCycle: GovernanceCycle) {
+    this.proposalHandler.incrementGovernanceCycle();
+    this.dProposalHandler.addGovernanceCycleToDb(governanceCycle);
   }
 
   pollPassCheck(yesCount: number, noCount: number) {
