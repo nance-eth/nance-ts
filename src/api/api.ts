@@ -91,6 +91,7 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
     logger.warn(signature);
     logger.warn(typedValue);
     res.json({ success: false, error: '[NANCE ERROR]: bad signature' });
+    return;
   }
   logger.debug(`[UPLOAD] space: ${space}, address: ${signature.address} good`);
   if (!proposal.governanceCycle) {
