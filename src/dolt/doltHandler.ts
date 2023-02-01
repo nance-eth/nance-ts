@@ -319,7 +319,7 @@ export class DoltHandler {
   async updateVotingSetup(proposal: Proposal) {
     return this.localDolt.db.query(`
       UPDATE ${proposalsTable} SET
-      title = ?, proposalStatus = ?, snapshotId = ?, WHERE uuid = ?
+      title = ?, proposalStatus = ?, snapshotId = ? WHERE uuid = ?
     `, [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.hash]);
   }
 

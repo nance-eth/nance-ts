@@ -29,7 +29,7 @@ export class SnapshotHandler {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();
-    const voteHash = await this.snapshot.proposal(this.wallet, this.wallet.address, {
+    const snapProposal = {
       space: this.config.snapshot.space,
       type: (options?.type === '') ? 'basic' : options?.type ?? 'basic',
       title: `${proposal.proposalId} - ${proposal.title}`,
@@ -41,7 +41,8 @@ export class SnapshotHandler {
       end: endTimeStamp,
       snapshot: latestBlock,
       plugins: JSON.stringify({}),
-    }).then((response: any) => {
+    };
+    const voteHash = await this.snapshot.proposal(this.wallet, this.wallet.address, snapProposal).then((response: any) => {
       return response.id;
     }).catch((e) => {
       return Promise.reject(e);
