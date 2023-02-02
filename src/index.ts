@@ -6,12 +6,14 @@ import {
 } from './utils';
 import { Nance } from './nance';
 import { NanceExtensions } from './extensions';
+import { NanceTreasury } from './treasury';
 import logger from './logging';
 import { getConfig, calendarPath } from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
 import { NanceConfig } from './types';
 
 let nance: Nance;
+let treasury: NanceTreasury;
 let nanceExt: NanceExtensions;
 let config: NanceConfig;
 
@@ -22,6 +24,7 @@ const ONE_HOUR_SECONDS = 1 * 60 * 60;
 async function setup() {
   config = await getConfig();
   nance = new Nance(config);
+  treasury = new NanceTreasury(config, nance.dProposalHandler);
   nanceExt = new NanceExtensions(nance);
 }
 
@@ -49,6 +52,13 @@ async function scheduleCycle() {
       schedule.scheduleJob('temperatureCheckSetup REMINDER', reminderDateStart, () => {
         nance.reminder(event.title, event.start, 'start');
       });
+      // increment governanceCycle 90 seconds before tempertureCheck starts
+      const governanceCycleIncTime = addSecondsToDate(event.start, -90);
+      schedule.scheduleJob('increment governanceCycle', governanceCycleIncTime, async () => {
+        const governanceCycle = await treasury.getCycleInformation();
+        nance.incrementGovernanceCycle(governanceCycle);
+      });
+      // temperatureCheck itself
       schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
         nance.temperatureCheckSetup(event.end);
         nance.clearDiscussionInterval();
