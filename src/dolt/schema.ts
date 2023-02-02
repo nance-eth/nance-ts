@@ -32,6 +32,9 @@ export type SQLPayout = {
   payProject?: number;
   payStatus?: string;
   payAllocator?: string;
+  authorDiscordId?: string;
+  proposalId?: number;
+  snapshotId?: string;
 };
 
 export type SQLReserve = {
