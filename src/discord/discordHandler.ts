@@ -14,6 +14,7 @@ import { limitLength, getLastSlash } from '../utils';
 import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
+import { SQLPayout } from '../dolt/schema';
 
 export class DiscordHandler {
   private discord;
@@ -50,6 +51,10 @@ export class DiscordHandler {
 
   private getAlertChannel(): TextChannel {
     return this.discord.channels.cache.get(this.config.discord.channelId) as TextChannel;
+  }
+
+  private getChannelById(id: string): TextChannel {
+    return this.discord.channels.cache.get(id) as TextChannel;
   }
 
   private getDailyUpdateChannels(): TextChannel[] {
@@ -179,7 +184,7 @@ export class DiscordHandler {
         voteNoEmoji: this.config.discord.poll.voteNoEmoji
       }
     );
-    const sendChannel = this.discord.channels.cache.get(threadId) as TextChannel;
+    const sendChannel = this.getChannelById(threadId);
     await sendChannel.send({ embeds: [message] });
   }
 
@@ -218,5 +223,10 @@ export class DiscordHandler {
     edittedMessage.fields = message.fields;
     edittedMessage.description = message.description;
     messageObj.edit({ embeds: [edittedMessage] });
+  }
+
+  async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
+    const response = discordTemplates.payoutsTable(payouts, governanceCycle, `${this.config.snapshot.base}/${this.config.snapshot.space}`, this.config.propertyKeys.proposalIdPrefix);
+    await this.getChannelById(this.config.discord.bookkeepingId).send({ embeds: [response.message], content: `${response.toAlert} your reoccuring payout expires next cycle! submit a proposal to renew today!` });
   }
 }

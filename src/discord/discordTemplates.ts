@@ -2,11 +2,12 @@
 /* eslint-disable max-len */
 /* eslint-disable newline-per-chained-call */
 import {
-  Message, MessageAttachment, MessageEmbed, ThreadChannel,
+  MessageAttachment, MessageEmbed, ThreadChannel,
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
+import { SQLPayout } from '../dolt/schema';
 
 export const juiceToolUrl = (proposal: Proposal, space: string) => {
   return `https://juicetool.xyz/nance/${space}/proposal/${proposal.hash}`;
@@ -140,4 +141,15 @@ export const dailyImageReminder = (day: string, governanceCycle: string, type: s
     message,
     attachments: [thumbnail, image]
   };
+};
+
+export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, proposalLinkPrefix: string, proposalIdPrefix: string) => {
+  const message = new MessageEmbed().setTitle(`Payouts for GC#${governanceCycle}`).setDescription('[submit new proposal](https://juicetool.xyz/nance/juicebox/new)');
+  const toAlert: string[] = [];
+  payouts.forEach((payout) => {
+    const payoutNum = Number(governanceCycle) - payout.governanceCycleStart + 1;
+    if (payoutNum === payout.numberOfPayouts && payout.numberOfPayouts !== 1) { toAlert.push(`<@${payout.authorDiscordId ?? ''}>`); }
+    message.addFields({ name: payout.payName ?? '', value: `| - - - $${payout.amount.toLocaleString()}  - - - | - - -  ${payoutNum}/${payout.numberOfPayouts} - - - | - - - [${proposalIdPrefix}${payout.proposalId}](${proposalLinkPrefix}/proposal/${payout.snapshotId}) - - - |\n=============================================` });
+  });
+  return { message, toAlert: toAlert.join(' ') };
 };

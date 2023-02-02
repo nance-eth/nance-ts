@@ -141,6 +141,7 @@ export interface NanceConfig {
     guildId: string;
     channelId: string;
     alertRole: string;
+    bookkeepingId: string;
     poll: {
       voteYesEmoji: string;
       voteNoEmoji: string;

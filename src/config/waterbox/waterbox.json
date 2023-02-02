@@ -32,6 +32,7 @@
     "guildId": "889377541675159602",
     "channelId": "964601032703352873",
     "alertRole": "958529682796605440",
+    "bookkeepingId": "964601032703352873",
     "poll": {
       "voteYesEmoji": "👍",
       "voteNoEmoji": "👎",
@@ -74,7 +75,7 @@
   },
   "notion": {
     "API_KEY": "NOTION_KEY_WATERBOX",
-    "enabled": true,
+    "enabled": false,
     "publicURLPrefix": "foil-flat-c43.notion.site",
     "database_id": "8f5a93009a364c4ebf69757ff98be405",
     "current_cycle_block_id": "8458fa50e1724d7aa721275a195dece3",
