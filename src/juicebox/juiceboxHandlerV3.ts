@@ -54,10 +54,10 @@ export class JuiceboxHandlerV3 {
 
   constructor(
     protected projectId: string,
-    protected network = 'mainnet' as 'mainnet' | 'goerli'
+    provider: JsonRpcProvider,
+    protected network = 'mainnet' as 'mainnet' | 'goerli',
   ) {
-    const RPC_HOST = `https://${this.network}.infura.io/v3/${keys.INFURA_KEY}`;
-    this.provider = new JsonRpcProvider(RPC_HOST);
+    this.provider = provider;
     this.wallet = (keys.PRIVATE_KEY) ? new Wallet(keys.PRIVATE_KEY, this.provider) : new Wallet(ethers.Wallet.createRandom());
     this.JBSplitsStore = getJBSplitsStore(this.provider, { network: this.network });
     this.JBController = getJBController(this.provider, { network: this.network });
@@ -266,7 +266,7 @@ export class JuiceboxHandlerV3 {
     const distributePayoutsOfData: DistributePayoutsOfData = [
       this.projectId,
       distributionLimit[0],
-      DISTRIBUTION_CURRENCY_ETH,
+      DISTRIBUTION_CURRENCY_USD,
       TOKEN_ETH,
       0,
       DEFAULT_MEMO

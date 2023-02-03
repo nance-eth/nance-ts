@@ -18,7 +18,6 @@ async function signPayload(space: string, command: string, payload: any): Promis
     payload: ethers.utils.solidityKeccak256(['string'], [JSON.stringify(payload)])
   };
   const wallet = new ethers.Wallet(keys.PRIVATE_KEY);
-  console.log(typedValue);
   // eslint-disable-next-line no-underscore-dangle
   return wallet._signTypedData(DOMAIN, TYPES, typedValue).then((signature) => {
     return {
@@ -31,7 +30,8 @@ async function signPayload(space: string, command: string, payload: any): Promis
 
 async function main(space: string, uuid: string) {
   const signature = await signPayload(space, 'delete', { uuid });
-  console.log((await axios.put(`${API}/${space}/delete`, { signature, uuid })).data);
+  console.log(signature);
+  console.log((await axios.delete(`${API}/${space}/proposal/${uuid}`, { data: { signature } })).data);
 }
 
-main('waterbox', '559eeff699784b0da8f8255ac16ee345');
+main('waterbox', '5156fd85a7344e01be665cb858fa8b0e');

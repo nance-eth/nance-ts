@@ -13,7 +13,6 @@ export function checkSignature(signaturePacket: Signature, space: string, comman
     timestamp: signaturePacket.timestamp,
     payload: ethers.utils.solidityKeccak256(['string'], [JSON.stringify(payload)])
   };
-  console.log(typedValue);
   try {
     const check = ethers.utils.verifyTypedData(DOMAIN, TYPES, typedValue, signaturePacket.signature);
     return { valid: check === signaturePacket.address, typedValue, signature: signaturePacket.signature };

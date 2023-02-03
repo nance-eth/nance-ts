@@ -12,7 +12,7 @@ const API_MAIN = 'https://api.nance.app';
 const API_LOCAL = 'http://localhost:3000';
 const API = API_LOCAL;
 
-const SPACE = 'yoohoo';
+const SPACE = 'waterbox';
 const PROPOSAL: Proposal = {
   hash: '',
   status: 'Draft',
@@ -58,7 +58,7 @@ async function signPayload(space: string, command: string, payload: any): Promis
 
 async function uploadProposal(space: string, proposal: Proposal): Promise<ProposalMarkdownResponse | APIErrorResponse> {
   const signature = await signPayload(space, 'upload', proposal);
-  return axios.post(`${API}/${space}/upload`, {
+  return axios.post(`${API}/${space}/proposals`, {
     signature,
     proposal
   }).then((response) => {

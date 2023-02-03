@@ -12,7 +12,7 @@ const API_LOCAL = 'http://localhost:3000';
 const API = API_LOCAL;
 
 const SPACE = 'waterbox';
-const PROPOSAL_HASH = 'd2ef2ae69d2a4cff945c2677b73186b9';
+const PROPOSAL_HASH = '77758442f030434bb212d9b0300f0fc6';
 
 const getSpaceInfo = async (space: string): Promise<SpaceInfoResponse | APIErrorResponse> => {
   return axios.get(`${API}/${space}`).then((response) => {
@@ -21,13 +21,13 @@ const getSpaceInfo = async (space: string): Promise<SpaceInfoResponse | APIError
 };
 
 const queryProposals = async (space: string, cycle?: number): Promise<ProposalsQueryResponse | APIErrorResponse> => {
-  return axios.get(`${API}/${space}/query${(cycle) ? `?cycle=${cycle}` : ''}`).then((response) => {
+  return axios.get(`${API}/${space}/proposals${(cycle) ? `?cycle=${cycle}` : ''}`).then((response) => {
     return response.data;
   });
 };
 
 const queryMarkdown = async (space: string, hash: string): Promise<ProposalMarkdownResponse | APIErrorResponse> => {
-  return axios.get(`${API}/${space}/proposal?hash=${hash}`).then((response) => {
+  return axios.get(`${API}/${space}/proposal/${hash}`).then((response) => {
     return response.data;
   });
 };

@@ -1,6 +1,14 @@
 import axios from 'axios';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { JsonRpcProvider } from '@ethersproject/providers';
+import { Network } from './types';
+import { keys } from './keys';
+
+export const myProvider = (network: Network) => {
+  const RPC_HOST = `https://${network}.infura.io/v3/${keys.INFURA_KEY}`;
+  return new JsonRpcProvider(RPC_HOST);
+};
 
 export const sleep = (milliseconds: number) => {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds); });

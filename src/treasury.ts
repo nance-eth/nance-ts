@@ -1,4 +1,5 @@
 /* eslint-disable prefer-promise-reject-errors */
+import { JsonRpcProvider } from '@ethersproject/providers';
 import { DoltHandler } from './dolt/doltHandler';
 import { GovernanceCycle } from './dolt/schema';
 import { JuiceboxHandlerV1 } from './juicebox/juiceboxHandlerV1';
@@ -16,7 +17,8 @@ export class NanceTreasury {
 
   constructor(
     protected config: NanceConfig,
-    protected proposalHandler: DoltHandler
+    protected proposalHandler: DoltHandler,
+    provider: JsonRpcProvider,
   ) {
     this.juiceboxHandlerV1 = new JuiceboxHandlerV1(
       config.juicebox.projectId,
@@ -28,6 +30,7 @@ export class NanceTreasury {
     );
     this.juiceboxHandlerV3 = new JuiceboxHandlerV3(
       config.juicebox.projectId,
+      provider,
       config.juicebox.network as 'mainnet' | 'goerli'
     );
     this.provider = this.juiceboxHandlerV3.provider;

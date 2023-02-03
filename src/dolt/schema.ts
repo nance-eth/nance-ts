@@ -48,6 +48,8 @@ export type SQLReserve = {
   reserveStatus?: string;
 };
 
+export type SQLExtended = SQLProposal & SQLPayout;
+
 export type GovernanceCycle = {
   cycleNumber: number;
   startDatetime: Date;

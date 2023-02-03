@@ -8,7 +8,7 @@ import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, 
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getAddressFromPrivateKey, getENS } from './helpers/ens';
-import { sleep } from '../utils';
+import { myProvider, sleep } from '../utils';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
@@ -34,6 +34,9 @@ router.use(spacePrefix, async (req, res, next) => {
   }
 });
 
+// ================================ //
+// ======== info functions ======== //
+// ================================ //
 router.get(`${spacePrefix}`, async (req, res) => {
   const { proposalHandlerMain, spaceName, config } = res.locals;
   try {
@@ -46,41 +49,31 @@ router.get(`${spacePrefix}`, async (req, res) => {
   }
 });
 
-router.get(`${spacePrefix}/discussionHook`, async (req, res) => {
-  const { config } = res.locals;
-  const nance = new Nance(config);
-  const calendar = new CalendarHandler(calendarPath(config));
-  const shouldSendDiscussion = CalendarHandler.shouldSendDiscussion(calendar.getNextEvents());
-  if (!shouldSendDiscussion) {
-    res.json({ success: false, error: 'out of phase to send' });
-    return;
+// ===================================== //
+// ======== proposals functions ======== //
+// ===================================== //
+
+// query proposals
+router.get(`${spacePrefix}/proposals`, async (req, res) => {
+  const { cycle, keyword } = req.query;
+  const { proposalHandlerMain, proposalHandlerBeta } = res.locals;
+  let data;
+  try {
+    if (!keyword && !cycle) {
+      const cycleSearch: string = cycle || await proposalHandlerMain.getCurrentGovernanceCycle();
+      data = await proposalHandlerBeta.getProposalsByGovernanceCycle(cycleSearch);
+    }
+    if (!keyword && cycle) { data = await proposalHandlerBeta.getProposalsByGovernanceCycle(cycle); }
+    if (keyword && !cycle) { data = await proposalHandlerBeta.getProposalsByKeyword(keyword); }
+    if (keyword && cycle) { data = await proposalHandlerBeta.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
+    return res.send({ success: true, data });
+  } catch (e) {
+    return res.send({ success: false, error: `[NANCE] ${e}` });
   }
-  // eslint-disable-next-line no-await-in-loop
-  while (!nance.dialogHandler.ready()) { await sleep(50); }
-  nance.queryAndSendDiscussions().then((discussions) => {
-    nance.dialogHandler.logout();
-    res.json({ success: true, data: discussions });
-  }).catch((e) => {
-    nance.dialogHandler.logout();
-    res.json({ success: false, error: e });
-  });
 });
 
-router.get(`${spacePrefix}/editTitles/:status`, async (req, res) => {
-  const { status } = req.params;
-  const { message } = req.query;
-  const { config } = res.locals;
-  const nance = new Nance(config);
-  // eslint-disable-next-line no-await-in-loop
-  while (!nance.dialogHandler.ready()) { await sleep(50); }
-  nance.editTitles(status, message as string).then((data) => {
-    res.json({ success: true, data });
-  }).catch((e) => {
-    res.json({ success: false, error: e });
-  });
-});
-
-router.post(`${spacePrefix}/upload`, async (req, res) => {
+// upload new proposal
+router.post(`${spacePrefix}/proposals`, async (req, res) => {
   const { space } = req.params;
   const { proposal, signature } = req.body as ProposalUploadRequest;
   const { config, proposalHandlerMain, proposalHandlerBeta } = res.locals;
@@ -120,16 +113,34 @@ router.post(`${spacePrefix}/upload`, async (req, res) => {
   });
 });
 
-router.put(`${spacePrefix}/edit`, async (req, res) => {
-  const { space } = req.params;
+// =========================================== //
+// ======== single proposal functions ======== //
+// =========================================== //
+
+// get specific proposal by uuid, snapshotId, or proposalId number
+router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
+  const { pid } = req.params;
+  const { proposalHandlerBeta } = res.locals;
+  return res.send(
+    await proposalHandlerBeta.getProposalByAnyId(pid).then((proposal: string) => {
+      return { sucess: true, data: proposal[0] };
+    }).catch((e: any) => {
+      return { success: false, error: `[NOTION ERROR]: ${e}` };
+    })
+  );
+});
+
+// edit single proposal
+router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
+  const { space, pid } = req.params;
   const { proposal, signature } = req.body as ProposalUploadRequest;
-  const { proposalHandlerMain } = res.locals;
+  const { proposalHandlerBeta } = res.locals;
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = proposalHandlerMain.getContentMarkdown(proposal.hash);
-  if (signature.address === proposalByUuid.authorAddress || getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+  const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid);
+  if (signature.address === proposalByUuid.authorAddress || signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
     logger.info(`EDIT issued by ${signature.address}`);
-    proposalHandlerMain.addProposalToDb(proposal, true).then((hash: string) => {
+    proposalHandlerBeta.addProposalToDb(proposal, true).then((hash: string) => {
       res.json({ success: true, data: { hash } });
     }).catch((e: any) => {
       res.json({ success: false, error: e });
@@ -137,23 +148,52 @@ router.put(`${spacePrefix}/edit`, async (req, res) => {
   }
 });
 
-router.put(`${spacePrefix}/delete`, async (req, res) => {
-  const { space } = req.params;
-  const { uuid, signature } = req.body as ProposalDeleteRequest;
-  const { proposalHandlerMain } = res.locals;
-  const { valid } = checkSignature(signature, space, 'delete', { uuid });
+// delete single proposal
+router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
+  const { space, hash } = req.params;
+  const { signature } = req.body as ProposalDeleteRequest;
+  const { proposalHandlerBeta } = res.locals;
+  const { valid } = checkSignature(signature, space, 'delete', { hash });
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = proposalHandlerMain.getContentMarkdown(uuid);
-  if (signature.address === proposalByUuid.authorAddress || getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+  const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(hash);
+  if (signature.address === proposalByUuid.authorAddress || signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
     logger.info(`DELETE issued by ${signature.address}`);
-    proposalHandlerMain.deleteProposal(uuid).then((affectedRows: number) => {
+    proposalHandlerBeta.deleteProposal(hash).then(async (affectedRows: number) => {
       res.json({ success: true, data: { affectedRows } });
     }).catch((e: any) => {
       res.json({ success: false, error: e });
     });
-  }
+  } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to delete proposal' }); }
 });
 
+// ==================================== //
+// ======== multisig functions ======== //
+// ==================================== //
+
+router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
+  const { version = 'V3', address = ZERO_ADDRESS, datetime = new Date(), network = 'mainnet' } = req.query as unknown as FetchReconfigureRequest;
+  const { config, proposalHandlerBeta } = res.locals;
+  const ens = await getENS(address);
+  const { gnosisSafeAddress } = config.juicebox;
+  const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
+  const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network);
+  if (!currentNonce) { return res.json({ success: false, error: 'safe not found' }); }
+  const nonce = (Number(currentNonce) + 1).toString();
+  const treasury = new NanceTreasury(config, proposalHandlerBeta, myProvider(config.juicebox.network));
+  return res.send(
+    await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
+      return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
+    }).catch((e: any) => {
+      return { success: false, error: e.reason };
+    })
+  );
+});
+
+// ===================================== //
+// ======== admin-ish functions ======== //
+// ===================================== //
+
+// increment governance cycle
 router.put(`${spacePrefix}/incrementGC`, async (req, res) => {
   const { space } = req.params;
   const { governanceCycle, signature } = req.body as IncrementGovernanceCycleRequest;
@@ -170,54 +210,19 @@ router.put(`${spacePrefix}/incrementGC`, async (req, res) => {
   }
 });
 
-// juicebox/markdown?hash=6bb92c83571245949ecf1e495793e66b
-router.get(`${spacePrefix}/proposal`, async (req, res) => {
-  const { hash } = req.query;
-  const { proposalHandlerMain } = res.locals;
-  return res.send(
-    await proposalHandlerMain.getContentMarkdown(hash).then((proposal: string) => {
-      return { sucess: true, data: proposal };
-    }).catch((e: any) => {
-      return { success: false, error: `[NOTION ERROR]: ${e}` };
-    })
-  );
-});
-
-router.get(`${spacePrefix}/query`, async (req, res) => {
-  const { cycle, keyword } = req.query;
-  const { proposalHandlerMain, proposalHandlerBeta } = res.locals;
-  let data;
-  try {
-    if (!keyword && !cycle) {
-      const cycleSearch: string = cycle || await proposalHandlerMain.getCurrentGovernanceCycle();
-      data = await proposalHandlerBeta.getProposalsByGovernanceCycle(cycleSearch);
-    }
-    if (!keyword && cycle) { data = await proposalHandlerBeta.getProposalsByGovernanceCycle(cycle); }
-    if (keyword && !cycle) { data = await proposalHandlerBeta.getProposalsByKeyword(keyword); }
-    if (keyword && cycle) { data = await proposalHandlerBeta.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
-    return res.send({ success: true, data });
-  } catch (e) {
-    return res.send({ success: false, error: `[NANCE] ${e}` });
-  }
-});
-
-router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
-  const { version = 'V3', address = ZERO_ADDRESS, datetime = new Date(), network = 'mainnet' } = req.query as unknown as FetchReconfigureRequest;
-  const { config, proposalHandlerBeta } = res.locals;
-  const ens = await getENS(address);
-  const { gnosisSafeAddress } = config.juicebox;
-  const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
-  const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network);
-  if (!currentNonce) { return res.json({ success: false, error: 'safe not found' }); }
-  const nonce = (Number(currentNonce) + 1).toString();
-  const treasury = new NanceTreasury(config, proposalHandlerBeta);
-  return res.send(
-    await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
-      return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
-    }).catch((e: any) => {
-      return { success: false, error: e.reason };
-    })
-  );
+// edit discord titles
+router.get(`${spacePrefix}/editTitles/:status`, async (req, res) => {
+  const { status } = req.params;
+  const { message } = req.query;
+  const { config } = res.locals;
+  const nance = new Nance(config);
+  // eslint-disable-next-line no-await-in-loop
+  while (!nance.dialogHandler.ready()) { await sleep(50); }
+  nance.editTitles(status, message as string).then((data) => {
+    res.json({ success: true, data });
+  }).catch((e) => {
+    res.json({ success: false, error: e });
+  });
 });
 
 export default router;

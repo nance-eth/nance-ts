@@ -27,7 +27,7 @@ export class Nance {
   ) {
     this.proposalHandler = new NotionHandler(config);
     this.dialogHandler = new DiscordHandler(config);
-    this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, keys.PROVIDER_KEY, this.config);
+    this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, this.config);
     this.dProposalHandler = new DoltHandler(
       { database: config.dolt.repo, host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT), user: process.env.DOLT_USER, password: process.env.DOLT_PASSWORD },
       this.config.propertyKeys
