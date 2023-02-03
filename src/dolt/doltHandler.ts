@@ -27,6 +27,7 @@ export class DoltHandler {
 
   async queryDb(query: string) {
     return this.localDolt.query(query).then((res) => {
+      this.localDolt.db.end();
       return res;
     }).catch((e) => {
       return Promise.reject(e);
@@ -35,6 +36,7 @@ export class DoltHandler {
 
   async queryProposals(query: string): Promise<Proposal[]> {
     return this.localDolt.queryRows(query).then((res) => {
+      this.localDolt.db.end();
       return res.map((r) => {
         return this.toProposal(r as SQLProposal & SQLPayout);
       });
@@ -45,6 +47,7 @@ export class DoltHandler {
 
   async queryDbResults(query: string) {
     return this.localDolt.queryResults(query).then((res) => {
+      this.localDolt.db.end();
       return res;
     }).catch((e) => {
       return Promise.reject(e);
@@ -134,6 +137,7 @@ export class DoltHandler {
         await this.addPayoutToDb(proposal);
       }
     }
+    this.localDolt.db.end();
     return proposal.hash;
   }
 
@@ -346,16 +350,17 @@ export class DoltHandler {
   }
 
   async updateVotingSetup(proposal: Proposal) {
-    return this.localDolt.db.query(`
-      UPDATE ${proposalsTable} SET
-      title = ?, proposalStatus = ?, snapshotId = ? WHERE uuid = ?
-    `, [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.hash]);
+    const results = this.localDolt.db.query(`
+    UPDATE ${proposalsTable} SET
+    title = ?, proposalStatus = ?, snapshotId = ? WHERE uuid = ?
+  `, [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.hash]);
+    this.localDolt.db.end();
+    return results;
   }
 
   async updateVotingClose(proposal: Proposal) {
     const voteChoices = (proposal.voteResults) ? JSON.stringify(Object.keys(proposal.voteResults.scores)) : null;
     const voteResults = (proposal.voteResults) ? JSON.stringify(Object.values(proposal.voteResults.scores)) : null;
-    console.log(voteResults);
     this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
       choices = ?,
@@ -366,6 +371,7 @@ export class DoltHandler {
     if (proposal.type?.toLowerCase().includes('pay')) {
       this.updatePayoutStatus(proposal);
     }
+    this.localDolt.db.end();
   }
 
   async updatePayoutStatus(proposal: Proposal) {
@@ -375,16 +381,17 @@ export class DoltHandler {
       payStatus = ?
       WHERE uuid = ?
   `, [payStatus, proposal.hash]);
+    this.localDolt.db.end();
   }
 
   async addGovernanceCycleToDb(g: GovernanceCycle) {
-    return this.localDolt.db.query(oneLine`
+    const results = this.localDolt.db.query(oneLine`
       REPLACE INTO ${governanceCyclesTable}
       (cycleNumber, startDateTime, endDateTime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle, acceptingProposals)
       VALUES(?,?,?,?,?,?,?)`, [g.cycleNumber, g.startDatetime, g.endDatetime, g.jbV1FundingCycle, g.jbV2FundingCycle, g.jbV3FundingCycle, true]
-    ).catch((e) => {
-      return Promise.reject(e);
-    });
+    );
+    this.localDolt.db.end();
+    return results;
   }
 
   async pushProposals(proposal: Proposal): Promise<number> {
@@ -396,7 +403,7 @@ export class DoltHandler {
   async getPayoutsDb(version: string): Promise<SQLPayout[]> {
     const treasuryVersion = Number(version.split('V')[1]);
     const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
-    return this.queryDb(`
+    const results = this.queryDb(`
       SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
       INNER JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
       WHERE treasuryVersion = ${treasuryVersion} AND
@@ -404,12 +411,16 @@ export class DoltHandler {
       governanceCycleStart <= ${currentGovernanceCycle} AND
       governanceCycleStart + numberOfPayouts >= ${currentGovernanceCycle}
     `) as unknown as SQLPayout[];
+    this.localDolt.db.end();
+    return results;
   }
 
   async getReserveDb(): Promise<SQLReserve[]> {
-    return this.queryDb(`
+    const results = this.queryDb(`
       SELECT * from ${reservesTable}
       WHERE reserveStatus = 'active'
     `) as unknown as SQLReserve[];
+    this.localDolt.db.end();
+    return results;
   }
 }
