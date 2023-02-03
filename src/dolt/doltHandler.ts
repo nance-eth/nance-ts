@@ -263,8 +263,11 @@ export class DoltHandler {
       SELECT * FROM ${proposalsTable}
       WHERE
       governanceCycle = ${governanceCycle}
-      AND body like '%${search}%'
-      OR title like '%${search}%'
+      AND 
+      ( 
+        body like '%${search}%'
+        OR title like '%${search}%'
+      )
       ORDER BY proposalId ASC
     `);
   }
