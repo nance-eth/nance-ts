@@ -14,6 +14,7 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { keys } from '../keys';
 import { DBConfig } from '../dolt/types';
+import { manager } from './helpers/manager';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -22,12 +23,18 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
-    const config = await getConfig(space);
-    const dbOptions: DBConfig = { database: config.dolt.repo, host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT), user: process.env.DOLT_USER, password: process.env.DOLT_PASSWORD };
-    res.locals.proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions, config.propertyKeys);
-    res.locals.proposalHandlerBeta = (config.notion.enabled && config.dolt.enabled) ? new DoltHandler(dbOptions, config.propertyKeys) : undefined;
-    res.locals.spaceName = space;
-    res.locals.config = config;
+    const reuse = manager.find((cache) => { return cache.space === space; });
+    if (reuse) {
+      res.locals = reuse.cache;
+    } else {
+      const config = await getConfig(space);
+      const dbOptions: DBConfig = { database: config.dolt.repo, host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT), user: process.env.DOLT_USER, password: process.env.DOLT_PASSWORD };
+      res.locals.proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions, config.propertyKeys);
+      res.locals.proposalHandlerBeta = (config.notion.enabled && config.dolt.enabled) ? new DoltHandler(dbOptions, config.propertyKeys) : undefined;
+      res.locals.spaceName = space;
+      res.locals.config = config;
+      manager.push({ space, cache: res.locals });
+    }
     next();
   } catch (e) {
     res.json({ success: false, error: `space ${space} not found!` });
