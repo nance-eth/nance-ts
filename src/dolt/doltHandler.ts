@@ -27,7 +27,6 @@ export class DoltHandler {
 
   async queryDb(query: string) {
     return this.localDolt.query(query).then((res) => {
-      this.localDolt.db.end();
       return res;
     }).catch((e) => {
       return Promise.reject(e);
@@ -47,7 +46,6 @@ export class DoltHandler {
 
   async queryDbResults(query: string) {
     return this.localDolt.queryResults(query).then((res) => {
-      this.localDolt.db.end();
       return res;
     }).catch((e) => {
       return Promise.reject(e);
@@ -361,7 +359,7 @@ export class DoltHandler {
   async updateVotingClose(proposal: Proposal) {
     const voteChoices = (proposal.voteResults) ? JSON.stringify(Object.keys(proposal.voteResults.scores)) : null;
     const voteResults = (proposal.voteResults) ? JSON.stringify(Object.values(proposal.voteResults.scores)) : null;
-    this.localDolt.db.query(oneLine`
+    await this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
       choices = ?,
       snapshotVotes = ?,
@@ -369,19 +367,18 @@ export class DoltHandler {
       WHERE uuid = ?
     `, [voteChoices, voteResults, proposal.status, proposal.hash]);
     if (proposal.type?.toLowerCase().includes('pay')) {
-      this.updatePayoutStatus(proposal);
+      await this.updatePayoutStatus(proposal);
     }
-    this.localDolt.db.end();
   }
 
   async updatePayoutStatus(proposal: Proposal) {
     const payStatus = (proposal.status === this.propertyKeys.statusApproved) ? 'active' : 'cancelled';
+    console.log(payStatus);
     this.localDolt.db.query(`
       UPDATE ${payoutsTable} SET
       payStatus = ?
       WHERE uuid = ?
   `, [payStatus, proposal.hash]);
-    this.localDolt.db.end();
   }
 
   async addGovernanceCycleToDb(g: GovernanceCycle) {
@@ -412,6 +409,19 @@ export class DoltHandler {
       governanceCycleStart + numberOfPayouts >= ${currentGovernanceCycle}
     `) as unknown as SQLPayout[];
     this.localDolt.db.end();
+    return results;
+  }
+
+  async setStalePayouts(): Promise<number> {
+    const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
+    const results = await this.queryDbResults(`
+      UPDATE ${payoutsTable} SET payStatus = 'complete' WHERE
+      payStatus = 'active' AND
+      governanceCycleStart <= ${currentGovernanceCycle - 1} AND
+      governanceCycleStart + numberOfPayouts <= ${currentGovernanceCycle}
+    `).then((res) => {
+      return res.affectedRows;
+    });
     return results;
   }
 
