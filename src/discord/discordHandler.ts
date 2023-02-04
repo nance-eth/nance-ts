@@ -229,4 +229,9 @@ export class DiscordHandler {
     const response = discordTemplates.payoutsTable(payouts, governanceCycle, `${this.config.snapshot.base}/${this.config.snapshot.space}`, this.config.propertyKeys.proposalIdPrefix);
     await this.getChannelById(this.config.discord.bookkeepingId).send({ embeds: [response.message], content: `${response.toAlert} your reoccuring payout expires next cycle! submit a proposal to renew today!` });
   }
+
+  async createTransactionThread(nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, simulationURL: string) {
+    const message = discordTemplates.transactionThread(nonce, operation, oldDistributionLimit, newDistributionLimit, simulationURL);
+    await this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message] });
+  }
 }

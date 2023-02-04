@@ -12,18 +12,26 @@ export class TenderlyHandler {
   private provider!: ethers.providers.JsonRpcProvider;
   private API;
   private headers;
+  private config;
+  private forkId = '';
 
   constructor(
     config: TenderlyConfig
   ) {
+    this.config = config;
     this.API = `${BASE_API}/account/${config.account}/project/${config.project}`;
     this.headers = { 'X-Access-Key': config.key };
   }
-  async getForkProvider(description: string) {
+
+  getForkURL() {
+    return `https://dashboard.tenderly.co/${this.config.account}/${this.config.project}/fork/${this.forkId}`;
+  }
+
+  async getForkProvider(description?: string) {
     const data = { network_id: '1', description };
     return axios({ method: 'POST', headers: this.headers, url: `${this.API}/fork`, data }).then(async (res) => {
-      const forkId = res.data.simulation_fork.id;
-      const forkRPC = `https://rpc.tenderly.co/fork/${forkId}`;
+      this.forkId = res.data.simulation_fork.id;
+      const forkRPC = `https://rpc.tenderly.co/fork/${this.forkId}`;
       this.provider = new ethers.providers.JsonRpcProvider(forkRPC);
       return this.provider;
     }).catch((e) => {

@@ -135,7 +135,6 @@ export class DoltHandler {
         await this.addPayoutToDb(proposal);
       }
     }
-    this.localDolt.db.end();
     return proposal.hash;
   }
 
@@ -408,7 +407,6 @@ export class DoltHandler {
       governanceCycleStart <= ${currentGovernanceCycle} AND
       governanceCycleStart + numberOfPayouts >= ${currentGovernanceCycle}
     `) as unknown as SQLPayout[];
-    this.localDolt.db.end();
     return results;
   }
 
@@ -430,7 +428,6 @@ export class DoltHandler {
       SELECT * from ${reservesTable}
       WHERE reserveStatus = 'active'
     `) as unknown as SQLReserve[];
-    this.localDolt.db.end();
     return results;
   }
 }

@@ -4,13 +4,13 @@
 import {
   MessageAttachment, MessageEmbed, ThreadChannel,
 } from 'discord.js';
-import { stripIndents } from 'common-tags';
+import { oneLine, stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout } from '../dolt/schema';
 
 export const juiceToolUrl = (proposal: Proposal, space: string) => {
-  return `https://juicetool.xyz/nance/${space}/proposal/${proposal.hash}`;
+  return `https://jbdao.org/proposal/${proposal.hash}`;
 };
 
 export const startDiscussionMessage = (proposal: Proposal) => {
@@ -152,4 +152,12 @@ export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, prop
     message.addFields({ name: payout.payName ?? '', value: `| - - - $${payout.amount.toLocaleString()}  - - - | - - -  ${payoutNum}/${payout.numberOfPayouts} - - - | - - - [${proposalIdPrefix}${payout.proposalId}](${proposalLinkPrefix}/proposal/${payout.snapshotId}) - - - |\n=============================================` });
   });
   return { message, toAlert: toAlert.join(' ') };
+};
+
+export const transactionThread = (nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, simulationURL: string) => {
+  const message = new MessageEmbed().setTitle(`Tx ${nonce}: ${operation}`).setDescription(oneLine`
+    [Tenderly simulation](${simulationURL})\n
+    [Transaction Diff](https://www.jbdao.org/juicebox)\n
+  `);
+  return message;
 };
