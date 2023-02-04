@@ -79,7 +79,7 @@ export const getJBFundingCycleMetadataStruct = (
   return {
     global: {
       allowSetTerminals: data.global.allowSetTerminals,
-      allowSetController: data.global.allowSetController,
+      allowSetController: true,
       pauseTransfers: data.global.pauseTransfers
     },
     reservedRate: data.reservedRate,

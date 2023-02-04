@@ -275,10 +275,10 @@ export class JuiceboxHandlerV3 {
       'distributePayoutsOf',
       distributePayoutsOfData
     );
-    console.dir(this.JBETHPaymentTerminal.interface.decodeFunctionData(
-      'distributePayoutsOf',
-      encodedDistribution
-    ), { depth: null });
+    // console.dir(this.JBETHPaymentTerminal.interface.decodeFunctionData(
+    //   'distributePayoutsOf',
+    //   encodedDistribution
+    // ), { depth: null });
     return { address: this.JBETHPaymentTerminal.address, bytes: encodedDistribution };
   }
 

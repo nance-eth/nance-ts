@@ -232,6 +232,11 @@ export class DiscordHandler {
 
   async createTransactionThread(nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, simulationURL: string) {
     const message = discordTemplates.transactionThread(nonce, operation, oldDistributionLimit, newDistributionLimit, simulationURL);
-    await this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message] });
+    this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message] }).then((messageObj) => {
+      messageObj.startThread({
+        name: limitLength(message.title ?? 'thread'),
+        autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
+      });
+    });
   }
 }
