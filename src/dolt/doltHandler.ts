@@ -406,6 +406,21 @@ export class DoltHandler {
       payStatus = 'active' AND
       governanceCycleStart <= ${currentGovernanceCycle} AND
       governanceCycleStart + numberOfPayouts >= ${currentGovernanceCycle}
+      ORDER BY proposalId ASC
+    `) as unknown as SQLPayout[];
+    return results;
+  }
+
+  async getPreviousPayoutsDb(version: string, governanceCycle: number): Promise<SQLPayout[]> {
+    const treasuryVersion = Number(version.split('V')[1]);
+    const results = this.queryDb(`
+      SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
+      INNER JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
+      WHERE treasuryVersion = ${treasuryVersion} AND
+      payStatus != 'cancelled' AND
+      governanceCycleStart <= ${governanceCycle} AND
+      governanceCycleStart + numberOfPayouts >= ${governanceCycle}
+      ORDER BY proposalId ASC
     `) as unknown as SQLPayout[];
     return results;
   }

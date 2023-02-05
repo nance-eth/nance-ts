@@ -8,6 +8,7 @@ import {
   TextChannel,
   ThreadAutoArchiveDuration,
   MessageEmbed,
+  EmbedFieldData,
 } from 'discord.js';
 import logger from '../logging';
 import { limitLength, getLastSlash } from '../utils';
@@ -64,7 +65,7 @@ export class DiscordHandler {
   }
 
   async startDiscussion(proposal: Proposal): Promise<string> {
-    proposal.url = discordTemplates.juiceToolUrl(proposal, this.config.name);
+    proposal.url = discordTemplates.juiceToolUrl(proposal);
     const message = discordTemplates.startDiscussionMessage(proposal);
     const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
@@ -200,7 +201,7 @@ export class DiscordHandler {
 
   async editDiscussionTitle(proposal: Proposal) {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-    proposal.url = discordTemplates.juiceToolUrl(proposal, this.config.name);
+    proposal.url = discordTemplates.juiceToolUrl(proposal);
     const message = discordTemplates.startDiscussionMessage(proposal);
     if (messageObj.embeds[0].title !== message.title) {
       messageObj.edit({ embeds: [message] });
@@ -227,16 +228,34 @@ export class DiscordHandler {
 
   async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
     const response = discordTemplates.payoutsTable(payouts, governanceCycle, `${this.config.snapshot.base}/${this.config.snapshot.space}`, this.config.propertyKeys.proposalIdPrefix);
-    await this.getChannelById(this.config.discord.bookkeepingId).send({ embeds: [response.message], content: `${response.toAlert} your reoccuring payout expires next cycle! submit a proposal to renew today!` });
+    await this.getChannelById(this.config.discord.bookkeepingId).send({ embeds: [response.message] });
   }
 
-  async createTransactionThread(nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, simulationURL: string) {
-    const message = discordTemplates.transactionThread(nonce, operation, oldDistributionLimit, newDistributionLimit, simulationURL);
-    this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message] }).then((messageObj) => {
-      messageObj.startThread({
+  async createTransactionThread(nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, links: EmbedFieldData[]) {
+    const message = discordTemplates.transactionThread(nonce, operation, links);
+    const thread = await this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message] }).then((messageObj) => {
+      return messageObj.startThread({
         name: limitLength(message.title ?? 'thread'),
         autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
       });
     });
+    await this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message] });
+  }
+
+  async editTransactionMessage(messageId: string, links: EmbedFieldData[]) {
+    const messageObj = await this.getChannelById(this.config.discord.transactionsId).messages.fetch(messageId);
+    const edittedMessage = messageObj.embeds[0];
+    const message = discordTemplates.transactionThread(0, '', links);
+    // only edit description
+    edittedMessage.description = message.description;
+    messageObj.edit({ embeds: [edittedMessage] });
+  }
+
+  async sendTransactionSummary(addPayouts: SQLPayout[], removePayouts: SQLPayout[], oldDistributionLimit: number, newDistributionLimit: number) {
+    const message1 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, addPayouts);
+    const message2 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, undefined, removePayouts);
+    const message3 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, undefined, undefined, oldDistributionLimit, newDistributionLimit, undefined);
+
+    await this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message3, message1, message2] });
   }
 }

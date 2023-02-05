@@ -8,7 +8,31 @@ async function main() {
   // const total = payouts.reduce((sum, payout) => { return sum + payout.amount; }, 0);
   // console.log(payouts.some((payout) => { return payout.currency === 'percent'; }));
   // console.log(payouts);
-  const payOuts = await dolt.getPayoutsDb('V3');
+  const currentPayouts = await dolt.getPreviousPayoutsDb('V3', 40);
+  const futurePayouts = await dolt.getPayoutsDb('V3');
+  let total = 0;
+  const currentPayoutsPretty = currentPayouts.map((pay) => {
+    total += pay.amount;
+    return {
+      // name: pay.payAddress || pay.payProject,
+      // other: pay.payName,
+      // amount: pay.amount,
+      pid: pay.proposalId
+    };
+  }).sort((a, b) => { return a.pid! - b.pid!; });
+
+  const furturePayoutsPretty = futurePayouts.map((pay) => {
+    total += pay.amount;
+    return {
+      // name: pay.payAddress || pay.payProject,
+      // other: pay.payName,
+      // amount: pay.amount,
+      pid: pay.proposalId
+    };
+  }).sort((a, b) => { return a.pid! - b.pid!; });
+  console.log(currentPayoutsPretty);
+  console.log(furturePayoutsPretty);
+  console.log(total);
 }
 
 main();

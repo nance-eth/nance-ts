@@ -2,14 +2,19 @@
 /* eslint-disable max-len */
 /* eslint-disable newline-per-chained-call */
 import {
-  MessageAttachment, MessageEmbed, ThreadChannel,
+  MessageAttachment, MessageEmbed, ThreadChannel, EmbedFieldData, EmbedField
 } from 'discord.js';
-import { oneLine, stripIndents } from 'common-tags';
+import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
-import { SQLPayout } from '../dolt/schema';
+import { SQLPayout, SQLProposal } from '../dolt/schema';
 
-export const juiceToolUrl = (proposal: Proposal, space: string) => {
+type Field = {
+  name: string;
+  value: string
+};
+
+export const juiceToolUrl = (proposal: Proposal) => {
   return `https://jbdao.org/proposal/${proposal.hash}`;
 };
 
@@ -22,7 +27,7 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], space: stri
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(`${String(proposals.length)} proposals`).addFields(
     proposals.map((proposal: Proposal) => {
-      proposal.url = juiceToolUrl(proposal, space);
+      proposal.url = juiceToolUrl(proposal);
       const proposalLinks = (proposal.translationURL)
         ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
         : `[proposal](${proposal.url})`;
@@ -42,7 +47,7 @@ export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], space:
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
-        proposal.url = juiceToolUrl(proposal, space);
+        proposal.url = juiceToolUrl(proposal);
         const proposalLinks = (proposal.translationURL)
           ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
           : `[proposal](${proposal.url})`;
@@ -154,10 +159,63 @@ export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, prop
   return { message, toAlert: toAlert.join(' ') };
 };
 
-export const transactionThread = (nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, simulationURL: string) => {
-  const message = new MessageEmbed().setTitle(`Tx ${nonce}: ${operation}`).setDescription(oneLine`
-    [Tenderly simulation](${simulationURL})\n
-    [Transaction Diff](https://www.jbdao.org/juicebox)\n
-  `);
+export const transactionThread = (nonce: number, operation: string, links: EmbedFieldData[]) => {
+  const description = links.map((link) => {
+    return `[${link.name}](${link.value})`;
+  }).join('\n');
+  const message = new MessageEmbed().setTitle(`Tx ${nonce}: ${operation}`).setDescription(description);
+  return message;
+};
+
+export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPayout[], removePayouts?: SQLPayout[], oldDistributionLimit?: number, newDistributionLimit?: number, otherProposals?: SQLProposal[]) => {
+  const message = new MessageEmbed().setTitle('Summary');
+  if (addPayouts) {
+    const additions = addPayouts.map((payout) => {
+      // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) --> **+$${payout.amount.toLocaleString()}** ${payout.payName} \`(${payout.payAddress || payout.payProject})\``;
+      // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) +$${payout.amount.toLocaleString()} ${payout.payName}`;
+      return [
+        { name: '-------', value: `[${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId})`, inline: true },
+        { name: '-------', value: `+$${payout.amount.toLocaleString()}`, inline: true },
+        { name: '-------', value: `${payout.payName} (${payout.payAddress || payout.payProject})`, inline: true }
+      ];
+    }).flatMap((a) => { return a; }) as unknown as EmbedFieldData[];
+    message.addFields(
+      { name: 'ADD', value: '=============' },
+      { name: 'Proposal ID', value: '\u200b', inline: true },
+      { name: 'Amount', value: '\u200b', inline: true },
+      { name: 'Receipient', value: '\u200b', inline: true },
+      ...additions
+    ).setTitle('\u200b');
+  }
+  if (removePayouts) {
+    const removals = removePayouts.map((payout) => {
+      // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) --> **+$${payout.amount.toLocaleString()}** ${payout.payName} \`(${payout.payAddress || payout.payProject})\``;
+      // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) +$${payout.amount.toLocaleString()} ${payout.payName}`;
+      return [
+        { name: '-------', value: `[${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId})`, inline: true },
+        { name: '-------', value: `-$${payout.amount.toLocaleString()}`, inline: true },
+        { name: '-------', value: `${payout.payName} (${payout.payAddress || payout.payProject})`, inline: true }
+      ];
+    }).flatMap((a) => { return a; }) as unknown as EmbedFieldData[];
+    message.addFields(
+      { name: 'REMOVE', value: '=============' },
+      { name: 'Proposal ID', value: '\u200b', inline: true },
+      { name: 'Amount', value: '\u200b', inline: true },
+      { name: 'Receipient', value: '\u200b', inline: true },
+      ...removals
+    ).setTitle('\u200b');
+  }
+  if (oldDistributionLimit && newDistributionLimit) {
+    message.addFields(
+      { name: 'OLD DISTRIBUTION LIMIT', value: `$${oldDistributionLimit.toLocaleString()}`, inline: true },
+      { name: 'NEW DISTRIBUTION LIMIT', value: `$${newDistributionLimit.toLocaleString()}`, inline: true }
+    );
+  }
+  if (otherProposals) {
+    const value = otherProposals.map((proposal) => {
+      return `* [${proposalIdPrefix}${proposal.proposalId}](https://jbdao.org/snapshot/${proposal.snapshotId})`;
+    }).join('\n');
+    message.addFields({ name: 'OTHER PASSED PROPOSALS', value });
+  }
   return message;
 };
