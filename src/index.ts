@@ -2,7 +2,8 @@ import schedule from 'node-schedule';
 import {
   sleep,
   addSecondsToDate,
-  downloadImages
+  downloadImages,
+  myProvider
 } from './utils';
 import { Nance } from './nance';
 import { NanceExtensions } from './extensions';
@@ -24,7 +25,7 @@ const ONE_HOUR_SECONDS = 1 * 60 * 60;
 async function setup() {
   config = await getConfig();
   nance = new Nance(config);
-  treasury = new NanceTreasury(config, nance.dProposalHandler);
+  treasury = new NanceTreasury(config, nance.dProposalHandler, myProvider('mainnet'));
   nanceExt = new NanceExtensions(nance);
 }
 
