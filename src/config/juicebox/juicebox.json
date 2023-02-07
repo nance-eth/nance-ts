@@ -36,9 +36,9 @@
       "links": {
         "process": "https://info.juicebox.money/dao/process",
         "temperature check": "https://discord.com/channels/775859454780244028/873248745771372584",
-        "vote": "https://juicetool.xyz/snapshot/jbdao.eth",
-        "execution": "https://juicetool.xyz/juicebox",
-        "delay": "https://juicetool.xyz/nance/juicebox/new?type=Payout&version=2&project=1"
+        "vote": "https://www.jbdao.org/snapshot/jbdao.eth",
+        "execution": "https://www.jbdao.org",
+        "delay": "https://www.jbdao.org/new"
       }
     }
   },
