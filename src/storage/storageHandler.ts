@@ -1,18 +1,13 @@
 /* eslint-disable quote-props */
-import fs from 'fs';
 import axios from 'axios';
 import path from 'path';
 import { keys } from '../keys';
-import { Proposal } from '../types';
 
 const TMP_DIR = path.join(__dirname, 'tmp');
 const API = 'https://api.nft.storage';
 
-function appendHeading(proposal: Proposal) {
-  return `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
-}
-
-async function uploadRequest(fileName: string): Promise<string> {
+export async function dotPin(dataIn: string, encoding = 'utf-8' as BufferEncoding): Promise<string> {
+  const data = Buffer.from(dataIn, encoding);
   return axios({
     method: 'post',
     url: `${API}/upload`,
@@ -20,19 +15,12 @@ async function uploadRequest(fileName: string): Promise<string> {
       'Authorization': `Bearer ${keys.STORAGE_KEY}`,
       'Content-Type': '*/*',
       'Accept-Encoding': '*',
-      'Content-Length': fs.statSync(fileName).size
+      'Content-Length': data.length
     },
-    data: fs.createReadStream(fileName)
+    data
   }).then((res) => {
-    fs.rm(fileName, () => {});
     return res.data.value.cid;
   }).catch((e) => {
     return Promise.reject(e);
   });
-}
-
-export async function pinProposal(proposal: Proposal): Promise<string> {
-  const fileName = path.join(TMP_DIR, `${proposal.hash}.md`);
-  fs.writeFileSync(fileName, appendHeading(proposal));
-  return uploadRequest(fileName);
 }

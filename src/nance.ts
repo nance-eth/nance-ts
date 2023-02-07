@@ -11,7 +11,7 @@ import {
 import logger from './logging';
 import { NanceConfig, Proposal, VoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
-import { pinProposal } from './storage/storageHandler';
+import { dotPin } from './storage/storageHandler';
 import { DoltHandler } from './dolt/doltHandler';
 import { GovernanceCycle } from './dolt/schema';
 
@@ -180,7 +180,8 @@ export class Nance {
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
       if (this.config.proposalDataBackup) {
-        const ipfsCID = await pinProposal(proposal);
+        const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
+        const ipfsCID = await dotPin(proposalWithHeading);
         proposal.ipfsURL = cidToLink(ipfsCID, this.config.ipfsGateway);
       }
       const markdownWithAdditions = this.proposalHandler.appendProposal(proposal);
