@@ -9,11 +9,6 @@ import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
-type Field = {
-  name: string;
-  value: string
-};
-
 export const juiceToolUrl = (proposal: Proposal) => {
   return `https://jbdao.org/proposal/${proposal.hash}`;
 };

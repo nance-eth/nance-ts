@@ -107,8 +107,6 @@ export class Nance {
         proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
         try {
           await this.dProposalHandler.addProposalToDb(proposal);
-          const pushed = await this.dProposalHandler.pushProposals(proposal);
-          logger.info(`[DOLT]: proposal push status: ${(pushed === 1) ? 'success' : 'failed'}`);
         } catch (e) { logger.error('no dDB'); }
         logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
         return proposal.discussionThreadURL;
