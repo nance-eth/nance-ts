@@ -36,21 +36,6 @@ export class NanceTreasury {
     this.provider = this.juiceboxHandlerV3.provider;
   }
 
-  // async removeStalePayouts() {
-  //
-  // }
-
-  // async updatePayoutTableFromProposals(governanceCycle: string) {
-  //   const approvedReccuringPayoutProposals = await this.proposalHandler.getApprovedRecurringPaymentProposals(governanceCycle);
-  //   approvedReccuringPayoutProposals.map((payoutProposal) => {
-  //     const payoutTitle = payoutProposal.title.toLowerCase().match(/[a-z1-9]*.eth/)?.[0] ?? payoutProposal.title;
-  //     return this.proposalHandler.addPayoutToDb(
-  //       payoutTitle,
-  //       payoutProposal
-  //     );
-  //   });
-  // }
-
   async payoutTableToGroupedSplitsStruct(version = 'V2') {
     const payouts = await this.proposalHandler.getPayoutsDb(version);
     const reserves = await this.proposalHandler.getReserveDb();

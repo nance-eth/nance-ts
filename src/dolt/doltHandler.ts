@@ -35,7 +35,6 @@ export class DoltHandler {
 
   async queryProposals(query: string): Promise<Proposal[]> {
     return this.localDolt.queryRows(query).then((res) => {
-      this.localDolt.db.end();
       return res.map((r) => {
         return this.toProposal(r as SQLProposal & SQLPayout);
       });
@@ -351,7 +350,6 @@ export class DoltHandler {
     UPDATE ${proposalsTable} SET
     title = ?, proposalStatus = ?, snapshotId = ? WHERE uuid = ?
   `, [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.hash]);
-    this.localDolt.db.end();
     return results;
   }
 
@@ -386,7 +384,6 @@ export class DoltHandler {
       (cycleNumber, startDateTime, endDateTime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle, acceptingProposals)
       VALUES(?,?,?,?,?,?,?)`, [g.cycleNumber, g.startDatetime, g.endDatetime, g.jbV1FundingCycle, g.jbV2FundingCycle, g.jbV3FundingCycle, true]
     );
-    this.localDolt.db.end();
     return results;
   }
 

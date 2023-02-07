@@ -6,7 +6,6 @@ import {
   myProvider
 } from './utils';
 import { Nance } from './nance';
-import { NanceExtensions } from './extensions';
 import { NanceTreasury } from './treasury';
 import logger from './logging';
 import { getConfig, calendarPath } from './configLoader';
@@ -15,7 +14,6 @@ import { NanceConfig } from './types';
 
 let nance: Nance;
 let treasury: NanceTreasury;
-let nanceExt: NanceExtensions;
 let config: NanceConfig;
 
 const PADDING_VOTE_START_SECONDS = 30;
@@ -26,11 +24,10 @@ async function setup() {
   config = await getConfig();
   nance = new Nance(config);
   treasury = new NanceTreasury(config, nance.dProposalHandler, myProvider('mainnet'));
-  nanceExt = new NanceExtensions(nance);
 }
 
 async function getReminderImages() {
-  downloadImages(config.reminder.imagesCID, config.reminder.images);
+  downloadImages(config.discord.reminder.imagesCID, config.discord.reminder.imageNames);
 }
 
 async function scheduleCycle() {
@@ -74,9 +71,7 @@ async function scheduleCycle() {
       });
     } else if (event.title === 'Snapshot Vote') {
       schedule.scheduleJob('voteSetup', addSecondsToDate(event.start, PADDING_VOTE_START_SECONDS), () => {
-        nance.votingSetup(event.start, event.end).then((proposals) => {
-          if (proposals) nanceExt.pushNewCycle(proposals);
-        });
+        nance.votingSetup(event.start, event.end);
       });
       // end reminder
       const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
@@ -84,9 +79,7 @@ async function scheduleCycle() {
         nance.reminder(event.title, event.end, 'end', `${config.snapshot.base}/${config.snapshot.space}`);
       });
       schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
-        nance.votingClose().then((proposals) => {
-          if (proposals) nanceExt.updateCycle(proposals, 'vote complete.');
-        });
+        nance.votingClose();
         nance.setDiscussionInterval(30);
       });
     }

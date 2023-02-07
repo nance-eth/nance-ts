@@ -117,32 +117,23 @@ export interface NanceConfig {
   proposalDataBackup: string;
   ipfsGateway: string;
   votingResultsDashboard: string;
-  translation?: {
-    api: string;
-    targetLanguage: TargetLanguageCode;
-    storage: {
-      user: string;
-      repo: string;
-    }
-  };
+  translation?: string[];
   juicebox: {
     network: 'mainnet' | 'rinkeby';
     projectId: string;
     gnosisSafeAddress: string;
   };
-  reminder: {
-    channelIds: string[];
-    imagesCID: string;
-    images: string[];
-    links: Record<string, string>;
-  }
   discord: {
     API_KEY: string;
     guildId: string;
-    channelId: string;
-    alertRole: string;
-    bookkeepingId: string;
-    transactionsId: string;
+    roles: {
+      governance: string;
+    };
+    channelIds: {
+      proposals: string;
+      bookkeeping: string;
+      transactions: string;
+    }
     poll: {
       voteYesEmoji: string;
       voteNoEmoji: string;
@@ -152,6 +143,12 @@ export interface NanceConfig {
       minYesVotes: number;
       yesNoRatio: number;
       showResults: boolean;
+    };
+    reminder: {
+      channelIds: string[];
+      imagesCID: string;
+      imageNames: string[];
+      links: Record<string, string>;
     };
   };
   propertyKeys: PropertyKeys;
@@ -164,25 +161,6 @@ export interface NanceConfig {
     payouts_database_id: string;
     reserves_database_id: string;
   };
-  github: {
-    user: string;
-    repo: string;
-    propertyKeys: {
-      title: string;
-      proposalId: string;
-      status: string;
-      statusTemperatureCheck: string;
-      statusVoting: string;
-      statusApproved: string;
-      statusCancelled: string;
-      proposalIdPrefix: string;
-      discussionThread: string;
-      ipfs: string;
-      vote: string;
-      type: string;
-      governanceCycle: string;
-    },
-  },
   dolt: DoltConfig,
   snapshot: {
     base: string;
@@ -214,11 +192,6 @@ export interface PollResults {
 export interface PollEmojis {
   voteYesEmoji: string;
   voteNoEmoji: string;
-}
-
-export interface GithubFileChange {
-  path: string,
-  contents: string
 }
 
 export type SnapshotVoteOptions = {

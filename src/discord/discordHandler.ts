@@ -39,7 +39,7 @@ export class DiscordHandler {
       logger.error('discord auth failed!');
       logger.error(e);
     });
-    this.roleTag = `<@&${this.config.discord.alertRole}>`;
+    this.roleTag = `<@&${this.config.discord.roles.governance}>`;
   }
 
   ready() {
@@ -51,7 +51,7 @@ export class DiscordHandler {
   }
 
   private getAlertChannel(): TextChannel {
-    return this.discord.channels.cache.get(this.config.discord.channelId) as TextChannel;
+    return this.discord.channels.cache.get(this.config.discord.channelIds.proposals) as TextChannel;
   }
 
   private getChannelById(id: string): TextChannel {
@@ -59,7 +59,7 @@ export class DiscordHandler {
   }
 
   private getDailyUpdateChannels(): TextChannel[] {
-    return this.config.reminder.channelIds.map((channelId) => {
+    return this.config.discord.reminder.channelIds.map((channelId) => {
       return this.discord.channels.cache.get(channelId) as TextChannel;
     });
   }
@@ -138,7 +138,7 @@ export class DiscordHandler {
         return null;
       })
     );
-    const { message, attachments } = discordTemplates.dailyImageReminder(day, governanceCycle, type, this.config.reminder.links[type], this.config.reminder.links.process);
+    const { message, attachments } = discordTemplates.dailyImageReminder(day, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {
         return channel.send({ embeds: [message], files: attachments });
@@ -228,22 +228,22 @@ export class DiscordHandler {
 
   async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
     const response = discordTemplates.payoutsTable(payouts, governanceCycle, `${this.config.snapshot.base}/${this.config.snapshot.space}`, this.config.propertyKeys.proposalIdPrefix);
-    await this.getChannelById(this.config.discord.bookkeepingId).send({ embeds: [response.message] });
+    await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 
   async createTransactionThread(nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, links: EmbedFieldData[]) {
     const message = discordTemplates.transactionThread(nonce, operation, links);
-    const thread = await this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message] }).then((messageObj) => {
+    const thread = await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] }).then((messageObj) => {
       return messageObj.startThread({
         name: limitLength(message.title ?? 'thread'),
         autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
       });
     });
-    await this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message] });
+    await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] });
   }
 
   async editTransactionMessage(messageId: string, links: EmbedFieldData[]) {
-    const messageObj = await this.getChannelById(this.config.discord.transactionsId).messages.fetch(messageId);
+    const messageObj = await this.getChannelById(this.config.discord.channelIds.transactions).messages.fetch(messageId);
     const edittedMessage = messageObj.embeds[0];
     const message = discordTemplates.transactionThread(0, '', links);
     // only edit description
@@ -256,6 +256,6 @@ export class DiscordHandler {
     const message2 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, undefined, removePayouts);
     const message3 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, undefined, undefined, oldDistributionLimit, newDistributionLimit, undefined);
 
-    await this.getChannelById(this.config.discord.transactionsId).send({ embeds: [message3, message1, message2] });
+    await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message3, message1, message2] });
   }
 }
