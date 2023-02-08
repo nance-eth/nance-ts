@@ -203,7 +203,7 @@ export class DiscordHandler {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
     proposal.url = discordTemplates.juiceToolUrl(proposal);
     const message = discordTemplates.startDiscussionMessage(proposal);
-    if (messageObj.embeds[0].title !== message.title) {
+    if (messageObj.embeds[0].title !== message.title || messageObj.embeds[0].url !== proposal.url) {
       messageObj.edit({ embeds: [message] });
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
     }

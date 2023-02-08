@@ -172,7 +172,6 @@ export interface NanceConfig {
 }
 
 export type DoltConfig = {
-  API_KEY: string;
   enabled: boolean;
   owner: string;
   repo: string;

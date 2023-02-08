@@ -1,4 +1,4 @@
-import { Proposal, Signature } from '../types';
+import { NanceConfig, Proposal, Signature } from '../types';
 
 interface APIResponse<T> {
   success: boolean;
@@ -59,4 +59,9 @@ export interface SubmitTransactionRequest extends BaseRequest {
   version: string;
   datetime: string;
   signature: Signature
+}
+
+export interface CreateSpaceRequest extends BaseRequest {
+  signature: Signature;
+  config: NanceConfig;
 }

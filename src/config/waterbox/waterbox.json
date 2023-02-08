@@ -80,7 +80,6 @@
     "reserves_database_id": "5e62c3b048944801bee6bf48b48896ba"
   },
   "dolt": {
-    "API_KEY": "DOLT_KEY",
     "enabled": true,
     "owner": "jigglyjams",
     "repo": "waterbox"

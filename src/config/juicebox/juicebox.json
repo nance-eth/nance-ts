@@ -87,7 +87,7 @@
     "repo": "juicebox"
   },
   "snapshot": {
-    "base": "https://juicetool.xyz/snapshot",
+    "base": "https://jbdao.org/snapshot",
     "space": "jbdao.eth",
     "choices": ["For", "Against", "Abstain"],
     "minTokenPassingAmount": 80E6,
