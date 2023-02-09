@@ -61,7 +61,8 @@ export interface SubmitTransactionRequest extends BaseRequest {
   signature: Signature
 }
 
-export interface CreateSpaceRequest extends BaseRequest {
+export interface ConfigSpaceRequest extends BaseRequest {
   signature: Signature;
   config: NanceConfig;
+  calendar?: string;
 }

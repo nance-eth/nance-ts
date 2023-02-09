@@ -33,8 +33,8 @@ export class DoltHandler {
     });
   }
 
-  async queryProposals(query: string): Promise<Proposal[]> {
-    return this.localDolt.queryRows(query).then((res) => {
+  async queryProposals(query: string, variables?: string[]): Promise<Proposal[]> {
+    return this.localDolt.queryRows(query, variables).then((res) => {
       return res.map((r) => {
         return this.toProposal(r as SQLProposal & SQLPayout);
       });
@@ -62,7 +62,7 @@ export class DoltHandler {
       status: proposal.proposalStatus,
       proposalId,
       discussionThreadURL: proposal.discussionURL ?? '',
-      url: '',
+      url: `https://${this.propertyKeys.publicURLPrefix}/${proposal.uuid}`,
       ipfsURL: '',
       voteURL,
       date: proposal.createdTime.toDateString(),

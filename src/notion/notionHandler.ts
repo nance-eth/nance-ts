@@ -41,7 +41,7 @@ export class NotionHandler implements DataContentHandler {
     const cleanProposal: Proposal = {
       hash: unconvertedProposal.id.replaceAll('-', ''),
       title: notionUtils.getTitle(unconvertedProposal),
-      url: notionUtils.getPublicURL(unconvertedProposal, this.config.notion.publicURLPrefix),
+      url: notionUtils.getPublicURL(unconvertedProposal, this.config.propertyKeys.publicURLPrefix),
       type: notionUtils.getType(unconvertedProposal),
       status: notionUtils.getStatus(unconvertedProposal),
       proposalId: notionUtils.getRichText(

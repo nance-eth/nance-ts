@@ -110,6 +110,7 @@ export type PropertyKeys = {
   payoutLastFC: string;
   payoutRenewalFC: string;
   payoutProposalLink: string;
+  publicURLPrefix: string;
 };
 
 export interface NanceConfig {
@@ -155,7 +156,6 @@ export interface NanceConfig {
   notion: {
     API_KEY: string;
     enabled: boolean;
-    publicURLPrefix: string;
     database_id: string;
     current_cycle_block_id: string;
     payouts_database_id: string;
@@ -169,6 +169,7 @@ export interface NanceConfig {
     minTokenPassingAmount: number;
     passingRatio: number;
   };
+  calendarCID?: string;
 }
 
 export type DoltConfig = {

@@ -3,15 +3,9 @@ import { addDaysToDate, formatUTCTime } from '../utils';
 import { DateEvent } from '../types';
 
 export class CalendarHandler {
-  public events: CalendarResponse;
+  public events: CalendarResponse = {};
 
-  constructor(
-    private icsFile: string,
-  ) {
-    this.events = ical.sync.parseFile(this.icsFile);
-  }
-
-  async useIcsLinkInstead(icsURL:string) {
+  async useIcsLink(icsURL:string) {
     this.events = await ical.fromURL(icsURL);
   }
 

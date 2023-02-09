@@ -122,8 +122,8 @@ export class DoltSQL {
     });
   }
 
-  async queryRows(query: string) {
-    return this.db.query(query).then((res) => {
+  async queryRows(query: string, variables?: string[]) {
+    return this.db.query(query, variables).then((res) => {
       return res[0] as RowDataPacket[];
     }).catch((e) => {
       return Promise.reject(e);
