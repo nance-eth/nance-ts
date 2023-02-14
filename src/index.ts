@@ -3,7 +3,7 @@ import {
   sleep,
   addSecondsToDate,
   downloadImages,
-  myProvider
+  myProvider,
 } from './utils';
 import { Nance } from './nance';
 import { NanceTreasury } from './treasury';

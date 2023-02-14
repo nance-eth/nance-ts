@@ -131,7 +131,7 @@ export class DoltHandler {
       if (edit) {
         await this.editPayout(proposal);
       } else {
-        await this.addPayoutToDb(proposal);
+        // await this.addPayoutToDb(proposal);
       }
     }
     return proposal.hash;
@@ -268,7 +268,7 @@ export class DoltHandler {
         body like '%${search}%'
         OR title like '%${search}%'
       )
-      ORDER BY proposalId ASC
+      ORDER BY createdTime DESC
     `);
   }
 

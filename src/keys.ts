@@ -1,7 +1,4 @@
 import 'dotenv/config';
-import logger from './logging';
-
-logger.info(`keys environment: ${process.env.NODE_ENV}`);
 
 export const keys = {
   PROVIDER_KEY: process.env.PROVIDER_KEY ?? '',

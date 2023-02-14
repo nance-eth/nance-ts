@@ -13,8 +13,8 @@ export class DoltSysHandler {
 
   async createSpaceDB(space: string) {
     return this.localDolt.db.query(`
-      CREATE DATABASE ?
-    `, [space]);
+      CREATE DATABASE ${space}
+    `);
   }
 
   async getSpaceCID(space: string): Promise<string> {
