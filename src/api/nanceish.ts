@@ -12,6 +12,14 @@ router.get('/', (req, res) => {
 
 router.post('/create', async (req, res) => {
   const { space } = req.body;
+  const dolt = new DoltSysHandler();
+  dolt.createSpaceDB(space).then((data) => {
+    dolt.createSchema(space).then(() => {
+      res.json({ success: true, data });
+    });
+  }).catch((e) => {
+    res.json({ success: false, error: e.sqlMessage });
+  });
 });
 
 router.post('/config', async (req, res) => {

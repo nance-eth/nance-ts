@@ -342,6 +342,7 @@ export class DoltHandler {
       title = '${proposal.title}'
       WHERE uuid = '${proposal.hash}'
     `;
+    console.log(query);
     return this.queryDb(query);
   }
 

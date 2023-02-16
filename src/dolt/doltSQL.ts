@@ -8,12 +8,16 @@ const USER = 'root';
 const PASSWORD = '';
 const PORT = 3306;
 
-const status = (res: any): number => {
+export const status = (res: any): number => {
   return (<RowDataPacket>res[0])[0].status;
 };
 
-const cleanSingleRes = (res: any) => {
+export const cleanSingleRes = (res: any) => {
   return (<RowDataPacket>res[0])[0];
+};
+
+export const cleanResultsHeader = (res: any) => {
+  return (<ResultSetHeader>res[0]).affectedRows;
 };
 export class DoltSQL {
   db;

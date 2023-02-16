@@ -1,50 +1,46 @@
 {
   "name": "",
-  "proposalDataBackup": "ipfs",
-  "ipfsGateway": "ipfs.nftstorage.link",
-  "translation": {
-    "api": "",
-    "targetLanguage": "",
-    "storage": {
-      "user": "",
-      "repo": ""
-    }
-  },
   "juicebox": {
     "network": "mainnet",
     "projectId": "",
     "gnosisSafeAddress": ""
   },
-  "reminder": {
-    "channelIds": "",
-    "imagesCID": "",
-    "images": [""],
-    "links": {
-      "process": "",
-      "temperature check": "",
-      "vote": "",
-      "execution": "",
-      "delay": ""
-    }
-  },
   "discord": {
     "API_KEY": "",
     "guildId": "",
-    "channelId": "",
-    "alertRole": "",
+    "roles":{
+      "governance": ""
+    },
+    "channelIds": {
+      "proposals": "",
+      "bookkeeping": "",
+      "transactions": ""
+    },
     "poll": {
       "voteYesEmoji": "👍",
       "voteNoEmoji": "👎",
       "voteGoVoteEmoji": "🗳",
       "votePassEmoji": "✅",
       "voteCancelledEmoji": "❌",
-      "minYesVotes": "",
-      "yesNoRatio": "",
+      "minYesVotes": 10,
+      "yesNoRatio": 0.3,
       "showResults": true
+    },
+    "reminder": {
+      "channelIds": [""],
+      "imagesCID": "",
+      "imageNames": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"],
+      "links": {
+        "process": "",
+        "temperature check": "",
+        "vote": "",
+        "execution": "",
+        "delay": ""
+      }
     }
   },
   "propertyKeys": {
-    "proposalId": "${NAME} Proposal ID",
+    "proposalId": "Proposal ID",
     "status": "Status",
     "statusTemperatureCheck": "Temperature Check",
     "statusVoting": "Voting",
@@ -57,57 +53,34 @@
     "type": "Category",
     "typeRecurringPayout": "Recurring Payment",
     "typePayout": "Payout",
-    "governanceCycle": "Funding Cycle",
-    "governanceCyclePrefix": "FC#",
+    "governanceCycle": "Governance Cycle",
+    "governanceCyclePrefix": "GC#",
     "payoutAmountUSD": "USD Payout Amount",
     "payoutAddress": "Payout Address",
     "payoutCount": "Number of Payouts",
     "payName": "Pay Name",
     "reservePercentage": "Percentage",
     "treasuryVersion": "JB DAO Treasury",
-    "payoutFirstFC": "First FC",
-    "payoutLastFC": "Last FC",
-    "payoutRenewalFC": "Renewal FC",
     "payoutProposalLink": "Proposal",
     "payoutType": "Type of payout",
-    "payoutName": "ENS"
+    "payoutName": "ENS",
+    "publicURLPrefix": ""
   },
   "notion": {
     "API_KEY": "",
     "enabled": false,
-    "publicURLPrefix": "",
     "database_id": "",
     "current_cycle_block_id": "",
     "payouts_database_id": "",
     "reserves_database_id": ""
   },
-  "github": {
-    "user": "",
-    "repo": "",
-    "propertyKeys": {
-      "title": "Name",
-      "proposalId": "${NAME} Proposal ID",
-      "status": "Status",
-      "statusTemperatureCheck": "Temperature Check",
-      "statusVoting": "Voting",
-      "statusApproved": "Approved",
-      "statusCancelled": "Cancelled",
-      "proposalIdPrefix": "",
-      "discussionThread": "Discussion Thread",
-      "ipfs": "Data Backup",
-      "vote": "Voting",
-      "type": "Category",
-      "governanceCycle": "Funding Cycle"
-    }
-  },
   "dolt": {
-    "API_KEY": "DOLT_KEY",
     "enabled": true,
-    "owner": "jigglyjams",
-    "repo": "${NAME}"
+    "owner": "",
+    "repo": ""
   },
   "snapshot": {
-    "base": "https://juicetool.xyz/snapshot",
+    "base": "",
     "space": "",
     "choices": ["For", "Against", "Abstain"],
     "minTokenPassingAmount": 1,

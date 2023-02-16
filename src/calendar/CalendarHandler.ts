@@ -4,6 +4,11 @@ import { DateEvent } from '../types';
 
 export class CalendarHandler {
   public events: CalendarResponse = {};
+  constructor(
+    private icsFile?: string,
+  ) {
+    if (icsFile) this.events = ical.sync.parseFile(icsFile);
+  }
 
   async useIcsLink(icsURL:string) {
     this.events = await ical.fromURL(icsURL);

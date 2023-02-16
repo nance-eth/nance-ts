@@ -158,6 +158,7 @@ export class Nance {
         pollResults.voteYesUsers.length,
         pollResults.voteNoUsers.length
       );
+      proposal.status = (pass) ? this.config.propertyKeys.statusVoting : this.config.propertyKeys.statusCancelled;
       if (this.config.discord.poll.showResults) {
         this.dialogHandler.sendPollResults(pollResults, pass, threadId);
       }

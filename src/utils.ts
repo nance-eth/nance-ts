@@ -1,5 +1,6 @@
 import axios from 'axios';
 import fs from 'fs';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Network } from './types';
@@ -144,4 +145,8 @@ export function uuid(hyphen = false): string {
 
 export function cidToLink(cid: string, gateway: string) {
   return (cid.startsWith('Qm') ? `${gateway}/${cid}` : `https://${cid}.${gateway}`);
+}
+
+export function sqlSchemaToString(): string[] {
+  return fs.readFileSync(`${path.join(__dirname, '../assets/schema.sql')}`, 'utf-8').split(';');
 }

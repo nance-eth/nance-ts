@@ -5,4 +5,23 @@ async function main(space: string) {
   console.log(await dolt.getSpaceCID(space));
 }
 
-main('juicebox');
+async function createSpace(space: string) {
+  const dolt = new DoltSysHandler();
+  dolt.createSpaceDB(space).then((res) => {
+    console.log(res);
+  }).catch((e) => {
+    console.log(e.sqlMessage);
+  });
+}
+
+async function createSchema(space: string) {
+  const dolt = new DoltSysHandler();
+  // dolt.createSchema(space).then((res) => {
+  //   console.log(res);
+  // }).catch((e) => {
+  //   console.log(e.sqlMessage);
+  // });
+  console.log(await dolt.showDatabases());
+}
+
+createSchema('doodada');

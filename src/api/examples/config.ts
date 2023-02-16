@@ -8,7 +8,7 @@ const API_MAIN = 'https://api.nance.app';
 const API_LOCAL = 'http://localhost:3000';
 const API = API_LOCAL;
 
-async function createSpace(space: string) {
+async function configSpace(space: string) {
   const config = await getConfig(space);
   const calendar = fs.readFileSync(calendarPath(config), 'utf-8');
   const signature = await signPayload(space, 'config', { ...config, calendar });
@@ -18,6 +18,6 @@ async function createSpace(space: string) {
   });
 }
 
-createSpace('juicebox').then((res) => {
+configSpace('waterbox').then((res) => {
   console.log(res);
 });
