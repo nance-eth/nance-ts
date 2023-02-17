@@ -25,6 +25,7 @@ export interface Proposal {
   ipfsURL: string;
   voteURL: string;
   voteSetup?: SnapshotVoteOptions;
+  internalVoteResults?: InternalVoteResults;
   voteResults?: VoteResults;
   version?: string;
   authorAddress?: string;
@@ -63,7 +64,7 @@ export type ParameterUpdate = {
   redemptionPercentage: number;
 };
 
-export type VoteResults = {
+export type InternalVoteResults = {
   voteProposalId: string;
   totalVotes: number;
   scoresState: string;
@@ -71,6 +72,12 @@ export type VoteResults = {
   percentages: Record<string, number>;
   outcomePercentage: string;
   outcomeEmoji: string;
+};
+
+export type VoteResults = {
+  choices: string[];
+  scores: number[];
+  votes: number;
 };
 
 export type BasicTransaction = {

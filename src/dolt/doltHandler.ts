@@ -77,6 +77,13 @@ export class DoltHandler {
         payName: proposal.payName ?? ''
       };
     }
+    if (proposal.snapshotVotes) {
+      cleanProposal.voteResults = {
+        choices: proposal.choices,
+        scores: proposal.snapshotVotes,
+        votes: proposal.voteAddressCount
+      };
+    }
     return cleanProposal;
   }
 
@@ -355,15 +362,16 @@ export class DoltHandler {
   }
 
   async updateVotingClose(proposal: Proposal) {
-    const voteChoices = (proposal.voteResults) ? JSON.stringify(Object.keys(proposal.voteResults.scores)) : null;
-    const voteResults = (proposal.voteResults) ? JSON.stringify(Object.values(proposal.voteResults.scores)) : null;
+    const voteChoices = (proposal.internalVoteResults) ? JSON.stringify(Object.keys(proposal.internalVoteResults.scores)) : null;
+    const voteResults = (proposal.internalVoteResults) ? JSON.stringify(Object.values(proposal.internalVoteResults.scores)) : null;
     await this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
       choices = ?,
       snapshotVotes = ?,
+      voteAddressCount = ?,
       proposalStatus = ?
       WHERE uuid = ?
-    `, [voteChoices, voteResults, proposal.status, proposal.hash]);
+    `, [voteChoices, voteResults, proposal.internalVoteResults?.totalVotes, proposal.status, proposal.hash]);
     if (proposal.type?.toLowerCase().includes('pay')) {
       await this.updatePayoutStatus(proposal);
     }

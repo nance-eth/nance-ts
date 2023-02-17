@@ -9,7 +9,7 @@ import {
   addSecondsToDate
 } from './utils';
 import logger from './logging';
-import { NanceConfig, Proposal, VoteResults } from './types';
+import { NanceConfig, Proposal, InternalVoteResults } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { dotPin } from './storage/storageHandler';
 import { DoltHandler } from './dolt/doltHandler';
@@ -66,7 +66,7 @@ export class Nance {
     return false;
   }
 
-  getVotePercentages(voteResults: VoteResults) {
+  getVotePercentages(voteResults: InternalVoteResults) {
     const yes = voteResults.scores[this.config.snapshot.choices[0]];
     const no = voteResults.scores[this.config.snapshot.choices[1]];
     const percentageYes = yes / (yes + no);
@@ -77,7 +77,7 @@ export class Nance {
     };
   }
 
-  votePassCheck(voteResults: VoteResults) {
+  votePassCheck(voteResults: InternalVoteResults) {
     const yes = voteResults.scores[this.config.snapshot.choices[0]];
     if (yes >= this.config.snapshot.minTokenPassingAmount
       && voteResults.percentages[this.config.snapshot.choices[0]]
@@ -224,15 +224,15 @@ export class Nance {
       if (!proposalMatch) { return; }
       const proposalHash = proposalMatch.hash;
       if (vote.scoresState === 'final') {
-        proposalMatch.voteResults = vote;
-        proposalMatch.voteResults.percentages = this.getVotePercentages(vote);
-        if (this.votePassCheck(proposalMatch.voteResults)) {
-          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch.voteResults.percentages[this.config.snapshot.choices[0]]);
-          proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
+        proposalMatch.internalVoteResults = vote;
+        proposalMatch.internalVoteResults.percentages = this.getVotePercentages(vote);
+        if (this.votePassCheck(proposalMatch.internalVoteResults)) {
+          proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[0]]);
+          proposalMatch.internalVoteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusApproved(proposalHash);
         } else {
-          proposalMatch.voteResults.outcomePercentage = floatToPercentage(proposalMatch.voteResults.percentages[this.config.snapshot.choices[1]]);
-          proposalMatch.voteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
+          proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[1]]);
+          proposalMatch.internalVoteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
           proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
         }
         try { await this.dProposalHandler.updateVotingClose(proposalMatch); } catch (e) { logger.error('no dDB'); }

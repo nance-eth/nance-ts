@@ -1,7 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
-import { Proposal, VoteResults, SnapshotVoteOptions, NanceConfig } from '../types';
+import { Proposal, InternalVoteResults, SnapshotVoteOptions, NanceConfig } from '../types';
 import { dateToUnixTimeStamp, myProvider } from '../utils';
 
 // console.log = function noConsole() {};
@@ -49,7 +49,7 @@ export class SnapshotHandler {
     return voteURL;
   }
 
-  async getProposalVotes(proposalIds: string[]): Promise<VoteResults[]> {
+  async getProposalVotes(proposalIds: string[]): Promise<InternalVoteResults[]> {
     const query = gql`
     {
       proposals (

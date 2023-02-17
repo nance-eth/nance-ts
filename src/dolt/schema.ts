@@ -14,6 +14,7 @@ export type SQLProposal = {
   voteType: string;
   choices: string[];
   snapshotVotes: number[];
+  voteAddressCount: number;
   governanceCycle: number;
   discussionURL?: string;
 };

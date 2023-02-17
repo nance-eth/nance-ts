@@ -62,14 +62,14 @@ export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => 
   ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
-        if (proposal.voteResults?.scores) {
+        if (proposal.internalVoteResults?.scores) {
           const [[yesWord, yesVal], [noWord, noVal]] = Object.entries(
-            proposal.voteResults?.scores ?? {}
+            proposal.internalVoteResults?.scores ?? {}
           );
           return {
             name: `*${proposal.proposalId}*: ${proposal.title}`,
             value: stripIndents`
-            [${proposal.voteResults?.outcomeEmoji} ${proposal.voteResults?.outcomePercentage}% | ${proposal.voteResults?.totalVotes} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposal.voteURL})
+            [${proposal.internalVoteResults?.outcomeEmoji} ${proposal.internalVoteResults?.outcomePercentage}% | ${proposal.internalVoteResults?.totalVotes} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposal.voteURL})
             ------------------------------`,
           };
         }
