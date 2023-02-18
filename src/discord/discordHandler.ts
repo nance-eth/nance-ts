@@ -239,7 +239,7 @@ export class DiscordHandler {
         autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
       });
     });
-    await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] });
+    return thread.id;
   }
 
   async editTransactionMessage(messageId: string, links: EmbedFieldData[]) {
@@ -251,11 +251,11 @@ export class DiscordHandler {
     messageObj.edit({ embeds: [edittedMessage] });
   }
 
-  async sendTransactionSummary(addPayouts: SQLPayout[], removePayouts: SQLPayout[], oldDistributionLimit: number, newDistributionLimit: number) {
+  async sendTransactionSummary(threadId: string, addPayouts: SQLPayout[], removePayouts: SQLPayout[], oldDistributionLimit: number, newDistributionLimit: number) {
     const message1 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, addPayouts);
     const message2 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, undefined, removePayouts);
     const message3 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, undefined, undefined, oldDistributionLimit, newDistributionLimit, undefined);
 
-    await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message3, message1, message2] });
+    await this.getChannelById(threadId).send({ embeds: [message3, message1, message2] });
   }
 }

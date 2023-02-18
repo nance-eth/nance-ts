@@ -252,7 +252,12 @@ export class JuiceboxHandlerV3 {
     //   'reconfigureFundingCyclesOf',
     //   encodedReconfiguration
     // ), { depth: null });
-    return { address: this.JBController.address, bytes: encodedReconfiguration };
+    // return { address: this.JBController.address, bytes: encodedReconfiguration };
+
+    // *******************************************
+    // ***** override for JBControllerv3.0.1 *****
+    // *******************************************
+    return { address: '0xA139D37275d1fF7275e6F33821898934Bc8Cb7B6', bytes: encodedReconfiguration };
   }
 
   async encodeDistributeFundsOf() {

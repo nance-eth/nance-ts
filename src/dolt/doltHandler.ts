@@ -424,7 +424,7 @@ export class DoltHandler {
       WHERE treasuryVersion = ${treasuryVersion} AND
       payStatus != 'cancelled' AND
       governanceCycleStart <= ${governanceCycle} AND
-      governanceCycleStart + numberOfPayouts >= ${governanceCycle}
+      governanceCycleStart + numberOfPayouts >= ${governanceCycle + 1}
       ORDER BY proposalId ASC
     `) as unknown as SQLPayout[];
     return results;
