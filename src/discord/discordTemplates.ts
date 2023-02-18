@@ -149,7 +149,7 @@ export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, prop
   payouts.forEach((payout) => {
     const payoutNum = Number(governanceCycle) - payout.governanceCycleStart + 1;
     if (payoutNum === payout.numberOfPayouts && payout.numberOfPayouts !== 1) { toAlert.push(`<@${payout.authorDiscordId ?? ''}>`); }
-    message.addFields({ name: payout.payName ?? '', value: `| - - - $${payout.amount.toLocaleString()}  - - - | - - -  ${payoutNum}/${payout.numberOfPayouts} - - - | - - - [${proposalIdPrefix}${payout.proposalId}](${proposalLinkPrefix}/proposal/${payout.snapshotId}) - - - |\n=============================================` });
+    message.addFields({ name: payout.payName ?? '', value: `| - - - $${payout.amount.toLocaleString()}  - - - | - - -  ${payoutNum}/${payout.numberOfPayouts} - - - | - - - [${proposalIdPrefix}${payout.proposalId}](${proposalLinkPrefix}/${payout.snapshotId}) - - - |\n=============================================` });
   });
   return { message, toAlert: toAlert.join(' ') };
 };

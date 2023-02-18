@@ -227,7 +227,7 @@ export class DiscordHandler {
   }
 
   async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
-    const response = discordTemplates.payoutsTable(payouts, governanceCycle, `${this.config.snapshot.base}/${this.config.snapshot.space}`, this.config.propertyKeys.proposalIdPrefix);
+    const response = discordTemplates.payoutsTable(payouts, governanceCycle, `${this.config.snapshot.base}`, this.config.propertyKeys.proposalIdPrefix);
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 

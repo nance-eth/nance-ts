@@ -379,11 +379,10 @@ export class DoltHandler {
 
   async updatePayoutStatus(proposal: Proposal) {
     const payStatus = (proposal.status === this.propertyKeys.statusApproved) ? 'active' : 'cancelled';
-    console.log(payStatus);
     this.localDolt.db.query(`
       UPDATE ${payoutsTable} SET
       payStatus = ?
-      WHERE uuid = ?
+      WHERE uuidOfProposal = ?
   `, [payStatus, proposal.hash]);
   }
 
