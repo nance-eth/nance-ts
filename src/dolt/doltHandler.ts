@@ -260,7 +260,7 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable}
       WHERE governanceCycle = ${Number(governanceCycle)}
-      ORDER BY proposalId ASC
+      ORDER BY snapshotId DESC, proposalId ASC
     `);
   }
 
