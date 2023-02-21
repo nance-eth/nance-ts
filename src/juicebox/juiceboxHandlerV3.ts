@@ -226,6 +226,14 @@ export class JuiceboxHandlerV3 {
       (reconfigurationBallot) ? this.JBReconfigurationBallotAddresses[reconfigurationBallot] : fundingCycle.ballot
     );
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
+
+    // *******************************************
+    // ***** override for JBControllerv3.0.1 *****
+    // *******************************************
+    reconfigFundingCycleMetaData.allowControllerMigration = true;
+    reconfigFundingCycleMetaData.allowTerminalMigration = true;
+    // *******************************************
+    // *******************************************
     const fundAccessConstraintsData = getJBFundAccessConstraintsStruct(
       this.JBETHPaymentTerminal.address,
       TOKEN_ETH,
