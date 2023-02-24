@@ -71,10 +71,11 @@ export class DoltHandler {
     };
     if (proposal.amount) {
       cleanProposal.payout = {
-        address: proposal.payAddress ?? '',
+        address: proposal.payAddress ?? undefined,
+        project: proposal.payProject ?? undefined,
         amountUSD: proposal.amount,
         count: proposal.numberOfPayouts,
-        payName: proposal.payName ?? ''
+        payName: proposal.payName ?? undefined
       };
     }
     if (proposal.snapshotVotes) {
@@ -166,9 +167,8 @@ export class DoltHandler {
   async editPayout(proposal: Proposal) {
     const treasuryVersion = proposal.version?.split('V')[1] ?? proposal.version;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    let payAddress: string | null = proposal.payout!.address;
-    let payProject;
-    if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
+    const payAddress = proposal.payout?.address;
+    const payProject = proposal.payout?.project;
     const payName = proposal.payout?.payName;
     const governanceStart = proposal.governanceCycle;
     const numberOfPayouts = proposal.payout?.count;
@@ -311,8 +311,13 @@ export class DoltHandler {
     } else if (Number.isInteger(Number(hashOrId))) {
       where = `${where}.proposalId = ${hashOrId}`;
     } else return Promise.reject('bad proposalId');
-    return this.queryProposals(`
-      SELECT * from ${proposalsTable} ${where}
+    return this.queryProposals(oneLine`
+      SELECT ${proposalsTable}.*,
+      ${payoutsTable}.amount, ${payoutsTable}.payAddress, ${payoutsTable}.payProject, ${payoutsTable}.numberOfPayouts, ${payoutsTable}.payName
+      FROM ${proposalsTable}
+      LEFT JOIN ${payoutsTable} ON
+      ${proposalsTable}.uuid = ${payoutsTable}.uuidOfProposal
+      ${where}
     `);
   }
 

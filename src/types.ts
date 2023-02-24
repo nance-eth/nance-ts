@@ -37,11 +37,11 @@ export interface Proposal {
 
 export type Payout = {
   type?: 'address' | 'project' | 'allocator';
-  address: string;
+  address?: string;
   project?: number;
   amountUSD: number;
   count: number;
-  payName: string;
+  payName?: string;
   uuid?: string;
 };
 
