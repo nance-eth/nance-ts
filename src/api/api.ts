@@ -14,6 +14,7 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { keys } from '../keys';
 import { dbOptions } from '../dolt/dbConfig';
+import { SQLPayout } from '../dolt/schema';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -220,6 +221,16 @@ router.get(`${spacePrefix}/editTitles/:status`, async (req, res) => {
   nance.editTitles(status, message as string).then((data) => {
     res.json({ success: true, data });
   }).catch((e) => {
+    res.json({ success: false, error: e });
+  });
+});
+
+// get payouts table
+router.get(`${spacePrefix}/payouts`, async (req, res) => {
+  const { proposalHandlerBeta } = res.locals;
+  proposalHandlerBeta.getPayoutsDb('V3').then((data: SQLPayout[]) => {
+    res.json({ success: true, data });
+  }).catch((e: any) => {
     res.json({ success: false, error: e });
   });
 });
