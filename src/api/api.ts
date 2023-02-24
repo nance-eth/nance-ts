@@ -117,7 +117,7 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
 // ======== single proposal functions ======== //
 // =========================================== //
 
-// get specific proposal by uuid, snapshotId, or proposalId number
+// get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #
 router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { pid } = req.params;
   const { proposalHandlerBeta } = res.locals;
@@ -125,7 +125,7 @@ router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
     await proposalHandlerBeta.getProposalByAnyId(pid).then((proposal: string) => {
       return { sucess: true, data: proposal[0] };
     }).catch((e: any) => {
-      return { success: false, error: `[NOTION ERROR]: ${e}` };
+      return { success: false, error: e };
     })
   );
 });

@@ -1,3 +1,4 @@
+/* eslint-disable prefer-promise-reject-errors */
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { Proposal, PropertyKeys } from '../types';
@@ -138,7 +139,7 @@ export class DoltHandler {
       if (edit) {
         await this.editPayout(proposal);
       } else {
-        // await this.addPayoutToDb(proposal);
+        await this.addPayoutToDb(proposal);
       }
     }
     return proposal.hash;
@@ -300,14 +301,18 @@ export class DoltHandler {
   }
 
   async getProposalByAnyId(hashOrId: string) {
-    let where = '';
+    let where = `WHERE ${proposalsTable}`;
     if (hashOrId.length === 32) {
-      where = `WHERE ${proposalsTable}.uuid = '${hashOrId}'`;
-    } if (hashOrId.includes(this.propertyKeys.proposalIdPrefix)) {
-      where = `WHERE ${proposalsTable}.proposalId = ${this.proposalIdNumber(hashOrId)}`;
-    } if (hashOrId.startsWith('0x')) {
-      where = `WHERE ${proposalsTable}.snapshotId = '${hashOrId}'`;
-    }
+      where = `${where}.uuid = '${hashOrId}'`;
+    } else if (hashOrId.includes(this.propertyKeys.proposalIdPrefix)) {
+      const id = this.proposalIdNumber(hashOrId);
+      if (!id) return Promise.reject('bad proposalId');
+      where = `${where}.proposalId = ${id}`;
+    } else if (hashOrId.startsWith('0x')) {
+      where = `${where}.snapshotId = '${hashOrId}'`;
+    } else if (Number.isInteger(Number(hashOrId))) {
+      where = `${where}.proposalId = ${hashOrId}`;
+    } else return Promise.reject('bad proposalId');
     return this.queryProposals(`
       SELECT * from ${proposalsTable} ${where}
     `);
