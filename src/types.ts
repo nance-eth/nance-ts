@@ -19,7 +19,7 @@ export interface Proposal {
   translationURL?: string;
   type?: string;
   status: string;
-  proposalId: string;
+  proposalId: number | null;
   author?: string;
   discussionThreadURL: string;
   ipfsURL: string;

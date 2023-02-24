@@ -9,6 +9,7 @@ app.use(express.urlencoded({ limit: '20mb', extended: false }));
 app.use(cors({
   maxAge: 86400,
 }));
+app.set('json spaces', 2);
 
 app.use('/ish', ish);
 

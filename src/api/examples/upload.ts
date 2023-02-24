@@ -18,10 +18,10 @@ const PROPOSAL: Proposal = {
   status: 'Draft',
   type: 'Payout',
   governanceCycle: undefined,
-  proposalId: '',
+  proposalId: null,
   author: '',
   version: '1',
-  title: 'newnenwenwe',
+  title: 'YO its me your compooper',
   // eslint-disable-next-line max-len
   body: 'Status: Draft\n\n```\nAuthor:\nDate: (YYYY-MM-DD)\n```\n\n## Synopsis\n\n*State what the proposal does in one sentence.*\n\n## Motivation\n\n*What problem does this solve? Why now?* \n\n## Specification\n\n*How exactly will this be executed? Be specific and leave no ambiguity.* \n\n## Rationale\n\n*Why is this specification appropriate?*\n\n## Risks\n\n*What might go wrong?*\n\n## Timeline\n\n*When exactly should this proposal take effect? When exactly should this proposal end?*',
   discussionThreadURL: '',

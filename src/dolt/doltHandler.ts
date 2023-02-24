@@ -54,14 +54,13 @@ export class DoltHandler {
 
   toProposal(proposal: SQLExtended): Proposal {
     const voteURL = proposal.snapshotId ?? '';
-    const proposalId = (proposal.proposalId) ? `${this.propertyKeys.proposalIdPrefix}${proposal.proposalId}` : '';
     const cleanProposal: Proposal = {
       hash: proposal.uuid,
       title: proposal.title,
       body: proposal.body,
       type: proposal.category,
       status: proposal.proposalStatus,
-      proposalId,
+      proposalId: proposal.proposalId || null,
       discussionThreadURL: proposal.discussionURL ?? '',
       url: `https://${this.propertyKeys.publicURLPrefix}/${proposal.uuid}`,
       ipfsURL: '',
@@ -124,7 +123,6 @@ export class DoltHandler {
     const now = new Date().toISOString();
     const voteType = proposal.voteSetup?.type || 'basic';
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
-    const proposalId = (proposal.proposalId) ? this.proposalIdNumber(proposal.proposalId) : null;
     proposal.status = proposal.status || 'Discussion';
     proposal.hash = proposal.hash || uuid();
     await this.localDolt.db.query(oneLine`
@@ -134,7 +132,7 @@ export class DoltHandler {
       ON DUPLICATE KEY UPDATE
       lastEditedTime = VALUES(lastEditedTime), title = VALUES(title), body = VALUES(body), category = VALUES(category), governanceCycle = VALUES(governanceCycle),
       discussionURL = VALUES(discussionURL), proposalStatus = VALUES(proposalStatus), voteType = VALUES(voteType), choices = VALUES(choices)`,
-    [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices)]);
+    [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices)]);
     if (proposal.type?.toLowerCase().includes('pay')) {
       if (edit) {
         await this.editPayout(proposal);
@@ -330,7 +328,7 @@ export class DoltHandler {
     const nextProposalId = await this.getNextProposalId() ?? 1;
     proposals.forEach((proposal, index) => {
       if (!proposal.proposalId) {
-        proposal.proposalId = `${this.propertyKeys.proposalIdPrefix}${(nextProposalId + index).toString()}`;
+        proposal.proposalId = nextProposalId + index;
       }
     });
     return proposals;
@@ -340,7 +338,7 @@ export class DoltHandler {
     const query = `
       UPDATE ${proposalsTable} SET
       proposalStatus = '${proposal.status}',
-      proposalId = ${this.proposalIdNumber(proposal.proposalId)}
+      proposalId = ${proposal.proposalId}
       WHERE uuid = '${proposal.hash}'
     `;
     return this.queryDb(query);

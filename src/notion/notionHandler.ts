@@ -44,7 +44,7 @@ export class NotionHandler implements DataContentHandler {
       url: notionUtils.getPublicURL(unconvertedProposal, this.config.propertyKeys.publicURLPrefix),
       type: notionUtils.getType(unconvertedProposal),
       status: notionUtils.getStatus(unconvertedProposal),
-      proposalId: notionUtils.getRichText(
+      proposalId: notionUtils.getNumberFromRichText(
         unconvertedProposal,
         this.config.propertyKeys.proposalId
       ),
@@ -133,8 +133,9 @@ export class NotionHandler implements DataContentHandler {
       return this.toProposal(data as GetDatabaseResponse, extendedData);
     }).sort((a, b) => {
       // sort ascending by proposalId
-      return Number(a.proposalId.split(this.config.propertyKeys.proposalIdPrefix)[1])
-        - Number(b.proposalId.split(this.config.propertyKeys.proposalIdPrefix)[1]);
+      if (a.proposalId === null) return -1;
+      if (b.proposalId === null) return 1;
+      return a.proposalId - b.proposalId;
     });
   }
 
@@ -353,18 +354,16 @@ export class NotionHandler implements DataContentHandler {
       false,
       'descending'
     );
-    const sortProposalsById = proposals.map((proposal) => {
-      return Number(proposal.proposalId.split(this.config.propertyKeys.proposalIdPrefix)[1]);
-    }).sort((a:number, b:number) => { return b - a; });
-    const nextProposalId = sortProposalsById[0] + 1;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const nextProposalId = proposals[0].proposalId! + 1;
     return (Number.isNaN(nextProposalId) ? 1 : nextProposalId);
   }
 
   async assignProposalIds(proposals: Proposal[]): Promise<Proposal[]> {
     const nextProposalIdNumber = await this.getNextProposalIdNumber();
     proposals.forEach((proposal, index) => {
-      if (proposal.proposalId === '') {
-        proposal.proposalId = `${this.config.propertyKeys.proposalIdPrefix}${nextProposalIdNumber + index}`;
+      if (proposal.proposalId === null) {
+        proposal.proposalId = nextProposalIdNumber + index;
       }
     });
     return proposals;
@@ -400,7 +399,7 @@ export class NotionHandler implements DataContentHandler {
         rich_text: [
           {
             type: 'text',
-            text: { content: proposal.proposalId }
+            text: { content: `${this.config.propertyKeys.proposalIdPrefix}${proposal.proposalId}` }
           }
         ]
       }

@@ -18,6 +18,10 @@ export function getRichText(page:any, property:any): string {
   }).join(' ').trim();
 }
 
+export function getNumberFromRichText(page:any, property:any): number {
+  return Number(getRichText(page, property).split('-')[1]);
+}
+
 export function getNumber(page:any, property:any): number {
   return page.properties[property].number;
 }
