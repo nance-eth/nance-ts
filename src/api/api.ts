@@ -235,4 +235,15 @@ router.get(`${spacePrefix}/payouts`, async (req, res) => {
   });
 });
 
+// sync notion to dolt
+router.get(`${spacePrefix}/sync`, async (req, res) => {
+  const { config } = res.locals;
+  const nance = new Nance(config);
+  await nance.syncProposalHandlers().then(() => {
+    res.json({ success: true });
+  }).catch((e) => {
+    res.json({ success: false, error: e });
+  });
+});
+
 export default router;

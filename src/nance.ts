@@ -247,4 +247,13 @@ export class Nance {
       logger.error(e);
     });
   }
+
+  async syncProposalHandlers() {
+    const currentGovernanceCycle = await this.proposalHandler.getCurrentGovernanceCycle();
+    const proposals = await this.proposalHandler.getProposalsByGovernanceCycle(currentGovernanceCycle.toString());
+    Promise.all(proposals.map(async (proposal) => {
+      proposal = await this.proposalHandler.getContentMarkdown(proposal.hash);
+      this.dProposalHandler.addProposalToDb(proposal);
+    })).catch((e) => { return Promise.reject(e); });
+  }
 }

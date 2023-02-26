@@ -157,7 +157,7 @@ export class DoltHandler {
     const currency = 'usd';
     const payStatus = 'voting';
     await this.localDolt.db.query(oneLine`
-      INSERT INTO ${payoutsTable}
+      INSERT IGNORE INTO ${payoutsTable}
       (uuid, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
       amount, currency, payAddress, payProject, payStatus, payName)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
