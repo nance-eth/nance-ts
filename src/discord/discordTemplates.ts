@@ -10,14 +10,14 @@ import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
 export const juiceToolUrl = (proposal: Proposal) => {
-  return `https://jbdao.org/proposal/${proposal.hash}`;
+  return `https://jbdao.org/p/${proposal.proposalId}`;
 };
 
 export const startDiscussionMessage = (proposal: Proposal) => {
   return new MessageEmbed().setTitle(`📃 ${proposal.title}`).setURL(proposal.url);
 };
 
-export const temperatureCheckRollUpMessage = (proposals: Proposal[], space: string, endDate: Date) => {
+export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {
   return new MessageEmbed().setColor('#c1272d').setTitle(
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(`${String(proposals.length)} proposals`).addFields(
@@ -27,7 +27,7 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], space: stri
         ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
         : `[proposal](${proposal.url})`;
       return {
-        name: `*${proposal.proposalId}*: ${proposal.title}`,
+        name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
         value: stripIndents`
         ${proposalLinks} | [discussion](${proposal.discussionThreadURL})
         ------------------------------`,
@@ -36,20 +36,17 @@ export const temperatureCheckRollUpMessage = (proposals: Proposal[], space: stri
   );
 };
 
-export const voteRollUpMessage = (voteURL: string, proposals: Proposal[], space: string, endDate: Date) => {
+export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {
   return new MessageEmbed().setColor('#009460').setTitle(
     `Voting is open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
         proposal.url = juiceToolUrl(proposal);
-        const proposalLinks = (proposal.translationURL)
-          ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
-          : `[proposal](${proposal.url})`;
         return {
-          name: `*${proposal.proposalId}*: ${proposal.title}`,
+          name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
-          ${proposalLinks} | [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.voteURL})
+          [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.url})
           ------------------------------`,
         };
       })

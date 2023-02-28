@@ -71,7 +71,7 @@ async function scheduleCycle() {
       });
     } else if (event.title === 'Snapshot Vote') {
       schedule.scheduleJob('voteSetup', addSecondsToDate(event.start, PADDING_VOTE_START_SECONDS), () => {
-        nance.votingSetup(event.start, event.end);
+        nance.votingSetup(event.end);
       });
       // end reminder
       const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);

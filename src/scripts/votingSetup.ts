@@ -16,7 +16,7 @@ async function getConfigs() {
   console.log(proposal);
   const now = new Date();
   const voteEnd = (nextVote.end < now) ? addSecondsToDate(now, 60 * 5) : nextVote.end
-  nance.votingSetup(new Date(), voteEnd, proposal);
+  nance.votingSetup(voteEnd, proposal);
 }
 
 getConfigs();

@@ -84,13 +84,14 @@ export class DiscordHandler {
   }
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
-    const message = discordTemplates.temperatureCheckRollUpMessage(proposals, this.config.name, endDate);
+    const message = discordTemplates.temperatureCheckRollUpMessage(this.config.propertyKeys.proposalIdPrefix, proposals, this.config.name, endDate);
     await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
   }
 
   async sendVoteRollup(proposals: Proposal[], endDate: Date) {
     const message = discordTemplates.voteRollUpMessage(
-      `${this.config.snapshot.base}/${this.config.snapshot.space}`,
+      `${this.config.snapshot.base}`,
+      this.config.propertyKeys.proposalIdPrefix,
       proposals,
       this.config.name,
       endDate
@@ -212,10 +213,11 @@ export class DiscordHandler {
   async editRollupMessage(proposals: Proposal[], status: string, messageId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
     let message = new MessageEmbed();
-    if (status === 'temperatureCheck') { message = discordTemplates.temperatureCheckRollUpMessage(proposals, this.config.name, new Date()); }
+    if (status === 'temperatureCheck') { message = discordTemplates.temperatureCheckRollUpMessage(this.config.propertyKeys.proposalIdPrefix, proposals, this.config.name, new Date()); }
     if (status === 'vote') {
       message = discordTemplates.voteRollUpMessage(
-        `${this.config.snapshot.base}/${this.config.snapshot.space}`,
+        `${this.config.snapshot.base}`,
+        this.config.propertyKeys.proposalIdPrefix,
         proposals,
         this.config.snapshot.space,
         new Date());

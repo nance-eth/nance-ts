@@ -175,7 +175,7 @@ export class Nance {
     });
   }
 
-  async votingSetup(startDate: Date, endDate: Date, proposals?: Proposal[] | undefined): Promise<Proposal[] | void> {
+  async votingSetup(endDate: Date, proposals?: Proposal[] | undefined): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingSetup() begin...`);
     const voteProposals = proposals || await this.proposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
@@ -193,7 +193,7 @@ export class Nance {
         endDate,
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
-      proposal.status = await this.proposalHandler.updateVoteAndIPFS(proposal);
+      await this.proposalHandler.updateVoteAndIPFS(proposal);
       try { await this.dProposalHandler.updateVotingSetup(proposal); } catch (e) { logger.error('no dDB'); }
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
     })).then(() => {
