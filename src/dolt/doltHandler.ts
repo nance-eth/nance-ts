@@ -224,7 +224,7 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Discussion'
-      AND governanceCycle = '${this.currentGovernanceCycle}'
+      AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
       AND discussionURL IS NOT NULL
       AND title IS NOT NULL
     `);
@@ -251,8 +251,8 @@ export class DoltHandler {
       SELECT proposalId FROM ${proposalsTable}
       ORDER BY proposalId DESC
       LIMIT 1
-    `).then((res) => {
-      return Number(res) + 1;
+    `).then((res: any) => {
+      return Number(res[0].proposalId) + 1;
     });
   }
 

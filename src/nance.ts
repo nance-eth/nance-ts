@@ -130,7 +130,7 @@ export class Nance {
 
   async temperatureCheckSetup(endDate: Date) {
     logger.info(`${this.config.name}: temperatureCheckSetup() begin...`);
-    const discussionProposals = await this.proposalHandler.assignProposalIds(
+    const discussionProposals = await this.dProposalHandler.assignProposalIds(
       await this.proposalHandler.getDiscussionProposals()
     );
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {

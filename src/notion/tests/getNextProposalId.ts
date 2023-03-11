@@ -1,8 +1,8 @@
+import { getConfig } from '../../configLoader';
 import { NotionHandler } from '../notionHandler';
-import config from '../../config/waterbox/config.waterbox';
-import { keys } from '../../keys';
 
 async function main() {
+  const config = await getConfig();
   const notion = new NotionHandler(config);
   console.log(await notion.getNextProposalIdNumber());
 }
