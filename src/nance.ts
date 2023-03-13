@@ -131,7 +131,7 @@ export class Nance {
   async temperatureCheckSetup(endDate: Date) {
     logger.info(`${this.config.name}: temperatureCheckSetup() begin...`);
     const discussionProposals = await this.dProposalHandler.assignProposalIds(
-      await this.proposalHandler.getDiscussionProposals()
+      await this.dProposalHandler.getDiscussionProposals()
     );
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       proposal.status = this.config.propertyKeys.statusTemperatureCheck;
@@ -177,9 +177,8 @@ export class Nance {
 
   async votingSetup(endDate: Date, proposals?: Proposal[] | undefined): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingSetup() begin...`);
-    const voteProposals = proposals || await this.proposalHandler.getVoteProposals();
+    const voteProposals = proposals || await this.dProposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
-      proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
       if (this.config.proposalDataBackup) {
         const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
         const ipfsCID = await dotPin(proposalWithHeading);

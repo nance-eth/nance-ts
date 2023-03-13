@@ -242,7 +242,6 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Voting'
-      AND governanceCycle = '${this.currentGovernanceCycle}'
     `);
   }
 
