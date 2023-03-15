@@ -30,7 +30,7 @@ export class SnapshotHandler {
     const snapProposal = {
       space: this.config.snapshot.space,
       type: (options?.type === '') ? 'basic' : options?.type ?? 'basic',
-      title: `${proposal.proposalId} - ${proposal.title}`,
+      title: `${this.config.propertyKeys.proposalIdPrefix}${proposal.proposalId} - ${proposal.title}`,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       body: proposal.body!,
       discussion: proposal.discussionThreadURL,
@@ -80,6 +80,27 @@ export class SnapshotHandler {
           };
         }, {})
       };
+    });
+    return results;
+  }
+  async getAllProposalsByScore(): Promise<any[]> {
+    const query = gql`
+    {
+      proposals (
+        where: {
+          space: "${this.config.snapshot.space}"
+        }
+        first: 1000
+      ) {
+        id
+        votes
+        scores
+        scores_total
+      }
+    }`;
+    const gqlResults = await gqlRequest(`${this.hub}/graphql`, query);
+    const results = gqlResults.proposals.sort((a: any, b: any) => {
+      return b.scores_total - a.scores_total;
     });
     return results;
   }

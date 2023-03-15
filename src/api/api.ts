@@ -2,7 +2,7 @@ import express from 'express';
 import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
-import { cidConfig, DEFAULT_GATEWAY } from '../configLoader';
+import { calendarPath, cidConfig, DEFAULT_GATEWAY, getConfig } from '../configLoader';
 import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest } from './models';
 import { checkSignature } from './helpers/signature';
@@ -24,7 +24,8 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
-    const { config, calendar } = await cidConfig(space);
+    const config = await getConfig(space);
+    const calendar = calendarPath(config);
     const proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     const proposalHandlerBeta = (config.notion.enabled && config.dolt.enabled) ? new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys) : undefined;
     res.locals = { space, config, calendar, proposalHandlerMain, proposalHandlerBeta };
@@ -40,8 +41,8 @@ router.use(spacePrefix, async (req, res, next) => {
 router.get(`${spacePrefix}`, async (req, res) => {
   const { proposalHandlerMain, space, calendar } = res.locals;
   try {
-    const calendarHandler = new CalendarHandler();
-    await calendarHandler.useIcsLink(cidToLink(calendar, DEFAULT_GATEWAY));
+    const calendarHandler = new CalendarHandler(calendar);
+    // await calendarHandler.useIcsLink(cidToLink(calendar, DEFAULT_GATEWAY));
     const currentEvent = calendarHandler.getCurrentEvent();
     const currentCycle = await proposalHandlerMain.getCurrentGovernanceCycle();
     return res.send({ sucess: true, data: { name: space, currentCycle, currentEvent } });
