@@ -228,7 +228,7 @@ export class JuiceboxHandlerV3 {
     const reconfigFundingCycleMetaData = getJBFundingCycleMetadataStruct(metadata);
 
     // *******************************************
-    // ***** override for JBControllerv3.0.1 *****
+    // ***** override for JBControllerv3.1 *****
     // *******************************************
     reconfigFundingCycleMetaData.allowControllerMigration = true;
     reconfigFundingCycleMetaData.allowTerminalMigration = true;
@@ -263,9 +263,9 @@ export class JuiceboxHandlerV3 {
     // return { address: this.JBController.address, bytes: encodedReconfiguration };
 
     // *******************************************
-    // ***** override for JBControllerv3.0.1 *****
+    // ***** override for JBControllerv3.1 *****
     // *******************************************
-    return { address: '0xA139D37275d1fF7275e6F33821898934Bc8Cb7B6', bytes: encodedReconfiguration };
+    return { address: '0x97a5b9D9F0F7cD676B69f584F29048D0Ef4BB59b', bytes: encodedReconfiguration };
   }
 
   async encodeDistributeFundsOf() {
