@@ -10,7 +10,7 @@ import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
 export const juiceToolUrl = (proposal: Proposal) => {
-  return `https://jbdao.org/p/${proposal.proposalId}`;
+  return `https://jbdao.org/p/${proposal.proposalId || proposal.hash}`;
 };
 
 export const startDiscussionMessage = (proposal: Proposal) => {
