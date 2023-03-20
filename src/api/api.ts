@@ -148,6 +148,8 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
     }).catch((e: any) => {
       res.json({ success: false, error: e });
     });
+  } else {
+    res.json({ success: false, error: 'not authorized to edit proposal' });
   }
 });
 
