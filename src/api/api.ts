@@ -142,7 +142,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
   const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid);
   if (signature.address === proposalByUuid.authorAddress || signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
-    logger.info(`EDIT issued by ${signature.address}`);
+    logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
     proposalHandlerBeta.addProposalToDb(proposal, true).then((hash: string) => {
       res.json({ success: true, data: { hash } });
     }).catch((e: any) => {

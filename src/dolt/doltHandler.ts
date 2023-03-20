@@ -11,6 +11,7 @@ const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
 const reservesTable = 'reserves';
 const governanceCyclesTable = 'governanceCycles';
+const DEFAULT_TREASURY_VERSION = 3;
 
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
 export class DoltHandler {
@@ -146,8 +147,7 @@ export class DoltHandler {
   }
 
   async addPayoutToDb(proposal: Proposal) {
-    const treasuryVersion = proposal.version?.split('V')[1] ?? proposal.version;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const treasuryVersion = DEFAULT_TREASURY_VERSION;
     let payAddress: string | null = proposal.payout?.address ?? '';
     let payProject;
     if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
@@ -166,8 +166,7 @@ export class DoltHandler {
   }
 
   async editPayout(proposal: Proposal) {
-    const treasuryVersion = proposal.version?.split('V')[1] ?? proposal.version;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const treasuryVersion = DEFAULT_TREASURY_VERSION;
     const payAddress = proposal.payout?.address;
     const payProject = proposal.payout?.project;
     const payName = proposal.payout?.payName;
@@ -177,7 +176,7 @@ export class DoltHandler {
     const currency = 'usd';
     const payStatus = proposal.status;
     this.localDolt.db.query(oneLine`
-      UPDATE ${payoutsTable} SET
+      UPDATE IGNORE ${payoutsTable} SET
       treasuryVersion = ?, governanceCycleStart = ?, numberOfPayouts = ?, amount = ?,
       currency = ?, payAddress = ?, payProject = ?, payStatus = ?, payName = ?
       WHERE uuidOfProposal = ?`,
