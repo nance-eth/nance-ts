@@ -251,4 +251,14 @@ router.get(`${spacePrefix}/sync`, async (req, res) => {
   });
 });
 
+// check for changes to db, push to dolt if true
+router.get(`${spacePrefix}/dolthub`, async (req, res) => {
+  const { proposalHandlerBeta } = res.locals;
+  proposalHandlerBeta.checkAndPush().then((data: string) => {
+    return res.json({ success: true, data });
+  }).catch((e: string) => {
+    return res.json({ success: false, error: e });
+  });
+});
+
 export default router;

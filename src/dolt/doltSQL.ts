@@ -38,6 +38,12 @@ export class DoltSQL {
     });
   }
 
+  async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
+    return this.db.query(`CALL DOLT_REMOTE('add', ?, ?)`, [remoteName, remote]).then((res) => {
+      return status(res[0]) === 0;
+    });
+  }
+
   async viewRemotes(): Promise<string[]> {
     return this.db.query('SELECT * FROM dolt_remotes').then((res) => {
       return (<RowDataPacket[]>res[0]).map((remote: any) => { return remote.url; });
@@ -86,17 +92,18 @@ export class DoltSQL {
     });
   }
 
-  async commit(message: string): Promise<string> {
-    return this.db.query(`CALL DOLT_COMMIT('-a', '-m', '${message}')`).then((res) => {
+  async commit(message: string, table?: string): Promise<string> {
+    await this.db.query(`CALL DOLT_ADD(${table ? '?' : '-A'})`, [table]);
+    return this.db.query(`CALL DOLT_COMMIT('-m', '${message}')`).then((res) => {
       return cleanSingleRes(res).hash;
     }).catch((e) => {
       return Promise.reject(e);
     });
   }
 
-  async push(branch: string) {
-    return this.db.query(`CALL DOLT_PUSH('origin', '${branch}')`).then((res) => {
-      return cleanSingleRes(res).success;
+  async push(branch?: string): Promise<boolean> {
+    return this.db.query(`CALL DOLT_PUSH(${(branch) ? 'origin, ?' : ''})`, [branch]).then((res) => {
+      return cleanSingleRes(res).success === 1;
     }).catch((e) => {
       return Promise.reject(e);
     });
@@ -140,5 +147,11 @@ export class DoltSQL {
     }).catch((e) => {
       return Promise.reject(e);
     });
+  }
+
+  async changes(table: string): Promise<boolean> {
+    return this.db.query('SELECT status from dolt_status WHERE table_name = ?', [table]).then((res) => {
+      return cleanSingleRes(res).status === 'modified';
+    }).catch((e) => { return false; });
   }
 }

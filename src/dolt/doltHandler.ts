@@ -402,12 +402,6 @@ export class DoltHandler {
     return results;
   }
 
-  async pushProposals(proposal: Proposal): Promise<number> {
-    return this.localDolt.commit(`Add proposal ${proposal.hash.substring(0, 7)}...${proposal.hash.substring(proposal.hash.length - 7)}`).then(() => {
-      return this.localDolt.push(`GC${this.currentGovernanceCycle}`);
-    });
-  }
-
   async getPayoutsDb(version: string): Promise<SQLPayout[]> {
     const treasuryVersion = Number(version.split('V')[1]);
     const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
@@ -456,5 +450,25 @@ export class DoltHandler {
       WHERE reserveStatus = 'active'
     `) as unknown as SQLReserve[];
     return results;
+  }
+
+  async checkAndPush(table = proposalsTable): Promise<string> {
+    // call push in case we committed but push failed before
+    // (not sure if there is dolt call to check for unpushed commit)
+    await this.localDolt.push();
+    if (await this.localDolt.changes(table)) {
+      const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
+      return this.localDolt.commit(`GC${currentGovernanceCycle}`, proposalsTable).then(async (res) => {
+        if (res) {
+          return this.localDolt.push().then(() => {
+            return res; // commit hash
+          });
+        }
+        return Promise.reject('dolthub push error');
+      }).catch((e) => {
+        return Promise.reject(e);
+      });
+    }
+    return Promise.reject('no changes');
   }
 }
