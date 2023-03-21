@@ -2,13 +2,14 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { ContractTransaction, ethers, Wallet } from 'ethers';
 import {
   getJBFundingCycleStore,
-  getJBController,
+  getJBController3_1 as getJBController,
   getJBSplitsStore,
   getJBDirectory,
   getJBProjects,
   getJB3DayReconfigurationBufferBallot,
   getJB7DayReconfigurationBufferBallot,
-  getJBETHPaymentTerminal
+  getJBETHPaymentTerminal3_1 as getJBETHPaymentTerminal,
+  getJBFundAccessConstraintsStore
 } from '@jigglyjams/juice-sdk-v3';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JBSplitStruct, JBGroupedSplitsStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
@@ -51,6 +52,7 @@ export class JuiceboxHandlerV3 {
   JBController;
   JBReconfigurationBallotAddresses;
   JBETHPaymentTerminal;
+  JBFundAccessConstraintsStore;
 
   constructor(
     protected projectId: string,
@@ -67,6 +69,7 @@ export class JuiceboxHandlerV3 {
       7: getJB7DayReconfigurationBufferBallot(this.provider, { network: this.network }).address
     } as ReconfigurationBallotAddresses;
     this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network });
+    this.JBFundAccessConstraintsStore = getJBFundAccessConstraintsStore(this.provider, { network: this.network });
   }
 
   currentConfiguration = async () => {
@@ -134,7 +137,7 @@ export class JuiceboxHandlerV3 {
   async getDistributionLimit() {
     const currentConfiguration = (await this.currentConfiguration()).configuration;
     const terminal = await getJBDirectory(this.provider, { network: this.network }).terminalsOf(this.projectId);
-    const distributionLimit = await this.JBController.distributionLimitOf(
+    const distributionLimit = await this.JBFundAccessConstraintsStore.distributionLimitOf(
       this.projectId,
       currentConfiguration,
       terminal[0],
@@ -153,7 +156,6 @@ export class JuiceboxHandlerV3 {
     domain = 0
   ) {
     const configuration = (domain === 0) ? (await this.queuedConfiguration()).start : domain;
-    console.log(configuration);
     return this.JBSplitsStore.interface.encodeFunctionData(
       'set',
       [
@@ -262,15 +264,12 @@ export class JuiceboxHandlerV3 {
     // ), { depth: null });
     // return { address: this.JBController.address, bytes: encodedReconfiguration };
 
-    // *******************************************
-    // ***** override for JBControllerv3.1 *****
-    // *******************************************
-    return { address: '0x97a5b9D9F0F7cD676B69f584F29048D0Ef4BB59b', bytes: encodedReconfiguration };
+    return { address: this.JBController.address, bytes: encodedReconfiguration };
   }
 
   async encodeDistributeFundsOf() {
     const currentConfiguration = (await this.currentConfiguration()).configuration;
-    const distributionLimit = await this.JBController.distributionLimitOf(
+    const distributionLimit = await this.JBFundAccessConstraintsStore.distributionLimitOf(
       this.projectId,
       currentConfiguration,
       this.JBETHPaymentTerminal.address,
@@ -282,7 +281,7 @@ export class JuiceboxHandlerV3 {
       DISTRIBUTION_CURRENCY_USD,
       TOKEN_ETH,
       0,
-      DEFAULT_MEMO
+      ethers.utils.formatBytes32String(DEFAULT_MEMO)
     ];
     const encodedDistribution = this.JBETHPaymentTerminal.interface.encodeFunctionData(
       'distributePayoutsOf',
