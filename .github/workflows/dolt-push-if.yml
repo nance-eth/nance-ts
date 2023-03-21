@@ -1,0 +1,14 @@
+name: Call nance-api endpoint to check for changes to dolt db and push if true
+on:
+  schedule:
+  - cron: 0 * * * *
+env:
+  NANCE_API: https://api.nance.app
+  SPACE: juicebox
+
+jobs:
+  call-nance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: hit-it
+        run: curl $NANCE_API/$SPACE/dolthub
