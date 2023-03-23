@@ -270,8 +270,8 @@ export class DoltHandler {
       governanceCycle = ${governanceCycle}
       AND 
       ( 
-        body like '%${search}%'
-        OR title like '%${search}%'
+        LOWER(body) like LOWER('%${search}%')
+        OR LOWER(title) like LOWER('%${search}%')
       )
       ORDER BY createdTime DESC
     `);
@@ -282,8 +282,8 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable}
       WHERE
-      body like '%${search}%'
-      OR title like '%${search}%'
+      LOWER(body) like LOWER('%${search}%')
+      OR LOWER(title) like LOWER('%${search}%')
       ORDER BY proposalId ASC
     `);
   }
