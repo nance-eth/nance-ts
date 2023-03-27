@@ -260,4 +260,9 @@ export class DiscordHandler {
 
     await this.getChannelById(threadId).send({ embeds: [message3, message1, message2] });
   }
+
+  async sendProposalDiff(threadId: string, diffText: string, hash: string) {
+    const message = discordTemplates.proposalDiff(diffText, hash);
+    await this.getChannelById(threadId).send(message);
+  }
 }

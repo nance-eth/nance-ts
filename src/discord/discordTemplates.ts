@@ -5,7 +5,7 @@ import {
   MessageAttachment, MessageEmbed, ThreadChannel, EmbedFieldData, EmbedField
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
-import { dateToUnixTimeStamp, numToPrettyString } from '../utils';
+import { dateToUnixTimeStamp, limitLength, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
@@ -209,5 +209,10 @@ export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPay
     }).join('\n');
     message.addFields({ name: 'OTHER PASSED PROPOSALS', value });
   }
+  return message;
+};
+
+export const proposalDiff = (diffText: string, hash: string) => {
+  const message = `Proposal editted\n\`\`\`diff\n${limitLength(diffText, 1900)}\`\`\`\nhttps://jbdao.org/p/${hash}`;
   return message;
 };

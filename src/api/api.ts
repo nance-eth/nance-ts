@@ -8,7 +8,7 @@ import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, 
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getAddressFromPrivateKey, getENS } from './helpers/ens';
-import { cidToLink, myProvider, sleep } from '../utils';
+import { cidToLink, getLastSlash, myProvider, sleep } from '../utils';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
@@ -16,6 +16,7 @@ import { keys } from '../keys';
 import { dbOptions } from '../dolt/dbConfig';
 import { SQLPayout } from '../dolt/schema';
 import { Proposal } from '../types';
+import { diffBody } from './helpers/diff';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -27,7 +28,7 @@ router.use(spacePrefix, async (req, res, next) => {
     const config = await getConfig(space);
     const calendar = calendarPath(config);
     const proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
-    const proposalHandlerBeta = (config.notion.enabled && config.dolt.enabled) ? new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys) : undefined;
+    const proposalHandlerBeta = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     res.locals = { space, config, calendar, proposalHandlerMain, proposalHandlerBeta };
     next();
   } catch (e) {
@@ -137,13 +138,20 @@ router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
 router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { space, pid } = req.params;
   const { proposal, signature } = req.body as ProposalUploadRequest;
-  const { proposalHandlerBeta } = res.locals;
+  const { proposalHandlerBeta, config } = res.locals;
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid);
+  const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid) as Proposal;
   if (signature.address === proposalByUuid.authorAddress || signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
     logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
-    proposalHandlerBeta.addProposalToDb(proposal, true).then((hash: string) => {
+    proposalHandlerBeta.addProposalToDb(proposal, true).then(async (hash: string) => {
+      const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
+      if (proposalByUuid.discussionThreadURL && diff) {
+        const discord = new DiscordHandler(config);
+        // eslint-disable-next-line no-await-in-loop
+        while (!discord.ready()) { await sleep(50); }
+        discord.sendProposalDiff(getLastSlash(proposalByUuid.discussionThreadURL), diff, pid);
+      }
       res.json({ success: true, data: { hash } });
     }).catch((e: any) => {
       res.json({ success: false, error: e });
