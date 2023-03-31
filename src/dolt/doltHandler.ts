@@ -86,6 +86,9 @@ export class DoltHandler {
         votes: proposal.voteAddressCount
       };
     }
+    if (proposal.temperatureCheckVotes) {
+      cleanProposal.temperatureCheckVotes = proposal.temperatureCheckVotes;
+    }
     return cleanProposal;
   }
 

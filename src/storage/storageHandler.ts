@@ -9,8 +9,6 @@ const AUTH_HEADER = `Basic ${Buffer.from(
   `${keys.INFURA_IPFS_ID}:${keys.INFURA_IPFS_SECRET}`,
 ).toString('base64')}`;
 
-console.log(AUTH_HEADER);
-
 // https://github.com/jbx-protocol/juice-interface/blob/main/src/lib/infura/ipfs.ts
 export async function dotPin(dataIn: string, encoding = 'utf-8' as BufferEncoding): Promise<string> {
   const data = Buffer.from(dataIn, encoding);
