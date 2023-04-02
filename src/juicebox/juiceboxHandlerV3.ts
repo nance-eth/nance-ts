@@ -179,13 +179,9 @@ export class JuiceboxHandlerV3 {
     distributionReserved: SQLReserve[]
   ): Promise<JBGroupedSplitsStruct[]> {
     const owner = await this.getProjectOwner();
-    let runningTotal = 0;
     const percentageBasedPayouts = distributionPayouts.some((payout) => { return payout.currency === 'percent'; });
     const distrubutionPayoutsJBSplitStruct = distributionPayouts.map((payout): JBSplitStruct => {
-      let percent = (percentageBasedPayouts) ? payout.amount * ONE_BILLION : Math.round((payout.amount / distributionLimit) * ONE_BILLION);
-      runningTotal += percent;
-      if (runningTotal > ONE_BILLION) percent -= 1; // overflow hack
-      if (runningTotal === ONE_BILLION - 1) percent += 1; // overflow hack
+      const percent = (percentageBasedPayouts) ? payout.amount * ONE_BILLION : BigNumber.from(payout.amount).mul(BigNumber.from(ONE_BILLION)).div(distributionLimit);
       return {
         preferClaimed: DEFAULT_PREFER_CLAIMED,
         preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
