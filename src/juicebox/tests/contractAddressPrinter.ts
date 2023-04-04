@@ -1,9 +1,10 @@
 import { myProvider } from '../../utils';
 import { JuiceboxHandlerV3 } from '../juiceboxHandlerV3';
 
-async function main() {
+function main() {
   const juice = new JuiceboxHandlerV3('1', myProvider('mainnet'));
-  console.log(await juice.getDistributionLimit());
+  console.log(`payment terminal: ${juice.JBETHPaymentTerminal.address}`);
+  console.log(`controller: ${juice.JBController.address}`);
 }
 
 main();

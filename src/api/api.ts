@@ -2,7 +2,7 @@ import express from 'express';
 import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
-import { calendarPath, cidConfig, DEFAULT_GATEWAY, getConfig } from '../configLoader';
+import { calendarPath, cidConfig, getConfig } from '../configLoader';
 import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest } from './models';
 import { checkSignature } from './helpers/signature';
@@ -108,6 +108,7 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
       while (!dialogHandler.ready()) { await sleep(50); }
       dialogHandler.startDiscussion(proposal).then((discussionThreadURL) => {
         proposalHandlerMain.updateDiscussionURL({ ...proposal, discussionThreadURL });
+        dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
       });
     }
     res.json({ success: true, data: { hash } });

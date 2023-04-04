@@ -80,7 +80,7 @@
     "repo": ""
   },
   "snapshot": {
-    "base": "",
+    "base": "https://jbdao.org",
     "space": "",
     "choices": ["For", "Against", "Abstain"],
     "minTokenPassingAmount": 1,

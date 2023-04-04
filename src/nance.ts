@@ -6,7 +6,8 @@ import {
   getLastSlash as getIdFromURL,
   floatToPercentage,
   cidToLink,
-  addSecondsToDate
+  addSecondsToDate,
+  IPFS_GATEWAY,
 } from './utils';
 import logger from './logging';
 import { NanceConfig, Proposal, InternalVoteResults } from './types';
@@ -133,6 +134,7 @@ export class Nance {
     const discussionProposals = await this.dProposalHandler.assignProposalIds(
       await this.dProposalHandler.getDiscussionProposals()
     );
+    console.log(discussionProposals);
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       proposal.status = this.config.propertyKeys.statusTemperatureCheck;
       await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
@@ -179,11 +181,9 @@ export class Nance {
     logger.info(`${this.config.name}: votingSetup() begin...`);
     const voteProposals = proposals || await this.dProposalHandler.getVoteProposals();
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
-      if (this.config.proposalDataBackup) {
-        const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
-        const ipfsCID = await dotPin(proposalWithHeading);
-        proposal.ipfsURL = cidToLink(ipfsCID, this.config.ipfsGateway);
-      }
+      const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
+      const ipfsCID = await dotPin(proposalWithHeading);
+      proposal.ipfsURL = cidToLink(ipfsCID, IPFS_GATEWAY);
       const markdownWithAdditions = this.proposalHandler.appendProposal(proposal);
       proposal.body = markdownWithAdditions;
       proposal.voteURL = await this.votingHandler.createProposal(

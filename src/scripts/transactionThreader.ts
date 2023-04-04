@@ -13,8 +13,8 @@ async function main() {
   const currentGovernanceCycle = await nance.dProposalHandler.getCurrentGovernanceCycle();
   const simProvider = await tenderly.getForkProvider(`GC#${currentGovernanceCycle}_${new Date().toISOString()}`);
   const simURL = tenderly.getForkURL();
-  const realTreasury = new NanceTreasury(config, nance.dProposalHandler, simProvider);
-  const simTreasury = new NanceTreasury(config, nance.dProposalHandler, myProvider('mainnet'));
+  const simTreasury = new NanceTreasury(config, nance.dProposalHandler, simProvider);
+  const realTreasury = new NanceTreasury(config, nance.dProposalHandler, myProvider('mainnet'));
   const currentNonce = await GnosisHandler.getCurrentNonce(config.juicebox.gnosisSafeAddress, 'mainnet');
   await sleep(2000);
 
@@ -38,8 +38,8 @@ async function main() {
     { name: '😵‍💫 Transaction Diff', value: 'https://www.jbdao.org/juicebox?role=Bookkeeper' },
     { name: '🗃 Juicebox Safe Diff', value: 'https://juicebox.money/@juicebox/safe'},
     { name: '', value: ''},
-    { name: '✍️ Gnosis Transaction', value: 'https://app.safe.global/eth:0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e/transactions/tx?id=multisig_0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e_0x114a716b210ae246f38dc566f9c39df5a7d6ec0cadb88f37e31481e9b594aca1' },
-    { name: '🔥 Den Transaction', value: 'https://app.onchainden.com/safes/eth:0xaf28bcb48c40dbc86f52d459a6562f658fc94b1e/transactions/0x114a716b210ae246f38dc566f9c39df5a7d6ec0cadb88f37e31481e9b594aca1' },
+    { name: '✍️ Gnosis Transaction', value: 'https://app.safe.global/eth:0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e/transactions/tx?id=multisig_0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e_0x8592621bbfcfb181b354dd1945b2c12d8541bf443f9f1160db285af434597fcd' },
+    { name: '🔥 Den Transaction', value: 'https://app.onchainden.com/safes/eth:0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e/transactions/0x8592621bbfcfb181b354dd1945b2c12d8541bf443f9f1160db285af434597fcd' },
   ];
   
   // need to functionize!!
@@ -51,16 +51,16 @@ async function main() {
   const removePayouts = currentPayoutsList.filter((pay) => { 
     return !futurePayoutsList.some((p2) => { return pay.proposalId === p2.proposalId })
   });
-  // console.log(addPayouts.map((pay) => { return pay.payName }));
-  // console.log(futurePayoutsList.map((p) => { return { name: p.payName, pid: p.proposalId } }))
-  // console.log(currentPayoutsList.map((p) => { return { name: p.payName, pid: p.proposalId } }))
+  console.log(addPayouts.map((pay) => { return pay.payName }));
+  console.log(futurePayoutsList.map((p) => { return { name: p.payName, pid: p.proposalId } }))
+  console.log(currentPayoutsList.map((p) => { return { name: p.payName, pid: p.proposalId } }))
   console.log('added payouts');
   console.log(addPayouts.map((p) => { return { name: p.payName, pid: p.proposalId } }))
   console.log('remove payouts');
   console.log(removePayouts.map((p) => { return { name: p.payName, pid: p.proposalId } }))
   
-  // nance.dialogHandler.editTransactionMessage('1071474333521809579', links);
-  const threadId = await nance.dialogHandler.createTransactionThread(currentNonce + 1, 'reconfigureV3', currentDistributionNum, futureDistributionNum, links);
+  // nance.dialogHandler.editTransactionMessage('1076538698562289755', links);
+  const threadId = await nance.dialogHandler.createTransactionThread(226, 'reconfigureV3', currentDistributionNum, futureDistributionNum, links);
   await nance.dialogHandler.sendTransactionSummary(threadId, addPayouts, removePayouts, currentDistributionNum, futureDistributionNum);
 }
 

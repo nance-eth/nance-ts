@@ -51,7 +51,7 @@ async function scheduleCycle() {
         nance.reminder(event.title, event.start, 'start');
       });
       // increment governanceCycle 90 seconds before tempertureCheck starts
-      const governanceCycleIncTime = addSecondsToDate(event.start, -90);
+      const governanceCycleIncTime = addSecondsToDate(event.start, (config.name === 'waterbox') ? -3 : -90);
       schedule.scheduleJob('increment governanceCycle', governanceCycleIncTime, async () => {
         const governanceCycle = await treasury.getCycleInformation();
         nance.incrementGovernanceCycle(governanceCycle);
@@ -76,7 +76,7 @@ async function scheduleCycle() {
       // end reminder
       const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
       schedule.scheduleJob('voteClose REMINDER', reminderDate, () => {
-        nance.reminder(event.title, event.end, 'end', `${config.snapshot.base}/${config.snapshot.space}`);
+        nance.reminder(event.title, event.end, 'end', `${config.snapshot.base}`);
       });
       schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
         nance.votingClose();

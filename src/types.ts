@@ -122,10 +122,6 @@ export type PropertyKeys = {
 
 export interface NanceConfig {
   name: string;
-  proposalDataBackup: string;
-  ipfsGateway: string;
-  votingResultsDashboard: string;
-  translation?: string[];
   juicebox: {
     network: 'mainnet' | 'rinkeby';
     projectId: string;

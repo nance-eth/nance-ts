@@ -11,7 +11,7 @@ import {
   EmbedFieldData,
 } from 'discord.js';
 import logger from '../logging';
-import { limitLength, getLastSlash } from '../utils';
+import { limitLength, getLastSlash, DEFAULT_DASHBOARD } from '../utils';
 import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
@@ -101,7 +101,7 @@ export class DiscordHandler {
 
   async sendVoteResultsRollup(proposals: Proposal[]) {
     const message = discordTemplates.voteResultsRollUpMessage(
-      this.config.votingResultsDashboard,
+      DEFAULT_DASHBOARD,
       proposals
     );
     await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
@@ -229,7 +229,7 @@ export class DiscordHandler {
   }
 
   async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
-    const response = discordTemplates.payoutsTable(payouts, governanceCycle, `${this.config.snapshot.base}`, this.config.propertyKeys.proposalIdPrefix);
+    const response = discordTemplates.payoutsTable(payouts, governanceCycle, this.config.snapshot.base, this.config.propertyKeys.proposalIdPrefix);
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 

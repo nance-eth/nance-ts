@@ -1,8 +1,5 @@
 {
   "name": "juicebox",
-  "proposalDataBackup": "ipfs",
-  "ipfsGateway": "ipfs.nftstorage.link",
-  "translation": ["zh"],
   "juicebox": {
     "network": "mainnet",
     "projectId": "1",
@@ -86,7 +83,7 @@
     "repo": "juicebox"
   },
   "snapshot": {
-    "base": "https://jbdao.org/snapshot",
+    "base": "https://jbdao.org",
     "space": "jbdao.eth",
     "choices": ["For", "Against", "Abstain"],
     "minTokenPassingAmount": 80E6,

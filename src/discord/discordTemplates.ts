@@ -141,12 +141,12 @@ export const dailyImageReminder = (day: string, governanceCycle: string, type: s
 };
 
 export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, proposalLinkPrefix: string, proposalIdPrefix: string) => {
-  const message = new MessageEmbed().setTitle(`Payouts for GC#${governanceCycle}`).setDescription('[submit new proposal](https://juicetool.xyz/nance/juicebox/new)');
+  const message = new MessageEmbed().setTitle(`Payouts for GC#${governanceCycle}`).setDescription('[submit new proposal](https://jbdao.org/edit)');
   const toAlert: string[] = [];
   payouts.forEach((payout) => {
     const payoutNum = Number(governanceCycle) - payout.governanceCycleStart + 1;
     if (payoutNum === payout.numberOfPayouts && payout.numberOfPayouts !== 1) { toAlert.push(`<@${payout.authorDiscordId ?? ''}>`); }
-    message.addFields({ name: payout.payName ?? '', value: `| - - - $${payout.amount.toLocaleString()}  - - - | - - -  ${payoutNum}/${payout.numberOfPayouts} - - - | - - - [${proposalIdPrefix}${payout.proposalId}](${proposalLinkPrefix}/${payout.snapshotId}) - - - |\n=============================================` });
+    message.addFields({ name: payout.payName ?? '', value: `| - - - $${payout.amount.toLocaleString()}  - - - | - - -  ${payoutNum}/${payout.numberOfPayouts} - - - | - - - [${proposalIdPrefix}${payout.proposalId}](${proposalLinkPrefix}/p/${payout.proposalId}) - - - |\n=============================================` });
   });
   return { message, toAlert: toAlert.join(' ') };
 };

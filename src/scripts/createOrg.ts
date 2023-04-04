@@ -24,7 +24,7 @@ function initOrg(org: string) {
 }
 
 async function createDB(org: string) {
-  const schema = fs.readFileSync(`${__dirname}/../dolt/schema.sql`, 'utf-8');
+  const schema = fs.readFileSync(`${__dirname}/../../assets/schema.sql`, 'utf-8');
   const initDB = mysql.createConnection({ host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT), user: 'root' });
   initDB.query(`CREATE DATABASE IF NOT EXISTS ${org}`);
   initDB.end();
@@ -40,4 +40,4 @@ async function createDB(org: string) {
   console.log('done!');
 }
 
-initOrg(process.argv[2]);
+createDB(process.argv[2]);

@@ -11,6 +11,10 @@ export const myProvider = (network: Network) => {
   return new JsonRpcProvider(RPC_HOST);
 };
 
+export const IPFS_GATEWAY = 'https://nance.infura-ipfs.io';
+
+export const DEFAULT_DASHBOARD = 'https://jbdao.org';
+
 export const sleep = (milliseconds: number) => {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds); });
 };
