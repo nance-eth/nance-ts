@@ -1,9 +1,11 @@
+/* eslint-disable no-param-reassign */
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { Network } from './types';
+import { NanceConfig, Network } from './types';
 import { keys } from './keys';
 
 export const myProvider = (network: Network) => {
@@ -143,7 +145,7 @@ export async function downloadImages(baseURL: string, images: string[]) {
   return Promise.resolve();
 }
 
-export function uuid(hyphen = false): string {
+export function uuid(): string {
   return uuidv4().replaceAll('-', '');
 }
 
@@ -153,4 +155,15 @@ export function cidToLink(cid: string, gateway: string) {
 
 export function sqlSchemaToString(): string[] {
   return fs.readFileSync(`${path.join(__dirname, '../assets/schema.sql')}`, 'utf-8').split(';');
+}
+
+export function mergeTemplateConfig(config: any): NanceConfig {
+  const template = JSON.parse(fs.readFileSync(`${path.join(__dirname, './config/template/template.json')}`, 'utf-8'));
+  const merged = merge(template, config);
+  merged.dolt.repo = config.name;
+  return merged;
+}
+
+export function fetchTemplateCalendar() {
+  return fs.readFileSync(`${path.join(__dirname, './config/template/template.ics')}`, 'utf-8');
 }

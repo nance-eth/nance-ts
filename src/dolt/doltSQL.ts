@@ -40,7 +40,7 @@ export class DoltSQL {
 
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
     return this.db.query(`CALL DOLT_REMOTE('add', ?, ?)`, [remoteName, remote]).then((res) => {
-      return status(res[0]) === 0;
+      return status(res) === 0;
     });
   }
 
@@ -54,7 +54,7 @@ export class DoltSQL {
 
   async createBranch(newBranch: string, fromBranch = 'main') {
     return this.db.query(`CALL DOLT_BRANCH('${newBranch}', '${fromBranch}')`).then((res) => {
-      return status(res[0]);
+      return status(res);
     }).catch((e) => {
       return Promise.reject(e);
     });
@@ -141,8 +141,8 @@ export class DoltSQL {
     });
   }
 
-  async queryResults(query: string) {
-    return this.db.query(query).then((res) => {
+  async queryResults(query: string, variables?: string[]) {
+    return this.db.query(query, variables).then((res) => {
       return res[0] as unknown as ResultSetHeader;
     }).catch((e) => {
       return Promise.reject(e);

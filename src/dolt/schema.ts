@@ -1,3 +1,5 @@
+import { NanceConfig } from '../types';
+
 export type SQLProposal = {
   uuid: string;
   createdTime: Date;
@@ -59,4 +61,13 @@ export type GovernanceCycle = {
   jbV2FundingCycle?: number;
   jbV3FundingCycle?: number;
   acceptingProposals: boolean;
+};
+
+export type SpaceConfig = {
+  space: string,
+  spaceOwners: string[],
+  cid: string;
+  config: NanceConfig;
+  calendar: string;
+  lastUpdated: Date;
 };

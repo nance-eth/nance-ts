@@ -12,3 +12,5 @@ export const keys = {
   STORAGE_KEY: process.env.NFT_STORAGE_KEY ?? '',
   TENDERLY_KEY: process.env.TENDERLY_KEY ?? '',
 };
+
+export const nanceAddress = process.env.PUBLIC_ADDRESS ?? '';

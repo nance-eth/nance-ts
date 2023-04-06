@@ -5,9 +5,9 @@ import { DateEvent } from '../types';
 export class CalendarHandler {
   public events: CalendarResponse = {};
   constructor(
-    private icsFile?: string,
+    private icsString?: string,
   ) {
-    if (icsFile) this.events = ical.sync.parseFile(icsFile);
+    if (icsString) this.events = ical.sync.parseICS(icsString);
   }
 
   async useIcsLink(icsURL:string) {

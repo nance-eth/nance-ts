@@ -2,7 +2,7 @@ import express from 'express';
 import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
-import { calendarPath, cidConfig, getConfig } from '../configLoader';
+import { doltConfig } from '../configLoader';
 import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest } from './models';
 import { checkSignature } from './helpers/signature';
@@ -12,7 +12,7 @@ import { cidToLink, getLastSlash, myProvider, sleep } from '../utils';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
-import { keys } from '../keys';
+import { keys, nanceAddress } from '../keys';
 import { dbOptions } from '../dolt/dbConfig';
 import { SQLPayout } from '../dolt/schema';
 import { Proposal } from '../types';
@@ -25,9 +25,8 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
-    const config = await getConfig(space);
-    const calendar = calendarPath(config);
-    const proposalHandlerMain = (config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
+    const { config, calendar } = await doltConfig(space);
+    const proposalHandlerMain = (!config.dolt.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     const proposalHandlerBeta = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     res.locals = { space, config, calendar, proposalHandlerMain, proposalHandlerBeta };
     next();
@@ -43,7 +42,6 @@ router.get(`${spacePrefix}`, async (req, res) => {
   const { proposalHandlerMain, space, calendar } = res.locals;
   try {
     const calendarHandler = new CalendarHandler(calendar);
-    // await calendarHandler.useIcsLink(cidToLink(calendar, DEFAULT_GATEWAY));
     const currentEvent = calendarHandler.getCurrentEvent();
     const currentCycle = await proposalHandlerMain.getCurrentGovernanceCycle();
     return res.send({ sucess: true, data: { name: space, currentCycle, currentEvent } });
@@ -143,7 +141,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
   const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid) as Proposal;
-  if (signature.address === proposalByUuid.authorAddress || signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+  if (signature.address === proposalByUuid.authorAddress || signature.address === nanceAddress) {
     logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
     proposalHandlerBeta.addProposalToDb(proposal, true).then(async (hash: string) => {
       const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
@@ -262,8 +260,11 @@ router.get(`${spacePrefix}/sync`, async (req, res) => {
 
 // check for changes to db, push to dolt if true
 router.get(`${spacePrefix}/dolthub`, async (req, res) => {
-  const { proposalHandlerBeta } = res.locals;
-  proposalHandlerBeta.checkAndPush().then((data: string) => {
+  const { table } = req.query;
+  const { proposalHandlerBeta, calendar } = res.locals;
+  const calendarHandler = new CalendarHandler(calendar);
+  const currentEvent = calendarHandler.getCurrentEvent();
+  proposalHandlerBeta.checkAndPush(table, currentEvent).then((data: string) => {
     return res.json({ success: true, data });
   }).catch((e: string) => {
     return res.json({ success: false, error: e });

@@ -22,6 +22,15 @@ export async function cidConfig(query: string): Promise<{ config: NanceConfig, c
   });
 }
 
+export async function doltConfig(query: string): Promise<{ config: NanceConfig, calendar: string }> {
+  const dolt = new DoltSysHandler();
+  return dolt.getSpaceConfig(query).then((res) => {
+    if (res) return { config: res.config, calendar: res.calendar };
+    // eslint-disable-next-line prefer-promise-reject-errors
+    return Promise.reject('no config found');
+  });
+}
+
 export const calendarPath = (config: NanceConfig) => {
   return `${__dirname}/config/${config.name}/${config.name}.ics`;
 };

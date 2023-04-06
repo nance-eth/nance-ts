@@ -2,6 +2,8 @@ import { oneLine } from 'common-tags';
 import { DoltSQL, cleanResultsHeader } from './doltSQL';
 import { dbOptions } from './dbConfig';
 import { sqlSchemaToString } from '../utils';
+import { NanceConfig } from '../types';
+import { SpaceConfig } from './schema';
 
 const systemDb = 'nance_sys';
 const system = 'config';
@@ -49,11 +51,22 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async setSpaceCID(space: string, cid: string) {
-    this.localDolt.db.query(oneLine`
-      INSERT INTO ${system} (space, cid)
-      VALUES (?,?)
-      ON DUPLICATE KEY UPDATE cid = VALUES(cid)
-    `, [space, cid]);
+  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, calendar: string) {
+    return this.localDolt.queryResults(oneLine`
+      INSERT INTO ${system} (space, cid, spaceOwners, config, calendar, lastUpdated)
+      VALUES (?, ?, ?, ?, ?, NOW())
+      ON DUPLICATE KEY UPDATE cid = VALUES(cid), spaceOwners = VALUES(spaceOwners), config = VALUES(config), calendar = VALUES(calendar), lastUpdated = NOW()
+    `, [space, cid, JSON.stringify(spaceOwners), JSON.stringify(config), calendar]).then((res) => {
+      return res.affectedRows;
+    }).catch((e) => { return Promise.reject(e.sqlMessage); });
+  }
+
+  async getSpaceConfig(space: string): Promise<SpaceConfig | undefined> {
+    return this.localDolt.queryRows(oneLine`
+      SELECT * FROM ${system}
+      WHERE space = ? LIMIT 1
+    `, [space]).then((res) => {
+      return res[0] as unknown as SpaceConfig;
+    }).catch((e) => { return Promise.reject(e); });
   }
 }
