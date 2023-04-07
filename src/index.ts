@@ -8,7 +8,7 @@ import {
 import { Nance } from './nance';
 import { NanceTreasury } from './treasury';
 import logger from './logging';
-import { getConfig, calendarPath } from './configLoader';
+import { getConfig, getCalendar } from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
 import { NanceConfig } from './types';
 
@@ -31,7 +31,7 @@ async function getReminderImages() {
 }
 
 async function scheduleCycle() {
-  const calendar = new CalendarHandler(calendarPath(config));
+  const calendar = new CalendarHandler(getCalendar(config));
   const cycle = calendar.getNextEvents();
   logger.debug(cycle);
   if (CalendarHandler.shouldSendDiscussion(cycle)) { nance.setDiscussionInterval(30); }
