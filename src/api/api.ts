@@ -26,7 +26,7 @@ router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
     const { config, calendar } = await doltConfig(space);
-    const proposalHandlerMain = (!config.dolt.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
+    const proposalHandlerMain = (config.notion && config.notion.enabled) ? new NotionHandler(config) : new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     const proposalHandlerBeta = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     res.locals = { space, config, calendar, proposalHandlerMain, proposalHandlerBeta };
     next();
