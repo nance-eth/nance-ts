@@ -10,15 +10,26 @@ import logger from '../logging';
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
+router.get('/', (_, res) => {
   res.send('nance-ish control panel');
 });
 
+router.get('/config/:space', async (req, res) => {
+  const { space } = req.params;
+  const dolt = new DoltSysHandler();
+  dolt.getSpaceConfig(space).then((doltConfig) => {
+    if (doltConfig) { res.json({ success: true, data: doltConfig }); return; }
+    res.json({ success: false, error: `config ${space} not found!` });
+  }).catch((e) => {
+    res.json({ success: false, error: e });
+  });
+});
+
 router.post('/config', async (req, res) => {
-  const { config, signature, calendar } = req.body as ConfigSpaceRequest;
+  const { config, signature, calendar, owners } = req.body as ConfigSpaceRequest;
   const space = config.name;
   // signature must be valid
-  const { valid } = checkSignature(signature, 'ish', 'config', { ...config, calendar });
+  const { valid } = checkSignature(signature, 'ish', 'config', { ...config, calendar, owners });
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); return; }
 
   // check if space exists and confiugurer is spaceOwner
@@ -43,7 +54,8 @@ router.post('/config', async (req, res) => {
   const configIn = mergeTemplateConfig(config);
   const packedConfig = JSON.stringify({ signature, config: configIn, calendar: calendarIn });
   const cid = await dotPin(packedConfig);
-  dolt.setSpaceConfig(space, cid, [signature.address, nanceAddress], configIn, calendarIn).then(() => {
+  const ownersIn = [...(owners ?? []), signature.address];
+  dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendarIn).then(() => {
     res.json({ success: true, data: { space, spaceOwner: signature.address } });
   }).catch((e) => {
     res.json({ success: false, error: e });

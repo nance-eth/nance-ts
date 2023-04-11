@@ -457,13 +457,13 @@ export class DoltHandler {
     return results;
   }
 
-  async checkAndPush(table = proposalsTable): Promise<string> {
+  async checkAndPush(table = proposalsTable, message = ''): Promise<string> {
     // call push in case we committed but push failed before
     // (not sure if there is dolt call to check for unpushed commit)
     await this.localDolt.push();
     if (await this.localDolt.changes(table)) {
       const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
-      return this.localDolt.commit(`GC${currentGovernanceCycle}`, proposalsTable).then(async (res) => {
+      return this.localDolt.commit(`GC${currentGovernanceCycle}-${message}`, proposalsTable).then(async (res) => {
         if (res) {
           return this.localDolt.push().then(() => {
             return res; // commit hash

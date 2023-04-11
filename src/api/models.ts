@@ -65,4 +65,5 @@ export interface ConfigSpaceRequest extends BaseRequest {
   signature: Signature;
   config: NanceConfig;
   calendar?: string;
+  owners?: string[];
 }
