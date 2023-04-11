@@ -217,7 +217,7 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Discussion'
-      AND governanceCycle = '${this.currentGovernanceCycle}'
+      AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
       AND discussionURL IS NULL
     `);
   }
@@ -236,14 +236,16 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Temperature Check'
-      AND governanceCycle = '${this.currentGovernanceCycle}'
+      AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
     `);
   }
 
-  async getVoteProposals() {
+  async getVoteProposals(uploaded = false) {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Voting'
+      AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
+      AND snapshotId IS ${uploaded ? 'NOT ' : ''}NULL
     `);
   }
 

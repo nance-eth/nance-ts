@@ -33,7 +33,6 @@ export async function doltConfig(query: string): Promise<{ config: NanceConfig, 
 }
 
 export const getCalendar = (config: NanceConfig) => {
-  console.log(config);
   const calendarPath = `${__dirname}/config/${config.name}/${config.name}.ics`;
   return fs.readFileSync(calendarPath, 'utf-8');
 };

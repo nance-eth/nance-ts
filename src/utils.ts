@@ -150,7 +150,7 @@ export function uuid(): string {
 }
 
 export function cidToLink(cid: string, gateway: string) {
-  return (cid.startsWith('Qm') ? `${gateway}/${cid}` : `https://${cid}.${gateway}`);
+  return (cid.startsWith('Qm') ? `${gateway}/ipfs/${cid}` : `https://${cid}.${gateway}`);
 }
 
 export function sqlSchemaToString(): string[] {

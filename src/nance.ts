@@ -151,7 +151,7 @@ export class Nance {
 
   async temperatureCheckClose() {
     logger.info(`${this.config.name}: temperatureCheckClose() begin...`);
-    const temperatureCheckProposals = await this.proposalHandler.getTemperatureCheckProposals();
+    const temperatureCheckProposals = await this.dProposalHandler.getTemperatureCheckProposals();
     await Promise.all(temperatureCheckProposals.map(async (proposal: Proposal) => {
       const threadId = getIdFromURL(proposal.discussionThreadURL);
       const pollResults = await this.dialogHandler.getPollVoters(threadId);
@@ -188,7 +188,7 @@ export class Nance {
       proposal.body = markdownWithAdditions;
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
-        addSecondsToDate(new Date(), -1),
+        addSecondsToDate(new Date(), -5),
         endDate,
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
@@ -211,7 +211,7 @@ export class Nance {
 
   async votingClose(): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingClose() begin...`);
-    const voteProposals = await this.proposalHandler.getVoteProposals();
+    const voteProposals = await this.dProposalHandler.getVoteProposals(true);
     const voteProposalIdStrings = voteProposals.map((proposal) => {
       return `"${getIdFromURL(proposal.voteURL)}"`;
     });
