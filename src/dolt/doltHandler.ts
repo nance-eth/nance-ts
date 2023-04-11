@@ -186,6 +186,26 @@ export class DoltHandler {
     [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, proposal.hash]);
   }
 
+  async bulkEditPayouts(payouts: SQLPayout[]) {
+    await Promise.all(payouts.map(async (payout) => {
+      const treasuryVersion = DEFAULT_TREASURY_VERSION;
+      const payAddress = payout?.payAddress;
+      const payProject = payout?.payProject;
+      const payName = payout?.payName;
+      const governanceStart = payout.governanceCycleStart;
+      const numberOfPayouts = payout?.numberOfPayouts;
+      const amount = payout?.amount;
+      const currency = 'usd';
+      const payStatus = payout?.payStatus;
+      await this.localDolt.queryResults(oneLine`
+        UPDATE IGNORE ${payoutsTable} SET
+        treasuryVersion = ?, governanceCycleStart = ?, numberOfPayouts = ?, amount = ?,
+        currency = ?, payAddress = ?, payProject = ?, payStatus = ?, payName = ?
+        WHERE uuid = ?`,
+      [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, payout.uuid]);
+    }));
+  }
+
   async deleteProposal(hash: string) {
     const queryProposals = oneLine`
       DELETE FROM ${proposalsTable}

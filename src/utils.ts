@@ -164,6 +164,10 @@ export function mergeTemplateConfig(config: any): NanceConfig {
   return merged;
 }
 
+export function mergeConfig(configOld: NanceConfig, configNew: Partial<NanceConfig>): NanceConfig {
+  return merge(configOld, configNew) as NanceConfig;
+}
+
 export function fetchTemplateCalendar() {
   return fs.readFileSync(`${path.join(__dirname, './config/template/template.ics')}`, 'utf-8');
 }

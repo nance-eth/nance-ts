@@ -1,4 +1,5 @@
 import { NanceConfig, Proposal, Signature } from '../types';
+import { SQLPayout } from '../dolt/schema';
 
 interface APIResponse<T> {
   success: boolean;
@@ -14,6 +15,8 @@ export type SpaceInfo = {
 export type ProposalsQueryResponse = APIResponse<Proposal[]>;
 
 export type ProposalMarkdownResponse = APIResponse<Proposal>;
+
+export type PayoutsQueryResponse = APIResponse<SQLPayout[]>;
 
 export type SpaceInfoResponse = APIResponse<SpaceInfo>;
 
@@ -66,4 +69,9 @@ export interface ConfigSpaceRequest extends BaseRequest {
   config: NanceConfig;
   calendar?: string;
   owners?: string[];
+}
+
+export interface EditPayoutsRequest extends BaseRequest {
+  signature: Signature;
+  payouts: SQLPayout[];
 }

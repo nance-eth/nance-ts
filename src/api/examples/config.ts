@@ -1,7 +1,6 @@
 import axios from 'axios';
-import fs from 'fs';
-import { signPayload } from '../helpers/signature';
-import { getConfig, calendarPath } from '../../configLoader';
+import { signPayload } from './signer';
+import { getConfig, getCalendar } from '../../configLoader';
 import { ConfigSpaceRequest } from '../models';
 
 const API_MAIN = 'https://api.nance.app';
@@ -10,7 +9,7 @@ const API = API_LOCAL;
 
 async function configSpace(space: string) {
   const config = await getConfig(space);
-  const calendar = fs.readFileSync(calendarPath(config), 'utf-8');
+  const calendar = getCalendar(config);
   const signature = await signPayload(space, 'config', { ...config, calendar });
   const req = { space, config, signature, calendar } as ConfigSpaceRequest;
   return axios.post(`${API}/ish/config`, req).then((res) => {

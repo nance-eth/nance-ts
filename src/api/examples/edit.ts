@@ -14,7 +14,7 @@ const PROPOSAL: Proposal = {
   status: 'Draft',
   type: 'Payout',
   governanceCycle: 40,
-  proposalId: '',
+  proposalId: null,
   author: '',
   version: '1',
   title: 'DO the thing to the woot m',

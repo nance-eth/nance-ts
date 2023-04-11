@@ -4,8 +4,7 @@ import { createDolthubDB } from '../dolt/doltAPI';
 import { dotPin } from '../storage/storageHandler';
 import { checkSignature } from './helpers/signature';
 import { ConfigSpaceRequest } from './models';
-import { mergeTemplateConfig, fetchTemplateCalendar } from '../utils';
-import { nanceAddress } from '../keys';
+import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar } from '../utils';
 import logger from '../logging';
 
 const router = express.Router();
@@ -51,7 +50,7 @@ router.post('/config', async (req, res) => {
 
   // config the space
   const calendarIn = calendar || fetchTemplateCalendar();
-  const configIn = mergeTemplateConfig(config);
+  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, config) : mergeTemplateConfig(config);
   const packedConfig = JSON.stringify({ signature, config: configIn, calendar: calendarIn });
   const cid = await dotPin(packedConfig);
   const ownersIn = [...(owners ?? []), signature.address];

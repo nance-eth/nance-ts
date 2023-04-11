@@ -4,19 +4,19 @@ import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
 import { doltConfig } from '../configLoader';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest } from './models';
+import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest, EditPayoutsRequest } from './models';
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
-import { getAddressFromPrivateKey, getENS } from './helpers/ens';
-import { cidToLink, getLastSlash, myProvider, sleep } from '../utils';
+import { getENS } from './helpers/ens';
+import { getLastSlash, myProvider, sleep } from '../utils';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
-import { keys, nanceAddress } from '../keys';
 import { dbOptions } from '../dolt/dbConfig';
 import { SQLPayout } from '../dolt/schema';
-import { Proposal } from '../types';
+import { NanceConfig, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
+import { isMultisig, isNanceAddress } from './helpers/permissions';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -38,7 +38,7 @@ router.use(spacePrefix, async (req, res, next) => {
 // ================================ //
 // ======== info functions ======== //
 // ================================ //
-router.get(`${spacePrefix}`, async (req, res) => {
+router.get(`${spacePrefix}`, async (_, res) => {
   const { proposalHandlerMain, space, calendar } = res.locals;
   try {
     const calendarHandler = new CalendarHandler(calendar);
@@ -141,7 +141,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
   const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid) as Proposal;
-  if (signature.address === proposalByUuid.authorAddress || signature.address === nanceAddress) {
+  if (signature.address === proposalByUuid.authorAddress || isNanceAddress(signature.address)) {
     logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
     proposalHandlerBeta.addProposalToDb(proposal, true).then(async (hash: string) => {
       const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
@@ -168,7 +168,7 @@ router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
   const { valid } = checkSignature(signature, space, 'delete', { hash });
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
   const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(hash);
-  if (signature.address === proposalByUuid.authorAddress || signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+  if (signature.address === proposalByUuid.authorAddress || isNanceAddress(signature.address)) {
     logger.info(`DELETE issued by ${signature.address}`);
     proposalHandlerBeta.deleteProposal(hash).then(async (affectedRows: number) => {
       res.json({ success: true, data: { affectedRows } });
@@ -209,10 +209,10 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
 router.put(`${spacePrefix}/incrementGC`, async (req, res) => {
   const { space } = req.params;
   const { governanceCycle, signature } = req.body as IncrementGovernanceCycleRequest;
-  const { config, proposalHandlerMain } = res.locals;
+  const { proposalHandlerMain } = res.locals;
   const { valid } = checkSignature(signature, space, 'incrementGC', { governanceCycle });
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  if (signature.address === getAddressFromPrivateKey(keys.PRIVATE_KEY)) {
+  if (isNanceAddress(signature.address)) {
     logger.info(`INCREMENT GC by ${signature.address}`);
     proposalHandlerMain.incrementGovernanceCycle().then((affectedRows: number) => {
       res.json({ success: true, data: { affectedRows } });
@@ -237,18 +237,8 @@ router.get(`${spacePrefix}/editTitles/:status`, async (req, res) => {
   });
 });
 
-// get payouts table
-router.get(`${spacePrefix}/payouts`, async (req, res) => {
-  const { proposalHandlerBeta } = res.locals;
-  proposalHandlerBeta.getPayoutsDb('V3').then((data: SQLPayout[]) => {
-    res.json({ success: true, data });
-  }).catch((e: any) => {
-    res.json({ success: false, error: e });
-  });
-});
-
 // sync notion to dolt
-router.get(`${spacePrefix}/sync`, async (req, res) => {
+router.get(`${spacePrefix}/sync`, async (_, res) => {
   const { config } = res.locals;
   const nance = new Nance(config);
   await nance.syncProposalHandlers().then(() => {
@@ -269,6 +259,36 @@ router.get(`${spacePrefix}/dolthub`, async (req, res) => {
   }).catch((e: string) => {
     return res.json({ success: false, error: e });
   });
+});
+
+// ===================================== //
+// ========= payout functions ========== //
+// ===================================== //
+
+// get payouts table
+router.get(`${spacePrefix}/payouts`, async (_, res) => {
+  const { proposalHandlerBeta } = res.locals;
+  proposalHandlerBeta.getPayoutsDb('V3').then((data: SQLPayout[]) => {
+    res.json({ success: true, data });
+  }).catch((e: any) => {
+    res.json({ success: false, error: e });
+  });
+});
+
+// edit payouts table
+router.put(`${spacePrefix}/payouts`, async (req, res) => {
+  const { space, config, proposalHandlerBeta } = res.locals;
+  const { payouts, signature } = req.body as EditPayoutsRequest;
+  const { valid } = checkSignature(signature, space, 'payouts', { payouts });
+  if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); return; }
+  const safeAddress = config.juicebox.gnosisSafeAddress;
+  const { address } = signature;
+  if (await isMultisig(safeAddress, address) || isNanceAddress(address)) {
+    logger.info(`EDIT PAYOUTS by ${address}`);
+    proposalHandlerBeta.bulkEditPayouts(payouts).then(() => {
+      res.json({ success: true });
+    }).catch((e: any) => { res.json({ success: false, error: e }); });
+  } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to edit payouts' }); }
 });
 
 export default router;

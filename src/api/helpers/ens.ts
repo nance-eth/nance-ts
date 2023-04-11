@@ -9,7 +9,3 @@ export const getENS = async (address: string) => {
   if (ens) return ens;
   return address;
 };
-
-export const getAddressFromPrivateKey = (privateKey: string) => {
-  return ethers.utils.computeAddress(`0x${privateKey}`);
-};

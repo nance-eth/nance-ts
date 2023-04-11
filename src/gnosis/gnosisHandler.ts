@@ -8,6 +8,8 @@ import logger from '../logging';
 
 const headers = { 'Content-type': 'application/json' };
 
+export const API = (network = 'mainnet') => { return `https://safe-transaction-${network}.safe.global`; };
+
 export class GnosisHandler {
   private TRANSACTION_API;
   private walletAddress;
@@ -20,7 +22,7 @@ export class GnosisHandler {
   ) {
     this.safeAddress = ethers.utils.getAddress(safeAddress.toLowerCase());
     this.walletAddress = ethers.utils.getAddress(this.wallet.address.toLowerCase());
-    this.TRANSACTION_API = `https://safe-transaction-${network}.safe.global`;
+    this.TRANSACTION_API = API();
   }
 
   static async initializeSafe(safeAddress: string, network = 'mainnet' as 'mainnet' | 'rinkeby' | 'goerli') {
@@ -86,6 +88,18 @@ export class GnosisHandler {
     });
   }
 
+  static async getSigners(safeAddress: string, network = 'mainnet'): Promise<string[]> {
+    return axios({
+      method: 'get',
+      url: `${API(network)}/api/v1/safes/${safeAddress}`,
+      headers,
+    }).then((res) => {
+      return res.data.owners;
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
+
   async getSafe() {
     return axios({
       method: 'get',
@@ -118,10 +132,9 @@ export class GnosisHandler {
   }
 
   static async getCurrentNonce(safeAddress: string, network: string, queued = true) {
-    const TRANSACTION_API = `https://safe-transaction-${network}.safe.global`;
     return axios({
       method: 'get',
-      url: `${TRANSACTION_API}/api/v1/safes/${safeAddress}/all-transactions`,
+      url: `${API()}/api/v1/safes/${safeAddress}/all-transactions`,
       headers,
       params: {
         ordering: 'nonce',
