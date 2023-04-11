@@ -55,7 +55,7 @@ router.post('/config', async (req, res) => {
   const cid = await dotPin(packedConfig);
   const ownersIn = [...(owners ?? []), signature.address];
   dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendarIn).then(() => {
-    res.json({ success: true, data: { space, spaceOwner: signature.address } });
+    res.json({ success: true, data: { space, spaceOwners: ownersIn } });
   }).catch((e) => {
     res.json({ success: false, error: e });
   });
