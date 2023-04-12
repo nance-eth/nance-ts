@@ -141,6 +141,10 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
   const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid) as Proposal;
+  if (proposalByUuid.status === 'Voting' || proposalByUuid.status === 'Approved') {
+    res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
+    return;
+  }
   if (signature.address === proposalByUuid.authorAddress || isNanceAddress(signature.address)) {
     logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
     proposalHandlerBeta.editProposal(proposal).then(async (hash: string) => {
