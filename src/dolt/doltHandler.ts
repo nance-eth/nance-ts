@@ -1,6 +1,7 @@
 /* eslint-disable prefer-promise-reject-errors */
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
+import { omitBy, isNil } from 'lodash';
 import { Proposal, PropertyKeys } from '../types';
 import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended } from './schema';
 import { DoltSQL } from './doltSQL';
@@ -92,6 +93,22 @@ export class DoltHandler {
     return cleanProposal;
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  toSQLProposal(proposal: Partial<Proposal>): Partial<SQLProposal> {
+    const sqlProposal = {
+      uuid: proposal.hash,
+      title: proposal.title || undefined,
+      body: proposal.body || undefined,
+      category: proposal.type || undefined,
+      proposalStatus: proposal.status,
+      proposalId: proposal.proposalId || undefined,
+      discussionURL: proposal.discussionThreadURL || undefined,
+      governanceCycle: proposal.governanceCycle || undefined,
+      authorAddress: proposal.authorAddress || undefined
+    };
+    return omitBy(sqlProposal, isNil);
+  }
+
   async getCurrentGovernanceCycle() {
     let { cycleNumber } = (await this.queryDb(`
     SELECT MAX(cycleNumber) as cycleNumber from ${governanceCyclesTable}
@@ -166,6 +183,19 @@ export class DoltHandler {
       amount, currency, payAddress, payProject, payStatus, payName)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
     [uuid(), proposal.hash, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
+  }
+
+  async editProposal(proposal: Partial<Proposal>) {
+    const updates: string[] = [];
+    const cleanedProposal = this.toSQLProposal(proposal);
+    Object.keys(cleanedProposal).forEach((key) => {
+      updates.push(`${key} = ?`);
+    });
+    await this.localDolt.db.query(oneLine`
+      UPDATE ${proposalsTable} SET
+      ${updates.join(',')} WHERE uuid = ?`,
+    [...Object.values(cleanedProposal), cleanedProposal.uuid]);
+    return proposal.hash;
   }
 
   async editPayout(proposal: Proposal) {

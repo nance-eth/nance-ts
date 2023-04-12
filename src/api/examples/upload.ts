@@ -1,11 +1,12 @@
+/* eslint-disable no-param-reassign */
 import axios from 'axios';
-import { ethers } from 'ethers';
-import { Proposal, Signature } from '../../types';
-import { DOMAIN, TYPES } from '../constants/Signature';
+import { Proposal } from '../../types';
+import { signPayload } from './helpers/signer';
 import {
   ProposalMarkdownResponse,
   APIErrorResponse
 } from '../models';
+import { getProposal } from './helpers/gpt';
 
 const API_STAGING = 'https://api.staging.nance.app';
 const API_MAIN = 'https://api.nance.app';
@@ -15,15 +16,11 @@ const API = API_LOCAL;
 const SPACE = 'waterbox';
 const PROPOSAL: Proposal = {
   hash: '',
-  status: 'Draft',
+  status: 'Discussion',
   type: 'Payout',
   governanceCycle: undefined,
   proposalId: null,
-  author: '',
-  version: '1',
-  title: 'YO its me your compooper',
-  // eslint-disable-next-line max-len
-  body: 'Status: Draft\n\n```\nAuthor:\nDate: (YYYY-MM-DD)\n```\n\n## Synopsis\n\n*State what the proposal does in one sentence.*\n\n## Motivation\n\n*What problem does this solve? Why now?* \n\n## Specification\n\n*How exactly will this be executed? Be specific and leave no ambiguity.* \n\n## Rationale\n\n*Why is this specification appropriate?*\n\n## Risks\n\n*What might go wrong?*\n\n## Timeline\n\n*When exactly should this proposal take effect? When exactly should this proposal end?*',
+  title: '',
   discussionThreadURL: '',
   ipfsURL: '',
   voteURL: '',
@@ -37,26 +34,18 @@ const PROPOSAL: Proposal = {
   }
 };
 
-async function signPayload(space: string, command: string, payload: any): Promise<Signature> {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const path = `${API}/${space}/${command}`;
-  const typedValue = {
-    path,
-    timestamp,
-    payload: ethers.utils.solidityKeccak256(['string'], [JSON.stringify(payload)])
-  };
-  const wallet = ethers.Wallet.createRandom();
-  // eslint-disable-next-line no-underscore-dangle
-  return wallet._signTypedData(DOMAIN, TYPES, typedValue).then((signature) => {
-    return {
-      address: wallet.address,
-      signature,
-      timestamp
-    };
-  });
-}
-
 async function uploadProposal(space: string, proposal: Proposal): Promise<ProposalMarkdownResponse | APIErrorResponse> {
+  const gptProposal = await getProposal().then((res) => {
+    if (res) {
+      const regex = /^(#{1,2})\s(.*)$/m;
+      const title = res.match(regex);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return { body: res, title: title![2] || 'DEFAULT' };
+    }
+    throw Error();
+  });
+  proposal.body = gptProposal.body;
+  proposal.title = gptProposal.title;
   const signature = await signPayload(space, 'upload', proposal);
   return axios.post(`${API}/${space}/proposals`, {
     signature,

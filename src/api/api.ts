@@ -78,7 +78,7 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
   const { space } = req.params;
   const { proposal, signature } = req.body as ProposalUploadRequest;
   const { config, proposalHandlerMain, proposalHandlerBeta } = res.locals;
-  if (!proposal) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
+  if (!proposal || !signature) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
   const { valid, typedValue } = checkSignature(signature, space, 'upload', proposal);
   if (!valid) {
     logger.warn(`[UPLOAD] space: ${space}, address: ${signature.address} bad`);
@@ -143,7 +143,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const proposalByUuid = await proposalHandlerBeta.getContentMarkdown(pid) as Proposal;
   if (signature.address === proposalByUuid.authorAddress || isNanceAddress(signature.address)) {
     logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
-    proposalHandlerBeta.addProposalToDb(proposal, true).then(async (hash: string) => {
+    proposalHandlerBeta.editProposal(proposal).then(async (hash: string) => {
       const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
       if (proposalByUuid.discussionThreadURL && diff) {
         const discord = new DiscordHandler(config);

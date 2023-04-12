@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { nanceWallet, signPayload } from './signer';
+import { nanceWallet, signPayload } from './helpers/signer';
 import { getConfig, getCalendar } from '../../configLoader';
 import { ConfigSpaceRequest } from '../models';
 
