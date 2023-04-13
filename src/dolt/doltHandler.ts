@@ -513,7 +513,7 @@ export class DoltHandler {
     await this.localDolt.push();
     if (await this.localDolt.changes(table)) {
       const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
-      return this.localDolt.commit(`GC${currentGovernanceCycle}-${message}`, proposalsTable).then(async (res) => {
+      return this.localDolt.commit(`GC${currentGovernanceCycle}-${message}`, table).then(async (res) => {
         if (res) {
           return this.localDolt.push().then(() => {
             return res; // commit hash
