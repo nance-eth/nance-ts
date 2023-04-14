@@ -13,10 +13,11 @@ import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { dbOptions } from '../dolt/dbConfig';
-import { SQLPayout } from '../dolt/schema';
-import { NanceConfig, Proposal } from '../types';
+import { SQLPayout, SQLTransfer } from '../dolt/schema';
+import { NanceConfig, PartialTransaction, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress } from './helpers/permissions';
+import { encodeBatchTransactions, encodeERC20Transfer } from '../transactions/transactionHandler';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -94,6 +95,7 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
   }
   if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
   if (!proposal.authorAddress) { proposal.authorAddress = signature.address; }
+  if (!proposal.type) { proposal.type = 'Payout'; }
 
   proposalHandlerMain.addProposalToDb(proposal).then(async (hash: string) => {
     proposal.hash = hash;
@@ -293,6 +295,40 @@ router.put(`${spacePrefix}/payouts`, async (req, res) => {
       res.json({ success: true });
     }).catch((e: any) => { res.json({ success: false, error: e }); });
   } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to edit payouts' }); }
+});
+
+// ===================================== //
+// ======== transfer functions ========= //
+// ===================================== //
+
+// get transfers table
+router.get(`${spacePrefix}/transfers`, async (_, res) => {
+  const { proposalHandlerBeta } = res.locals;
+  proposalHandlerBeta.getTransfersDb().then((data: SQLTransfer[]) => {
+    res.json({ success: true, data });
+  }).catch((e: any) => {
+    res.json({ success: false, error: e });
+  });
+});
+
+router.get(`${spacePrefix}/encodeTransfers`, async (_, res) => {
+  const { proposalHandlerBeta } = res.locals;
+  proposalHandlerBeta.getTransfersDb().then((transfers: SQLTransfer[]) => {
+    const transactions = transfers.map((transfer) => {
+      const { transferAddress, transferAmount, transferTokenName, transferTokenAddress } = transfer;
+      const amount = transferAmount.toString().padEnd(transfer.transferDecimals, '0');
+      const { address, bytes } = encodeERC20Transfer(transferAddress, amount, transferTokenName);
+      return {
+        to: address,
+        data: bytes,
+        value: '0x',
+        operation: 0,
+      } as PartialTransaction;
+    });
+    console.log(transactions);
+    const data = encodeBatchTransactions(transactions);
+    res.json({ success: true, data });
+  });
 });
 
 export default router;

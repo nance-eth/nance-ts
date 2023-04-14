@@ -71,3 +71,17 @@ export type SpaceConfig = {
   calendar: string;
   lastUpdated: Date;
 };
+
+export type SQLTransfer = {
+  uuid: string;
+  uuidOfProposal: string;
+  governanceCycleStart: number;
+  numberOfTransfers: number;
+  transferName: string;
+  transferAddress: string;
+  transferTokenName: string;
+  transferTokenAddress: string;
+  transferAmount: number;
+  transferDecimals: number;
+  transferStatus: string;
+};

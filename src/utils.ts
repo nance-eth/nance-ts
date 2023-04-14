@@ -8,7 +8,7 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { NanceConfig, Network } from './types';
 import { keys } from './keys';
 
-export const myProvider = (network: Network) => {
+export const myProvider = (network = 'mainnet' as Network) => {
   const RPC_HOST = `https://${network}.infura.io/v3/${keys.INFURA_KEY}`;
   return new JsonRpcProvider(RPC_HOST);
 };

@@ -49,6 +49,21 @@ CREATE TABLE IF NOT EXISTS reserves (
   PRIMARY KEY(uuid)
 );
 
+CREATE TABLE IF NOT EXISTS transfers (
+  uuid VARCHAR(35) NOT NULL,
+  uuidOfProposal VARCHAR(35),
+  governanceCycleStart INT NOT NULL,
+  numberOfTransfers INT NOT NULL DEFAULT 1,
+  transferName VARCHAR(255),
+  transferAddress CHAR(42),
+  transferTokenName VARCHAR(8),
+  transferTokenAddress CHAR(42),
+  transferAmount INT,
+  transferDecimals INT NOT NULL DEFAULT 18,
+  transferStatus VARCHAR(35),
+  PRIMARY KEY (uuid)
+);
+
 CREATE TABLE IF NOT EXISTS reconfigurations (
   uuid VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),

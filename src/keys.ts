@@ -11,6 +11,7 @@ export const keys = {
   DOLT_KEY: process.env.DOLT_KEY ?? '',
   STORAGE_KEY: process.env.NFT_STORAGE_KEY ?? '',
   TENDERLY_KEY: process.env.TENDERLY_KEY ?? '',
+  ETHERSCAN_KEY: process.env.ETHERSCAN_KEY ?? '',
 };
 
 export const nanceAddress = process.env.PUBLIC_ADDRESS ?? '';
