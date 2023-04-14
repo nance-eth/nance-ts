@@ -321,7 +321,7 @@ router.get(`${spacePrefix}/encodeTransfers`, async (_, res) => {
       return {
         to: address,
         data: bytes,
-        value: '0x',
+        value: '0x0',
         operation: 0,
       } as PartialTransaction;
     });
