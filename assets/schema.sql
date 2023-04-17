@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   body MEDIUMTEXT NOT NULL,
   authorAddress CHAR(42),
   authorDiscordId CHAR(18),
-  category VARCHAR(64) NOT NULL,
+  category VARCHAR(64),
   proposalStatus VARCHAR(30) NOT NULL,
   proposalId INT,
   temperatureCheckVotes JSON,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS transfers (
   transferAddress CHAR(42),
   transferTokenName VARCHAR(8),
   transferTokenAddress CHAR(42),
-  transferAmount INT,
+  transferAmount VARCHAR(255),
   transferDecimals INT NOT NULL DEFAULT 18,
   transferStatus VARCHAR(35),
   PRIMARY KEY (uuid)

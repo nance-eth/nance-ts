@@ -36,6 +36,7 @@ export interface Proposal {
 
 export type Action = {
   type: 'Payout' | 'Reserve' | 'Transfer' | 'Custom Transaction';
+  name?: string;
   payload: Payout | Reserve | Transfer | CustomTransaction;
 };
 
@@ -65,7 +66,7 @@ export type Transfer = {
   contract: string;
   tokenName: string;
   to: string;
-  amount: number;
+  amount: string;
 };
 
 export type CustomTransaction = {

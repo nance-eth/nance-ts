@@ -2,7 +2,7 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
-import { Proposal, PropertyKeys, Transfer, Action } from '../types';
+import { Proposal, PropertyKeys, Transfer, Payout } from '../types';
 import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
@@ -110,7 +110,7 @@ export class DoltHandler {
     return omitBy(sqlProposal, isNil);
   }
 
-  async getCurrentGovernanceCycle() {
+  async getCurrentGovernanceCycle(): Promise<number> {
     let { cycleNumber } = (await this.queryDb(`
     SELECT MAX(cycleNumber) as cycleNumber from ${governanceCyclesTable}
     `) as unknown as Array<{ cycleNumber: number }>)[0];
@@ -142,7 +142,22 @@ export class DoltHandler {
     return (Number.isNaN(value)) ? null : value;
   };
 
-  async addProposalToDb(proposal: Proposal, edit = false) {
+  async actionDirector(proposal: Proposal) {
+    const governanceCycle = proposal.governanceCycle || await this.getCurrentGovernanceCycle();
+    proposal.actions?.forEach((action) => {
+      if (action.type === 'Payout') {
+        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle);
+      } else if (action.type === 'Transfer') {
+        this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title);
+      } else if (action.type === 'Reserve') {
+        //
+      } else if (action.type === 'Custom Transaction') {
+        //
+      }
+    });
+  }
+
+  async addProposalToDb(proposal: Proposal) {
     const now = new Date().toISOString();
     const voteType = proposal.voteSetup?.type || 'basic';
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
@@ -157,25 +172,18 @@ export class DoltHandler {
       lastEditedTime = VALUES(lastEditedTime), title = VALUES(title), body = VALUES(body), category = VALUES(category), governanceCycle = VALUES(governanceCycle),
       discussionURL = VALUES(discussionURL), proposalStatus = VALUES(proposalStatus), voteType = VALUES(voteType), choices = VALUES(choices)`,
     [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices)]);
-    if (proposal.type?.toLowerCase().includes('pay')) {
-      if (edit) {
-        await this.editPayout(proposal);
-      } else {
-        await this.addPayoutToDb(proposal);
-      }
-    }
     return proposal.hash;
   }
 
-  async addPayoutToDb(proposal: Proposal) {
+  async addPayoutToDb(payout: Payout, uuidOfProposal: string, governanceCycle: number) {
     const treasuryVersion = DEFAULT_TREASURY_VERSION;
-    let payAddress: string | null = proposal.payout?.address ?? '';
+    let payAddress: string | null = payout.address ?? '';
     let payProject;
     if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
-    const payName = proposal.payout?.payName;
-    const governanceStart = proposal.governanceCycle;
-    const numberOfPayouts = proposal.payout?.count;
-    const amount = proposal.payout?.amountUSD;
+    const payName = payout.payName || '';
+    const governanceStart = governanceCycle;
+    const numberOfPayouts = payout.count;
+    const amount = payout.amountUSD;
     const currency = 'usd';
     const payStatus = 'voting';
     await this.localDolt.db.query(oneLine`
@@ -183,7 +191,7 @@ export class DoltHandler {
       (uuid, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
       amount, currency, payAddress, payProject, payStatus, payName)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
-    [uuid(), proposal.hash, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
+    [uuid(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
   }
 
   async addTransferToDb(transfer: Transfer, uuidOfProposal: string, governanceCycleStart: number, transferName: string, numberOfTransfers = 1) {
@@ -195,7 +203,7 @@ export class DoltHandler {
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transfersTable}
       (uuid, uuidOfProposal, governanceCycleStart, numberOfTransfers, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
+      VALUES(?,?,?,?,?,?,?,?,?,?)`,
     [uuid(), uuidOfProposal, governanceCycleStart, numberOfTransfers, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus]);
   }
 

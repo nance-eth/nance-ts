@@ -252,7 +252,7 @@ export class Nance {
     const proposals = await this.proposalHandler.getProposalsByGovernanceCycle(currentGovernanceCycle.toString());
     Promise.all(proposals.map(async (proposal) => {
       proposal = await this.proposalHandler.getContentMarkdown(proposal.hash);
-      this.dProposalHandler.addProposalToDb(proposal, true);
+      this.dProposalHandler.editProposal(proposal);
     })).catch((e) => { return Promise.reject(e); });
   }
 }

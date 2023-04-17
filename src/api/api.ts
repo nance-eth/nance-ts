@@ -14,10 +14,9 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { dbOptions } from '../dolt/dbConfig';
 import { SQLPayout, SQLTransfer } from '../dolt/schema';
-import { NanceConfig, PartialTransaction, Proposal } from '../types';
+import { Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress } from './helpers/permissions';
-import { encodeBatchTransactions, ticketBoothTransfer } from '../transactions/transactionHandler';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -99,7 +98,8 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
 
   proposalHandlerMain.addProposalToDb(proposal).then(async (hash: string) => {
     proposal.hash = hash;
-    if (proposalHandlerBeta) { proposalHandlerBeta.addProposalToDb(proposal); }
+    proposalHandlerBeta.addProposalToDb(proposal);
+    proposalHandlerBeta.actionDirector(proposal);
 
     // if notion is not enabled then send proposal discussion to dialog handler, otherwise it will get picked up by cron job checking notion
     if (!config.notion.enabled && config.dolt.enabled && config.discord.guildId) {
@@ -310,19 +310,5 @@ router.get(`${spacePrefix}/transfers`, async (_, res) => {
     res.json({ success: false, error: e });
   });
 });
-
-// router.get(`${spacePrefix}/transfersJBXEncoded`, async (_, res) => {
-//   const { proposalHandlerBeta, config } = res.locals as { proposalHandlerBeta: DoltHandler, config: NanceConfig };
-//   proposalHandlerBeta.getTransfersDb().then((transfers: SQLTransfer[]) => {
-//     const transactions = transfers.map((transfer) => {
-//       const { transferAddress, transferAmount, transferDecimals } = transfer;
-//       const amount = transferAmount.toString() + '0'.repeat(transferDecimals);
-//       const { address, bytes } = ticketBoothTransfer(config.juicebox.gnosisSafeAddress, config.juicebox.projectId, amount, transferAddress);
-//       return { to: address, data: bytes, value: '0x0' } as PartialTransaction;
-//     });
-//     const data = encodeBatchTransactions(transactions);
-//     res.json({ success: true, data });
-//   });
-// });
 
 export default router;

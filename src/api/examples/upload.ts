@@ -25,13 +25,17 @@ const PROPOSAL: Proposal = {
   ipfsURL: '',
   voteURL: '',
   url: '',
-  payout: {
-    type: 'address',
-    count: 3,
-    amountUSD: 1800,
-    address: '0x25910143C255828F623786f46fe9A8941B7983bB',
-    payName: 'testing123 payout'
-  }
+  actions: [{
+    type: 'Payout',
+    name: 'jigglyjams',
+    payload: {
+      type: 'address',
+      count: 3,
+      amountUSD: 1800,
+      address: '0x25910143C255828F623786f46fe9A8941B7983bB',
+      payName: 'testing123 payout'
+    }
+  }],
 };
 
 async function uploadProposal(space: string, proposal: Proposal): Promise<ProposalMarkdownResponse | APIErrorResponse> {
