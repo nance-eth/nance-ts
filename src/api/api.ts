@@ -17,7 +17,7 @@ import { SQLPayout, SQLTransfer } from '../dolt/schema';
 import { NanceConfig, PartialTransaction, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress } from './helpers/permissions';
-import { encodeBatchTransactions, encodeERC20Transfer } from '../transactions/transactionHandler';
+import { encodeBatchTransactions, ticketBoothTransfer } from '../transactions/transactionHandler';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -311,24 +311,18 @@ router.get(`${spacePrefix}/transfers`, async (_, res) => {
   });
 });
 
-router.get(`${spacePrefix}/encodeTransfers`, async (_, res) => {
-  const { proposalHandlerBeta } = res.locals;
-  proposalHandlerBeta.getTransfersDb().then((transfers: SQLTransfer[]) => {
-    const transactions = transfers.map((transfer) => {
-      const { transferAddress, transferAmount, transferTokenName, transferTokenAddress } = transfer;
-      const amount = transferAmount.toString().padEnd(transfer.transferDecimals, '0');
-      const { address, bytes } = encodeERC20Transfer(transferAddress, amount, transferTokenName);
-      return {
-        to: address,
-        data: bytes,
-        value: '0x0',
-        operation: 0,
-      } as PartialTransaction;
-    });
-    console.log(transactions);
-    const data = encodeBatchTransactions(transactions);
-    res.json({ success: true, data });
-  });
-});
+// router.get(`${spacePrefix}/transfersJBXEncoded`, async (_, res) => {
+//   const { proposalHandlerBeta, config } = res.locals as { proposalHandlerBeta: DoltHandler, config: NanceConfig };
+//   proposalHandlerBeta.getTransfersDb().then((transfers: SQLTransfer[]) => {
+//     const transactions = transfers.map((transfer) => {
+//       const { transferAddress, transferAmount, transferDecimals } = transfer;
+//       const amount = transferAmount.toString() + '0'.repeat(transferDecimals);
+//       const { address, bytes } = ticketBoothTransfer(config.juicebox.gnosisSafeAddress, config.juicebox.projectId, amount, transferAddress);
+//       return { to: address, data: bytes, value: '0x0' } as PartialTransaction;
+//     });
+//     const data = encodeBatchTransactions(transactions);
+//     res.json({ success: true, data });
+//   });
+// });
 
 export default router;
