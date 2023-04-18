@@ -16,6 +16,19 @@ const transfersTable = 'transfers';
 const transactionsTable = 'customTransactions';
 const DEFAULT_TREASURY_VERSION = 3;
 
+const EXTENDED_SELECT = oneLine`
+  SELECT ${proposalsTable}.*, ${payoutsTable}.*, ${transfersTable}.*, ${transactionsTable}.*, ${reservesTable}.*
+  FROM ${proposalsTable}
+  LEFT JOIN ${payoutsTable} ON
+  ${proposalsTable}.uuid = ${payoutsTable}.uuidOfProposal
+  LEFT JOIN ${transfersTable} ON
+  ${proposalsTable}.uuid = ${transfersTable}.uuidOfProposal
+  LEFT JOIN ${transactionsTable} ON
+  ${proposalsTable}.uuid = ${transactionsTable}.uuidOfProposal
+  LEFT JOIN ${reservesTable} ON
+  ${proposalsTable}.uuid = ${reservesTable}.uuidOfProposal
+`;
+
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
 export class DoltHandler {
   localDolt;
@@ -215,7 +228,7 @@ export class DoltHandler {
     const payStatus = 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${payoutsTable}
-      (uuid, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
+      (uuidOfPayout, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
       amount, currency, payAddress, payProject, payStatus, payName)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
     [uuid(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
@@ -229,7 +242,7 @@ export class DoltHandler {
     const transferStatus = 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transfersTable}
-      (uuid, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
+      (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
       VALUES(?,?,?,?,?,?,?,?,?,?)`,
     [uuid(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus]);
   }
@@ -247,24 +260,6 @@ export class DoltHandler {
     return proposal.hash;
   }
 
-  async editPayout(proposal: Proposal) {
-    const treasuryVersion = DEFAULT_TREASURY_VERSION;
-    const payAddress = proposal.payout?.address;
-    const payProject = proposal.payout?.project;
-    const payName = proposal.payout?.payName;
-    const governanceStart = proposal.governanceCycle;
-    const numberOfPayouts = proposal.payout?.count;
-    const amount = proposal.payout?.amountUSD;
-    const currency = 'usd';
-    const payStatus = proposal.status;
-    this.localDolt.db.query(oneLine`
-      UPDATE IGNORE ${payoutsTable} SET
-      treasuryVersion = ?, governanceCycleStart = ?, numberOfPayouts = ?, amount = ?,
-      currency = ?, payAddress = ?, payProject = ?, payStatus = ?, payName = ?
-      WHERE uuidOfProposal = ?`,
-    [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, proposal.hash]);
-  }
-
   async bulkEditPayouts(payouts: SQLPayout[]) {
     await Promise.all(payouts.map(async (payout) => {
       const treasuryVersion = DEFAULT_TREASURY_VERSION;
@@ -280,8 +275,8 @@ export class DoltHandler {
         UPDATE IGNORE ${payoutsTable} SET
         treasuryVersion = ?, governanceCycleStart = ?, numberOfPayouts = ?, amount = ?,
         currency = ?, payAddress = ?, payProject = ?, payStatus = ?, payName = ?
-        WHERE uuid = ?`,
-      [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, payout.uuid]);
+        WHERE uuidOfPayout = ?`,
+      [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, payout.uuidOfPayout]);
     }));
   }
 
@@ -360,7 +355,7 @@ export class DoltHandler {
 
   async getProposalsByGovernanceCycle(governanceCycle: string) {
     return this.queryProposals(`
-      SELECT * FROM ${proposalsTable}
+      ${EXTENDED_SELECT}
       WHERE governanceCycle = ${Number(governanceCycle)}
       ORDER BY snapshotId DESC, proposalId ASC
     `);
@@ -369,7 +364,7 @@ export class DoltHandler {
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
     const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
-      SELECT * FROM ${proposalsTable}
+      ${EXTENDED_SELECT}
       WHERE
       governanceCycle = ${governanceCycle}
       AND 
@@ -384,7 +379,7 @@ export class DoltHandler {
   async getProposalsByKeyword(keyword: string) {
     const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
-      SELECT * FROM ${proposalsTable}
+      ${EXTENDED_SELECT}
       WHERE
       LOWER(body) like LOWER('%${search}%')
       OR LOWER(title) like LOWER('%${search}%')
@@ -394,7 +389,7 @@ export class DoltHandler {
 
   async getContentMarkdown(hash: string) {
     const proposal = await this.queryDb(`
-      SELECT * FROM ${proposalsTable}
+      ${EXTENDED_SELECT}
       WHERE uuid = '${hash}'
     `) as SQLExtended[];
     if (proposal.length === 0) return [];
@@ -415,14 +410,7 @@ export class DoltHandler {
       where = `${where}.proposalId = ${hashOrId}`;
     } else return Promise.reject('bad proposalId');
     return this.queryProposals(oneLine`
-      SELECT ${proposalsTable}.*,
-      ${payoutsTable}.amount, ${payoutsTable}.payAddress, ${payoutsTable}.payProject, ${payoutsTable}.numberOfPayouts, ${payoutsTable}.payName,
-      ${transfersTable}.*
-      FROM ${proposalsTable}
-      LEFT JOIN ${payoutsTable} ON
-      ${proposalsTable}.uuid = ${payoutsTable}.uuidOfProposal
-      LEFT JOIN ${transfersTable} ON
-      ${proposalsTable}.uuid = ${transfersTable}.uuidOfProposal
+      ${EXTENDED_SELECT}
       ${where}
     `);
   }

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS proposals (
 );
 
 CREATE TABLE IF NOT EXISTS payouts (
-  uuid VARCHAR(35) NOT NULL,
+  uuidOfPayout VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35) NOT NULL,
   treasuryVersion INT NOT NULL,
   governanceCycleStart INT NOT NULL,
@@ -34,11 +34,11 @@ CREATE TABLE IF NOT EXISTS payouts (
   payAllocator CHAR(42),
   payProject INT,
   payStatus VARCHAR(35),
-  PRIMARY KEY (uuid)
+  PRIMARY KEY (uuidOfPayout)
 );
 
 CREATE TABLE IF NOT EXISTS reserves (
-  uuid VARCHAR(35) NOT NULL,
+  uuidOfReserve VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
   governanceCycleStart INT NOT NULL,
   lockedUntil INT,
@@ -46,11 +46,11 @@ CREATE TABLE IF NOT EXISTS reserves (
   reservePercentage INT,
   reserveAddress CHAR(42) NOT NULL,
   reserveStatus VARCHAR(35),
-  PRIMARY KEY(uuid)
+  PRIMARY KEY(uuidOfReserve)
 );
 
 CREATE TABLE IF NOT EXISTS transfers (
-  uuid VARCHAR(35) NOT NULL,
+  uuidOfTransfer VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
   transferGovernanceCycle INT NOT NULL,
   transferCount INT NOT NULL DEFAULT 1,
@@ -61,11 +61,11 @@ CREATE TABLE IF NOT EXISTS transfers (
   transferAmount VARCHAR(255),
   transferDecimals INT NOT NULL DEFAULT 18,
   transferStatus VARCHAR(35),
-  PRIMARY KEY (uuid)
+  PRIMARY KEY (uuidOfTransfer)
 );
 
 CREATE TABLE IF NOT EXISTS customTransactions (
-  uuid VARCHAR(35) NOT NULL,
+  uuidOfTransaction VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
   transactionGovernanceCycle INT NOT NULL,
   transactionCount INT NOT NULL DEFAULT 1,
@@ -75,15 +75,15 @@ CREATE TABLE IF NOT EXISTS customTransactions (
   transactionFunctionName VARCHAR(255),
   transactionFunctionArgs JSON,
   transactionStatus VARCHAR(35),
-  PRIMARY KEY (uuid)
+  PRIMARY KEY (uuidOfTransaction)
 );
 
 CREATE TABLE IF NOT EXISTS reconfigurations (
-  uuid VARCHAR(35) NOT NULL,
+  uuidOfReconfiguration VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
   JBFundingCycleData JSON NOT NULL,
   JBFundingCycleMetaData JSON NOT NULL,
-  PRIMARY KEY (uuid)
+  PRIMARY KEY (uuidOfReconfiguration)
 );
 
 CREATE TABLE IF NOT EXISTS governanceCycles (

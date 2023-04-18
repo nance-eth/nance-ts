@@ -22,7 +22,7 @@ export type SQLProposal = {
 };
 
 export type SQLPayout = {
-  uuid: string;
+  uuidOfPayout: string;
   uuidOfProposal: string;
   treasuryVersion: number;
   governanceCycleStart: number;
@@ -41,7 +41,7 @@ export type SQLPayout = {
 };
 
 export type SQLReserve = {
-  uuid: string;
+  uuidOfReserve: string;
   uuidOfProposal: string;
   governanceCycleStart: number;
   lockedUntil: number;
@@ -73,7 +73,7 @@ export type SpaceConfig = {
 };
 
 export type SQLTransfer = {
-  uuid: string;
+  uuidOfTransaction: string;
   uuidOfProposal: string;
   transferGovernanceCycle: number;
   transferCount: number;
@@ -87,7 +87,7 @@ export type SQLTransfer = {
 };
 
 export type SQLCustomTransaction = {
-  uuid: string;
+  uuidOfTransaction: string;
   uuidOfProposal: string;
   transactionGovernanceCycle: number;
   transactionCount: number;
