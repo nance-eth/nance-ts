@@ -31,7 +31,7 @@ export interface Proposal {
   temperatureCheckVotes?: number[];
   createdTime?: Date;
   lastEditedTime?: Date;
-  actions?: Action[];
+  actions: Action[];
 }
 
 export type Action = {
@@ -71,8 +71,7 @@ export type Transfer = {
 
 export type CustomTransaction = {
   contract: string;
-  value: number;
-  abi: any[];
+  value: string;
   functionName: string;
   args: any[];
 };

@@ -52,8 +52,8 @@ CREATE TABLE IF NOT EXISTS reserves (
 CREATE TABLE IF NOT EXISTS transfers (
   uuid VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
-  governanceCycleStart INT NOT NULL,
-  numberOfTransfers INT NOT NULL DEFAULT 1,
+  transferGovernanceCycle INT NOT NULL,
+  transferCount INT NOT NULL DEFAULT 1,
   transferName VARCHAR(255),
   transferAddress CHAR(42),
   transferTokenName VARCHAR(8),
@@ -61,6 +61,20 @@ CREATE TABLE IF NOT EXISTS transfers (
   transferAmount VARCHAR(255),
   transferDecimals INT NOT NULL DEFAULT 18,
   transferStatus VARCHAR(35),
+  PRIMARY KEY (uuid)
+);
+
+CREATE TABLE IF NOT EXISTS customTransactions (
+  uuid VARCHAR(35) NOT NULL,
+  uuidOfProposal VARCHAR(35),
+  transactionGovernanceCycle INT NOT NULL,
+  transactionCount INT NOT NULL DEFAULT 1,
+  transactionName VARCHAR(255),
+  transactionAddress CHAR(42),
+  transactionValue VARCHAR(255),
+  transactionFunctionName VARCHAR(255),
+  transactionFunctionArgs JSON,
+  transactionStatus VARCHAR(35),
   PRIMARY KEY (uuid)
 );
 

@@ -51,7 +51,7 @@ export type SQLReserve = {
   reserveStatus?: string;
 };
 
-export type SQLExtended = SQLProposal & SQLPayout;
+export type SQLExtended = SQLProposal & SQLPayout & SQLTransfer & SQLReserve & SQLCustomTransaction;
 
 export type GovernanceCycle = {
   cycleNumber: number;
@@ -75,13 +75,26 @@ export type SpaceConfig = {
 export type SQLTransfer = {
   uuid: string;
   uuidOfProposal: string;
-  governanceCycleStart: number;
-  numberOfTransfers: number;
+  transferGovernanceCycle: number;
+  transferCount: number;
   transferName: string;
   transferAddress: string;
   transferTokenName: string;
   transferTokenAddress: string;
-  transferAmount: number;
+  transferAmount: string;
   transferDecimals: number;
   transferStatus: string;
+};
+
+export type SQLCustomTransaction = {
+  uuid: string;
+  uuidOfProposal: string;
+  transactionGovernanceCycle: number;
+  transactionCount: number;
+  transactionName: string;
+  transactionAddress: string;
+  transactionValue: string;
+  transactionFunctionName: string;
+  transactionFunctionArgs: string;
+  transactionStatus: string;
 };
