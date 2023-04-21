@@ -19,6 +19,7 @@ export type SQLProposal = {
   voteAddressCount: number;
   governanceCycle: number;
   discussionURL?: string;
+  actions: string;
 };
 
 export type SQLPayout = {
@@ -73,7 +74,7 @@ export type SpaceConfig = {
 };
 
 export type SQLTransfer = {
-  uuidOfTransaction: string;
+  uuidOfTransfer: string;
   uuidOfProposal: string;
   transferGovernanceCycle: number;
   transferCount: number;

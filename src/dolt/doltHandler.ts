@@ -2,11 +2,12 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
-import { Proposal, PropertyKeys, Transfer, Payout } from '../types';
-import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
+import { Proposal, PropertyKeys, Transfer, Payout, Action } from '../types';
+import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
 import { DBConfig } from './types';
+import { SELECT_ACTIONS } from './queries';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
@@ -15,19 +16,6 @@ const governanceCyclesTable = 'governanceCycles';
 const transfersTable = 'transfers';
 const transactionsTable = 'customTransactions';
 const DEFAULT_TREASURY_VERSION = 3;
-
-const EXTENDED_SELECT = oneLine`
-  SELECT ${proposalsTable}.*, ${payoutsTable}.*, ${transfersTable}.*, ${transactionsTable}.*, ${reservesTable}.*
-  FROM ${proposalsTable}
-  LEFT JOIN ${payoutsTable} ON
-  ${proposalsTable}.uuid = ${payoutsTable}.uuidOfProposal
-  LEFT JOIN ${transfersTable} ON
-  ${proposalsTable}.uuid = ${transfersTable}.uuidOfProposal
-  LEFT JOIN ${transactionsTable} ON
-  ${proposalsTable}.uuid = ${transactionsTable}.uuidOfProposal
-  LEFT JOIN ${reservesTable} ON
-  ${proposalsTable}.uuid = ${reservesTable}.uuidOfProposal
-`;
 
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
 export class DoltHandler {
@@ -85,42 +73,8 @@ export class DoltHandler {
       date: proposal.createdTime.toISOString(),
       governanceCycle: proposal.governanceCycle,
       authorAddress: proposal.authorAddress,
-      actions: [],
+      actions: proposal.actions ? JSON.parse(proposal.actions).filter((action: Action) => { return action.uuid !== null; }) : undefined,
     };
-    if (proposal.amount) {
-      cleanProposal.actions.push({
-        type: 'Payout',
-        payload: {
-          address: proposal.payAddress ?? undefined,
-          project: proposal.payProject ?? undefined,
-          amountUSD: proposal.amount,
-          count: proposal.numberOfPayouts,
-          payName: proposal.payName ?? undefined
-        }
-      });
-    }
-    if (proposal.transferAmount) {
-      cleanProposal.actions.push({
-        type: 'Transfer',
-        payload: {
-          contract: proposal.transferTokenAddress,
-          tokenName: proposal.transferTokenName,
-          to: proposal.transferAddress,
-          amount: proposal.transferAmount
-        }
-      });
-    }
-    if (proposal.transactionAddress) {
-      cleanProposal.actions.push({
-        type: 'Custom Transaction',
-        payload: {
-          contract: proposal.transactionAddress,
-          value: proposal.transactionValue,
-          functionName: proposal.transactionFunctionName,
-          args: JSON.parse(proposal.transactionFunctionArgs)
-        }
-      });
-    }
     if (proposal.snapshotVotes) {
       cleanProposal.voteResults = {
         choices: proposal.choices,
@@ -355,41 +309,41 @@ export class DoltHandler {
 
   async getProposalsByGovernanceCycle(governanceCycle: string) {
     return this.queryProposals(`
-      ${EXTENDED_SELECT}
+      ${SELECT_ACTIONS}
       WHERE governanceCycle = ${Number(governanceCycle)}
-      ORDER BY snapshotId DESC, proposalId ASC
+      GROUP BY proposals.uuid
     `);
   }
 
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
     const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
-      ${EXTENDED_SELECT}
-      WHERE
-      governanceCycle = ${governanceCycle}
-      AND 
+    ${SELECT_ACTIONS}
+      WHERE governanceCycle = ${governanceCycle}
       ( 
         LOWER(body) like LOWER('%${search}%')
         OR LOWER(title) like LOWER('%${search}%')
       )
       ORDER BY createdTime DESC
+      GROUP BY proposals.uuid
     `);
   }
 
   async getProposalsByKeyword(keyword: string) {
     const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
-      ${EXTENDED_SELECT}
+      ${SELECT_ACTIONS}
       WHERE
       LOWER(body) like LOWER('%${search}%')
       OR LOWER(title) like LOWER('%${search}%')
       ORDER BY proposalId ASC
+      GROUP BY proposals.uuid;
     `);
   }
 
   async getContentMarkdown(hash: string) {
     const proposal = await this.queryDb(`
-      ${EXTENDED_SELECT}
+      ${SELECT_ACTIONS}
       WHERE uuid = '${hash}'
     `) as SQLExtended[];
     if (proposal.length === 0) return [];
@@ -410,9 +364,12 @@ export class DoltHandler {
       where = `${where}.proposalId = ${hashOrId}`;
     } else return Promise.reject('bad proposalId');
     return this.queryProposals(oneLine`
-      ${EXTENDED_SELECT}
-      ${where}
-    `);
+      ${SELECT_ACTIONS}
+      ${where} GROUP BY ${proposalsTable}.uuid LIMIT 1
+    `).then((res) => {
+      if (res.length === 0) return Promise.reject('proposalId not found');
+      return res[0];
+    }).catch((e) => { return Promise.reject(e); });
   }
 
   async updateDiscussionURL(proposal: Proposal) {
@@ -451,7 +408,6 @@ export class DoltHandler {
       title = '${proposal.title}'
       WHERE uuid = '${proposal.hash}'
     `;
-    console.log(query);
     return this.queryDb(query);
   }
 

@@ -31,12 +31,13 @@ export interface Proposal {
   temperatureCheckVotes?: number[];
   createdTime?: Date;
   lastEditedTime?: Date;
-  actions: Action[];
+  actions?: Action[];
 }
 
 export type Action = {
   type: 'Payout' | 'Reserve' | 'Transfer' | 'Custom Transaction';
   name?: string;
+  uuid: string;
   payload: Payout | Reserve | Transfer | CustomTransaction;
 };
 

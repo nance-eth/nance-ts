@@ -128,7 +128,7 @@ router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   return res.send(
     await proposalHandlerBeta.getProposalByAnyId(pid).then((proposal: Proposal[]) => {
       if (proposal.length === 0) return { success: false, error: 'proposal not found' };
-      return { sucess: true, data: proposal[0] };
+      return { sucess: true, data: proposal };
     }).catch((e: any) => {
       return { success: false, error: e };
     })
