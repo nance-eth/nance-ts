@@ -7,6 +7,7 @@ import {
   APIErrorResponse
 } from '../models';
 import { getProposal } from './helpers/gpt';
+import { uuid } from '../../utils';
 
 const API_STAGING = 'https://api.staging.nance.app';
 const API_MAIN = 'https://api.nance.app';
@@ -25,17 +26,41 @@ const PROPOSAL: Proposal = {
   ipfsURL: '',
   voteURL: '',
   url: '',
-  actions: [{
-    type: 'Payout',
-    name: 'jigglyjams',
-    payload: {
-      type: 'address',
-      count: 3,
-      amountUSD: 1800,
-      address: '0x25910143C255828F623786f46fe9A8941B7983bB',
-      payName: 'testing123 payout'
+  actions: [
+    {
+      type: 'Payout',
+      name: 'jigglyjams',
+      uuid: uuid(),
+      payload: {
+        type: 'address',
+        count: 3,
+        amountUSD: 1800,
+        address: '0x25910143C255828F623786f46fe9A8941B7983bB',
+        payName: 'testing123 payout'
+      }
+    },
+    {
+      type: 'Payout',
+      name: 'jigglyjams project',
+      uuid: uuid(),
+      payload: {
+        count: 3,
+        amountUSD: 1800,
+        project: 1
+      }
+    },
+    {
+      type: 'Transfer',
+      name: 'jigglyjams transfer',
+      uuid: uuid(),
+      payload: {
+        contract: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        tokenName: 'USDC',
+        to: '0x25910143C255828F623786f46fe9A8941B7983bB',
+        amount: '1000000'
+      }
     }
-  }],
+  ],
 };
 
 async function uploadProposal(space: string, proposal: Proposal): Promise<ProposalMarkdownResponse | APIErrorResponse> {

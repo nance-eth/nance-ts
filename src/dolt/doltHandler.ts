@@ -2,7 +2,7 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
-import { Proposal, PropertyKeys, Transfer, Payout, Action } from '../types';
+import { Proposal, PropertyKeys, Transfer, Payout, Action, CustomTransaction } from '../types';
 import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
@@ -146,7 +146,7 @@ export class DoltHandler {
       } else if (action.type === 'Reserve') {
         //
       } else if (action.type === 'Custom Transaction') {
-        //
+        this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title);
       }
     });
   }
@@ -189,16 +189,25 @@ export class DoltHandler {
   }
 
   async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, transferCount = 1) {
-    const transferAddress = transfer.to;
-    const transferTokenAddress = transfer.contract;
-    const transferAmount = transfer.amount;
-    const transferTokenName = transfer.tokenName;
+    const { to, contract, amount, tokenName } = transfer;
     const transferStatus = 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transfersTable}
       (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
       VALUES(?,?,?,?,?,?,?,?,?,?)`,
-    [uuid(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus]);
+    [uuid(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, transferStatus]);
+  }
+
+  async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, transactionCount = 1) {
+    const address = customTransaction.contract;
+    const { value, functionName, args } = customTransaction;
+    const argsArray = JSON.stringify(args);
+    const transactionStatus = 'voting';
+    await this.localDolt.db.query(oneLine`
+      INSERT IGNORE INTO ${transactionsTable}
+      (uuidOfTransaction, uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, transactionAddress, transactionValue, transactionFunctionName, transactionFunctionArgs, transactionStatus)
+      VALUES(?,?,?,?,?,?,?,?,?,?)`,
+    [uuid(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray, transactionStatus]);
   }
 
   async editProposal(proposal: Partial<Proposal>) {
