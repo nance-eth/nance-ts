@@ -38,14 +38,11 @@ CREATE TABLE IF NOT EXISTS payouts (
 );
 
 CREATE TABLE IF NOT EXISTS reserves (
+  id INT NOT NULL AUTO_INCREMENT,
   uuidOfReserve VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35),
-  governanceCycleStart INT NOT NULL,
-  lockedUntil INT,
-  reserveName VARCHAR(255),
-  reservePercentage INT,
-  reserveAddress CHAR(42) NOT NULL,
-  reserveStatus VARCHAR(35),
+  reserveGovernanceCycle INT NOT NULL,
+  splits JSON NOT NULL,
   PRIMARY KEY(uuidOfReserve)
 );
 

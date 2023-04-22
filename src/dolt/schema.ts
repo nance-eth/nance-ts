@@ -1,4 +1,5 @@
-import { NanceConfig } from '../types';
+import { JBSplitStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
+import { NanceConfig, Reserve } from '../types';
 
 export type SQLProposal = {
   uuid: string;
@@ -42,14 +43,12 @@ export type SQLPayout = {
 };
 
 export type SQLReserve = {
+  id: number;
   uuidOfReserve: string;
   uuidOfProposal: string;
-  governanceCycleStart: number;
-  lockedUntil: number;
-  reserveName: string;
-  reservePercentage: number;
-  reserveAddress: string;
-  reserveStatus?: string;
+  reserveGovernanceCycle: number;
+  splits: JBSplitStruct[];
+  reserveStatus: string;
 };
 
 export type SQLExtended = SQLProposal & SQLPayout & SQLTransfer & SQLReserve & SQLCustomTransaction;
