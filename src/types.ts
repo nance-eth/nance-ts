@@ -1,5 +1,8 @@
+import { JBSplitStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
+
 type ProposalType = 'Payout' | 'ReservedToken' | 'ParameterUpdate' | 'ProcessUpdate' | 'CustomTransaction';
 
+export { JBSplitStruct };
 export interface Proposal {
   hash: string;
   title: string;
@@ -38,7 +41,7 @@ export type Action = {
   type: 'Payout' | 'Reserve' | 'Transfer' | 'Custom Transaction';
   name?: string;
   uuid: string;
-  payload: Payout | Reserve | Transfer | CustomTransaction;
+  payload: Payout | JBSplitStruct[] | Transfer | CustomTransaction;
 };
 
 export type Payout = {

@@ -194,7 +194,11 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const ens = await getENS(address);
   const { gnosisSafeAddress } = config.juicebox;
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
-  const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network);
+  const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network).then((nonce: string) => {
+    return nonce;
+  }).catch((e: any) => {
+    return res.json({ success: false, error: e });
+  });
   if (!currentNonce) { return res.json({ success: false, error: 'safe not found' }); }
   const nonce = (Number(currentNonce) + 1).toString();
   const treasury = new NanceTreasury(config, proposalHandlerBeta, myProvider(config.juicebox.network));
@@ -202,7 +206,7 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
     await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
       return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
     }).catch((e: any) => {
-      return { success: false, error: e.reason };
+      return { success: false, error: e };
     })
   );
 });

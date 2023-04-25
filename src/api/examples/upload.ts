@@ -59,6 +59,23 @@ const PROPOSAL: Proposal = {
         to: '0x25910143C255828F623786f46fe9A8941B7983bB',
         amount: '1000000'
       }
+    },
+    {
+      type: 'Custom Transaction',
+      name: 'jigglyjams custom transaction',
+      uuid: uuid(),
+      payload: {
+        value: '0',
+        contract: '0x97a5b9D9F0F7cD676B69f584F29048D0Ef4BB59b',
+        functionName: 'burnTokensOf(address,uint256,uint256,string,bool)',
+        args: {
+          _projectId: '1',
+          _tokenCount: '100',
+          _memo: 'hi',
+          _preferClaimedTokens: true,
+          _holder: '0x25910143C255828F623786f46fe9A8941B7983bB'
+        }
+      }
     }
   ],
 };

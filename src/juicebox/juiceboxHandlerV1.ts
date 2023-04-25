@@ -106,7 +106,7 @@ export class JuiceboxHandlerV1 {
     }, 0));
   }
 
-  async buildModsStruct(distributionLimit: number, distributionPayouts: SQLPayout[], distributionReserved: SQLReserve[]): Promise<PayoutAndTickets> {
+  async buildModsStruct(distributionLimit: number, distributionPayouts: SQLPayout[], distributionReserved: SQLReserve): Promise<PayoutAndTickets> {
     const owner = await this.getProjectOwner();
     const distributionPayoutModStruct = distributionPayouts.map((payout): PayoutModStruct => {
       return {
@@ -118,12 +118,12 @@ export class JuiceboxHandlerV1 {
         projectId: payout.payProject || DEFAULT_PROJECT_ID
       };
     });
-    const distributionTicketModStruct = distributionReserved.map((reserve): TicketModStruct => {
+    const distributionTicketModStruct = distributionReserved.splits.map((reserve): TicketModStruct => {
       return {
-        preferUnstaked: DEFAULT_PREFER_UNSTAKED,
-        percent: reserve.reservePercentage / 100_000,
+        preferUnstaked: reserve.preferAddToBalance || DEFAULT_PREFER_UNSTAKED,
+        percent: Number(reserve.percent) / 100_000,
         lockedUntil: DEFAULT_LOCKED_UNTIL,
-        beneficiary: reserve.reserveAddress
+        beneficiary: reserve.beneficiary
       };
     });
     return {

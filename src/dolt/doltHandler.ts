@@ -2,8 +2,8 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
-import { Proposal, PropertyKeys, Transfer, Payout, Action, CustomTransaction } from '../types';
-import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
+import { Proposal, PropertyKeys, Transfer, Payout, Action, JBSplitStruct, CustomTransaction } from '../types';
+import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
 import { DBConfig } from './types';
@@ -144,7 +144,7 @@ export class DoltHandler {
       } else if (action.type === 'Transfer') {
         this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title);
       } else if (action.type === 'Reserve') {
-        //
+        this.addReserveToDb(action.payload as JBSplitStruct[], proposal.hash, governanceCycle);
       } else if (action.type === 'Custom Transaction') {
         this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title);
       }
@@ -208,6 +208,14 @@ export class DoltHandler {
       (uuidOfTransaction, uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, transactionAddress, transactionValue, transactionFunctionName, transactionFunctionArgs, transactionStatus)
       VALUES(?,?,?,?,?,?,?,?,?,?)`,
     [uuid(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray, transactionStatus]);
+  }
+
+  async addReserveToDb(splits: JBSplitStruct[], uuidOfProposal: string, reserveGovernanceCycle: number) {
+    await this.localDolt.db.query(oneLine`
+      INSERT IGNORE INTO ${reservesTable}
+      (uuidOfReserve, uuidOfProposal, reserveGovernanceCycle, splits, reserveStatus)
+      VALUES(?,?,?,?,?)`,
+    [uuid(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(splits), 'voting']);
   }
 
   async editProposal(proposal: Partial<Proposal>) {
@@ -504,12 +512,13 @@ export class DoltHandler {
     return results;
   }
 
-  async getReserveDb(): Promise<SQLReserve[]> {
-    const results = this.queryDb(`
+  async getReserveDb(): Promise<SQLReserve> {
+    const results = await this.queryDb(`
       SELECT * from ${reservesTable}
-      WHERE reserveStatus = 'active'
+      WHERE id = (SELECT MAX(id) from ${reservesTable})
+      AND reserveStatus = 'voting'
     `) as unknown as SQLReserve[];
-    return results;
+    return results[0];
   }
 
   async getTransfersDb(): Promise<SQLTransfer[]> {

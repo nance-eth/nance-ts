@@ -176,7 +176,7 @@ export class JuiceboxHandlerV3 {
   async buildJBGroupedSplitsStruct(
     distributionLimit: number,
     distributionPayouts: SQLPayout[],
-    distributionReserved: SQLReserve[]
+    distributionReserved: SQLReserve
   ): Promise<JBGroupedSplitsStruct[]> {
     const owner = await this.getProjectOwner();
     const percentageBasedPayouts = distributionPayouts.some((payout) => { return payout.currency === 'percent'; });
@@ -192,15 +192,15 @@ export class JuiceboxHandlerV3 {
         allocator: payout.payAllocator || DEFAULT_ALLOCATOR
       };
     });
-    const distrubutionReservedJBSplitStruct = distributionReserved.map((reserve): JBSplitStruct => {
+    const distrubutionReservedJBSplitStruct = distributionReserved.splits.map((reserve): JBSplitStruct => {
       return {
-        preferClaimed: DEFAULT_PREFER_CLAIMED,
-        preferAddToBalance: DEFAULT_PREFER_ADD_BALANCE,
-        percent: reserve.reservePercentage,
-        projectId: DEFAULT_PROJECT_ID,
-        beneficiary: reserve.reserveAddress,
+        preferClaimed: reserve.preferClaimed || DEFAULT_PREFER_CLAIMED,
+        preferAddToBalance: reserve.preferAddToBalance || DEFAULT_PREFER_ADD_BALANCE,
+        percent: reserve.percent,
+        projectId: reserve.projectId || DEFAULT_PROJECT_ID,
+        beneficiary: reserve.beneficiary || owner,
         lockedUntil: reserve.lockedUntil || DEFAULT_LOCKED_UNTIL,
-        allocator: DEFAULT_ALLOCATOR
+        allocator: reserve.allocator || DEFAULT_ALLOCATOR
       };
     });
     return [

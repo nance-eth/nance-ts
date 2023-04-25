@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS reserves (
   uuidOfProposal VARCHAR(35),
   reserveGovernanceCycle INT NOT NULL,
   splits JSON NOT NULL,
-  PRIMARY KEY(uuidOfReserve)
+  reserveStatus VARCHAR(35),
+  PRIMARY KEY(id)
 );
 
 CREATE TABLE IF NOT EXISTS transfers (

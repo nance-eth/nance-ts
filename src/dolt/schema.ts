@@ -1,5 +1,5 @@
 import { JBSplitStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
-import { NanceConfig, Reserve } from '../types';
+import { NanceConfig } from '../types';
 
 export type SQLProposal = {
   uuid: string;
