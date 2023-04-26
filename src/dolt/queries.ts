@@ -6,7 +6,7 @@ SELECT proposals.*,
     '[',
     GROUP_CONCAT(
       JSON_UNQUOTE(
-        DISTINCT JSON_OBJECT(
+        JSON_OBJECT(
           'type', 'Payout',
           'uuid', payouts.uuidOfPayout,
           'payload', JSON_OBJECT(
@@ -23,7 +23,7 @@ SELECT proposals.*,
     ',',
     GROUP_CONCAT(
       JSON_UNQUOTE(
-        DISTINCT JSON_OBJECT(
+        JSON_OBJECT(
           'type', 'Transfer',
           'uuid', transfers.uuidOfTransfer,
           'payload', JSON_OBJECT(
@@ -39,7 +39,7 @@ SELECT proposals.*,
     ',',
     GROUP_CONCAT(
       JSON_UNQUOTE(
-        DISTINCT JSON_OBJECT(
+        JSON_OBJECT(
           'type', 'Custom Transaction',
           'uuid', customTransactions.uuidOfTransaction,
           'payload', JSON_OBJECT(
@@ -55,12 +55,11 @@ SELECT proposals.*,
     ',',
     GROUP_CONCAT(
       JSON_UNQUOTE(
-        DISTINCT JSON_OBJECT(
+        JSON_OBJECT(
           'type', 'Reserve',
           'uuid', reserves.uuidOfReserve,
           'payload', JSON_OBJECT(
-            'address', reserves.reserveAddress,
-            'percentage', reserves.reservePercentage
+            'splits', reserves.splits
           )
         )
       )
