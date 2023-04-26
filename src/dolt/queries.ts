@@ -52,24 +52,10 @@ SELECT proposals.*,
       )
       SEPARATOR ','
     ),
-    ',',
-    GROUP_CONCAT(
-      JSON_UNQUOTE(
-        JSON_OBJECT(
-          'type', 'Reserve',
-          'uuid', reserves.uuidOfReserve,
-          'payload', JSON_OBJECT(
-            'splits', reserves.splits
-          )
-        )
-      )
-      SEPARATOR ','
-    ),
     ']'
   ) as actions
 FROM proposals
 LEFT JOIN payouts ON proposals.uuid = payouts.uuidOfProposal
 LEFT JOIN transfers ON proposals.uuid = transfers.uuidOfProposal
-LEFT JOIN reserves ON proposals.uuid = reserves.uuidOfProposal
 LEFT JOIN customTransactions ON proposals.uuid = customTransactions.uuidOfProposal
 `;
