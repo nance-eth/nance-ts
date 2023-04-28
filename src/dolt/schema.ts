@@ -1,4 +1,4 @@
-import { NanceConfig } from '../types';
+import { NanceConfig, JBSplitStruct, Action } from '../types';
 
 export type SQLProposal = {
   uuid: string;
@@ -19,10 +19,11 @@ export type SQLProposal = {
   voteAddressCount: number;
   governanceCycle: number;
   discussionURL?: string;
+  actions: string;
 };
 
 export type SQLPayout = {
-  uuid: string;
+  uuidOfPayout: string;
   uuidOfProposal: string;
   treasuryVersion: number;
   governanceCycleStart: number;
@@ -41,17 +42,15 @@ export type SQLPayout = {
 };
 
 export type SQLReserve = {
-  uuid: string;
+  id: number;
+  uuidOfReserve: string;
   uuidOfProposal: string;
-  governanceCycleStart: number;
-  lockedUntil: number;
-  reserveName: string;
-  reservePercentage: number;
-  reserveAddress: string;
-  reserveStatus?: string;
+  reserveGovernanceCycle: number;
+  splits: JBSplitStruct[];
+  reserveStatus: string;
 };
 
-export type SQLExtended = SQLProposal & SQLPayout;
+export type SQLExtended = SQLProposal & SQLPayout & SQLTransfer & SQLReserve & SQLCustomTransaction;
 
 export type GovernanceCycle = {
   cycleNumber: number;
@@ -70,4 +69,31 @@ export type SpaceConfig = {
   config: NanceConfig;
   calendar: string;
   lastUpdated: Date;
+};
+
+export type SQLTransfer = {
+  uuidOfTransfer: string;
+  uuidOfProposal: string;
+  transferGovernanceCycle: number;
+  transferCount: number;
+  transferName: string;
+  transferAddress: string;
+  transferTokenName: string;
+  transferTokenAddress: string;
+  transferAmount: string;
+  transferDecimals: number;
+  transferStatus: string;
+};
+
+export type SQLCustomTransaction = {
+  uuidOfTransaction: string;
+  uuidOfProposal: string;
+  transactionGovernanceCycle: number;
+  transactionCount: number;
+  transactionName: string;
+  transactionAddress: string;
+  transactionValue: string;
+  transactionFunctionName: string;
+  transactionFunctionArgs: string;
+  transactionStatus: string;
 };

@@ -65,8 +65,9 @@ export class NotionHandler implements DataContentHandler {
         notionUtils.getRichText(
           unconvertedProposal,
           this.config.propertyKeys.governanceCycle
-        ).split(this.config.propertyKeys.governanceCyclePrefix)[1] ?? ''
+        ).split(this.config.propertyKeys.governanceCyclePrefix)[1] ?? '',
       ),
+      actions: [],
       version: notionUtils.getRichText(
         unconvertedProposal,
         this.config.propertyKeys.treasuryVersion

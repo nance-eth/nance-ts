@@ -13,8 +13,8 @@ import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { dbOptions } from '../dolt/dbConfig';
-import { SQLPayout } from '../dolt/schema';
-import { NanceConfig, Proposal } from '../types';
+import { SQLPayout, SQLTransfer } from '../dolt/schema';
+import { Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress } from './helpers/permissions';
 
@@ -94,10 +94,12 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
   }
   if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
   if (!proposal.authorAddress) { proposal.authorAddress = signature.address; }
+  if (!proposal.type) { proposal.type = 'Payout'; }
 
   proposalHandlerMain.addProposalToDb(proposal).then(async (hash: string) => {
     proposal.hash = hash;
-    if (proposalHandlerBeta) { proposalHandlerBeta.addProposalToDb(proposal); }
+    proposalHandlerBeta.addProposalToDb(proposal);
+    proposalHandlerBeta.actionDirector(proposal);
 
     // if notion is not enabled then send proposal discussion to dialog handler, otherwise it will get picked up by cron job checking notion
     if (!config.notion.enabled && config.dolt.enabled && config.discord.guildId) {
@@ -126,7 +128,7 @@ router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   return res.send(
     await proposalHandlerBeta.getProposalByAnyId(pid).then((proposal: Proposal[]) => {
       if (proposal.length === 0) return { success: false, error: 'proposal not found' };
-      return { sucess: true, data: proposal[0] };
+      return { sucess: true, data: proposal };
     }).catch((e: any) => {
       return { success: false, error: e };
     })
@@ -192,7 +194,11 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
   const ens = await getENS(address);
   const { gnosisSafeAddress } = config.juicebox;
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
-  const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network);
+  const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network).then((nonce: string) => {
+    return nonce;
+  }).catch((e: any) => {
+    return res.json({ success: false, error: e });
+  });
   if (!currentNonce) { return res.json({ success: false, error: 'safe not found' }); }
   const nonce = (Number(currentNonce) + 1).toString();
   const treasury = new NanceTreasury(config, proposalHandlerBeta, myProvider(config.juicebox.network));
@@ -200,7 +206,7 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
     await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
       return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
     }).catch((e: any) => {
-      return { success: false, error: e.reason };
+      return { success: false, error: e };
     })
   );
 });
@@ -293,6 +299,20 @@ router.put(`${spacePrefix}/payouts`, async (req, res) => {
       res.json({ success: true });
     }).catch((e: any) => { res.json({ success: false, error: e }); });
   } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to edit payouts' }); }
+});
+
+// ===================================== //
+// ======== transfer functions ========= //
+// ===================================== //
+
+// get transfers table
+router.get(`${spacePrefix}/transfers`, async (_, res) => {
+  const { proposalHandlerBeta } = res.locals;
+  proposalHandlerBeta.getTransfersDb().then((data: SQLTransfer[]) => {
+    res.json({ success: true, data });
+  }).catch((e: any) => {
+    res.json({ success: false, error: e });
+  });
 });
 
 export default router;

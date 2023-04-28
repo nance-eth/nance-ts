@@ -1,7 +1,8 @@
-import { TargetLanguageCode } from 'deepl-node';
+import { JBSplitStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
 
 type ProposalType = 'Payout' | 'ReservedToken' | 'ParameterUpdate' | 'ProcessUpdate' | 'CustomTransaction';
 
+export { JBSplitStruct };
 export interface Proposal {
   hash: string;
   title: string;
@@ -33,7 +34,15 @@ export interface Proposal {
   temperatureCheckVotes?: number[];
   createdTime?: Date;
   lastEditedTime?: Date;
+  actions?: Action[];
 }
+
+export type Action = {
+  type: 'Payout' | 'Reserve' | 'Transfer' | 'Custom Transaction';
+  name?: string;
+  uuid: string;
+  payload: Payout | JBSplitStruct[] | Transfer | CustomTransaction;
+};
 
 export type Payout = {
   type?: 'address' | 'project' | 'allocator';
@@ -55,6 +64,20 @@ type Notification = {
 export type Reserve = {
   address: string;
   percentage: number;
+};
+
+export type Transfer = {
+  contract: string;
+  tokenName: string;
+  to: string;
+  amount: string;
+};
+
+export type CustomTransaction = {
+  contract: string;
+  value: string;
+  functionName: string;
+  args: any;
 };
 
 export type ParameterUpdate = {
@@ -209,3 +232,10 @@ export interface Signature {
 }
 
 export type Network = 'mainnet' | 'goerli';
+
+export type PartialTransaction = {
+  to: string;
+  value: string;
+  data: string;
+  operation?: number;
+};

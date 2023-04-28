@@ -2,16 +2,19 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
-import { Proposal, PropertyKeys } from '../types';
-import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended } from './schema';
+import { Proposal, PropertyKeys, Transfer, Payout, Action, JBSplitStruct, CustomTransaction } from '../types';
+import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
 import { DoltSQL } from './doltSQL';
 import { getLastSlash, uuid } from '../utils';
 import { DBConfig } from './types';
+import { SELECT_ACTIONS } from './queries';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
 const reservesTable = 'reserves';
 const governanceCyclesTable = 'governanceCycles';
+const transfersTable = 'transfers';
+const transactionsTable = 'customTransactions';
 const DEFAULT_TREASURY_VERSION = 3;
 
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
@@ -39,7 +42,7 @@ export class DoltHandler {
   async queryProposals(query: string, variables?: string[]): Promise<Proposal[]> {
     return this.localDolt.queryRows(query, variables).then((res) => {
       return res.map((r) => {
-        return this.toProposal(r as SQLProposal & SQLPayout);
+        return this.toProposal(r as SQLExtended);
       });
     }).catch((e) => {
       return Promise.reject(e);
@@ -67,19 +70,11 @@ export class DoltHandler {
       url: `https://${this.propertyKeys.publicURLPrefix}/${proposal.uuid}`,
       ipfsURL: '',
       voteURL,
-      date: proposal.createdTime.toDateString(),
+      date: proposal.createdTime.toISOString(),
       governanceCycle: proposal.governanceCycle,
-      authorAddress: proposal.authorAddress
+      authorAddress: proposal.authorAddress,
+      actions: proposal.actions ? JSON.parse(proposal.actions).flat() : undefined,
     };
-    if (proposal.amount) {
-      cleanProposal.payout = {
-        address: proposal.payAddress ?? undefined,
-        project: proposal.payProject ?? undefined,
-        amountUSD: proposal.amount,
-        count: proposal.numberOfPayouts,
-        payName: proposal.payName ?? undefined
-      };
-    }
     if (proposal.snapshotVotes) {
       cleanProposal.voteResults = {
         choices: proposal.choices,
@@ -109,7 +104,7 @@ export class DoltHandler {
     return omitBy(sqlProposal, isNil);
   }
 
-  async getCurrentGovernanceCycle() {
+  async getCurrentGovernanceCycle(): Promise<number> {
     let { cycleNumber } = (await this.queryDb(`
     SELECT MAX(cycleNumber) as cycleNumber from ${governanceCyclesTable}
     `) as unknown as Array<{ cycleNumber: number }>)[0];
@@ -141,7 +136,22 @@ export class DoltHandler {
     return (Number.isNaN(value)) ? null : value;
   };
 
-  async addProposalToDb(proposal: Proposal, edit = false) {
+  async actionDirector(proposal: Proposal) {
+    const governanceCycle = proposal.governanceCycle || await this.getCurrentGovernanceCycle();
+    proposal.actions?.forEach((action) => {
+      if (action.type === 'Payout') {
+        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle);
+      } else if (action.type === 'Transfer') {
+        this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title);
+      } else if (action.type === 'Reserve') {
+        this.addReserveToDb(action.payload as JBSplitStruct[], proposal.hash, governanceCycle);
+      } else if (action.type === 'Custom Transaction') {
+        this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title);
+      }
+    });
+  }
+
+  async addProposalToDb(proposal: Proposal) {
     const now = new Date().toISOString();
     const voteType = proposal.voteSetup?.type || 'basic';
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
@@ -156,33 +166,56 @@ export class DoltHandler {
       lastEditedTime = VALUES(lastEditedTime), title = VALUES(title), body = VALUES(body), category = VALUES(category), governanceCycle = VALUES(governanceCycle),
       discussionURL = VALUES(discussionURL), proposalStatus = VALUES(proposalStatus), voteType = VALUES(voteType), choices = VALUES(choices)`,
     [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices)]);
-    if (proposal.type?.toLowerCase().includes('pay')) {
-      if (edit) {
-        await this.editPayout(proposal);
-      } else {
-        await this.addPayoutToDb(proposal);
-      }
-    }
     return proposal.hash;
   }
 
-  async addPayoutToDb(proposal: Proposal) {
+  async addPayoutToDb(payout: Payout, uuidOfProposal: string, governanceCycle: number) {
     const treasuryVersion = DEFAULT_TREASURY_VERSION;
-    let payAddress: string | null = proposal.payout?.address ?? '';
+    let payAddress: string | null = payout.address ?? '';
     let payProject;
     if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
-    const payName = proposal.payout?.payName;
-    const governanceStart = proposal.governanceCycle;
-    const numberOfPayouts = proposal.payout?.count;
-    const amount = proposal.payout?.amountUSD;
+    const payName = payout.payName || '';
+    const governanceStart = governanceCycle;
+    const numberOfPayouts = payout.count;
+    const amount = payout.amountUSD;
     const currency = 'usd';
     const payStatus = 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${payoutsTable}
-      (uuid, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
+      (uuidOfPayout, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
       amount, currency, payAddress, payProject, payStatus, payName)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
-    [uuid(), proposal.hash, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
+    [uuid(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
+  }
+
+  async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, transferCount = 1) {
+    const { to, contract, amount, tokenName } = transfer;
+    const transferStatus = 'voting';
+    await this.localDolt.db.query(oneLine`
+      INSERT IGNORE INTO ${transfersTable}
+      (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
+      VALUES(?,?,?,?,?,?,?,?,?,?)`,
+    [uuid(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, transferStatus]);
+  }
+
+  async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, transactionCount = 1) {
+    const address = customTransaction.contract;
+    const { value, functionName, args } = customTransaction;
+    const argsArray = JSON.stringify(args);
+    const transactionStatus = 'voting';
+    await this.localDolt.db.query(oneLine`
+      INSERT IGNORE INTO ${transactionsTable}
+      (uuidOfTransaction, uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, transactionAddress, transactionValue, transactionFunctionName, transactionFunctionArgs, transactionStatus)
+      VALUES(?,?,?,?,?,?,?,?,?,?)`,
+    [uuid(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray, transactionStatus]);
+  }
+
+  async addReserveToDb(splits: JBSplitStruct[], uuidOfProposal: string, reserveGovernanceCycle: number) {
+    await this.localDolt.db.query(oneLine`
+      INSERT IGNORE INTO ${reservesTable}
+      (uuidOfReserve, uuidOfProposal, reserveGovernanceCycle, splits, reserveStatus)
+      VALUES(?,?,?,?,?)`,
+    [uuid(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(splits), 'voting']);
   }
 
   async editProposal(proposal: Partial<Proposal>) {
@@ -196,24 +229,6 @@ export class DoltHandler {
       ${updates.join(',')} WHERE uuid = ?`,
     [...Object.values(cleanedProposal), cleanedProposal.uuid]);
     return proposal.hash;
-  }
-
-  async editPayout(proposal: Proposal) {
-    const treasuryVersion = DEFAULT_TREASURY_VERSION;
-    const payAddress = proposal.payout?.address;
-    const payProject = proposal.payout?.project;
-    const payName = proposal.payout?.payName;
-    const governanceStart = proposal.governanceCycle;
-    const numberOfPayouts = proposal.payout?.count;
-    const amount = proposal.payout?.amountUSD;
-    const currency = 'usd';
-    const payStatus = proposal.status;
-    this.localDolt.db.query(oneLine`
-      UPDATE IGNORE ${payoutsTable} SET
-      treasuryVersion = ?, governanceCycleStart = ?, numberOfPayouts = ?, amount = ?,
-      currency = ?, payAddress = ?, payProject = ?, payStatus = ?, payName = ?
-      WHERE uuidOfProposal = ?`,
-    [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, proposal.hash]);
   }
 
   async bulkEditPayouts(payouts: SQLPayout[]) {
@@ -231,8 +246,8 @@ export class DoltHandler {
         UPDATE IGNORE ${payoutsTable} SET
         treasuryVersion = ?, governanceCycleStart = ?, numberOfPayouts = ?, amount = ?,
         currency = ?, payAddress = ?, payProject = ?, payStatus = ?, payName = ?
-        WHERE uuid = ?`,
-      [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, payout.uuid]);
+        WHERE uuidOfPayout = ?`,
+      [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, payout.uuidOfPayout]);
     }));
   }
 
@@ -311,19 +326,16 @@ export class DoltHandler {
 
   async getProposalsByGovernanceCycle(governanceCycle: string) {
     return this.queryProposals(`
-      SELECT * FROM ${proposalsTable}
+      ${SELECT_ACTIONS}
       WHERE governanceCycle = ${Number(governanceCycle)}
-      ORDER BY snapshotId DESC, proposalId ASC
     `);
   }
 
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
     const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
-      SELECT * FROM ${proposalsTable}
-      WHERE
-      governanceCycle = ${governanceCycle}
-      AND 
+    ${SELECT_ACTIONS}
+      WHERE governanceCycle = ${governanceCycle}
       ( 
         LOWER(body) like LOWER('%${search}%')
         OR LOWER(title) like LOWER('%${search}%')
@@ -335,7 +347,7 @@ export class DoltHandler {
   async getProposalsByKeyword(keyword: string) {
     const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
-      SELECT * FROM ${proposalsTable}
+      ${SELECT_ACTIONS}
       WHERE
       LOWER(body) like LOWER('%${search}%')
       OR LOWER(title) like LOWER('%${search}%')
@@ -345,7 +357,7 @@ export class DoltHandler {
 
   async getContentMarkdown(hash: string) {
     const proposal = await this.queryDb(`
-      SELECT * FROM ${proposalsTable}
+      ${SELECT_ACTIONS}
       WHERE uuid = '${hash}'
     `) as SQLExtended[];
     if (proposal.length === 0) return [];
@@ -366,13 +378,12 @@ export class DoltHandler {
       where = `${where}.proposalId = ${hashOrId}`;
     } else return Promise.reject('bad proposalId');
     return this.queryProposals(oneLine`
-      SELECT ${proposalsTable}.*,
-      ${payoutsTable}.amount, ${payoutsTable}.payAddress, ${payoutsTable}.payProject, ${payoutsTable}.numberOfPayouts, ${payoutsTable}.payName
-      FROM ${proposalsTable}
-      LEFT JOIN ${payoutsTable} ON
-      ${proposalsTable}.uuid = ${payoutsTable}.uuidOfProposal
-      ${where}
-    `);
+      ${SELECT_ACTIONS}
+      ${where} LIMIT 1
+    `).then((res) => {
+      if (res.length === 0) return Promise.reject('proposalId not found');
+      return res[0];
+    }).catch((e) => { return Promise.reject(e); });
   }
 
   async updateDiscussionURL(proposal: Proposal) {
@@ -411,7 +422,6 @@ export class DoltHandler {
       title = '${proposal.title}'
       WHERE uuid = '${proposal.hash}'
     `;
-    console.log(query);
     return this.queryDb(query);
   }
 
@@ -462,7 +472,7 @@ export class DoltHandler {
     const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
     const results = this.queryDb(`
       SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
-      INNER JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
+      LEFT JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
       WHERE treasuryVersion = ${treasuryVersion} AND
       payStatus = 'active' AND
       governanceCycleStart <= ${currentGovernanceCycle} AND
@@ -499,11 +509,22 @@ export class DoltHandler {
     return results;
   }
 
-  async getReserveDb(): Promise<SQLReserve[]> {
-    const results = this.queryDb(`
+  async getReserveDb(): Promise<SQLReserve> {
+    const results = await this.queryDb(`
       SELECT * from ${reservesTable}
-      WHERE reserveStatus = 'active'
+      WHERE id = (SELECT MAX(id) from ${reservesTable})
+      AND reserveStatus = 'voting'
     `) as unknown as SQLReserve[];
+    return results[0];
+  }
+
+  async getTransfersDb(): Promise<SQLTransfer[]> {
+    const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
+    const results = await this.queryDb(`
+      SELECT * from ${transfersTable} WHERE
+      transferGovernanceCycle <= ${currentGovernanceCycle} AND
+      transferGovernanceCycle + transferCount >= ${currentGovernanceCycle + 1}
+    `) as unknown as SQLTransfer[];
     return results;
   }
 
