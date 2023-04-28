@@ -4,8 +4,8 @@ export const SELECT_ACTIONS = oneLine`
 SELECT proposals.*,
   CONCAT(
     '[',
-    GROUP_CONCAT(
-      JSON_UNQUOTE(
+    (
+      SELECT JSON_ARRAYAGG(
         JSON_OBJECT(
           'type', 'Payout',
           'uuid', payouts.uuidOfPayout,
@@ -18,11 +18,12 @@ SELECT proposals.*,
           )
         )
       )
-      SEPARATOR ','
+      FROM payouts
+      WHERE proposals.uuid = payouts.uuidOfProposal AND payouts.uuidOfPayout IS NOT NULL
     ),
     ',',
-    GROUP_CONCAT(
-      JSON_UNQUOTE(
+    (
+      SELECT JSON_ARRAYAGG(
         JSON_OBJECT(
           'type', 'Transfer',
           'uuid', transfers.uuidOfTransfer,
@@ -34,11 +35,12 @@ SELECT proposals.*,
           )
         )
       )
-      SEPARATOR ','
+      FROM transfers
+      WHERE proposals.uuid = transfers.uuidOfProposal AND transfers.uuidOfTransfer IS NOT NULL
     ),
     ',',
-    GROUP_CONCAT(
-      JSON_UNQUOTE(
+    (
+      SELECT JSON_ARRAYAGG(
         JSON_OBJECT(
           'type', 'Custom Transaction',
           'uuid', customTransactions.uuidOfTransaction,
@@ -50,12 +52,24 @@ SELECT proposals.*,
           )
         )
       )
-      SEPARATOR ','
+      FROM customTransactions
+      WHERE proposals.uuid = customTransactions.uuidOfProposal AND customTransactions.uuidOfTransaction IS NOT NULL
+    ),
+    ',',
+    (
+      SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+          'type', 'Reserve',
+          'uuid', reserves.uuidOfReserve,
+          'payload', JSON_OBJECT(
+            'splits', reserves.splits
+          )
+        )
+      )
+      FROM reserves
+      WHERE proposals.uuid = reserves.uuidOfProposal AND reserves.uuidOfReserve IS NOT NULL
     ),
     ']'
   ) as actions
 FROM proposals
-LEFT JOIN payouts ON proposals.uuid = payouts.uuidOfProposal
-LEFT JOIN transfers ON proposals.uuid = transfers.uuidOfProposal
-LEFT JOIN customTransactions ON proposals.uuid = customTransactions.uuidOfProposal
 `;

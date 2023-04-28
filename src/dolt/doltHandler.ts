@@ -73,7 +73,7 @@ export class DoltHandler {
       date: proposal.createdTime.toISOString(),
       governanceCycle: proposal.governanceCycle,
       authorAddress: proposal.authorAddress,
-      actions: proposal.actions ? JSON.parse(proposal.actions).filter((action: Action) => { return action.uuid !== null; }) : undefined,
+      actions: proposal.actions ? JSON.parse(proposal.actions).flat() : undefined,
     };
     if (proposal.snapshotVotes) {
       cleanProposal.voteResults = {
@@ -328,7 +328,6 @@ export class DoltHandler {
     return this.queryProposals(`
       ${SELECT_ACTIONS}
       WHERE governanceCycle = ${Number(governanceCycle)}
-      GROUP BY proposals.uuid
     `);
   }
 
@@ -342,7 +341,6 @@ export class DoltHandler {
         OR LOWER(title) like LOWER('%${search}%')
       )
       ORDER BY createdTime DESC
-      GROUP BY proposals.uuid
     `);
   }
 
@@ -354,7 +352,6 @@ export class DoltHandler {
       LOWER(body) like LOWER('%${search}%')
       OR LOWER(title) like LOWER('%${search}%')
       ORDER BY proposalId ASC
-      GROUP BY proposals.uuid;
     `);
   }
 
@@ -382,7 +379,7 @@ export class DoltHandler {
     } else return Promise.reject('bad proposalId');
     return this.queryProposals(oneLine`
       ${SELECT_ACTIONS}
-      ${where} GROUP BY ${proposalsTable}.uuid LIMIT 1
+      ${where} LIMIT 1
     `).then((res) => {
       if (res.length === 0) return Promise.reject('proposalId not found');
       return res[0];
