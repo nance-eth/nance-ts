@@ -19,7 +19,7 @@ export type SQLProposal = {
   voteAddressCount: number;
   governanceCycle: number;
   discussionURL?: string;
-  actions: string;
+  actions: Action[];
 };
 
 export type SQLPayout = {
@@ -49,8 +49,6 @@ export type SQLReserve = {
   splits: JBSplitStruct[];
   reserveStatus: string;
 };
-
-export type SQLExtended = SQLProposal & SQLPayout & SQLTransfer & SQLReserve & SQLCustomTransaction;
 
 export type GovernanceCycle = {
   cycleNumber: number;

@@ -73,7 +73,7 @@ export class DoltHandler {
       date: proposal.createdTime.toISOString(),
       governanceCycle: proposal.governanceCycle,
       authorAddress: proposal.authorAddress,
-      actions: proposal.actions ? JSON.parse(proposal.actions).flat() : undefined,
+      actions: proposal.actions ? JSON.parse(proposal.actions as unknown as string).flat() : undefined, // comes from db as stringified array of arrays
     };
     if (proposal.snapshotVotes) {
       cleanProposal.voteResults = {

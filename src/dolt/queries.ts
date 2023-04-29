@@ -31,7 +31,7 @@ SELECT proposals.*,
             'contract', transfers.transferTokenAddress,
             'tokenName', transfers.transferTokenName,
             'to', transfers.transferAddress,
-            'amount', transfers.transferAmount
+            'amount', (CONCAT(transfers.transferAmount, REPEAT('0', transfers.transferDecimals)))
           )
         )
       )
