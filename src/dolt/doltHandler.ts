@@ -5,7 +5,7 @@ import { omitBy, isNil } from 'lodash';
 import { Proposal, PropertyKeys, Transfer, Payout, Action, JBSplitStruct, CustomTransaction } from '../types';
 import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
 import { DoltSQL } from './doltSQL';
-import { getLastSlash, uuid } from '../utils';
+import { IPFS_GATEWAY, getLastSlash, uuid } from '../utils';
 import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
 
@@ -68,7 +68,7 @@ export class DoltHandler {
       proposalId: proposal.proposalId || null,
       discussionThreadURL: proposal.discussionURL ?? '',
       url: `https://${this.propertyKeys.publicURLPrefix}/${proposal.uuid}`,
-      ipfsURL: '',
+      ipfsURL: proposal.ipfsCID ? `${IPFS_GATEWAY}/ipfs/${proposal.ipfsCID}` : '',
       voteURL,
       date: proposal.createdTime.toISOString(),
       governanceCycle: proposal.governanceCycle,

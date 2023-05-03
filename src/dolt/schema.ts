@@ -19,6 +19,7 @@ export type SQLProposal = {
   voteAddressCount: number;
   governanceCycle: number;
   discussionURL?: string;
+  ipfsCID?: string;
   actions: Action[];
 };
 
