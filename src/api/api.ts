@@ -151,6 +151,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
     logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
     proposalHandlerBeta.editProposal(proposal).then(async (hash: string) => {
       const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
+      proposalHandlerBeta.actionEditDirector(proposal);
       if (proposalByUuid.discussionThreadURL && diff) {
         const discord = new DiscordHandler(config);
         // eslint-disable-next-line no-await-in-loop

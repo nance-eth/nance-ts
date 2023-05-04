@@ -41,7 +41,7 @@ export type Action = {
   type: 'Payout' | 'Reserve' | 'Transfer' | 'Custom Transaction';
   name?: string;
   uuid: string;
-  payload: Payout | JBSplitStruct[] | Transfer | CustomTransaction;
+  payload: Payout | Reserve | Transfer | CustomTransaction;
 };
 
 export type Payout = {
@@ -61,10 +61,7 @@ type Notification = {
   progress: boolean;
 };
 
-export type Reserve = {
-  address: string;
-  percentage: number;
-};
+export type Reserve = { splits: JBSplitStruct[] };
 
 export type Transfer = {
   contract: string;

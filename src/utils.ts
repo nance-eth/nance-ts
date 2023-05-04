@@ -145,7 +145,7 @@ export async function downloadImages(baseURL: string, images: string[]) {
   return Promise.resolve();
 }
 
-export function uuid(): string {
+export function uuidGen(): string {
   return uuidv4().replaceAll('-', '');
 }
 

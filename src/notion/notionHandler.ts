@@ -17,7 +17,6 @@ import {
   NanceConfig,
   Payout,
   Proposal,
-  Reserve
 } from '../types';
 import * as notionUtils from './notionUtils';
 
@@ -112,13 +111,6 @@ export class NotionHandler implements DataContentHandler {
     };
   }
 
-  private toReserve(unconvertedPayout: GetDatabaseResponse | GetPageResponse): Reserve {
-    return {
-      address: notionUtils.getRichText(unconvertedPayout, this.config.propertyKeys.payoutAddress),
-      percentage: notionUtils.getNumber(unconvertedPayout, this.config.propertyKeys.reservePercentage),
-    };
-  }
-
   async queryNotionDb(filters: any, extendedData = false, sortTimeDirection = 'ascending'): Promise<Proposal[]> {
     const databaseReponse = await this.notion.databases.query(
       {
@@ -153,22 +145,6 @@ export class NotionHandler implements DataContentHandler {
     );
     return databaseReponse.results.map((data: any) => {
       return this.toPayout(data as GetDatabaseResponse);
-    });
-  }
-
-  async queryNotionReserveDb(filters: any): Promise<any> {
-    const databaseReponse = await this.notion.databases.query(
-      {
-        database_id: this.config.notion.reserves_database_id,
-        filter: filters,
-        sorts: [{
-          property: this.config.propertyKeys.payoutAddress,
-          direction: 'descending'
-        }]
-      } as QueryDatabaseParameters
-    );
-    return databaseReponse.results.map((data: any) => {
-      return this.toReserve(data as GetDatabaseResponse);
     });
   }
 
@@ -312,22 +288,6 @@ export class NotionHandler implements DataContentHandler {
               { name: proposal.type }
             ]
           },
-          [this.config.propertyKeys.payoutAddress]: {
-            rich_text: [
-              { text: { content: proposal.payout?.address || proposal.reserve?.address || '' } }
-            ]
-          },
-          [this.config.propertyKeys.payoutCount]: {
-            number: proposal.payout?.count || null
-          },
-          [this.config.propertyKeys.payoutAmountUSD]: {
-            number: proposal.payout?.amountUSD || null
-          },
-          [this.config.propertyKeys.treasuryVersion]: {
-            rich_text: [
-              { text: { content: `V${proposal.version}` } }
-            ]
-          },
           [this.config.propertyKeys.governanceCycle]: {
             rich_text: [
               { text: { content: `${this.config.propertyKeys.governanceCyclePrefix}${String(proposal.governanceCycle)}` } }
@@ -468,10 +428,6 @@ export class NotionHandler implements DataContentHandler {
 
   async getPayoutsDb(version: string): Promise<Payout[]> {
     return this.queryNotionPayoutDb(this.filters[`payouts${version as 'V1' | 'V2' | 'V3'}`]);
-  }
-
-  async getReserveDb(version: string): Promise<Reserve[]> {
-    return this.queryNotionReserveDb(this.filters.reservedIsNotOwner);
   }
 
   async getCurrentGovernanceCycle(): Promise<number> {

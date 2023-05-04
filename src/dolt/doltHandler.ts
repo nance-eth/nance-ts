@@ -2,10 +2,10 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
-import { Proposal, PropertyKeys, Transfer, Payout, Action, JBSplitStruct, CustomTransaction } from '../types';
+import { Proposal, PropertyKeys, Transfer, Payout, Action, JBSplitStruct, CustomTransaction, Reserve } from '../types';
 import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
 import { DoltSQL } from './doltSQL';
-import { IPFS_GATEWAY, getLastSlash, uuid } from '../utils';
+import { IPFS_GATEWAY, getLastSlash, uuidGen } from '../utils';
 import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
 
@@ -49,8 +49,8 @@ export class DoltHandler {
     });
   }
 
-  async queryDbResults(query: string) {
-    return this.localDolt.queryResults(query).then((res) => {
+  async queryDbResults(query: string, variables?: (string | number | undefined)[]) {
+    return this.localDolt.queryResults(query, variables).then((res) => {
       return res;
     }).catch((e) => {
       return Promise.reject(e);
@@ -144,27 +144,42 @@ export class DoltHandler {
       } else if (action.type === 'Transfer') {
         this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title);
       } else if (action.type === 'Reserve') {
-        this.addReserveToDb(action.payload as JBSplitStruct[], proposal.hash, governanceCycle);
+        this.addReserveToDb(action.payload as Reserve, proposal.hash, governanceCycle);
       } else if (action.type === 'Custom Transaction') {
         this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title);
       }
     });
   }
 
+  async actionEditDirector(proposal: Proposal) {
+    proposal.actions?.forEach((action) => {
+      if (action.type === 'Payout') {
+        this.editPayout(action.payload as Payout, action.uuid);
+      } else if (action.type === 'Transfer') {
+        this.editTransfer(action.payload as Transfer, action.uuid);
+      } else if (action.type === 'Reserve') {
+        this.editReserves(action.payload as Reserve, action.uuid);
+      } else if (action.type === 'Custom Transaction') {
+        this.editCustomTransaction(action.payload as CustomTransaction, action.uuid);
+      }
+    });
+  }
+
+  // ===================================== //
+  // ========== add functions ============ //
+  // ===================================== //
+
   async addProposalToDb(proposal: Proposal) {
     const now = new Date().toISOString();
     const voteType = proposal.voteSetup?.type || 'basic';
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
     proposal.status = proposal.status || 'Discussion';
-    proposal.hash = proposal.hash || uuid();
+    proposal.hash = proposal.hash || uuidGen();
     proposal.proposalId = (Number.isNaN(proposal.proposalId)) ? null : proposal.proposalId;
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, category, governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
-      ON DUPLICATE KEY UPDATE
-      lastEditedTime = VALUES(lastEditedTime), title = VALUES(title), body = VALUES(body), category = VALUES(category), governanceCycle = VALUES(governanceCycle),
-      discussionURL = VALUES(discussionURL), proposalStatus = VALUES(proposalStatus), voteType = VALUES(voteType), choices = VALUES(choices)`,
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices)]);
     return proposal.hash;
   }
@@ -185,7 +200,7 @@ export class DoltHandler {
       (uuidOfPayout, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
       amount, currency, payAddress, payProject, payStatus, payName)
       VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
-    [uuid(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
+    [uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
   }
 
   async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, transferCount = 1) {
@@ -195,7 +210,7 @@ export class DoltHandler {
       INSERT IGNORE INTO ${transfersTable}
       (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
       VALUES(?,?,?,?,?,?,?,?,?,?)`,
-    [uuid(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, transferStatus]);
+    [uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, transferStatus]);
   }
 
   async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, transactionCount = 1) {
@@ -207,16 +222,39 @@ export class DoltHandler {
       INSERT IGNORE INTO ${transactionsTable}
       (uuidOfTransaction, uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, transactionAddress, transactionValue, transactionFunctionName, transactionFunctionArgs, transactionStatus)
       VALUES(?,?,?,?,?,?,?,?,?,?)`,
-    [uuid(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray, transactionStatus]);
+    [uuidGen(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray, transactionStatus]);
   }
 
-  async addReserveToDb(splits: JBSplitStruct[], uuidOfProposal: string, reserveGovernanceCycle: number) {
+  async addReserveToDb(reserve: Reserve, uuidOfProposal: string, reserveGovernanceCycle: number) {
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${reservesTable}
       (uuidOfReserve, uuidOfProposal, reserveGovernanceCycle, splits, reserveStatus)
       VALUES(?,?,?,?,?)`,
-    [uuid(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(splits), 'voting']);
+    [uuidGen(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(reserve.splits), 'voting']);
   }
+
+  async addGovernanceCycleToDb(g: GovernanceCycle) {
+    const results = this.localDolt.db.query(oneLine`
+      REPLACE INTO ${governanceCyclesTable}
+      (cycleNumber, startDateTime, endDateTime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle, acceptingProposals)
+      VALUES(?,?,?,?,?,?,?)`, [g.cycleNumber, g.startDatetime, g.endDatetime, g.jbV1FundingCycle, g.jbV2FundingCycle, g.jbV3FundingCycle, true]
+    );
+    return results;
+  }
+
+  async assignProposalIds(proposals: Proposal[]) {
+    const nextProposalId = await this.getNextProposalId() ?? 1;
+    proposals.forEach((proposal, index) => {
+      if (!proposal.proposalId) {
+        proposal.proposalId = nextProposalId + index;
+      }
+    });
+    return proposals;
+  }
+
+  // ===================================== //
+  // ====== edit/update functions ======== //
+  // ===================================== //
 
   async editProposal(proposal: Partial<Proposal>) {
     const updates: string[] = [];
@@ -277,6 +315,117 @@ export class DoltHandler {
     `;
     return this.queryDb(query);
   }
+
+  async updateDiscussionURL(proposal: Proposal) {
+    return this.queryDb(`
+      UPDATE ${proposalsTable} SET
+      discussionURL = '${proposal.discussionThreadURL}'
+      WHERE uuid = '${proposal.hash}'
+    `);
+  }
+
+  async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
+    const query = `
+      UPDATE ${proposalsTable} SET
+      proposalStatus = '${proposal.status}',
+      proposalId = ${proposal.proposalId}
+      WHERE uuid = '${proposal.hash}'
+    `;
+    return this.queryDb(query);
+  }
+
+  async updateTemperatureCheckClose(proposal: Proposal) {
+    const query = `
+      UPDATE ${proposalsTable} SET
+      temperatureCheckVotes = '[${proposal.temperatureCheckVotes}]',
+      proposalStatus = '${proposal.status}',
+      title = '${proposal.title}'
+      WHERE uuid = '${proposal.hash}'
+    `;
+    return this.queryDb(query);
+  }
+
+  async updateVotingSetup(proposal: Proposal) {
+    const results = this.localDolt.db.query(`
+      UPDATE ${proposalsTable} SET
+      title = ?, proposalStatus = ?, snapshotId = ? WHERE uuid = ?`,
+    [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.hash]);
+    return results;
+  }
+
+  async updateVotingClose(proposal: Proposal) {
+    const voteChoices = (proposal.internalVoteResults) ? JSON.stringify(Object.keys(proposal.internalVoteResults.scores)) : null;
+    const voteResults = (proposal.internalVoteResults) ? JSON.stringify(Object.values(proposal.internalVoteResults.scores)) : null;
+    await this.localDolt.db.query(oneLine`
+      UPDATE ${proposalsTable} SET
+      choices = ?,
+      snapshotVotes = ?,
+      voteAddressCount = ?,
+      proposalStatus = ?
+      WHERE uuid = ?
+    `, [voteChoices, voteResults, proposal.internalVoteResults?.totalVotes, proposal.status, proposal.hash]);
+    if (proposal.type?.toLowerCase().includes('pay')) {
+      await this.updatePayoutStatus(proposal);
+    }
+  }
+
+  async updatePayoutStatus(proposal: Proposal) {
+    const payStatus = (proposal.status === this.propertyKeys.statusApproved) ? 'active' : 'cancelled';
+    this.localDolt.db.query(`
+      UPDATE ${payoutsTable} SET
+      payStatus = ?
+      WHERE uuidOfProposal = ?
+  `, [payStatus, proposal.hash]);
+  }
+
+  async setStalePayouts(): Promise<number> {
+    const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
+    const results = await this.queryDbResults(`
+      UPDATE ${payoutsTable} SET payStatus = 'complete' WHERE
+      payStatus = 'active' AND
+      governanceCycleStart <= ${currentGovernanceCycle - 1} AND
+      governanceCycleStart + numberOfPayouts <= ${currentGovernanceCycle}
+    `).then((res) => {
+      return res.affectedRows;
+    });
+    return results;
+  }
+
+  // [[[ACTIONS]]] //
+  async editPayout(payout: Payout, uuid: string) {
+    const results = this.queryDbResults(oneLine`
+      UPDATE ${payoutsTable} SET
+      payAddress = ?, payProject = ?, amount = ?, numberOfPayouts = ?
+      WHERE uuidOfPayout = ?`,
+    [payout.address, payout.project, payout.amountUSD, payout.count, uuid]);
+  }
+
+  async editTransfer(transfer: Transfer, uuid: string) {
+    const results = this.queryDbResults(oneLine`
+      UPDATE ${transfersTable} SET
+      transferAddress = ?, transferTokenAddress = ?, transferAmount = ?
+      WHERE uuidOfTransfer = ?`,
+    [transfer.to, transfer.contract, transfer.amount, uuid]);
+  }
+
+  async editCustomTransaction(transaction: CustomTransaction, uuid: string) {
+    const results = this.queryDbResults(oneLine`
+      UPDATE ${transactionsTable} SET
+      transactionAddress = ?, transactionValue = ?, transactionFunctionName = ?, transactionFunctionArgs = ?
+      WHERE uuidOfTransaction = ?`,
+    [transaction.contract, transaction.value, transaction.functionName, transaction.args, uuid]);
+  }
+
+  async editReserves(reserves: Reserve, uuid: string) {
+    const results = this.queryDbResults(oneLine`
+      UPDATE ${reservesTable} SET splits = ?
+      WHERE uuidOfReserve = ?`,
+    [JSON.stringify(reserves.splits), uuid]);
+  }
+
+  // ===================================== //
+  // ========== get functions ============ //
+  // ===================================== //
 
   async getToDiscuss() {
     return this.queryProposals(`
@@ -386,87 +535,6 @@ export class DoltHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async updateDiscussionURL(proposal: Proposal) {
-    return this.queryDb(`
-      UPDATE ${proposalsTable} SET
-      discussionURL = '${proposal.discussionThreadURL}'
-      WHERE uuid = '${proposal.hash}'
-    `);
-  }
-
-  async assignProposalIds(proposals: Proposal[]) {
-    const nextProposalId = await this.getNextProposalId() ?? 1;
-    proposals.forEach((proposal, index) => {
-      if (!proposal.proposalId) {
-        proposal.proposalId = nextProposalId + index;
-      }
-    });
-    return proposals;
-  }
-
-  async updateStatusTemperatureCheckAndProposalId(proposal: Proposal) {
-    const query = `
-      UPDATE ${proposalsTable} SET
-      proposalStatus = '${proposal.status}',
-      proposalId = ${proposal.proposalId}
-      WHERE uuid = '${proposal.hash}'
-    `;
-    return this.queryDb(query);
-  }
-
-  async updateTemperatureCheckClose(proposal: Proposal) {
-    const query = `
-      UPDATE ${proposalsTable} SET
-      temperatureCheckVotes = '[${proposal.temperatureCheckVotes}]',
-      proposalStatus = '${proposal.status}',
-      title = '${proposal.title}'
-      WHERE uuid = '${proposal.hash}'
-    `;
-    return this.queryDb(query);
-  }
-
-  async updateVotingSetup(proposal: Proposal) {
-    const results = this.localDolt.db.query(`
-    UPDATE ${proposalsTable} SET
-    title = ?, proposalStatus = ?, snapshotId = ? WHERE uuid = ?
-  `, [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.hash]);
-    return results;
-  }
-
-  async updateVotingClose(proposal: Proposal) {
-    const voteChoices = (proposal.internalVoteResults) ? JSON.stringify(Object.keys(proposal.internalVoteResults.scores)) : null;
-    const voteResults = (proposal.internalVoteResults) ? JSON.stringify(Object.values(proposal.internalVoteResults.scores)) : null;
-    await this.localDolt.db.query(oneLine`
-      UPDATE ${proposalsTable} SET
-      choices = ?,
-      snapshotVotes = ?,
-      voteAddressCount = ?,
-      proposalStatus = ?
-      WHERE uuid = ?
-    `, [voteChoices, voteResults, proposal.internalVoteResults?.totalVotes, proposal.status, proposal.hash]);
-    if (proposal.type?.toLowerCase().includes('pay')) {
-      await this.updatePayoutStatus(proposal);
-    }
-  }
-
-  async updatePayoutStatus(proposal: Proposal) {
-    const payStatus = (proposal.status === this.propertyKeys.statusApproved) ? 'active' : 'cancelled';
-    this.localDolt.db.query(`
-      UPDATE ${payoutsTable} SET
-      payStatus = ?
-      WHERE uuidOfProposal = ?
-  `, [payStatus, proposal.hash]);
-  }
-
-  async addGovernanceCycleToDb(g: GovernanceCycle) {
-    const results = this.localDolt.db.query(oneLine`
-      REPLACE INTO ${governanceCyclesTable}
-      (cycleNumber, startDateTime, endDateTime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle, acceptingProposals)
-      VALUES(?,?,?,?,?,?,?)`, [g.cycleNumber, g.startDatetime, g.endDatetime, g.jbV1FundingCycle, g.jbV2FundingCycle, g.jbV3FundingCycle, true]
-    );
-    return results;
-  }
-
   async getPayoutsDb(version: string): Promise<SQLPayout[]> {
     const treasuryVersion = Number(version.split('V')[1]);
     const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
@@ -496,19 +564,6 @@ export class DoltHandler {
     return results;
   }
 
-  async setStalePayouts(): Promise<number> {
-    const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
-    const results = await this.queryDbResults(`
-      UPDATE ${payoutsTable} SET payStatus = 'complete' WHERE
-      payStatus = 'active' AND
-      governanceCycleStart <= ${currentGovernanceCycle - 1} AND
-      governanceCycleStart + numberOfPayouts <= ${currentGovernanceCycle}
-    `).then((res) => {
-      return res.affectedRows;
-    });
-    return results;
-  }
-
   async getReserveDb(): Promise<SQLReserve> {
     const results = await this.queryDb(`
       SELECT * from ${reservesTable}
@@ -527,6 +582,10 @@ export class DoltHandler {
     `) as unknown as SQLTransfer[];
     return results;
   }
+
+  // ===================================== //
+  // ========== dolt routines ============ //
+  // ===================================== //
 
   async checkAndPush(table = proposalsTable, message = ''): Promise<string> {
     // call push in case we committed but push failed before

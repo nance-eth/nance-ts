@@ -28,3 +28,17 @@ export async function dotPin(dataIn: string, encoding = 'utf-8' as BufferEncodin
     return Promise.reject(e);
   });
 }
+
+export async function pin(cid: string): Promise<boolean> {
+  return axios({
+    method: 'post',
+    url: `${API}/pin/add?arg=${cid}`,
+    headers: {
+      'Authorization': AUTH_HEADER,
+    },
+  }).then((res) => {
+    return res.status === 200;
+  }).catch((e) => {
+    return Promise.reject(e);
+  });
+}

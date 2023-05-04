@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   voteAddressCount INT,
   governanceCycle INT,
   discussionURL VARCHAR(500),
-  ipfsCID VARCHAR(50),
+  ipfsCID VARCHAR(60),
   PRIMARY KEY (uuid)
 );
 
