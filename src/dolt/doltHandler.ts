@@ -140,27 +140,13 @@ export class DoltHandler {
     const governanceCycle = proposal.governanceCycle || await this.getCurrentGovernanceCycle();
     proposal.actions?.forEach((action) => {
       if (action.type === 'Payout') {
-        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle);
+        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle, action.uuid);
       } else if (action.type === 'Transfer') {
-        this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title);
+        this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid);
       } else if (action.type === 'Reserve') {
-        this.addReserveToDb(action.payload as Reserve, proposal.hash, governanceCycle);
+        this.addReserveToDb(action.payload as Reserve, proposal.hash, governanceCycle, action.uuid);
       } else if (action.type === 'Custom Transaction') {
-        this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title);
-      }
-    });
-  }
-
-  async actionEditDirector(proposal: Proposal) {
-    proposal.actions?.forEach((action) => {
-      if (action.type === 'Payout') {
-        this.editPayout(action.payload as Payout, action.uuid);
-      } else if (action.type === 'Transfer') {
-        this.editTransfer(action.payload as Transfer, action.uuid);
-      } else if (action.type === 'Reserve') {
-        this.editReserves(action.payload as Reserve, action.uuid);
-      } else if (action.type === 'Custom Transaction') {
-        this.editCustomTransaction(action.payload as CustomTransaction, action.uuid);
+        this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid);
       }
     });
   }
@@ -184,7 +170,7 @@ export class DoltHandler {
     return proposal.hash;
   }
 
-  async addPayoutToDb(payout: Payout, uuidOfProposal: string, governanceCycle: number) {
+  async addPayoutToDb(payout: Payout, uuidOfProposal: string, governanceCycle: number, uuid?: string) {
     const treasuryVersion = DEFAULT_TREASURY_VERSION;
     let payAddress: string | null = payout.address ?? '';
     let payProject;
@@ -199,21 +185,26 @@ export class DoltHandler {
       INSERT IGNORE INTO ${payoutsTable}
       (uuidOfPayout, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
       amount, currency, payAddress, payProject, payStatus, payName)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
-    [uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
+      VALUES(?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
+      governanceCycleStart = VALUES(governanceCycleStart), numberOfPayouts = VALUES(numberOfPayouts), amount = VALUES(amount), currency = VALUES(currency),
+      payAddress = VALUES(payAddress), payProject = VALUES(payProject), payStatus = VALUES(payStatus), payName = VALUES(payName)`,
+    [uuid || uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
   }
 
-  async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, transferCount = 1) {
+  async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, uuid?: string, transferCount = 1) {
     const { to, contract, amount, tokenName } = transfer;
     const transferStatus = 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transfersTable}
       (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
-      VALUES(?,?,?,?,?,?,?,?,?,?)`,
-    [uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, transferStatus]);
+      VALUES(?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
+      transferGovernanceCycle = VALUES(transferGovernanceCycle), transferCount = VALUES(transferCount), transferName = VALUES(transferName),
+      transferAddress = VALUES(transferAddress), transferTokenName = VALUES(transferTokenName), transferTokenAddress = VALUES(transferTokenAddress),
+      transferAmount = VALUES(transferAmount), transferStatus = VALUES(transferStatus)`,
+    [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, transferStatus]);
   }
 
-  async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, transactionCount = 1) {
+  async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, uuid?: string, transactionCount = 1) {
     const address = customTransaction.contract;
     const { value, functionName, args } = customTransaction;
     const argsArray = JSON.stringify(args);
@@ -221,16 +212,20 @@ export class DoltHandler {
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transactionsTable}
       (uuidOfTransaction, uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, transactionAddress, transactionValue, transactionFunctionName, transactionFunctionArgs, transactionStatus)
-      VALUES(?,?,?,?,?,?,?,?,?,?)`,
-    [uuidGen(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray, transactionStatus]);
+      VALUES(?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
+      transactionGovernanceCycle = VALUES(transactionGovernanceCycle), transactionCount = VALUES(transactionCount), transactionName = VALUES(transactionName),
+      transactionAddress = VALUES(transactionAddress), transactionValue = VALUES(transactionValue), transactionFunctionName = VALUES(transactionFunctionName),
+      transactionFunctionArgs = VALUES(transactionFunctionArgs), transactionStatus = VALUES(transactionStatus)`,
+    [uuid || uuidGen(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray, transactionStatus]);
   }
 
-  async addReserveToDb(reserve: Reserve, uuidOfProposal: string, reserveGovernanceCycle: number) {
+  async addReserveToDb(reserve: Reserve, uuidOfProposal: string, reserveGovernanceCycle: number, uuid?: string) {
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${reservesTable}
       (uuidOfReserve, uuidOfProposal, reserveGovernanceCycle, splits, reserveStatus)
-      VALUES(?,?,?,?,?)`,
-    [uuidGen(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(reserve.splits), 'voting']);
+      VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE
+      reserveGovernanceCycle = VALUES(reserveGovernanceCycle), splits = VALUES(splits), reserveStatus = VALUES(reserveStatus)`,
+    [uuid || uuidGen(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(reserve.splits), 'voting']);
   }
 
   async addGovernanceCycleToDb(g: GovernanceCycle) {
@@ -389,38 +384,6 @@ export class DoltHandler {
       return res.affectedRows;
     });
     return results;
-  }
-
-  // [[[ACTIONS]]] //
-  async editPayout(payout: Payout, uuid: string) {
-    const results = this.queryDbResults(oneLine`
-      UPDATE ${payoutsTable} SET
-      payAddress = ?, payProject = ?, amount = ?, numberOfPayouts = ?
-      WHERE uuidOfPayout = ?`,
-    [payout.address, payout.project, payout.amountUSD, payout.count, uuid]);
-  }
-
-  async editTransfer(transfer: Transfer, uuid: string) {
-    const results = this.queryDbResults(oneLine`
-      UPDATE ${transfersTable} SET
-      transferAddress = ?, transferTokenAddress = ?, transferAmount = ?
-      WHERE uuidOfTransfer = ?`,
-    [transfer.to, transfer.contract, transfer.amount, uuid]);
-  }
-
-  async editCustomTransaction(transaction: CustomTransaction, uuid: string) {
-    const results = this.queryDbResults(oneLine`
-      UPDATE ${transactionsTable} SET
-      transactionAddress = ?, transactionValue = ?, transactionFunctionName = ?, transactionFunctionArgs = ?
-      WHERE uuidOfTransaction = ?`,
-    [transaction.contract, transaction.value, transaction.functionName, JSON.stringify(transaction.args), uuid]);
-  }
-
-  async editReserves(reserves: Reserve, uuid: string) {
-    const results = this.queryDbResults(oneLine`
-      UPDATE ${reservesTable} SET splits = ?
-      WHERE uuidOfReserve = ?`,
-    [JSON.stringify(reserves.splits), uuid]);
   }
 
   // ===================================== //
