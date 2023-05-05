@@ -30,58 +30,83 @@ async function getReminderImages() {
   downloadImages(config.discord.reminder.imagesCID, config.discord.reminder.imageNames);
 }
 
+function isNotScheduled(jobName: string) {
+  return !schedule.scheduledJobs[jobName];
+}
+
 async function scheduleCycle() {
   const calendar = new CalendarHandler(getCalendar(config));
   const cycle = calendar.getNextEvents();
-  logger.debug(cycle);
   if (CalendarHandler.shouldSendDiscussion(cycle)) { nance.setDiscussionInterval(30); }
   const now = new Date();
   cycle.forEach((event) => {
     if (event.start <= now && event.end <= now) { return; }
     if (event.title.includes('Reminder:')) {
       const [, day, type] = event.title.split(':');
-      schedule.scheduleJob(`Day ${day} ${type} reminder`, event.start, () => {
-        nance.sendImageReminder(day, type);
-      });
+      const reminderTitle = `Day ${day} ${type} reminder`;
+      if (isNotScheduled(reminderTitle)) {
+        schedule.scheduleJob(reminderTitle, event.start, () => {
+          nance.sendImageReminder(day, type);
+        });
+      }
     }
     if (event.title === 'Temperature Check') {
       // start reminder
       const reminderDateStart = addSecondsToDate(event.start, -ONE_HOUR_SECONDS);
-      schedule.scheduleJob('temperatureCheckSetup REMINDER', reminderDateStart, () => {
-        nance.reminder(event.title, event.start, 'start');
-      });
+      if (isNotScheduled('temperatureCheckSetup REMINDER')) {
+        schedule.scheduleJob('temperatureCheckSetup REMINDER', reminderDateStart, () => {
+          nance.reminder(event.title, event.start, 'start');
+        });
+      }
       // increment governanceCycle 90 seconds before tempertureCheck starts
       const governanceCycleIncTime = addSecondsToDate(event.start, (config.name === 'waterbox') ? -3 : -90);
-      schedule.scheduleJob('increment governanceCycle', governanceCycleIncTime, async () => {
-        const governanceCycle = await treasury.getCycleInformation();
-        nance.incrementGovernanceCycle(governanceCycle);
-      });
+      if (isNotScheduled('increment governanceCycle')) {
+        schedule.scheduleJob('increment governanceCycle', governanceCycleIncTime, async () => {
+          treasury.getCycleInformation().then((cycleInfo) => {
+            nance.incrementGovernanceCycle(cycleInfo);
+          }).catch((err) => {
+            logger.error(err);
+          });
+        });
+      }
       // temperatureCheck itself
-      schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
-        nance.temperatureCheckSetup(event.end);
-        nance.clearDiscussionInterval();
-      });
+      if (isNotScheduled('temperatureCheckSetup')) {
+        schedule.scheduleJob('temperatureCheckSetup', event.start, () => {
+          nance.temperatureCheckSetup(event.end);
+          nance.clearDiscussionInterval();
+        });
+      }
       // end reminder
-      const reminderDateEnd = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
-      schedule.scheduleJob('temperatureCheckClose REMINDER', reminderDateEnd, () => {
-        nance.reminder(event.title, event.end, 'end');
-      });
-      schedule.scheduleJob('temperatureCheckClose', event.end, () => {
-        nance.temperatureCheckClose();
-      });
+      if (isNotScheduled('temperatureCheckClose REMINDER')) {
+        const reminderDateEnd = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
+        schedule.scheduleJob('temperatureCheckClose REMINDER', reminderDateEnd, () => {
+          nance.reminder(event.title, event.end, 'end');
+        });
+      }
+      if (isNotScheduled('temperatureCheckClose')) {
+        schedule.scheduleJob('temperatureCheckClose', event.end, () => {
+          nance.temperatureCheckClose();
+        });
+      }
     } else if (event.title === 'Snapshot Vote') {
-      schedule.scheduleJob('voteSetup', addSecondsToDate(event.start, PADDING_VOTE_START_SECONDS), () => {
-        nance.votingSetup(event.end);
-      });
+      if (isNotScheduled('voteSetup')) {
+        schedule.scheduleJob('voteSetup', addSecondsToDate(event.start, PADDING_VOTE_START_SECONDS), () => {
+          nance.votingSetup(event.end);
+        });
+      }
       // end reminder
-      const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
-      schedule.scheduleJob('voteClose REMINDER', reminderDate, () => {
-        nance.reminder(event.title, event.end, 'end', `${config.snapshot.base}`);
-      });
-      schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
-        nance.votingClose();
-        nance.setDiscussionInterval(30);
-      });
+      if (isNotScheduled('voteClose REMINDER')) {
+        const reminderDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
+        schedule.scheduleJob('voteClose REMINDER', reminderDate, () => {
+          nance.reminder(event.title, event.end, 'end', `${config.snapshot.base}`);
+        });
+      }
+      if (isNotScheduled('voteClose')) {
+        schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
+          nance.votingClose();
+          nance.setDiscussionInterval(30);
+        });
+      }
     }
   });
 }
@@ -95,10 +120,34 @@ function listScheduledJobs() {
   logger.debug('===================================================================');
 }
 
+function clearCompletedJobs() {
+  const jobs = schedule.scheduledJobs;
+  Object.keys(jobs).forEach((job) => {
+    if (job[0] === 'cleanup') { return; }
+    if (jobs[job].nextInvocation() < new Date()) {
+      logger.debug(`Clearing job ${job}`);
+      jobs[job].cancel();
+    }
+  });
+}
+
+async function scheduleCleanup() {
+  schedule.scheduleJob('cleanup', '0 0 * * 0', async () => {
+    logger.debug('========================== 🧽 CLEANUP 🧽 ==========================');
+    clearCompletedJobs();
+    scheduleCycle().then(async () => {
+      listScheduledJobs();
+    });
+    logger.debug('===================================================================');
+    console.log('\n'.repeat(20));
+  });
+}
+
 setup().then(() => {
   getReminderImages();
   scheduleCycle().then(async () => {
     await sleep(1000);
+    scheduleCleanup();
     listScheduledJobs();
   });
 });
