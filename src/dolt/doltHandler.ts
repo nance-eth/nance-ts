@@ -413,7 +413,7 @@ export class DoltHandler {
       UPDATE ${transactionsTable} SET
       transactionAddress = ?, transactionValue = ?, transactionFunctionName = ?, transactionFunctionArgs = ?
       WHERE uuidOfTransaction = ?`,
-    [transaction.contract, transaction.value, transaction.functionName, transaction.args, uuid]);
+    [transaction.contract, transaction.value, transaction.functionName, JSON.stringify(transaction.args), uuid]);
   }
 
   async editReserves(reserves: Reserve, uuid: string) {
