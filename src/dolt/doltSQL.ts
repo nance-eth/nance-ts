@@ -93,7 +93,7 @@ export class DoltSQL {
   }
 
   async commit(message: string, table?: string): Promise<string> {
-    await this.db.query(`CALL DOLT_ADD(${table ? '?' : '-A'})`, [table]);
+    await this.db.query(`CALL DOLT_ADD(${table ? '?' : '"-A"'})`, [table]);
     return this.db.query(`CALL DOLT_COMMIT('-m', '${message}')`).then((res) => {
       return cleanSingleRes(res).hash;
     }).catch((e) => {
@@ -149,8 +149,10 @@ export class DoltSQL {
     });
   }
 
-  async changes(table: string): Promise<boolean> {
-    return this.db.query('SELECT status from dolt_status WHERE table_name = ?', [table]).then((res) => {
+  async changes(table?: string): Promise<boolean> {
+    console.log(`table: ${table}`);
+    return this.db.query(`SELECT status from dolt_status${(table) ? ' WHERE table_name = ?' : ''}`, [table]).then((res) => {
+      console.log(res);
       return cleanSingleRes(res).status === 'modified';
     }).catch((e) => { return false; });
   }

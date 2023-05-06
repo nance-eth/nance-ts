@@ -265,7 +265,7 @@ router.get(`${spacePrefix}/dolthub`, async (req, res) => {
   const { proposalHandlerBeta, calendar } = res.locals;
   const calendarHandler = new CalendarHandler(calendar);
   const currentEvent = calendarHandler.getCurrentEvent();
-  proposalHandlerBeta.checkAndPush(table, currentEvent.title).then((data: string) => {
+  proposalHandlerBeta.checkAndPush(table, currentEvent?.title || '').then((data: string) => {
     return res.json({ success: true, data });
   }).catch((e: string) => {
     return res.json({ success: false, error: e });

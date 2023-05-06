@@ -2,7 +2,7 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
-import { Proposal, PropertyKeys, Transfer, Payout, Action, JBSplitStruct, CustomTransaction, Reserve } from '../types';
+import { Proposal, PropertyKeys, Transfer, Payout, CustomTransaction, Reserve } from '../types';
 import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, getLastSlash, uuidGen } from '../utils';
@@ -410,10 +410,11 @@ export class DoltHandler {
   }
 
   async getTemperatureCheckProposals() {
-    return this.queryProposals(`
+    return this.queryProposals(oneLine`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Temperature Check'
       AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
+      ORDER BY proposalId ASC
     `);
   }
 
@@ -550,13 +551,11 @@ export class DoltHandler {
   // ========== dolt routines ============ //
   // ===================================== //
 
-  async checkAndPush(table = proposalsTable, message = ''): Promise<string> {
+  async checkAndPush(table?: string, message = ''): Promise<string> {
     // call push in case we committed but push failed before
-    // (not sure if there is dolt call to check for unpushed commit)
-    await this.localDolt.push();
     if (await this.localDolt.changes(table)) {
       const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
-      return this.localDolt.commit(`GC${currentGovernanceCycle}-${message}`, table).then(async (res) => {
+      return this.localDolt.commit(`GC${currentGovernanceCycle}-${message}`).then(async (res) => {
         if (res) {
           return this.localDolt.push().then(() => {
             return res; // commit hash
