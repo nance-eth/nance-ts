@@ -1,5 +1,4 @@
 import express from 'express';
-import * as util from 'util';
 import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';

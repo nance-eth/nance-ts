@@ -222,10 +222,10 @@ export class DiscordHandler {
         this.config.snapshot.space,
         new Date());
     }
-    const edittedMessage = messageObj.embeds[0];
-    edittedMessage.fields = message.fields;
-    edittedMessage.description = message.description;
-    messageObj.edit({ embeds: [edittedMessage] });
+    const editedMessage = messageObj.embeds[0];
+    editedMessage.fields = message.fields;
+    editedMessage.description = message.description;
+    messageObj.edit({ embeds: [editedMessage] });
   }
 
   async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
@@ -246,11 +246,11 @@ export class DiscordHandler {
 
   async editTransactionMessage(messageId: string, links: EmbedFieldData[]) {
     const messageObj = await this.getChannelById(this.config.discord.channelIds.transactions).messages.fetch(messageId);
-    const edittedMessage = messageObj.embeds[0];
+    const editedMessage = messageObj.embeds[0];
     const message = discordTemplates.transactionThread(0, '', links);
     // only edit description
-    edittedMessage.description = message.description;
-    messageObj.edit({ embeds: [edittedMessage] });
+    editedMessage.description = message.description;
+    messageObj.edit({ embeds: [editedMessage] });
   }
 
   async sendTransactionSummary(threadId: string, addPayouts: SQLPayout[], removePayouts: SQLPayout[], oldDistributionLimit: number, newDistributionLimit: number) {
