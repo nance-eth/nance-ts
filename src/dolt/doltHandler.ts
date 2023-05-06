@@ -62,7 +62,7 @@ export class DoltHandler {
     const cleanProposal: Proposal = {
       hash: proposal.uuid,
       title: proposal.title,
-      body: proposal.body,
+      body: Buffer.from(proposal.hexBody, 'hex').toString('utf8'),
       type: proposal.category,
       status: proposal.proposalStatus,
       proposalId: proposal.proposalId || null,
@@ -477,7 +477,7 @@ export class DoltHandler {
     return this.toProposal(proposal[0]);
   }
 
-  async getProposalByAnyId(hashOrId: string) {
+  async getProposalByAnyId(hashOrId: string): Promise<Proposal> {
     let where = `WHERE ${proposalsTable}`;
     if (hashOrId.length === 32) {
       where = `${where}.uuid = '${hashOrId}'`;

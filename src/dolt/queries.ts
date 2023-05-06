@@ -1,7 +1,7 @@
 import { oneLine } from 'common-tags';
 
 export const SELECT_ACTIONS = oneLine`
-SELECT proposals.*,
+SELECT proposals.*, HEX(proposals.body) as hexBody,
   CONCAT(
     '[',
     (
