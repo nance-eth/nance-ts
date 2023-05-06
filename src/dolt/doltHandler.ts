@@ -61,8 +61,8 @@ export class DoltHandler {
     const voteURL = proposal.snapshotId ?? '';
     const cleanProposal: Proposal = {
       hash: proposal.uuid,
-      title: proposal.title,
-      body: Buffer.from(proposal.hexBody, 'hex').toString('utf8'),
+      title: Buffer.from(proposal.title, 'hex').toString('utf8'),
+      body: Buffer.from(proposal.body, 'hex').toString('utf8'),
       type: proposal.category,
       status: proposal.proposalStatus,
       proposalId: proposal.proposalId || null,

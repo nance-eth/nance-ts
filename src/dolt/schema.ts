@@ -6,7 +6,6 @@ export type SQLProposal = {
   lastEditedTime: Date;
   title: string;
   body: string;
-  hexBody: string;
   authorAddress: string;
   authorDiscordId?: string;
   category: string;
