@@ -144,29 +144,30 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { dolt, config } = res.locals as Locals;
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = await dolt.getContentMarkdown(pid) as Proposal;
+  const proposalByUuid = await dolt.getProposalByAnyId(pid);
   if (proposalByUuid.status === 'Voting' || proposalByUuid.status === 'Approved') {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
   }
-  if (signature.address === proposalByUuid.authorAddress || isNanceAddress(signature.address)) {
-    logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
-    dolt.editProposal(proposal).then(async (hash: string) => {
-      const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
-      dolt.actionDirector(proposal);
-      if (proposalByUuid.discussionThreadURL && diff) {
-        const discord = new DiscordHandler(config);
-        // eslint-disable-next-line no-await-in-loop
-        while (!discord.ready()) { await sleep(50); }
-        discord.sendProposalDiff(getLastSlash(proposalByUuid.discussionThreadURL), diff, pid);
-      }
-      res.json({ success: true, data: { hash } });
-    }).catch((e: any) => {
-      res.json({ success: false, error: e });
-    });
-  } else {
-    res.json({ success: false, error: 'not authorized to edit proposal' });
+  proposal.coauthors = proposalByUuid.coauthors ?? [];
+  if (!proposalByUuid.coauthors?.includes(signature.address)) {
+    proposal.coauthors.push(signature.address);
   }
+  logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
+  console.log(proposalByUuid);
+  dolt.editProposal(proposal).then(async (hash: string) => {
+    const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
+    dolt.actionDirector(proposal);
+    if (proposalByUuid.discussionThreadURL && diff) {
+      const discord = new DiscordHandler(config);
+      // eslint-disable-next-line no-await-in-loop
+      while (!discord.ready()) { await sleep(50); }
+      discord.sendProposalDiff(getLastSlash(proposalByUuid.discussionThreadURL), diff, pid);
+    }
+    res.json({ success: true, data: { hash } });
+  }).catch((e: any) => {
+    res.json({ success: false, error: JSON.stringify(e) });
+  });
 });
 
 // delete single proposal

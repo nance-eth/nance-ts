@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   title VARCHAR(500) NOT NULL,
   body MEDIUMTEXT NOT NULL,
   authorAddress CHAR(42),
+  coauthors JSON,
   authorDiscordId CHAR(18),
   category VARCHAR(64),
   proposalStatus VARCHAR(30) NOT NULL,

@@ -7,6 +7,7 @@ export type SQLProposal = {
   title: string;
   body: string;
   authorAddress: string;
+  coauthors: string[];
   authorDiscordId?: string;
   category: string;
   proposalStatus: string;

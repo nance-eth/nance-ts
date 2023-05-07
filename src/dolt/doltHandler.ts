@@ -73,6 +73,7 @@ export class DoltHandler {
       date: proposal.createdTime.toISOString(),
       governanceCycle: proposal.governanceCycle,
       authorAddress: proposal.authorAddress,
+      coauthors: proposal.coauthors,
       actions: proposal.actions ? JSON.parse(proposal.actions as unknown as string).flat() : undefined, // comes from db as stringified array of arrays
     };
     if (proposal.snapshotVotes) {
@@ -99,7 +100,8 @@ export class DoltHandler {
       proposalId: proposal.proposalId || undefined,
       discussionURL: proposal.discussionThreadURL || undefined,
       governanceCycle: proposal.governanceCycle || undefined,
-      authorAddress: proposal.authorAddress || undefined
+      authorAddress: proposal.authorAddress || undefined,
+      coauthors: JSON.stringify(proposal.coauthors) || undefined,
     };
     return omitBy(sqlProposal, isNil);
   }
@@ -258,6 +260,7 @@ export class DoltHandler {
   async editProposal(proposal: Partial<Proposal>) {
     const updates: string[] = [];
     const cleanedProposal = this.toSQLProposal(proposal);
+    cleanedProposal.lastEditedTime = new Date();
     Object.keys(cleanedProposal).forEach((key) => {
       updates.push(`${key} = ?`);
     });
@@ -443,7 +446,7 @@ export class DoltHandler {
 
   async getProposalsByGovernanceCycle(governanceCycle: string) {
     return this.queryProposals(`
-      SELECT * from ${proposalsTable}
+      SELECT *, HEX(${proposalsTable}.title) as title from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
     `);
   }
