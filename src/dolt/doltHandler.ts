@@ -5,7 +5,7 @@ import { omitBy, isNil } from 'lodash';
 import { Proposal, PropertyKeys, Transfer, Payout, CustomTransaction, Reserve } from '../types';
 import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
 import { DoltSQL } from './doltSQL';
-import { IPFS_GATEWAY, getLastSlash, uuidGen } from '../utils';
+import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
 import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
 
@@ -61,8 +61,8 @@ export class DoltHandler {
     const voteURL = proposal.snapshotId ?? '';
     const cleanProposal: Proposal = {
       hash: proposal.uuid,
-      title: Buffer.from(proposal.title, 'hex').toString('utf8'),
-      body: Buffer.from(proposal.body, 'hex').toString('utf8'),
+      title: isHexString(proposal.title) ? Buffer.from(proposal.title, 'hex').toString('utf8') : proposal.title,
+      body: isHexString(proposal.title) ? Buffer.from(proposal.body, 'hex').toString('utf8') : proposal.body,
       type: proposal.category,
       status: proposal.proposalStatus,
       proposalId: proposal.proposalId || null,
@@ -128,7 +128,11 @@ export class DoltHandler {
     return this.queryDbResults(`
       INSERT INTO ${governanceCyclesTable} (cycleNumber)
       SELECT COALESCE(MAX(cycleNumber) + 1, 1) FROM ${governanceCyclesTable}
-    `);
+    `).then((res) => {
+      return res.affectedRows === 1;
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
   }
 
   proposalIdNumber = (proposalId: string): number | null => {
@@ -261,7 +265,7 @@ export class DoltHandler {
       UPDATE ${proposalsTable} SET
       ${updates.join(',')} WHERE uuid = ?`,
     [...Object.values(cleanedProposal), cleanedProposal.uuid]);
-    return proposal.hash;
+    return proposal.hash || Promise.reject('Proposal hash not found');
   }
 
   async bulkEditPayouts(payouts: SQLPayout[]) {
@@ -439,17 +443,17 @@ export class DoltHandler {
 
   async getProposalsByGovernanceCycle(governanceCycle: string) {
     return this.queryProposals(`
-      ${SELECT_ACTIONS}
-      WHERE governanceCycle = ${Number(governanceCycle)}
+      SELECT * from ${proposalsTable}
+      WHERE governanceCycle = ${governanceCycle}
     `);
   }
 
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
     const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
-    ${SELECT_ACTIONS}
+    SELECT * from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
-      ( 
+      AND (
         LOWER(body) like LOWER('%${search}%')
         OR LOWER(title) like LOWER('%${search}%')
       )
@@ -460,7 +464,7 @@ export class DoltHandler {
   async getProposalsByKeyword(keyword: string) {
     const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
-      ${SELECT_ACTIONS}
+    SELECT * from ${proposalsTable}
       WHERE
       LOWER(body) like LOWER('%${search}%')
       OR LOWER(title) like LOWER('%${search}%')

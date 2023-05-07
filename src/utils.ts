@@ -171,3 +171,8 @@ export function mergeConfig(configOld: NanceConfig, configNew: Partial<NanceConf
 export function fetchTemplateCalendar() {
   return fs.readFileSync(`${path.join(__dirname, './config/template/template.ics')}`, 'utf-8');
 }
+
+export function isHexString(text: string) {
+  const hexRegex = /^[0-9a-fA-F]+$/;
+  return hexRegex.test(text);
+}

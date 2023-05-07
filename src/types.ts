@@ -143,7 +143,7 @@ export type PropertyKeys = {
 export interface NanceConfig {
   name: string;
   juicebox: {
-    network: 'mainnet' | 'rinkeby';
+    network: 'mainnet' | 'goerli';
     projectId: string;
     gnosisSafeAddress: string;
   };
