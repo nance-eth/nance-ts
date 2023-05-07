@@ -37,7 +37,7 @@ function isNotScheduled(jobName: string) {
 async function scheduleCycle() {
   const calendar = new CalendarHandler(getCalendar(config));
   const cycle = calendar.getNextEvents();
-  if (CalendarHandler.shouldSendDiscussion(cycle)) { nance.setDiscussionInterval(30); }
+  if (calendar.shouldSendDiscussion()) { nance.setDiscussionInterval(30); }
   const now = new Date();
   cycle.forEach((event) => {
     if (event.start <= now && event.end <= now) { return; }

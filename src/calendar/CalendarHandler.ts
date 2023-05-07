@@ -43,9 +43,10 @@ export class CalendarHandler {
     return sortedNextDates;
   }
 
-  static shouldSendDiscussion(nextEvents: DateEvent[]) {
-    const noEventsInProgress = nextEvents.filter((event) => { return CalendarHandler.inProgress(event); }).length === 0;
-    const executionOrDelayInProgress = nextEvents.filter((event) => {
+  shouldSendDiscussion() {
+    const events = this.getNextEvents();
+    const noEventsInProgress = events.filter((event) => { return CalendarHandler.inProgress(event); }).length === 0;
+    const executionOrDelayInProgress = events.filter((event) => {
       return event.title === 'Execution' || event.title === 'Delay Period';
     }).some((event) => {
       return CalendarHandler.inProgress(event);

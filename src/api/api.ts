@@ -22,14 +22,15 @@ const router = express.Router();
 const spacePrefix = '/:space';
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-type Locals = { space: string, config: NanceConfig, calendar: string, notion: NotionHandler, dolt: DoltHandler };
+type Locals = { space: string, config: NanceConfig, calendar: CalendarHandler, notion: NotionHandler, dolt: DoltHandler };
 
 router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
-    const { config, calendar } = await doltConfig(space);
+    const { config, calendarText } = await doltConfig(space);
     const notion = new NotionHandler(config);
     const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
+    const calendar = new CalendarHandler(calendarText);
     res.locals = { space, config, calendar, notion, dolt };
     next();
   } catch (e) {
@@ -43,8 +44,7 @@ router.use(spacePrefix, async (req, res, next) => {
 router.get(`${spacePrefix}`, async (_, res) => {
   const { dolt, space, calendar } = res.locals as Locals;
   try {
-    const calendarHandler = new CalendarHandler(calendar);
-    const currentEvent = calendarHandler.getCurrentEvent();
+    const currentEvent = calendar.getCurrentEvent();
     const currentCycle = await dolt.getCurrentGovernanceCycle();
     return res.send({ sucess: true, data: { name: space, currentCycle, currentEvent } });
   } catch (e) {
@@ -79,7 +79,7 @@ router.get(`${spacePrefix}/proposals`, async (req, res) => {
 router.post(`${spacePrefix}/proposals`, async (req, res) => {
   const { space } = req.params;
   const { proposal, signature } = req.body as ProposalUploadRequest;
-  const { config, notion, dolt } = res.locals as Locals;
+  const { config, calendar, notion, dolt } = res.locals as Locals;
   if (!proposal || !signature) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
   const { valid, typedValue } = checkSignature(signature, space, 'upload', proposal);
   if (!valid) {
@@ -100,18 +100,20 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
 
   dolt.addProposalToDb(proposal).then(async (hash: string) => {
     proposal.hash = hash;
-    dolt.addProposalToDb(proposal);
+    notion.addProposalToDb(proposal);
     dolt.actionDirector(proposal);
 
     // send discord message
-    const dialogHandler = new DiscordHandler(config);
-    // eslint-disable-next-line no-await-in-loop
-    while (!dialogHandler.ready()) { await sleep(50); }
-    dialogHandler.startDiscussion(proposal).then((discussionThreadURL) => {
-      dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
-      notion.updateDiscussionURL({ ...proposal, discussionThreadURL });
-      dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
-    });
+    if (calendar.shouldSendDiscussion()) {
+      const dialogHandler = new DiscordHandler(config);
+      // eslint-disable-next-line no-await-in-loop
+      while (!dialogHandler.ready()) { await sleep(50); }
+      dialogHandler.startDiscussion(proposal).then((discussionThreadURL) => {
+        dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+        notion.updateDiscussionURL({ ...proposal, discussionThreadURL });
+        dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+      });
+    }
     res.json({ success: true, data: { hash } });
   }).catch((e: any) => {
     res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
@@ -263,8 +265,7 @@ router.get(`${spacePrefix}/sync`, async (_, res) => {
 router.get(`${spacePrefix}/dolthub`, async (req, res) => {
   const { table } = req.query as { table: string | undefined };
   const { dolt, calendar } = res.locals as Locals;
-  const calendarHandler = new CalendarHandler(calendar);
-  const currentEvent = calendarHandler.getCurrentEvent();
+  const currentEvent = calendar.getCurrentEvent();
   dolt.checkAndPush(table, currentEvent?.title || '').then((data: string) => {
     return res.json({ success: true, data });
   }).catch((e: string) => {
