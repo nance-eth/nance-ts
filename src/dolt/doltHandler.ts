@@ -575,4 +575,12 @@ export class DoltHandler {
     }
     return Promise.reject('no changes');
   }
+
+  async getHead(): Promise<string> {
+    return this.queryDbResults(`SELECT @@${this.localDolt.options.database}_head as head`).then((res) => {
+      return (res as unknown as [{ head: string }])[0].head;
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
+  }
 }

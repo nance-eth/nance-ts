@@ -42,11 +42,22 @@ router.use(spacePrefix, async (req, res, next) => {
 // ======== info functions ======== //
 // ================================ //
 router.get(`${spacePrefix}`, async (_, res) => {
-  const { dolt, space, calendar } = res.locals as Locals;
+  const { dolt, space, calendar, config } = res.locals as Locals;
   try {
     const currentEvent = calendar.getCurrentEvent();
     const currentCycle = await dolt.getCurrentGovernanceCycle();
-    return res.send({ sucess: true, data: { name: space, currentCycle, currentEvent } });
+    const head = await dolt.getHead();
+    return res.send({
+      sucess: true,
+      data: {
+        name: space,
+        currentCycle,
+        currentEvent,
+        snapshotSpace: config.snapshot.space,
+        juiceboxProject: config.juicebox.projectId,
+        doltHead: head
+      }
+    });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
   }
