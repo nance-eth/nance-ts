@@ -17,6 +17,7 @@ import { SQLPayout, SQLTransfer } from '../dolt/schema';
 import { NanceConfig, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress } from './helpers/permissions';
+import { headToUrl } from '../dolt/doltAPI';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -54,8 +55,8 @@ router.get(`${spacePrefix}`, async (_, res) => {
         currentCycle,
         currentEvent,
         snapshotSpace: config.snapshot.space,
-        juiceboxProject: config.juicebox.projectId,
-        doltHead: head
+        juiceboxProjectId: config.juicebox.projectId,
+        dolthubLink: headToUrl(config.dolt.owner, config.dolt.repo, head),
       }
     });
   } catch (e) {

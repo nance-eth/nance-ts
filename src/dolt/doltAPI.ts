@@ -20,3 +20,7 @@ export async function createDolthubDB(repoName: string) {
     return res.data;
   }).catch((e) => { return Promise.reject(e.response.data); });
 }
+
+export function headToUrl(repoOwner: string, repoName: string, head: string) {
+  return `https://www.dolthub.com/repositories/${repoOwner}/${repoName}/compare/main/${head}`;
+}
