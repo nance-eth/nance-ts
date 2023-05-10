@@ -69,4 +69,11 @@ export class DoltSysHandler {
       return res[0] as unknown as SpaceConfig;
     }).catch((e) => { return Promise.reject(e); });
   }
+
+  async getAllSpaceNames(): Promise<SpaceConfig[]> {
+    return this.localDolt.queryRows(oneLine`
+      SELECT * FROM ${system}`).then((res) => {
+      return res as unknown as SpaceConfig[];
+    }).catch((e) => { return Promise.reject(e); });
+  }
 }

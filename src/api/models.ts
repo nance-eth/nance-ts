@@ -8,8 +8,16 @@ interface APIResponse<T> {
 }
 
 export type SpaceInfo = {
-  name: string,
-  currentCycle: string
+  name: string;
+  currentCycle: number;
+  currentEvent: {
+    title: string;
+    start: string;
+    end: string;
+  };
+  snapshotSpace: string;
+  juiceboxProjectId: string;
+  dolthubLink: string;
 };
 
 export type ProposalsQueryResponse = APIResponse<Proposal[]>;

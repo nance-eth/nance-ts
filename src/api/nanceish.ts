@@ -1,6 +1,9 @@
 import express from 'express';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
-import { createDolthubDB } from '../dolt/doltAPI';
+import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
+import { CalendarHandler } from '../calendar/CalendarHandler';
+import { DoltHandler } from '../dolt/doltHandler';
+import { dbOptions } from '../dolt/dbConfig';
 import { dotPin } from '../storage/storageHandler';
 import { checkSignature } from './helpers/signature';
 import { ConfigSpaceRequest } from './models';
@@ -19,6 +22,30 @@ router.get('/config/:space', async (req, res) => {
   dolt.getSpaceConfig(space).then((doltConfig) => {
     if (doltConfig) { res.json({ success: true, data: doltConfig }); return; }
     res.json({ success: false, error: `config ${space} not found!` });
+  }).catch((e) => {
+    res.json({ success: false, error: e });
+  });
+});
+
+router.get('/all', async (_, res) => {
+  const doltSys = new DoltSysHandler();
+  doltSys.getAllSpaceNames().then(async (data) => {
+    const infos = await Promise.all(data.map(async (entry) => {
+      const dolt = new DoltHandler(dbOptions(entry.config.dolt.repo), entry.config.propertyKeys);
+      const calendar = new CalendarHandler(entry.calendar);
+      const currentCycle = await dolt.getCurrentGovernanceCycle();
+      const currentEvent = calendar.getCurrentEvent();
+      const head = await dolt.getHead();
+      return {
+        name: entry.space,
+        currentCycle,
+        currentEvent,
+        snapshotSpace: entry.config.snapshot.space,
+        juiceboxProjectId: entry.config.juicebox.projectId,
+        dolthubLink: headToUrl(entry.config.dolt.owner, entry.config.dolt.repo, head),
+      };
+    }));
+    res.json({ success: true, data: infos });
   }).catch((e) => {
     res.json({ success: false, error: e });
   });
