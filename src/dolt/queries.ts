@@ -31,7 +31,8 @@ SELECT proposals.*, HEX(proposals.body) as body, HEX(proposals.title) as title,
             'contract', transfers.transferTokenAddress,
             'tokenName', transfers.transferTokenName,
             'to', transfers.transferAddress,
-            'amount', (CONCAT(transfers.transferAmount, REPEAT('0', transfers.transferDecimals)))
+            'amount', transfers.transferAmount,
+            'decimals', transfers.transferDecimals
           )
         )
       )

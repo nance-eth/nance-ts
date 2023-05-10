@@ -69,6 +69,7 @@ export type Transfer = {
   tokenName: string;
   to: string;
   amount: string;
+  decimals: number;
 };
 
 export type CustomTransaction = {
