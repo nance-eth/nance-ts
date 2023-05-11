@@ -183,12 +183,12 @@ export class Nance {
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
       const ipfsCID = await dotPin(proposalWithHeading);
-      proposal.ipfsURL = cidToLink(ipfsCID, IPFS_GATEWAY);
+      proposal.ipfsURL = ipfsCID;
       const markdownWithAdditions = this.proposalHandler.appendProposal(proposal);
       proposal.body = markdownWithAdditions;
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
-        addSecondsToDate(new Date(), -5),
+        addSecondsToDate(new Date(), -10),
         endDate,
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );

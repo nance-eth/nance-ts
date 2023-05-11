@@ -350,8 +350,8 @@ export class DoltHandler {
   async updateVotingSetup(proposal: Proposal) {
     const results = this.localDolt.db.query(`
       UPDATE ${proposalsTable} SET
-      title = ?, proposalStatus = ?, snapshotId = ? WHERE uuid = ?`,
-    [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.hash]);
+      title = ?, proposalStatus = ?, snapshotId = ?, ipfsCID = ? WHERE uuid = ?`,
+    [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.ipfsURL, proposal.hash]);
     return results;
   }
 
@@ -427,7 +427,7 @@ export class DoltHandler {
 
   async getVoteProposals(uploaded = false) {
     return this.queryProposals(`
-      SELECT * FROM ${proposalsTable} WHERE
+      SELECT *, HEX(body) as body, HEX(title) as title FROM ${proposalsTable} WHERE
       proposalStatus = 'Voting'
       AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
       AND snapshotId IS ${uploaded ? 'NOT ' : ''}NULL
@@ -539,7 +539,6 @@ export class DoltHandler {
     const results = await this.queryDb(`
       SELECT * from ${reservesTable}
       WHERE id = (SELECT MAX(id) from ${reservesTable})
-      AND reserveStatus = 'voting'
     `) as unknown as SQLReserve[];
     return results[0];
   }
