@@ -440,6 +440,7 @@ export class DoltHandler {
       ORDER BY proposalId DESC
       LIMIT 1
     `).then((res: any) => {
+      if (res.length === 0) return 1;
       return Number(res[0].proposalId) + 1;
     });
   }

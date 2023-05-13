@@ -29,7 +29,8 @@ router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
     const { config, calendarText } = await doltConfig(space);
-    const notion = new NotionHandler(config);
+    let notion;
+    if (config.notion) { notion = new NotionHandler(config); }
     const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     const calendar = new CalendarHandler(calendarText);
     res.locals = { space, config, calendar, notion, dolt };
@@ -106,13 +107,13 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
     const currentGovernanceCycle = await dolt.getCurrentGovernanceCycle();
     proposal.governanceCycle = currentGovernanceCycle + 1;
   }
-  if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
+  // if (proposal.payout?.type === 'project') proposal.payout.address = `V${proposal.version}:${proposal.payout.project}`;
   if (!proposal.authorAddress) { proposal.authorAddress = signature.address; }
-  if (!proposal.type) { proposal.type = 'Payout'; }
+  // if (!proposal.type) { proposal.type = 'Payout'; }
 
   dolt.addProposalToDb(proposal).then(async (hash: string) => {
     proposal.hash = hash;
-    notion.addProposalToDb(proposal);
+    if (notion) notion.addProposalToDb(proposal);
     dolt.actionDirector(proposal);
 
     // send discord message
@@ -124,6 +125,8 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
         dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
         notion.updateDiscussionURL({ ...proposal, discussionThreadURL });
         dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+      }).catch((e) => {
+        logger.error(`[DISCORD] ${e}`);
       });
     }
     res.json({ success: true, data: { hash } });
