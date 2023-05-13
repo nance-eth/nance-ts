@@ -8,7 +8,7 @@ const USER = 'root';
 const PASSWORD = '';
 const PORT = 3306;
 
-export const status = (res: any): number => {
+export const resStatus = (res: any): number => {
   return (<RowDataPacket>res[0])[0].status;
 };
 
@@ -40,7 +40,7 @@ export class DoltSQL {
 
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
     return this.db.query(`CALL DOLT_REMOTE('add', ?, ?)`, [remoteName, remote]).then((res) => {
-      return status(res) === 0;
+      return resStatus(res) === 0;
     });
   }
 
@@ -54,7 +54,7 @@ export class DoltSQL {
 
   async createBranch(newBranch: string, fromBranch = 'main') {
     return this.db.query(`CALL DOLT_BRANCH('${newBranch}', '${fromBranch}')`).then((res) => {
-      return status(res);
+      return resStatus(res);
     }).catch((e) => {
       return Promise.reject(e);
     });
@@ -62,7 +62,7 @@ export class DoltSQL {
 
   async deleteBranch(branch: string) {
     return this.db.query(`CALL DOLT_BRANCH('-d', '${branch}')`).then((res) => {
-      return status(res);
+      return resStatus(res);
     }).catch((e) => {
       return Promise.reject(e);
     });
@@ -111,7 +111,7 @@ export class DoltSQL {
 
   async merge(branch: string) {
     return this.db.query(`CALL DOLT_MERGE('${branch}')`).then((res) => {
-      return status(res);
+      return resStatus(res);
     }).catch((e) => {
       return Promise.reject(e);
     });
@@ -151,8 +151,8 @@ export class DoltSQL {
 
   async changes(table?: string): Promise<boolean> {
     return this.db.query(`SELECT status from dolt_status${(table) ? ' WHERE table_name = ?' : ''}`, [table]).then((res) => {
-      console.log(res);
-      return cleanSingleRes(res).status === 'modified';
+      const { status } = cleanSingleRes(res);
+      return status === 'modified' || status === 'new table';
     }).catch((e) => { return false; });
   }
 }
