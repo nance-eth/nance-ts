@@ -150,7 +150,6 @@ export class DoltSQL {
   }
 
   async changes(table?: string): Promise<boolean> {
-    console.log(`table: ${table}`);
     return this.db.query(`SELECT status from dolt_status${(table) ? ' WHERE table_name = ?' : ''}`, [table]).then((res) => {
       console.log(res);
       return cleanSingleRes(res).status === 'modified';
