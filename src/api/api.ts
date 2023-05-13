@@ -29,8 +29,8 @@ router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
     const { config, calendarText } = await doltConfig(space);
-    let notion;
-    if (config.notion) { notion = new NotionHandler(config); }
+    let notion = null;
+    if (config.notion?.enabled) { notion = new NotionHandler(config); }
     const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     const calendar = new CalendarHandler(calendarText);
     res.locals = { space, config, calendar, notion, dolt };
@@ -121,13 +121,14 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
       const dialogHandler = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!dialogHandler.ready()) { await sleep(50); }
-      dialogHandler.startDiscussion(proposal).then((discussionThreadURL) => {
+      try {
+        const discussionThreadURL = await dialogHandler.startDiscussion(proposal);
         dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
-        notion.updateDiscussionURL({ ...proposal, discussionThreadURL });
+        if (notion) notion.updateDiscussionURL({ ...proposal, discussionThreadURL });
         dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
-      }).catch((e) => {
+      } catch (e) {
         logger.error(`[DISCORD] ${e}`);
-      });
+      }
     }
     res.json({ success: true, data: { hash } });
   }).catch((e: any) => {
@@ -188,18 +189,27 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
 router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
   const { space, hash } = req.params;
   const { signature } = req.body as ProposalDeleteRequest;
-  const { dolt } = res.locals as Locals;
+  const { dolt, config } = res.locals as Locals;
   const { valid } = checkSignature(signature, space, 'delete', { hash });
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  const proposalByUuid = await dolt.getProposalByAnyId(hash);
-  if (signature.address === proposalByUuid.authorAddress || isNanceAddress(signature.address)) {
-    logger.info(`DELETE issued by ${signature.address}`);
-    dolt.deleteProposal(hash).then(async (affectedRows: number) => {
-      res.json({ success: true, data: { affectedRows } });
-    }).catch((e: any) => {
-      res.json({ success: false, error: e });
-    });
-  } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to delete proposal' }); }
+  dolt.getProposalByAnyId(hash).then(async (proposalByUuid: Proposal) => {
+    const permissions = (
+      signature.address === proposalByUuid.authorAddress
+      || await isMultisig(config.juicebox.gnosisSafeAddress, signature.address)
+      || isNanceAddress(signature.address)
+    );
+    if (permissions) {
+      logger.info(`DELETE issued by ${signature.address}`);
+      dolt.deleteProposal(hash).then(async (affectedRows: number) => {
+        res.json({ success: true, data: { affectedRows } });
+      }).catch((e: any) => {
+        res.json({ success: false, error: e });
+      });
+    } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to  proposal' }); }
+  }).catch((e) => {
+    console.log(e);
+    res.json({ success: false, error: 'proposal not found' });
+  });
 });
 
 // ==================================== //

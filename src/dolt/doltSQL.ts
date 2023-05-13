@@ -102,7 +102,7 @@ export class DoltSQL {
   }
 
   async push(branch?: string): Promise<boolean> {
-    return this.db.query(`CALL DOLT_PUSH(${(branch) ? 'origin, ?' : ''})`, [branch]).then((res) => {
+    return this.db.query(`CALL DOLT_PUSH(${(branch) ? 'origin, ?' : 'main'})`, [branch]).then((res) => {
       return cleanSingleRes(res).success === 1;
     }).catch((e) => {
       return Promise.reject(e);

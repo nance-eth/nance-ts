@@ -292,19 +292,17 @@ export class DoltHandler {
   }
 
   async deleteProposal(hash: string) {
-    const queryProposals = oneLine`
-      DELETE FROM ${proposalsTable}
-      WHERE uuid = '${hash}'
-    `;
-    return this.queryDbResults(queryProposals).then(async (res) => {
-      const queryPayouts = oneLine`
-        DELETE FROM ${payoutsTable}
-        WHERE uuidOfProposal = '${hash}'
-      `;
-      return this.queryDbResults(queryPayouts).then((payRes) => {
-        return (res.affectedRows + payRes.affectedRows);
-      }).catch((e) => { return Promise.reject(e); });
-    }).catch((e) => { return Promise.reject(e); });
+    try {
+      let affectedRows = 0;
+      affectedRows += (await this.queryDbResults(oneLine`DELETE FROM ${proposalsTable} WHERE uuid = '${hash}'`)).affectedRows;
+      affectedRows += (await this.queryDbResults(oneLine`DELETE FROM ${payoutsTable} WHERE uuidOfProposal = '${hash}'`)).affectedRows;
+      affectedRows += (await this.queryDbResults(oneLine`DELETE FROM ${transactionsTable} WHERE uuidOfProposal = '${hash}'`)).affectedRows;
+      affectedRows += (await this.queryDbResults(oneLine`DELETE FROM ${reservesTable} WHERE uuidOfProposal = '${hash}'`)).affectedRows;
+      affectedRows += (await this.queryDbResults(oneLine`DELETE FROM ${transfersTable} WHERE uuidOfProposal = '${hash}'`)).affectedRows;
+      return affectedRows;
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
   async updateStatus(hash: string, status: string) {
