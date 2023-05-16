@@ -285,7 +285,7 @@ export class NotionHandler implements DataContentHandler {
           },
           [this.config.propertyKeys.type]: {
             multi_select: [
-              { name: proposal.type }
+              { name: proposal.type || this.config.propertyKeys.typePayout }
             ]
           },
           [this.config.propertyKeys.governanceCycle]: {
