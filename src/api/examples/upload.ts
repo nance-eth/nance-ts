@@ -57,7 +57,8 @@ const PROPOSAL: Proposal = {
         contract: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
         tokenName: 'USDC',
         to: '0x25910143C255828F623786f46fe9A8941B7983bB',
-        amount: '1000000'
+        amount: '1000000',
+        decimals: 6
       }
     },
     {
