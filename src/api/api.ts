@@ -16,24 +16,24 @@ import { dbOptions } from '../dolt/dbConfig';
 import { SQLPayout, SQLTransfer } from '../dolt/schema';
 import { NanceConfig, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
-import { isMultisig, isNanceAddress } from './helpers/permissions';
+import { isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { headToUrl } from '../dolt/doltAPI';
 
 const router = express.Router();
 const spacePrefix = '/:space';
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-type Locals = { space: string, config: NanceConfig, calendar: CalendarHandler, notion: NotionHandler, dolt: DoltHandler };
+type Locals = { space: string, spaceOwners: string[], config: NanceConfig, calendar: CalendarHandler, notion: NotionHandler, dolt: DoltHandler };
 
 router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
   try {
-    const { config, calendarText } = await doltConfig(space);
+    const { config, calendarText, spaceOwners } = await doltConfig(space);
     let notion = null;
     if (config.notion?.enabled) { notion = new NotionHandler(config); }
     const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     const calendar = new CalendarHandler(calendarText);
-    res.locals = { space, config, calendar, notion, dolt };
+    res.locals = { space, spaceOwners, config, calendar, notion, dolt };
     next();
   } catch (e) {
     res.json({ success: false, error: `space ${space} not found!` });
@@ -161,7 +161,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
   const proposalByUuid = await dolt.getProposalByAnyId(pid);
-  if (proposalByUuid.status === 'Voting' || proposalByUuid.status === 'Approved') {
+  if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft') {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
   }
@@ -189,13 +189,18 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
 router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
   const { space, hash } = req.params;
   const { signature } = req.body as ProposalDeleteRequest;
-  const { dolt, config } = res.locals as Locals;
+  const { dolt, config, spaceOwners } = res.locals as Locals;
   const { valid } = checkSignature(signature, space, 'delete', { hash });
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
   dolt.getProposalByAnyId(hash).then(async (proposalByUuid: Proposal) => {
+    if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft') {
+      res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
+      return;
+    }
     const permissions = (
       signature.address === proposalByUuid.authorAddress
       || await isMultisig(config.juicebox.gnosisSafeAddress, signature.address)
+      || isNanceSpaceOwner(spaceOwners, signature.address)
       || isNanceAddress(signature.address)
     );
     if (permissions) {

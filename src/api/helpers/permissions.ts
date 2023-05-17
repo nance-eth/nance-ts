@@ -10,3 +10,7 @@ export const isMultisig = async (safeAddress: string, address: string) => {
 export const isNanceAddress = (address: string) => {
   return address.toLowerCase() === nanceAddress.toLowerCase();
 };
+
+export const isNanceSpaceOwner = (spaceOwners: string[], address: string) => {
+  return spaceOwners.includes(address);
+};

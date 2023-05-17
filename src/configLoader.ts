@@ -23,10 +23,10 @@ export async function cidConfig(query: string): Promise<{ config: NanceConfig, c
   });
 }
 
-export async function doltConfig(query: string): Promise<{ config: NanceConfig, calendarText: string }> {
+export async function doltConfig(query: string): Promise<{ config: NanceConfig, calendarText: string, spaceOwners: string[] }> {
   const dolt = new DoltSysHandler();
   return dolt.getSpaceConfig(query).then((res) => {
-    if (res) return { config: res.config, calendarText: res.calendar };
+    if (res) return { config: res.config, calendarText: res.calendar, spaceOwners: res.spaceOwners };
     // eslint-disable-next-line prefer-promise-reject-errors
     return Promise.reject('no config found');
   });
