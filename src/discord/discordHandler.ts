@@ -47,6 +47,7 @@ export class DiscordHandler {
   }
 
   logout() {
+    logger.info('logging out of discord');
     this.discord.destroy();
   }
 
@@ -263,7 +264,7 @@ export class DiscordHandler {
   }
 
   async sendProposalDiff(threadId: string, diffText: string, hash: string) {
-    const message = discordTemplates.proposalDiff(diffText, hash);
+    const message = discordTemplates.proposalDiff(this.config.name, diffText, hash);
     await this.getChannelById(threadId).send(message);
   }
 }

@@ -167,7 +167,7 @@ export class DoltHandler {
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
     proposal.status = proposal.status || 'Discussion';
     proposal.hash = proposal.hash || uuidGen();
-    proposal.proposalId = await this.getNextProposalId();
+    proposal.proposalId = (proposal.status === 'Discussion') ? await this.getNextProposalId() : null;
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, category, governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices)
@@ -261,6 +261,9 @@ export class DoltHandler {
     const updates: string[] = [];
     const cleanedProposal = this.toSQLProposal(proposal);
     cleanedProposal.lastEditedTime = new Date();
+    if (!cleanedProposal.proposalId && cleanedProposal.proposalStatus === 'Discussion') {
+      cleanedProposal.proposalId = await this.getNextProposalId();
+    }
     Object.keys(cleanedProposal).forEach((key) => {
       updates.push(`${key} = ?`);
     });
@@ -558,6 +561,7 @@ export class DoltHandler {
 
   async checkAndPush(table?: string, message = ''): Promise<string> {
     // call push in case we committed but push failed before
+    await this.localDolt.push();
     if (await this.localDolt.changes(table)) {
       const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
       return this.localDolt.commit(`GC${currentGovernanceCycle}-${message}`).then(async (res) => {
