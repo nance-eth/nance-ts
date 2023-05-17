@@ -9,3 +9,5 @@ dist/
 tmp/
 
 src/dolt/databases
+
+.sqlhistory
