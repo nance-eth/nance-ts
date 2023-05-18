@@ -71,7 +71,7 @@ router.get(`${spacePrefix}`, async (_, res) => {
 
 // query proposals
 router.get(`${spacePrefix}/proposals`, async (req, res) => {
-  const { cycle, keyword } = req.query as { cycle: string, keyword: string };
+  const { cycle, keyword, author } = req.query as { cycle: string, keyword: string, author: string };
   const { dolt } = res.locals as Locals;
   let data;
   try {
@@ -82,6 +82,7 @@ router.get(`${spacePrefix}/proposals`, async (req, res) => {
     if (!keyword && cycle) { data = await dolt.getProposalsByGovernanceCycle(cycle); }
     if (keyword && !cycle) { data = await dolt.getProposalsByKeyword(keyword); }
     if (keyword && cycle) { data = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
+    if (author) { data = await dolt.getProposalsByAuthorAddress(author); }
     return res.send({ success: true, data });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });

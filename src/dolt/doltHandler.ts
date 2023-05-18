@@ -508,6 +508,13 @@ export class DoltHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
+  async getProposalsByAuthorAddress(authorAddress: string) {
+    return this.queryProposals(oneLine`
+      SELECT *, HEX(body) as body, HEX(title) as title FROM ${proposalsTable} WHERE
+      authorAddress = ?
+    `, [authorAddress]);
+  }
+
   async getPayoutsDb(version: string): Promise<SQLPayout[]> {
     const treasuryVersion = Number(version.split('V')[1]);
     const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
