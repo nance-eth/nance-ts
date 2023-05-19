@@ -8,6 +8,7 @@ import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
 import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
+import { SnapshotProposal } from '../snapshot/snapshotHandler';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
@@ -170,9 +171,14 @@ export class DoltHandler {
     proposal.proposalId = (proposal.status === 'Discussion') ? await this.getNextProposalId() : null;
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
-      (uuid, createdTime, lastEditedTime, title, body, authorAddress, category, governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type, proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices)]);
+      (uuid, createdTime, lastEditedTime, title, body, authorAddress, category,
+        governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices,
+        snapshotVotes, snapshotId, voteAddressCount)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [proposal.hash, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type,
+      proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices),
+      JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes
+    ]);
     return proposal.hash;
   }
 

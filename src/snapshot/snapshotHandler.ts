@@ -2,9 +2,45 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
 import { Proposal, InternalVoteResults, SnapshotVoteOptions, NanceConfig } from '../types';
-import { dateToUnixTimeStamp, myProvider } from '../utils';
+import { dateToUnixTimeStamp, myProvider, uuidGen } from '../utils';
 
-// console.log = function noConsole() {};
+export type SnapshotProposal = {
+  id: string;
+  type: string;
+  start: string;
+  choices: string[];
+  votes: number[];
+  scores_total: number;
+  title?: string;
+  body?: string;
+  author?: string;
+  discussion?: string;
+  ipfsCID?: string;
+};
+
+const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
+  return {
+    hash: uuidGen(),
+    title: sProposal.title || 'Title Unknown',
+    body: sProposal.body || 'Body Unknown',
+    status: 'Voted',
+    authorAddress: sProposal.author,
+    proposalId: null,
+    createdTime: new Date(Number(sProposal.start) * 1000),
+    url: '',
+    discussionThreadURL: sProposal.discussion || '',
+    ipfsURL: sProposal.ipfsCID || '',
+    voteURL: sProposal.id,
+    voteSetup: {
+      type: sProposal.type,
+    },
+    voteResults: {
+      votes: sProposal.scores_total,
+      scores: sProposal.votes,
+      choices: sProposal.choices,
+    }
+  };
+};
 
 export class SnapshotHandler {
   private wallet;
@@ -83,7 +119,7 @@ export class SnapshotHandler {
     });
     return results;
   }
-  async getAllProposalsByScore(): Promise<any[]> {
+  async getAllProposalsByScore(forSync = false): Promise<Proposal[]> {
     const query = gql`
     {
       proposals (
@@ -94,14 +130,19 @@ export class SnapshotHandler {
       ) {
         id
         votes
+        type
+        start
+        choices
         scores
         scores_total
+        ${(forSync) ? 'title\nbody\nauthor\ndiscussion\nipfs' : ''}
       }
     }`;
     const gqlResults = await gqlRequest(`${this.hub}/graphql`, query);
-    const results = gqlResults.proposals.sort((a: any, b: any) => {
+    let results = gqlResults.proposals.sort((a: SnapshotProposal, b: SnapshotProposal) => {
       return b.scores_total - a.scores_total;
     });
+    results = (forSync) ? results.map((result: SnapshotProposal) => { return snapshotProposalToProposal(result); }) : results;
     return results;
   }
 }

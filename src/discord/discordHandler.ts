@@ -66,7 +66,7 @@ export class DiscordHandler {
   }
 
   async startDiscussion(proposal: Proposal): Promise<string> {
-    proposal.url = discordTemplates.juiceToolUrl(proposal);
+    proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
     const message = discordTemplates.startDiscussionMessage(proposal);
     const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
@@ -103,6 +103,7 @@ export class DiscordHandler {
   async sendVoteResultsRollup(proposals: Proposal[]) {
     const message = discordTemplates.voteResultsRollUpMessage(
       DEFAULT_DASHBOARD,
+      this.config.name,
       proposals
     );
     await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
@@ -203,7 +204,7 @@ export class DiscordHandler {
 
   async editDiscussionTitle(proposal: Proposal) {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-    proposal.url = discordTemplates.juiceToolUrl(proposal);
+    proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
     const message = discordTemplates.startDiscussionMessage(proposal);
     if (messageObj.embeds[0].title !== message.title || messageObj.embeds[0].url !== proposal.url) {
       messageObj.edit({ embeds: [message] });

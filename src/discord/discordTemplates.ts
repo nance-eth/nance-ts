@@ -9,8 +9,8 @@ import { dateToUnixTimeStamp, limitLength, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
-export const juiceToolUrl = (proposal: Proposal) => {
-  return `https://jbdao.org/p/${proposal.proposalId || proposal.hash}`;
+export const getProposalURL = (space: string, proposal: Proposal) => {
+  return `https://nance.app/s/${space}/${proposal.proposalId || proposal.hash}`;
 };
 
 export const startDiscussionMessage = (proposal: Proposal) => {
@@ -22,7 +22,7 @@ export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposal
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(`${String(proposals.length)} proposals`).addFields(
     proposals.map((proposal: Proposal) => {
-      proposal.url = juiceToolUrl(proposal);
+      proposal.url = getProposalURL(space, proposal);
       const proposalLinks = (proposal.translationURL)
         ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
         : `[proposal](${proposal.url})`;
@@ -42,7 +42,7 @@ export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, pro
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
-        proposal.url = juiceToolUrl(proposal);
+        proposal.url = getProposalURL(space, proposal);
         return {
           name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
@@ -53,7 +53,7 @@ export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, pro
     );
 };
 
-export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => {
+export const voteResultsRollUpMessage = (url: string, space: string, proposals: Proposal[]) => {
   return new MessageEmbed().setColor('#2772af').setTitle(
     'Voting has ended. Thanks for participating!'
   ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
@@ -63,7 +63,7 @@ export const voteResultsRollUpMessage = (url: string, proposals: Proposal[]) => 
           const [[yesWord, yesVal], [noWord, noVal]] = Object.entries(
             proposal.internalVoteResults?.scores ?? {}
           );
-          const proposalURL = `${url}/p/${proposal.proposalId}`;
+          const proposalURL = getProposalURL(space, proposal);
           return {
             name: `*${proposal.proposalId}*: ${proposal.title}`,
             value: stripIndents`
