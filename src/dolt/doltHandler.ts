@@ -450,6 +450,7 @@ export class DoltHandler {
     return this.queryProposals(`
       SELECT *, HEX(${proposalsTable}.title) as title from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
+      ORDER BY proposalId ASC
     `);
   }
 
@@ -462,7 +463,7 @@ export class DoltHandler {
         LOWER(body) like LOWER('%${search}%')
         OR LOWER(title) like LOWER('%${search}%')
       )
-      ORDER BY createdTime DESC
+      ORDER BY proposalId ASC
     `);
   }
 
