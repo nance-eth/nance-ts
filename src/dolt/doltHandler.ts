@@ -261,9 +261,6 @@ export class DoltHandler {
     const updates: string[] = [];
     const cleanedProposal = this.toSQLProposal(proposal);
     cleanedProposal.lastEditedTime = new Date();
-    if (!cleanedProposal.proposalId && cleanedProposal.proposalStatus === 'Discussion') {
-      cleanedProposal.proposalId = await this.getNextProposalId();
-    }
     Object.keys(cleanedProposal).forEach((key) => {
       updates.push(`${key} = ?`);
     });

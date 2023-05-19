@@ -168,6 +168,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   if (!proposalByUuid.coauthors?.includes(signature.address) && signature.address !== proposalByUuid.authorAddress) {
     proposal.coauthors.push(signature.address);
   }
+  proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === 'Discussion') ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
   logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
   dolt.editProposal(proposal).then(async (hash: string) => {
     const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
