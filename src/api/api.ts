@@ -160,7 +160,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { valid } = checkSignature(signature, space, 'edit', proposal);
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
   const proposalByUuid = await dolt.getProposalByAnyId(pid);
-  if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft') {
+  if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft' && proposalByUuid.status !== 'Temperature Check') {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
   }
