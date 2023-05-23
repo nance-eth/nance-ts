@@ -147,7 +147,7 @@ export class DoltHandler {
     const governanceCycle = proposal.governanceCycle || await this.getCurrentGovernanceCycle();
     proposal.actions?.forEach((action) => {
       if (action.type === 'Payout') {
-        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle, action.uuid);
+        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid);
       } else if (action.type === 'Transfer') {
         this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid);
       } else if (action.type === 'Reserve') {
@@ -182,12 +182,8 @@ export class DoltHandler {
     return proposal.hash;
   }
 
-  async addPayoutToDb(payout: Payout, uuidOfProposal: string, governanceCycle: number, uuid?: string) {
+  async addPayoutToDb(payout: Payout, uuidOfProposal: string, governanceCycle: number, payName: string, uuid?: string) {
     const treasuryVersion = DEFAULT_TREASURY_VERSION;
-    let payAddress: string | null = payout.address ?? '';
-    let payProject;
-    if (payAddress?.includes('V')) { [, payProject] = payAddress.split(':'); payAddress = null; }
-    const payName = payout.payName || '';
     const governanceStart = governanceCycle;
     const numberOfPayouts = payout.count;
     const amount = payout.amountUSD;
@@ -200,7 +196,7 @@ export class DoltHandler {
       VALUES(?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
       governanceCycleStart = VALUES(governanceCycleStart), numberOfPayouts = VALUES(numberOfPayouts), amount = VALUES(amount), currency = VALUES(currency),
       payAddress = VALUES(payAddress), payProject = VALUES(payProject), payStatus = VALUES(payStatus), payName = VALUES(payName)`,
-    [uuid || uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName]);
+    [uuid || uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payout.address, payout.project, payStatus, payName]);
   }
 
   async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, uuid?: string, transferCount = 1) {
