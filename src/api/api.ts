@@ -4,7 +4,7 @@ import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
 import { doltConfig } from '../configLoader';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest, EditPayoutsRequest } from './models';
+import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest, EditPayoutsRequest, ProposalsPacket } from './models';
 import { checkSignature } from './helpers/signature';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
@@ -72,17 +72,17 @@ router.get(`${spacePrefix}`, async (_, res) => {
 // query proposals
 router.get(`${spacePrefix}/proposals`, async (req, res) => {
   const { cycle, keyword, author } = req.query as { cycle: string, keyword: string, author: string };
-  const { dolt } = res.locals as Locals;
-  let data;
+  const { dolt, config } = res.locals as Locals;
+  const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [] };
   try {
     if (!keyword && !cycle) {
       const cycleSearch = cycle || (await dolt.getCurrentGovernanceCycle()).toString();
-      data = await dolt.getProposalsByGovernanceCycle(cycleSearch);
+      data.proposals = await dolt.getProposalsByGovernanceCycle(cycleSearch);
     }
-    if (!keyword && cycle) { data = await dolt.getProposalsByGovernanceCycle(cycle); }
-    if (keyword && !cycle) { data = await dolt.getProposalsByKeyword(keyword); }
-    if (keyword && cycle) { data = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
-    if (author) { data = await dolt.getProposalsByAuthorAddress(author); }
+    if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle); }
+    if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword); }
+    if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
+    if (author) { data.proposals = await dolt.getProposalsByAuthorAddress(author); }
     return res.send({ success: true, data });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });

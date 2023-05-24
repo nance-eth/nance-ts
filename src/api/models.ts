@@ -20,7 +20,14 @@ export type SpaceInfo = {
   dolthubLink: string;
 };
 
-export type ProposalsQueryResponse = APIResponse<Proposal[]>;
+type ProposalInfo = {
+  proposalIdPrefix: string;
+  minTokenPassingAmount: number;
+};
+
+export type ProposalsPacket = { proposalInfo: ProposalInfo, proposals: Proposal[] };
+
+export type ProposalsQueryResponse = APIResponse<ProposalsPacket>;
 
 export type ProposalMarkdownResponse = APIResponse<Proposal>;
 
