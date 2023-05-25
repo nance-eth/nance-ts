@@ -2,11 +2,13 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
 import { BasicTransaction } from '../types';
+import { keys } from '../keys';
 
 // docs: https://docs-api.tenderly.co, https://docs.tenderly.co/simulations-and-forks/simulation-api
 const BASE_API = 'https://api.tenderly.co/api/v1';
+const DASHBOARD = 'https://dashboard.tenderly.co';
 
-export type TenderlyConfig = { account: string, project: string, key: string };
+export type TenderlyConfig = { account: string, project: string };
 
 export class TenderlyHandler {
   private provider!: ethers.providers.JsonRpcProvider;
@@ -20,7 +22,7 @@ export class TenderlyHandler {
   ) {
     this.config = config;
     this.API = `${BASE_API}/account/${config.account}/project/${config.project}`;
-    this.headers = { 'X-Access-Key': config.key };
+    this.headers = { 'X-Access-Key': keys.TENDERLY_KEY };
   }
 
   getForkURL() {
@@ -44,7 +46,7 @@ export class TenderlyHandler {
     await this.provider.send('evm_increaseTime', [time]);
   }
 
-  async sendTransaction(txn: BasicTransaction, from: string) {
+  async sendTransaction(txn: BasicTransaction, from: string): Promise<string> {
     const params = [{
       to: txn.address,
       from,
@@ -53,27 +55,29 @@ export class TenderlyHandler {
       gasPrice: ethers.utils.hexValue(1),
       value: ethers.utils.hexValue(0)
     }];
-    await this.provider.send('eth_sendTransaction', params);
+    try {
+      const hash = await this.provider.send('eth_sendTransaction', params); // returns transaction hash
+      const res = await this.provider.send('eth_getTransactionReceipt', [hash]); // returns transaction receipt
+      return res;
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  async simulate(txn: BasicTransaction, from: string): Promise<any> {
+    const data = {
+      network_id: '1',
+      save: true,
+      save_if_fails: true,
+      from,
+      to: txn.address,
+      input: txn.bytes,
+    };
+    return axios({ method: 'POST', headers: this.headers, url: `${this.API}/simulate`, data }).then(async (res) => {
+      return {
+        simulationResults: res.data.transaction.status,
+        url: `${DASHBOARD}/${this.config.account}/${this.config.project}/simulator/${res.data.simulation.id}`
+      };
+    });
   }
 }
-
-// export async function simulateTxn(from: string, to: string, input: string) {
-//   const data = {
-//     network_id: '1',
-//     from,
-//     to,
-//     input,
-//     gas: 8000000,
-//     gas_price: '0',
-//     value: 0,
-//     save_if_fails: true,
-//     save: true,
-//     simulation_type: 'quick'
-//   };
-//   return axios({
-//     method: 'post',
-//     headers: this.headers,
-//     url: `${this.API}/simulate`,
-//     data
-//   });
-// }

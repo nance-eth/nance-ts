@@ -96,6 +96,6 @@ export type SQLCustomTransaction = {
   transactionAddress: string;
   transactionValue: string;
   transactionFunctionName: string;
-  transactionFunctionArgs: string;
+  transactionFunctionArgs: any;
   transactionStatus: string;
 };

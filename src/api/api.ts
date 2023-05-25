@@ -18,6 +18,8 @@ import { NanceConfig, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { headToUrl } from '../dolt/doltAPI';
+import { encodeCustomTransaction } from '../transactions/transactionHandler';
+import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 
 const router = express.Router();
 const spacePrefix = '/:space';
@@ -359,6 +361,36 @@ router.get(`${spacePrefix}/transfers`, async (_, res) => {
   dolt.getTransfersDb().then((data: SQLTransfer[]) => {
     res.json({ success: true, data });
   }).catch((e: any) => {
+    res.json({ success: false, error: e });
+  });
+});
+
+// tenderly fork simulation
+router.get(`${spacePrefix}/fork/simulate/:uuid`, async (req, res) => {
+  const { uuid } = req.params;
+  const { dolt, config } = res.locals as Locals;
+  const transaction = await dolt.getTransactionByUuid(uuid);
+  const encodeFunctionData = await encodeCustomTransaction(transaction);
+  const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
+  await tenderly.getForkProvider(transaction.transactionName);
+  tenderly.sendTransaction(encodeFunctionData, config.juicebox.gnosisSafeAddress).then((data) => {
+    res.json({ success: true, data });
+  }).catch((e) => {
+    res.json({ success: false, error: e });
+  });
+});
+
+// tenderly simulation of custom transactions
+router.get(`${spacePrefix}/simulate/:uuid`, async (req, res) => {
+  const { uuid } = req.params;
+  const { dolt, config } = res.locals as Locals;
+  const txn = await dolt.getTransactionByUuid(uuid);
+  if (!txn) { res.json({ success: false, error: 'no transaction found' }); return; }
+  const encodeFunctionData = await encodeCustomTransaction(txn);
+  const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
+  tenderly.simulate(encodeFunctionData, config.juicebox.gnosisSafeAddress).then((data) => {
+    res.json({ success: true, data });
+  }).catch((e) => {
     res.json({ success: false, error: e });
   });
 });

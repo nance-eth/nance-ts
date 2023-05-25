@@ -3,12 +3,11 @@
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
 import { Proposal, PropertyKeys, Transfer, Payout, CustomTransaction, Reserve } from '../types';
-import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer } from './schema';
+import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
 import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
-import { SnapshotProposal } from '../snapshot/snapshotHandler';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
@@ -560,6 +559,22 @@ export class DoltHandler {
       transferGovernanceCycle + transferCount >= ${currentGovernanceCycle + 1}
     `) as unknown as SQLTransfer[];
     return results;
+  }
+
+  async getTransactionsByProposalUuid(uuid: string) {
+    const results = await this.queryDbResults(`
+      SELECT * from ${transactionsTable} WHERE
+      uuidOfProposal = ?
+    `, [uuid]) as unknown as SQLCustomTransaction[];
+    return results;
+  }
+
+  async getTransactionByUuid(uuid: string) {
+    const results = await this.queryDbResults(`
+      SELECT * from ${transactionsTable} WHERE
+      uuidOfTransaction = ?
+    `, [uuid]) as unknown as SQLCustomTransaction[];
+    return results[0];
   }
 
   // ===================================== //
