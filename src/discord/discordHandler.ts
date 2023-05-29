@@ -141,7 +141,7 @@ export class DiscordHandler {
         return null;
       })
     );
-    const { message, attachments } = discordTemplates.dailyImageReminder(day, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
+    const { message, attachments } = discordTemplates.dailyImageReminder(this.config.name, day, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {
         return channel.send({ embeds: [message], files: attachments });

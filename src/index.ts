@@ -8,26 +8,27 @@ import {
 import { Nance } from './nance';
 import { NanceTreasury } from './treasury';
 import logger from './logging';
-import { getConfig, getCalendar } from './configLoader';
+import { getConfig, getCalendar, doltConfig } from './configLoader';
 import { CalendarHandler } from './calendar/CalendarHandler';
 import { NanceConfig } from './types';
 
 let nance: Nance;
 let treasury: NanceTreasury;
 let config: NanceConfig;
+let calendarText: string;
 
 const PADDING_VOTE_START_SECONDS = 30;
 const PADDING_VOTE_COUNT_SECONDS = 120;
 const ONE_HOUR_SECONDS = 1 * 60 * 60;
 
 async function setup() {
-  config = await getConfig();
+  ({ config, calendarText } = await doltConfig(process.env.CONFIG || ''));
   nance = new Nance(config);
   treasury = new NanceTreasury(config, nance.dProposalHandler, myProvider('mainnet'));
 }
 
 async function getReminderImages() {
-  downloadImages(config.discord.reminder.imagesCID, config.discord.reminder.imageNames);
+  downloadImages(config.name, config.discord.reminder.imagesCID, config.discord.reminder.imageNames);
 }
 
 function isNotScheduled(jobName: string) {
@@ -35,9 +36,8 @@ function isNotScheduled(jobName: string) {
 }
 
 async function scheduleCycle() {
-  const calendar = new CalendarHandler(getCalendar(config));
+  const calendar = new CalendarHandler(calendarText);
   const cycle = calendar.getNextEvents();
-  if (calendar.shouldSendDiscussion()) { nance.setDiscussionInterval(30); }
   const now = new Date();
   cycle.forEach((event) => {
     if (event.start <= now && event.end <= now) { return; }
@@ -104,7 +104,6 @@ async function scheduleCycle() {
       if (isNotScheduled('voteClose')) {
         schedule.scheduleJob('voteClose', addSecondsToDate(event.end, PADDING_VOTE_COUNT_SECONDS), () => {
           nance.votingClose();
-          nance.setDiscussionInterval(30);
         });
       }
     }

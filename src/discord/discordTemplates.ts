@@ -114,8 +114,8 @@ export const threadToURL = (thread: ThreadChannel) => {
   return `https://discord.com/channels/${thread.guildId}/${thread.parentId}/${thread.id}`;
 };
 
-export const dailyImageReminder = (day: string, governanceCycle: string, type: string, contentLink: string, processLink: string) => {
-  const baseDir = './src/tmp';
+export const dailyImageReminder = (space: string, day: string, governanceCycle: string, type: string, contentLink: string, processLink: string) => {
+  const baseDir = `./src/tmp/${space}`;
   const thumbnail = new MessageAttachment(`${baseDir}/day${day}/thumbnail.png`, 'thumbnail.png');
   const image = new MessageAttachment(`${baseDir}/day${day}/${day}.png`, 'image.png');
   const preamble = () => {

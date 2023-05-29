@@ -117,8 +117,8 @@ export function omitKey(object: object, key: string) {
   return newObject;
 }
 
-export async function downloadImages(baseURL: string, images: string[]) {
-  const baseDir = './src/tmp';
+export async function downloadImages(space: string, baseURL: string, images: string[]) {
+  const baseDir = `./src/tmp/${space}`;
   if (!fs.existsSync(`${baseDir}`)) {
     fs.mkdirSync(`${baseDir}`);
   }

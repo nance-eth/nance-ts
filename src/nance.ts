@@ -5,9 +5,7 @@ import { keys } from './keys';
 import {
   getLastSlash as getIdFromURL,
   floatToPercentage,
-  cidToLink,
   addSecondsToDate,
-  IPFS_GATEWAY,
 } from './utils';
 import logger from './logging';
 import { NanceConfig, Proposal, InternalVoteResults } from './types';
@@ -26,7 +24,7 @@ export class Nance {
   constructor(
     public config: NanceConfig
   ) {
-    this.proposalHandler = new NotionHandler(config);
+    if (config.notion) this.proposalHandler = new NotionHandler(config);
     this.dialogHandler = new DiscordHandler(config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, this.config);
     this.dProposalHandler = new DoltHandler(
@@ -38,23 +36,18 @@ export class Nance {
     });
   }
 
-  async setDiscussionInterval(seconds: number) {
-    this.discussionInterval = setInterval(this.queryAndSendDiscussions.bind(this), seconds * 1000);
-    logger.info(`${this.config.name}: setDiscussionInterval(${seconds})`);
-  }
-
   async clearDiscussionInterval() {
     clearInterval(this.discussionInterval);
     logger.info(`${this.config.name}: clearDiscussionInterval()`);
   }
 
   async sendImageReminder(day: string, type: string) {
-    const governanceCycle = await this.proposalHandler.getCurrentGovernanceCycle();
+    const governanceCycle = await this.dProposalHandler.getCurrentGovernanceCycle();
     this.dialogHandler.sendImageReminder(day, governanceCycle.toString(), type);
   }
 
   async incrementGovernanceCycle(governanceCycle: GovernanceCycle) {
-    this.proposalHandler.incrementGovernanceCycle();
+    if (this.proposalHandler) this.proposalHandler.incrementGovernanceCycle();
     this.dProposalHandler.addGovernanceCycleToDb(governanceCycle);
   }
 
@@ -98,31 +91,11 @@ export class Nance {
     });
   }
 
-  async queryAndSendDiscussions() {
-    return this.proposalHandler.getToDiscuss(true).then((proposalsToDiscuss) => {
-      return Promise.all(proposalsToDiscuss.map(async (proposal) => {
-        proposal.discussionThreadURL = await this.dialogHandler.startDiscussion(proposal);
-        const threadId = getIdFromURL(proposal.discussionThreadURL);
-        await this.dialogHandler.setupPoll(threadId);
-        this.proposalHandler.updateDiscussionURL(proposal);
-        proposal.body = (await this.proposalHandler.getContentMarkdown(proposal.hash)).body;
-        try {
-          await this.dProposalHandler.addProposalToDb(proposal);
-        } catch (e) { logger.error(`dDB: ${e}`); }
-        logger.debug(`${this.config.name}: new proposal ${proposal.title}, ${proposal.url}`);
-        return proposal.discussionThreadURL;
-      }));
-    }).catch(() => {
-      logger.error(`${this.config.name}: queryAndSendDiscussions() issue`);
-      return [];
-    });
-  }
-
   async editTitles(status: string, rollupMessageId?: string) {
     let proposals: Proposal[] = [];
-    if (status === 'discussion') { proposals = await this.proposalHandler.getDiscussionProposals(); }
-    if (status === 'temperatureCheck') { proposals = await this.proposalHandler.getTemperatureCheckProposals(); }
-    if (status === 'vote') { proposals = await this.proposalHandler.getVoteProposals(); }
+    if (status === 'discussion') { proposals = await this.dProposalHandler.getDiscussionProposals(); }
+    if (status === 'temperatureCheck') { proposals = await this.dProposalHandler.getTemperatureCheckProposals(); }
+    if (status === 'vote') { proposals = await this.dProposalHandler.getVoteProposals(); }
     proposals.forEach((proposal) => {
       this.dialogHandler.editDiscussionTitle(proposal);
     });
@@ -137,8 +110,8 @@ export class Nance {
     console.log(discussionProposals);
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       proposal.status = this.config.propertyKeys.statusTemperatureCheck;
-      await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
-      try { await this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(proposal); } catch (e) { logger.error(`dDB: ${e}`); }
+      await this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
+      if (this.proposalHandler) await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
       this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
       logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
@@ -165,8 +138,11 @@ export class Nance {
         this.dialogHandler.sendPollResults(pollResults, pass, threadId);
       }
       this.dialogHandler.sendPollResultsEmoji(pass, threadId);
-      if (pass) await this.proposalHandler.updateStatusVoting(proposal.hash);
-      else await this.proposalHandler.updateStatusCancelled(proposal.hash);
+      if (pass) {
+        if (this.proposalHandler) await this.proposalHandler.updateStatusVoting(proposal.hash);
+      } else if (!pass) {
+        if (this.proposalHandler) await this.proposalHandler.updateStatusCancelled(proposal.hash);
+      }
       try { await this.dProposalHandler.updateTemperatureCheckClose(proposal); } catch (e) { logger.error(`dDB: ${e}`); }
     })).then(() => {
       logger.info(`${this.config.name}: temperatureCheckClose() complete`);
@@ -184,15 +160,13 @@ export class Nance {
       const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
       const ipfsCID = await dotPin(proposalWithHeading);
       proposal.ipfsURL = ipfsCID;
-      const markdownWithAdditions = this.proposalHandler.appendProposal(proposal);
-      proposal.body = markdownWithAdditions;
       proposal.voteURL = await this.votingHandler.createProposal(
         proposal,
         addSecondsToDate(new Date(), -10),
         endDate,
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
-      await this.proposalHandler.updateVoteAndIPFS(proposal);
+      if (this.proposalHandler) await this.proposalHandler.updateVoteAndIPFS(proposal);
       try { await this.dProposalHandler.updateVotingSetup(proposal); } catch (e) { logger.error(`dDB: ${e}`); }
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
     })).then(() => {
@@ -228,11 +202,11 @@ export class Nance {
         if (this.votePassCheck(proposalMatch.internalVoteResults)) {
           proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[0]]);
           proposalMatch.internalVoteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
-          proposalMatch.status = await this.proposalHandler.updateStatusApproved(proposalHash);
+          proposalMatch.status = (this.proposalHandler) ? await this.proposalHandler.updateStatusApproved(proposalHash) : this.config.propertyKeys.statusApproved;
         } else {
           proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[1]]);
           proposalMatch.internalVoteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
-          proposalMatch.status = await this.proposalHandler.updateStatusCancelled(proposalHash);
+          proposalMatch.status = (this.proposalHandler) ? await this.proposalHandler.updateStatusCancelled(proposalHash) : this.config.propertyKeys.statusCancelled;
         }
         try { await this.dProposalHandler.updateVotingClose(proposalMatch); } catch (e) { logger.error(`dDB: ${e}`); }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
@@ -245,14 +219,5 @@ export class Nance {
       logger.error(`${this.config.name}: votingClose() error:`);
       logger.error(e);
     });
-  }
-
-  async syncProposalHandlers() {
-    const currentGovernanceCycle = await this.proposalHandler.getCurrentGovernanceCycle();
-    const proposals = await this.proposalHandler.getProposalsByGovernanceCycle(currentGovernanceCycle.toString());
-    Promise.all(proposals.map(async (proposal) => {
-      proposal = await this.proposalHandler.getContentMarkdown(proposal.hash);
-      this.dProposalHandler.editProposal(proposal);
-    })).catch((e) => { return Promise.reject(e); });
   }
 }
