@@ -13,7 +13,7 @@
     "test:gov": "export CONFIG='waterbox' && ts-node src/scripts/createCalendar.ts && ts-node src/index.ts",
     "start:api": "export CONSOLE_LOG=on && node ./dist/api/index.js",
     "dev:api": "export CONSOLE_LOG=on && export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
-    "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 && cp -r ./src/config/ ./dist/config/",
+    "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 && cp -r ./src/config/ ./dist/config/ && cp -r ./src/transactions/abi ./dist/transactions/abi",
     "dolt-client": "source .env && dolt sql-client -H$DOLT_HOST -P$DOLT_PORT -u$DOLT_USER -p$DOLT_PASSWORD",
     "dolt-superclient": "source .env && dolt sql-client -H$DOLT_HOST -P$DOLT_PORT -u$DOLT_SUPERUSER -p$DOLT_SUPERPASSWORD"
   },
