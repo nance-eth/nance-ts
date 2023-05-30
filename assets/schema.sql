@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS customTransactions (
   transactionValue VARCHAR(255),
   transactionFunctionName VARCHAR(255),
   transactionFunctionArgs JSON,
+  transactionFunctionFragment JSON,
   transactionStatus VARCHAR(35),
   PRIMARY KEY (uuidOfTransaction)
 );

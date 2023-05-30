@@ -1,4 +1,5 @@
 import express from 'express';
+import fs from 'fs';
 import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
@@ -18,7 +19,7 @@ import { NanceConfig, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { headToUrl } from '../dolt/doltAPI';
-import { encodeCustomTransaction } from '../transactions/transactionHandler';
+import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 
 const router = express.Router();
@@ -298,17 +299,6 @@ router.get(`${spacePrefix}/editTitles/:status`, async (req, res) => {
   });
 });
 
-// sync notion to dolt
-router.get(`${spacePrefix}/sync`, async (_, res) => {
-  const { config } = res.locals as Locals;
-  const nance = new Nance(config);
-  await nance.syncProposalHandlers().then(() => {
-    res.json({ success: true });
-  }).catch((e) => {
-    res.json({ success: false, error: e });
-  });
-});
-
 // check for changes to db, push to dolt if true
 router.get(`${spacePrefix}/dolthub`, async (req, res) => {
   const { table } = req.query as { table: string | undefined };
@@ -366,30 +356,32 @@ router.get(`${spacePrefix}/transfers`, async (_, res) => {
 });
 
 // tenderly fork simulation
-router.get(`${spacePrefix}/fork/simulate/:uuid`, async (req, res) => {
-  const { uuid } = req.params;
-  const { dolt, config } = res.locals as Locals;
-  const transaction = await dolt.getTransactionByUuid(uuid);
-  const encodeFunctionData = await encodeCustomTransaction(transaction);
-  const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
-  await tenderly.getForkProvider(transaction.transactionName);
-  tenderly.sendTransaction(encodeFunctionData, config.juicebox.gnosisSafeAddress).then((data) => {
-    res.json({ success: true, data });
-  }).catch((e) => {
-    res.json({ success: false, error: e });
-  });
-});
+// router.get(`${spacePrefix}/fork/simulate/:uuid`, async (req, res) => {
+//   const { uuid } = req.params;
+//   const { dolt, config } = res.locals as Locals;
+//   const transaction = await dolt.getTransactionsByUuid(uuid);
+//   const encodeFunctionData = await encodeCustomTransaction(transaction);
+//   const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
+//   await tenderly.getForkProvider(transaction.transactionName);
+//   tenderly.sendTransaction(encodeFunctionData, config.juicebox.gnosisSafeAddress).then((data) => {
+//     res.json({ success: true, data });
+//   }).catch((e) => {
+//     res.json({ success: false, error: e });
+//   });
+// });
 
-// tenderly simulation of custom transactions
-router.get(`${spacePrefix}/simulate/:uuid`, async (req, res) => {
-  const { uuid } = req.params;
+// tenderly simulation of multiple transactions, encoded using gnosis MultiCall
+// pass in comma separated uuids of transactions to simulate as a query ex: ?uuids=uuid1,uuid2,uuid3...
+router.get(`${spacePrefix}/simulate/multicall`, async (req, res) => {
+  const { uuids } = req.query as { uuids: string };
   const { dolt, config } = res.locals as Locals;
-  const txn = await dolt.getTransactionByUuid(uuid);
-  if (!txn) { res.json({ success: false, error: 'no transaction found' }); return; }
-  const encodeFunctionData = await encodeCustomTransaction(txn);
+  const txn = await dolt.getTransactionsByUuids(uuids.split(','));
+  if (!txn || txn.length === 0) { res.json({ success: false, error: 'no transaction found' }); return; }
+  const signer = (await GnosisHandler.getSigners(config.juicebox.gnosisSafeAddress))[0]; // get the first signer to encode MultiCall
+  const encodedTransactions = await encodeGnosisMulticall(txn, signer);
   const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
-  tenderly.simulate(encodeFunctionData, config.juicebox.gnosisSafeAddress).then((data) => {
-    res.json({ success: true, data });
+  tenderly.simulate(encodedTransactions.data, config.juicebox.gnosisSafeAddress, signer, true).then((tenderlyResults) => {
+    res.json({ success: true, data: { ...tenderlyResults, transactionCount: encodedTransactions.count, transactions: encodedTransactions.transactions } });
   }).catch((e) => {
     res.json({ success: false, error: e });
   });

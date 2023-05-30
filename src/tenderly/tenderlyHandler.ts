@@ -1,5 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import axios from 'axios';
+import { MetaTransaction } from 'ethers-multisend';
 import { ethers } from 'ethers';
 import { BasicTransaction } from '../types';
 import { keys } from '../keys';
@@ -64,18 +65,30 @@ export class TenderlyHandler {
     }
   }
 
-  async simulate(txn: BasicTransaction, from: string): Promise<any> {
+  async simulate(input: string, to: string, from: string, gnosisMulticall = false): Promise<any> {
     const data = {
       network_id: '1',
       save: true,
       save_if_fails: true,
       from,
-      to: txn.address,
-      input: txn.bytes,
-    };
+      to,
+      input,
+      gas: 30000000,
+    } as any;
+    // set some overrides for gnosis multicall
+    if (gnosisMulticall) {
+      data.state_objects = {
+        [to]: {
+          storage: {
+            '0x0000000000000000000000000000000000000000000000000000000000000004':
+              '0x0000000000000000000000000000000000000000000000000000000000000001',
+          }
+        }
+      };
+    }
     return axios({ method: 'POST', headers: this.headers, url: `${this.API}/simulate`, data }).then(async (res) => {
       return {
-        simulationResults: res.data.transaction.status,
+        success: res.data.transaction.status,
         url: `${DASHBOARD}/${this.config.account}/${this.config.project}/simulator/${res.data.simulation.id}`
       };
     });

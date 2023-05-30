@@ -15,7 +15,7 @@ export const fetchABIAndWriteToFile = async (address: string, tokenName: string)
     address,
     abi: await fetchABI(address),
   }, null, "  ");
-  fs.writeFileSync(`${__dirname}/../tokens/${tokenName}.json`, output);
+  fs.writeFileSync(`${__dirname}/../abi/${tokenName}.json`, output);
 }
 
 fetchABIAndWriteToFile(process.argv[2], process.argv[3]);

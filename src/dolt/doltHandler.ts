@@ -569,12 +569,12 @@ export class DoltHandler {
     return results;
   }
 
-  async getTransactionByUuid(uuid: string) {
-    const results = await this.queryDbResults(`
+  async getTransactionsByUuids(uuids: string[]) {
+    const results = await this.queryDbResults(oneLine`
       SELECT * from ${transactionsTable} WHERE
-      uuidOfTransaction = ?
-    `, [uuid]) as unknown as SQLCustomTransaction[];
-    return results[0];
+      uuidOfTransaction IN (${uuids.map((uuid) => { return `'${uuid}'`; }).join(',')})
+    `) as unknown as SQLCustomTransaction[];
+    return results;
   }
 
   // ===================================== //
