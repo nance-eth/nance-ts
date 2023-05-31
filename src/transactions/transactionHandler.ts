@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import { encodeMulti } from 'ethers-multisend';
 import fs from 'fs';
-import { BasicTransaction, PartialTransaction } from '../types';
+import { BasicTransaction, PartialTransaction, FunctionFragmentInput, FunctionFragment } from '../types';
 import { keys } from '../keys';
 import { SQLCustomTransaction } from '../dolt/schema';
 
@@ -17,6 +17,31 @@ type Token = { address: string; abi: any };
 
 function localABI(name: string) {
   return JSON.parse(fs.readFileSync(`${__dirname}/abi/${name}.json`, 'utf-8')) as unknown as Token;
+}
+
+export function adjustFunctionFragment(fragment: FunctionFragmentInput): FunctionFragment {
+  const cleanedFragment = {
+    gas: fragment.gas ?? undefined,
+    name: fragment.name,
+    type: fragment.type,
+    stateMutability: fragment.stateMutability,
+    inputs: fragment.inputs.map((input) => {
+      return {
+        name: input.name,
+        type: input.type,
+        internalType: input.baseType,
+        indexed: input.indexed || false
+      };
+    }),
+    outputs: fragment.outputs.map((output) => {
+      return {
+        name: output.name || undefined,
+        type: output.type,
+        internalType: output.baseType
+      };
+    }),
+  };
+  return cleanedFragment;
 }
 
 export function encodeERC20Transfer(to: string, value: string, token: string): BasicTransaction {
@@ -52,13 +77,9 @@ export const fetchABI = async (address: string) => {
 };
 
 export async function encodeCustomTransaction(txn: SQLCustomTransaction): Promise<BasicTransaction> {
-  const abi = savedABI.filter((b) => { return b.address; })[0]?.abi ?? await fetchABI(txn.transactionAddress);
-  savedABI.push(abi);
-  const iface = new ethers.utils.Interface(abi);
-
-  const functionFragment = iface.getFunction(txn.transactionFunctionName);
+  const functionFragment = txn.transactionFunctionFragment;
+  const iface = new ethers.utils.Interface([ethers.utils.Fragment.fromObject(functionFragment)]);
   const inputs = functionFragment.inputs.map((input) => { return txn.transactionFunctionArgs[input.name]; });
-
   const encodedData = iface.encodeFunctionData(txn.transactionFunctionName, inputs);
   return {
     address: txn.transactionAddress,

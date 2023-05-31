@@ -77,6 +77,8 @@ export type CustomTransaction = {
   value: string;
   functionName: string;
   args: any;
+  functionFragment: FunctionFragmentInput;
+  tenderlyId: string;
 };
 
 export type ParameterUpdate = {
@@ -237,4 +239,25 @@ export type PartialTransaction = {
   value: string;
   data: string;
   operation?: number;
+};
+
+export type FunctionFragment = {
+  gas: string | undefined;
+  name: string;
+  type: string;
+  inputs: { name: string; type: string; internalType: string; }[];
+  outputs: { name: string | undefined; type: string; internalType: string; }[];
+  stateMutability: string;
+};
+
+export type FunctionFragmentInput = {
+  gas: string | null;
+  name: string;
+  type: string;
+  payable: boolean;
+  constant: boolean;
+  _isFragment: boolean;
+  stateMutability: string;
+  inputs: { name: string; type: string; baseType: string; indexed: boolean | undefined }[];
+  outputs: { name: string | null; type: string; baseType: string; }[];
 };

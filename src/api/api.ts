@@ -373,9 +373,9 @@ router.get(`${spacePrefix}/transfers`, async (_, res) => {
 // tenderly simulation of multiple transactions, encoded using gnosis MultiCall
 // pass in comma separated uuids of transactions to simulate as a query ex: ?uuids=uuid1,uuid2,uuid3...
 router.get(`${spacePrefix}/simulate/multicall`, async (req, res) => {
-  const { uuids } = req.query as { uuids: string };
+  const { uuids, uuidOfProposal } = req.query as { uuids: string, uuidOfProposal: string };
   const { dolt, config } = res.locals as Locals;
-  const txn = await dolt.getTransactionsByUuids(uuids.split(','));
+  const txn = (uuidOfProposal) ? await dolt.getTransactionsByProposalUuid(uuidOfProposal) : await dolt.getTransactionsByUuids(uuids.split(','));
   if (!txn || txn.length === 0) { res.json({ success: false, error: 'no transaction found' }); return; }
   const signer = (await GnosisHandler.getSigners(config.juicebox.gnosisSafeAddress))[0]; // get the first signer to encode MultiCall
   const encodedTransactions = await encodeGnosisMulticall(txn, signer);
