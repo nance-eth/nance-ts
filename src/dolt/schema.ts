@@ -1,4 +1,4 @@
-import { NanceConfig, JBSplitStruct, Action, FunctionFragment } from '../types';
+import { NanceConfig, JBSplitStruct, Action } from '../types';
 
 export type SQLProposal = {
   uuid: string;
