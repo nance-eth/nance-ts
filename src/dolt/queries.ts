@@ -50,7 +50,6 @@ SELECT proposals.*, HEX(proposals.body) as body, HEX(proposals.title) as title,
             'value', customTransactions.transactionValue,
             'functionName', customTransactions.transactionFunctionName,
             'args', customTransactions.transactionFunctionArgs,
-            'functionFragment', customTransactions.transactionFunctionFragment,
             'tenderlyId', customTransactions.transactionTenderlyId
           )
         )

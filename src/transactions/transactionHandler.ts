@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import { encodeMulti } from 'ethers-multisend';
 import fs from 'fs';
-import { BasicTransaction, PartialTransaction, FunctionFragmentInput, FunctionFragment } from '../types';
+import { BasicTransaction, PartialTransaction } from '../types';
 import { keys } from '../keys';
 import { SQLCustomTransaction } from '../dolt/schema';
 
@@ -17,31 +17,6 @@ type Token = { address: string; abi: any };
 
 function localABI(name: string) {
   return JSON.parse(fs.readFileSync(`${__dirname}/abi/${name}.json`, 'utf-8')) as unknown as Token;
-}
-
-export function adjustFunctionFragment(fragment: FunctionFragmentInput): FunctionFragment {
-  const cleanedFragment = {
-    gas: fragment.gas ?? undefined,
-    name: fragment.name,
-    type: fragment.type,
-    stateMutability: fragment.stateMutability,
-    inputs: fragment.inputs.map((input) => {
-      return {
-        name: input.name,
-        type: input.type,
-        internalType: input.baseType,
-        indexed: input.indexed || false
-      };
-    }),
-    outputs: fragment.outputs.map((output) => {
-      return {
-        name: output.name || undefined,
-        type: output.type,
-        internalType: output.baseType
-      };
-    }),
-  };
-  return cleanedFragment;
 }
 
 export function encodeERC20Transfer(to: string, value: string, token: string): BasicTransaction {
@@ -76,15 +51,19 @@ export const fetchABI = async (address: string) => {
   });
 };
 
-export async function encodeCustomTransaction(txn: SQLCustomTransaction): Promise<BasicTransaction> {
-  const functionFragment = txn.transactionFunctionFragment;
-  const iface = new ethers.utils.Interface([ethers.utils.Fragment.fromObject(functionFragment)]);
-  const inputs = functionFragment.inputs.map((input) => { return txn.transactionFunctionArgs[input.name]; });
-  const encodedData = iface.encodeFunctionData(txn.transactionFunctionName, inputs);
-  return {
-    address: txn.transactionAddress,
-    bytes: encodedData
-  };
+export function encodeCustomTransaction(txn: SQLCustomTransaction): BasicTransaction {
+  try {
+    const functionName = txn.transactionFunctionName;
+    const iface = new ethers.utils.Interface([functionName]);
+    const encodedData = iface.encodeFunctionData(functionName.split('function ')[1], txn.transactionFunctionArgs);
+    return {
+      address: txn.transactionAddress,
+      bytes: encodedData
+    };
+  } catch (e) {
+    console.log(e);
+    throw Error('Error encoding transaction');
+  }
 }
 
 export async function encodeGnosisMulticall(txn: SQLCustomTransaction[], signer: string) {

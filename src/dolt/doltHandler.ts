@@ -8,7 +8,6 @@ import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
 import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
-import { adjustFunctionFragment } from '../transactions/transactionHandler';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
@@ -216,20 +215,17 @@ export class DoltHandler {
     const address = customTransaction.contract;
     const { value, functionName, args } = customTransaction;
     const argsArray = JSON.stringify(args);
-    const fragmentArray = JSON.stringify(adjustFunctionFragment(customTransaction.functionFragment));
     const transactionStatus = 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transactionsTable}
       (uuidOfTransaction, uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName,
-        transactionAddress, transactionValue, transactionFunctionName, transactionFunctionArgs,
-        transactionFunctionFragment, transactionStatus, transactionTenderlyId)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
+        transactionAddress, transactionValue, transactionFunctionName, transactionFunctionArgs, transactionStatus, transactionTenderlyId)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
       transactionGovernanceCycle = VALUES(transactionGovernanceCycle), transactionCount = VALUES(transactionCount), transactionName = VALUES(transactionName),
       transactionAddress = VALUES(transactionAddress), transactionValue = VALUES(transactionValue), transactionFunctionName = VALUES(transactionFunctionName),
-      transactionFunctionArgs = VALUES(transactionFunctionArgs), transactionFunctionFragment = VALUES(transactionFunctionFragment),
-      transactionStatus = VALUES(transactionStatus)`,
+      transactionFunctionArgs = VALUES(transactionFunctionArgs), transactionStatus = VALUES(transactionStatus)`,
     [uuid || uuidGen(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray,
-      fragmentArray, transactionStatus, customTransaction.tenderlyId]);
+      transactionStatus, customTransaction.tenderlyId]);
   }
 
   async addReserveToDb(reserve: Reserve, uuidOfProposal: string, reserveGovernanceCycle: number, uuid?: string) {

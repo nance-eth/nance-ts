@@ -96,8 +96,7 @@ export type SQLCustomTransaction = {
   transactionAddress: string;
   transactionValue: string;
   transactionFunctionName: string;
-  transactionFunctionArgs: any;
-  transactionFunctionFragment: FunctionFragment;
+  transactionFunctionArgs: any[];
   transactionTenderlyId: string;
   transactionStatus: string;
 };
