@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import api from './api';
 import ish from './nanceish';
+import auth from './auth';
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -10,6 +11,8 @@ app.use(cors({
   maxAge: 86400,
 }));
 app.set('json spaces', 2);
+
+app.use('/auth', auth);
 
 app.use('/ish', ish);
 
