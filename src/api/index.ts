@@ -9,7 +9,8 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: false }));
 app.use(cors({
   maxAge: 86400,
-  origin: 'http://localhost:3001'
+  origin: 'http://localhost:3001',
+  credentials: true
 }));
 app.set('json spaces', 2);
 
