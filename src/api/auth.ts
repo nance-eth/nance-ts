@@ -18,8 +18,8 @@ router.use(
     saveUninitialized: false,
     secret: 'somereallysecretsecret',
     cookie: {
-      sameSite: 'none',
-      secure: true,
+      sameSite: false,
+      secure: false,
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7
     }
