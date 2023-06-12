@@ -16,7 +16,10 @@ router.use(
     store,
     resave: false,
     saveUninitialized: false,
-    secret: 'somereallysecretsecret'
+    secret: 'somereallysecretsecret',
+    cookie: {
+      sameSite: 'none',
+    }
   })
 );
 
