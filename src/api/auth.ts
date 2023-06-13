@@ -1,5 +1,7 @@
 import express from 'express';
 import session from 'express-session';
+import cookie from 'cookie';
+import * as cookieSig from 'cookie-signature';
 import { SiweMessage, generateNonce } from 'siwe';
 import store from './helpers/sessionDb';
 import { addDaysToDate } from '../utils';
@@ -18,13 +20,6 @@ router.use(
     resave: true,
     saveUninitialized: false,
     secret: 'somereallysecretsecret',
-    cookie: {
-      sameSite: 'none',
-      secure: true,
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-      domain: 'https://jbdao-org-git-nextauth-juicetool.vercel.app'
-    }
   })
 );
 
@@ -44,6 +39,15 @@ router.post('/verify', async (req, res) => {
   sesh.siwe = message;
   sesh.cookie.expires = addDaysToDate(new Date(), 7);
   sesh.save(() => {
+    const homeBakedCookie = encodeURI(`s:${cookieSig.sign(req.sessionID, 'somereallysecretsecret')}`);
+    const serializedCookie = cookie.serialize('nance-siwe', homeBakedCookie, {
+      expires: addDaysToDate(new Date(), 7),
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    });
+    res.setHeader('Set-Cookie', serializedCookie);
     res.json({ success: true, data: 'Successfully verified signature.' });
   });
 });
@@ -51,6 +55,7 @@ router.post('/verify', async (req, res) => {
 router.get('/status', (req, res) => {
   const origin = req.headers.origin || req.headers.referer;
   console.log('Request Origin:', origin);
+  console.log('session:', req.session);
   const sesh = req.session as Session;
   if (!sesh.siwe) {
     res.json({ success: false, data: 'unauthenticated' });
