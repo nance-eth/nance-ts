@@ -48,6 +48,7 @@ router.post('/verify', async (req, res) => {
 });
 
 router.get('/status', (req, res) => {
+  console.log(req.session);
   const sesh = req.session as Session;
   if (!sesh.siwe) {
     res.json({ success: false, data: 'unauthenticated' });
