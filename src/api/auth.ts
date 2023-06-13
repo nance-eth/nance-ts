@@ -43,9 +43,7 @@ router.post('/verify', async (req, res) => {
     const serializedCookie = cookie.serialize('nance-siwe', homeBakedCookie, {
       expires: addDaysToDate(new Date(), 7),
       path: '/',
-      httpOnly: true,
       secure: true,
-      sameSite: 'none'
     });
     res.setHeader('Set-Cookie', serializedCookie);
     res.json({ success: true, data: 'Successfully verified signature.' });
