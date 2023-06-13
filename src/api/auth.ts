@@ -19,10 +19,11 @@ router.use(
     saveUninitialized: false,
     secret: 'somereallysecretsecret',
     cookie: {
-      sameSite: 'lax',
-      secure: false,
-      httpOnly: false,
-      maxAge: 1000 * 60 * 60 * 24 * 7
+      sameSite: 'none',
+      secure: true,
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      domain: 'https://jbdao-org-git-nextauth-juicetool.vercel.app'
     }
   })
 );
