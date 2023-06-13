@@ -28,7 +28,7 @@ router.use(
   })
 );
 
-router.get('/nonce', (req, res) => {
+router.get('/nonce', (_, res) => {
   const nonce = generateNonce();
   return res.send(nonce);
 });
@@ -49,7 +49,8 @@ router.post('/verify', async (req, res) => {
 });
 
 router.get('/status', (req, res) => {
-  console.log(req.session);
+  const origin = req.headers.origin || req.headers.referer;
+  console.log('Request Origin:', origin);
   const sesh = req.session as Session;
   if (!sesh.siwe) {
     res.json({ success: false, data: 'unauthenticated' });

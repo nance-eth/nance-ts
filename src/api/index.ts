@@ -14,7 +14,8 @@ app.use(cors({
     'https://jbdao.org',
     'https://jbdao-org-git-nextauth-juicetool.vercel.app'
   ],
-  credentials: true
+  credentials: true,
+  allowedHeaders: '*',
 }));
 app.set('json spaces', 2);
 
