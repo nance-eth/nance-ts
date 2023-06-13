@@ -20,6 +20,11 @@ router.use(
     resave: true,
     saveUninitialized: false,
     secret: 'somereallysecretsecret',
+    cookie: {
+      expires: addDaysToDate(new Date(), 7),
+      path: '/',
+      secure: true,
+    },
   })
 );
 
