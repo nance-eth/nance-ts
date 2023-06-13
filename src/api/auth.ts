@@ -13,14 +13,15 @@ interface Session extends session.Session {
 
 router.use(
   session({
+    name: 'nance-siwe',
     store,
-    resave: false,
+    resave: true,
     saveUninitialized: false,
     secret: 'somereallysecretsecret',
     cookie: {
-      sameSite: 'none',
-      secure: true,
-      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      httpOnly: false,
       maxAge: 1000 * 60 * 60 * 24 * 7
     }
   })
