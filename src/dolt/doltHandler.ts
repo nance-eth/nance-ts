@@ -62,7 +62,7 @@ export class DoltHandler {
     const cleanProposal: Proposal = {
       hash: proposal.uuid,
       title: isHexString(proposal.title) ? Buffer.from(proposal.title, 'hex').toString('utf8') : proposal.title,
-      body: isHexString(proposal.title) ? Buffer.from(proposal.body, 'hex').toString('utf8') : proposal.body,
+      body: isHexString(proposal.body) ? Buffer.from(proposal.body, 'hex').toString('utf8') : proposal.body,
       type: proposal.category,
       status: proposal.proposalStatus,
       proposalId: proposal.proposalId || null,
