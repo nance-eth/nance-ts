@@ -53,7 +53,6 @@ export interface ProposalMarkdownRequest extends BaseRequest {
 
 export interface ProposalUploadRequest extends BaseRequest {
   proposal: Proposal;
-  signature: Signature
 }
 
 export interface ProposalDeleteRequest extends BaseRequest {

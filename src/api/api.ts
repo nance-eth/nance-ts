@@ -5,8 +5,7 @@ import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
 import { doltConfig } from '../configLoader';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest, ProposalDeleteRequest, IncrementGovernanceCycleRequest, EditPayoutsRequest, ProposalsPacket } from './models';
-import { checkSignature } from './helpers/signature';
+import { ProposalUploadRequest, FetchReconfigureRequest, EditPayoutsRequest, ProposalsPacket } from './models';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
 import { getLastSlash, myProvider, sleep } from '../utils';
@@ -106,47 +105,42 @@ router.get(`${spacePrefix}/proposals`, async (req, res) => {
 // upload new proposal
 router.post(`${spacePrefix}/proposals`, async (req, res) => {
   const { space } = req.params;
-  const { proposal, signature } = req.body as ProposalUploadRequest;
-  const { config, calendar, notion, dolt } = res.locals as Locals;
-  if (!proposal || !signature) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
-  const { valid, typedValue } = checkSignature(signature, space, 'upload', proposal);
-  if (!valid) {
-    logger.warn(`[UPLOAD] space: ${space}, address: ${signature.address} bad`);
-    logger.warn(signature);
-    logger.warn(typedValue);
-    res.json({ success: false, error: '[NANCE ERROR]: bad signature' });
-    return;
-  }
-  logger.debug(`[UPLOAD] space: ${space}, address: ${signature.address} good`);
+  const { proposal } = req.body as ProposalUploadRequest;
+  const { config, calendar, notion, dolt, address } = res.locals as Locals;
+  if (!proposal) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
+  logger.debug(`[UPLOAD] space: ${space}, address: ${address} good`);
   if (!proposal.governanceCycle) {
     const currentGovernanceCycle = await dolt.getCurrentGovernanceCycle();
     proposal.governanceCycle = currentGovernanceCycle + 1;
   }
-  if (!proposal.authorAddress) { proposal.authorAddress = signature.address; }
+  if (!proposal.authorAddress) { proposal.authorAddress = address; }
+  if (proposal.status === 'Private') dolt.addPrivateProposalToDb(proposal);
+  else {
+    dolt.addProposalToDb(proposal).then(async (hash: string) => {
+      proposal.hash = hash;
+      if (notion) notion.addProposalToDb(proposal);
+      dolt.actionDirector(proposal);
 
-  dolt.addProposalToDb(proposal).then(async (hash: string) => {
-    proposal.hash = hash;
-    if (notion) notion.addProposalToDb(proposal);
-    dolt.actionDirector(proposal);
-
-    // send discord message
-    if (proposal.status === 'Discussion' && calendar.shouldSendDiscussion()) {
-      const dialogHandler = new DiscordHandler(config);
-      // eslint-disable-next-line no-await-in-loop
-      while (!dialogHandler.ready()) { await sleep(50); }
-      try {
-        const discussionThreadURL = await dialogHandler.startDiscussion(proposal);
-        dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
-        if (notion) notion.updateDiscussionURL({ ...proposal, discussionThreadURL });
-        dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
-      } catch (e) {
-        logger.error(`[DISCORD] ${e}`);
+      // send discord message
+      if (proposal.status === 'Discussion' && calendar.shouldSendDiscussion()) {
+        const dialogHandler = new DiscordHandler(config);
+        // eslint-disable-next-line no-await-in-loop
+        while (!dialogHandler.ready()) { await sleep(50); }
+        try {
+          const discussionThreadURL = await dialogHandler.startDiscussion(proposal);
+          dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+          if (notion) notion.updateDiscussionURL({ ...proposal, discussionThreadURL });
+          dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+        } catch (e) {
+          logger.error(`[DISCORD] ${e}`);
+        }
       }
-    }
-    res.json({ success: true, data: { hash } });
-  }).catch((e: any) => {
-    res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
-  });
+      res.json({ success: true, data: { hash } });
+    }).catch((e: any) => {
+      res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
+    });
+  }
 });
 
 // =========================================== //
@@ -169,21 +163,20 @@ router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
 // edit single proposal
 router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
   const { space, pid } = req.params;
-  const { proposal, signature } = req.body as ProposalUploadRequest;
-  const { dolt, config } = res.locals as Locals;
-  const { valid } = checkSignature(signature, space, 'edit', proposal);
-  if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
+  const { proposal } = req.body as ProposalUploadRequest;
+  const { dolt, config, address } = res.locals as Locals;
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   const proposalByUuid = await dolt.getProposalByAnyId(pid);
   if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft' && proposalByUuid.status !== 'Temperature Check') {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
   }
   proposal.coauthors = proposalByUuid.coauthors ?? [];
-  if (!proposalByUuid.coauthors?.includes(signature.address) && signature.address !== proposalByUuid.authorAddress) {
-    proposal.coauthors.push(signature.address);
+  if (address && !proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
+    proposal.coauthors.push(address);
   }
   proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === 'Discussion') ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
-  logger.info(`EDIT issued by ${signature.address} for uuid: ${proposal.hash}`);
+  logger.info(`EDIT issued by ${address} for uuid: ${proposal.hash}`);
   dolt.editProposal(proposal).then(async (hash: string) => {
     const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
     dolt.actionDirector(proposal);
@@ -217,24 +210,22 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
 
 // delete single proposal
 router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
-  const { space, hash } = req.params;
-  const { signature } = req.body as ProposalDeleteRequest;
-  const { dolt, config, spaceOwners } = res.locals as Locals;
-  const { valid } = checkSignature(signature, space, 'delete', { hash });
-  if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
+  const { hash } = req.params;
+  const { dolt, config, spaceOwners, address } = res.locals as Locals;
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   dolt.getProposalByAnyId(hash).then(async (proposalByUuid: Proposal) => {
     if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft') {
       res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
       return;
     }
     const permissions = (
-      signature.address === proposalByUuid.authorAddress
-      || await isMultisig(config.juicebox.gnosisSafeAddress, signature.address)
-      || isNanceSpaceOwner(spaceOwners, signature.address)
-      || isNanceAddress(signature.address)
+      address === proposalByUuid.authorAddress
+      || await isMultisig(config.juicebox.gnosisSafeAddress, address)
+      || isNanceSpaceOwner(spaceOwners, address)
+      || isNanceAddress(address)
     );
     if (permissions) {
-      logger.info(`DELETE issued by ${signature.address}`);
+      logger.info(`DELETE issued by ${address}`);
       dolt.deleteProposal(hash).then(async (affectedRows: number) => {
         res.json({ success: true, data: { affectedRows } });
       }).catch((e: any) => {
@@ -279,14 +270,11 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
 // ===================================== //
 
 // increment governance cycle
-router.put(`${spacePrefix}/incrementGC`, async (req, res) => {
-  const { space } = req.params;
-  const { governanceCycle, signature } = req.body as IncrementGovernanceCycleRequest;
-  const { dolt } = res.locals as Locals;
-  const { valid } = checkSignature(signature, space, 'incrementGC', { governanceCycle });
-  if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); }
-  if (isNanceAddress(signature.address)) {
-    logger.info(`INCREMENT GC by ${signature.address}`);
+router.put(`${spacePrefix}/incrementGC`, async (_, res) => {
+  const { dolt, spaceOwners, address } = res.locals as Locals;
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: no address' }); return; }
+  if (isNanceAddress(address) || isNanceSpaceOwner(spaceOwners, address)) {
+    logger.info(`INCREMENT GC by ${address}`);
     dolt.incrementGovernanceCycle().then((data) => {
       res.json({ success: true, data });
     }).catch((e) => {
@@ -338,12 +326,10 @@ router.get(`${spacePrefix}/payouts`, async (_, res) => {
 
 // edit payouts table
 router.put(`${spacePrefix}/payouts`, async (req, res) => {
-  const { space, config, dolt } = res.locals as Locals;
-  const { payouts, signature } = req.body as EditPayoutsRequest;
-  const { valid } = checkSignature(signature, space, 'payouts', { payouts });
-  if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); return; }
+  const { config, dolt, address } = res.locals as Locals;
+  const { payouts } = req.body as EditPayoutsRequest;
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   const safeAddress = config.juicebox.gnosisSafeAddress;
-  const { address } = signature;
   if (await isMultisig(safeAddress, address) || isNanceAddress(address)) {
     logger.info(`EDIT PAYOUTS by ${address}`);
     dolt.bulkEditPayouts(payouts).then(() => {

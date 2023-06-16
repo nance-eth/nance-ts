@@ -22,6 +22,18 @@ CREATE TABLE IF NOT EXISTS proposals (
   PRIMARY KEY (uuid)
 );
 
+CREATE TABLE IF NOT EXISTS privateProposals {
+  uuid VARCHAR(35),
+  createdTime DATETIME,
+  lastEditedTime DATETIME,
+  title VARCHAR(500),
+  body MEDIUMTEXT,
+  authorAddress CHAR(42),
+  coauthors JSON,
+  actions JSON,
+  PRIMARY KEY (uuid)
+};
+
 CREATE TABLE IF NOT EXISTS payouts (
   uuidOfPayout VARCHAR(35) NOT NULL,
   uuidOfProposal VARCHAR(35) NOT NULL,
