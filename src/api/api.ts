@@ -21,12 +21,21 @@ import { isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permiss
 import { headToUrl } from '../dolt/doltAPI';
 import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
+import { addressFromJWT } from './helpers/auth';
 
 const router = express.Router();
 const spacePrefix = '/:space';
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-type Locals = { space: string, spaceOwners: string[], config: NanceConfig, calendar: CalendarHandler, notion: NotionHandler, dolt: DoltHandler };
+type Locals = {
+  space: string,
+  spaceOwners: string[],
+  config: NanceConfig,
+  calendar: CalendarHandler,
+  notion: NotionHandler,
+  dolt: DoltHandler
+  address: string | null
+};
 
 router.use(spacePrefix, async (req, res, next) => {
   const { space } = req.params;
@@ -36,7 +45,9 @@ router.use(spacePrefix, async (req, res, next) => {
     if (config.notion?.enabled) { notion = new NotionHandler(config); }
     const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
     const calendar = new CalendarHandler(calendarText);
-    res.locals = { space, spaceOwners, config, calendar, notion, dolt };
+    const jwt = req.headers.authorization?.split('Bearer ')[1];
+    const address = jwt ? await addressFromJWT(jwt) : null;
+    res.locals = { space, spaceOwners, config, calendar, notion, dolt, address };
     next();
   } catch (e) {
     res.json({ success: false, error: `space ${space} not found!` });

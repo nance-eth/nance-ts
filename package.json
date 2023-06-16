@@ -44,6 +44,7 @@
     "juice-sdk-v1": "^2.1.0-alpha",
     "lodash": "^4.17.21",
     "mysql2": "^2.3.3",
+    "next-auth": "^4.22.1",
     "node-ical": "^0.15.1",
     "node-schedule": "^2.1.0",
     "notion-to-md": "^2.3.2",
