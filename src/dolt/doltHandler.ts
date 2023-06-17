@@ -479,7 +479,7 @@ export class DoltHandler {
   }
 
   relevanceMatch(keyword: string) {
-    const searchKeywords = keyword.replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean);
+    const searchKeywords = keyword.replaceAll('+', ' ').replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean);
     const relevanceCalculation = searchKeywords
       .map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) + (LOWER(title) LIKE LOWER('%${kw}%'))`)
       .join(' + ');
