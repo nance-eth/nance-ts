@@ -455,28 +455,40 @@ export class DoltHandler {
   }
 
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
+    const {relevanceCalculation, orConditions} = this.relevanceMatch(keyword);
+
     return this.queryProposals(`
     SELECT *, (${this.relevanceMatch(keyword)}) AS relevance from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       AND (
-        ${this.relevanceMatch(keyword)}
+        ${orConditions}
       )
       ORDER BY proposalId ASC, relevance DESC
     `);
   }
 
   async getProposalsByKeyword(keyword: string) {
+    const {relevanceCalculation, orConditions} = this.relevanceMatch(keyword);
+
     return this.queryProposals(`
-    SELECT *, (${this.relevanceMatch(keyword)}) AS relevance from ${proposalsTable}
+    SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
       WHERE
-      ${this.relevanceMatch(keyword)}
+      ${orConditions}
       ORDER BY proposalId ASC, relevance DESC
     `);
   }
 
   relevanceMatch(keyword: string) {
-    const searchKeywords = keyword.replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean).join(' ');
-    return `MATCH (LOWER(body), LOWER(title)) AGAINST ('${searchKeywords}')`
+    const searchKeywords = keyword.replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean);
+    const relevanceCalculation = searchKeywords
+      .map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) + (LOWER(title) LIKE LOWER('%${kw}%'))`)
+      .join(' + ');
+
+    const orConditions = searchKeywords
+      .map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) OR (LOWER(title) LIKE LOWER('%${kw}%'))`)
+      .join(' OR ');
+
+    return {relevanceCalculation, orConditions};
   }
 
   async getContentMarkdown(hash: string) {
