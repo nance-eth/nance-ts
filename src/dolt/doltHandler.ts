@@ -455,27 +455,28 @@ export class DoltHandler {
   }
 
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
-    const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
     SELECT * from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       AND (
-        LOWER(body) like LOWER('%${search}%')
-        OR LOWER(title) like LOWER('%${search}%')
+        ${this.processKeyword(keyword)}
       )
       ORDER BY proposalId ASC
     `);
   }
 
   async getProposalsByKeyword(keyword: string) {
-    const search = keyword.replaceAll('%20', ' ');
     return this.queryProposals(`
     SELECT * from ${proposalsTable}
       WHERE
-      LOWER(body) like LOWER('%${search}%')
-      OR LOWER(title) like LOWER('%${search}%')
+      ${this.processKeyword(keyword)}
       ORDER BY proposalId ASC
     `);
+  }
+
+  processKeyword(keyword: string) {
+    const searchKeywords = keyword.replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean);
+    return searchKeywords.map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) OR (LOWER(title) LIKE LOWER('%${kw}%'))`).join(' OR ');
   }
 
   async getContentMarkdown(hash: string) {
