@@ -456,27 +456,27 @@ export class DoltHandler {
 
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
     return this.queryProposals(`
-    SELECT * from ${proposalsTable}
+    SELECT *, (${this.relevanceMatch(keyword)}) AS relevance from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       AND (
-        ${this.processKeyword(keyword)}
+        ${this.relevanceMatch(keyword)}
       )
-      ORDER BY proposalId ASC
+      ORDER BY proposalId ASC, relevance DESC
     `);
   }
 
   async getProposalsByKeyword(keyword: string) {
     return this.queryProposals(`
-    SELECT * from ${proposalsTable}
+    SELECT *, (${this.relevanceMatch(keyword)}) AS relevance from ${proposalsTable}
       WHERE
-      ${this.processKeyword(keyword)}
-      ORDER BY proposalId ASC
+      ${this.relevanceMatch(keyword)}
+      ORDER BY proposalId ASC, relevance DESC
     `);
   }
 
-  processKeyword(keyword: string) {
-    const searchKeywords = keyword.replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean);
-    return searchKeywords.map((kw) => `(LOWER(body) LIKE LOWER('% ${kw} %')) OR (LOWER(title) LIKE LOWER('% ${kw} %'))`).join(' OR ');
+  relevanceMatch(keyword: string) {
+    const searchKeywords = keyword.replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean).join(' ');
+    return `MATCH (LOWER(body), LOWER(title)) AGAINST ('${searchKeywords}')`
   }
 
   async getContentMarkdown(hash: string) {
