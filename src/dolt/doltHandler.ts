@@ -476,7 +476,7 @@ export class DoltHandler {
 
   processKeyword(keyword: string) {
     const searchKeywords = keyword.replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean);
-    return searchKeywords.map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) OR (LOWER(title) LIKE LOWER('%${kw}%'))`).join(' OR ');
+    return searchKeywords.map((kw) => `(LOWER(body) LIKE LOWER('% ${kw} %')) OR (LOWER(title) LIKE LOWER('% ${kw} %'))`).join(' OR ');
   }
 
   async getContentMarkdown(hash: string) {
