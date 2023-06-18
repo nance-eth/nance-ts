@@ -195,6 +195,7 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
       const discord = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!discord.ready()) { await sleep(50); }
+      proposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
       await discord.editDiscussionTitle(proposal);
       await discord.sendProposalDiff(getLastSlash(proposalByUuid.discussionThreadURL), diff, pid);
       discord.logout();
