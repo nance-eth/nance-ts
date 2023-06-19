@@ -73,17 +73,23 @@ router.get(`${spacePrefix}`, async (_, res) => {
 
 // query proposals
 router.get(`${spacePrefix}/proposals`, async (req, res) => {
-  const { cycle, keyword, author } = req.query as { cycle: string, keyword: string, author: string };
+  const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
   const { dolt, config } = res.locals as Locals;
   const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [] };
+
   try {
+    // calculate offset for SQL pagination
+    const _limit = limit ? parseInt(limit) : 0;
+    const _page = page ? parseInt(page) : 0;
+    const _offset = _page ? (_page - 1) * _limit : 0;
+
     if (!keyword && !cycle) {
       const cycleSearch = cycle || (await dolt.getCurrentGovernanceCycle()).toString();
-      data.proposals = await dolt.getProposalsByGovernanceCycle(cycleSearch);
+      data.proposals = await dolt.getProposalsByGovernanceCycle(cycleSearch, _limit, _offset);
     }
-    if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle); }
-    if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword); }
-    if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
+    if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle, _limit, _offset); }
+    if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword, _limit, _offset); }
+    if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword, _limit, _offset); }
     if (author) { data.proposals = await dolt.getProposalsByAuthorAddress(author); }
     return res.send({ success: true, data });
   } catch (e) {

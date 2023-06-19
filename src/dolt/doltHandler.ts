@@ -446,16 +446,20 @@ export class DoltHandler {
     });
   }
 
-  async getProposalsByGovernanceCycle(governanceCycle: string) {
+  async getProposalsByGovernanceCycle(governanceCycle: string, limit?: number, offset?: number) {
+    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
+
     return this.queryProposals(`
       SELECT *, HEX(${proposalsTable}.title) as title from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       ORDER BY proposalId ASC
+      ${pagination}
     `);
   }
 
-  async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
+  async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string, limit?: number, offset?: number) {
     const {relevanceCalculation, orConditions} = this.relevanceMatch(keyword);
+    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
     SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
@@ -464,17 +468,20 @@ export class DoltHandler {
         ${orConditions}
       )
       ORDER BY relevance DESC
+      ${pagination}
     `);
   }
 
-  async getProposalsByKeyword(keyword: string) {
+  async getProposalsByKeyword(keyword: string, limit?: number, offset?: number) {
     const {relevanceCalculation, orConditions} = this.relevanceMatch(keyword);
+    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
     SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
       WHERE
       ${orConditions}
       ORDER BY relevance DESC
+      ${pagination}
     `);
   }
 
