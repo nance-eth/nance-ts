@@ -1,5 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
+import fs from 'fs';
 
 const API = 'https://ipfs.infura.io:5001/api/v0';
 
@@ -8,7 +9,7 @@ const AUTH_HEADER = `Basic ${Buffer.from(
 ).toString('base64')}`;
 
 // https://github.com/jbx-protocol/juice-interface/blob/main/src/lib/infura/ipfs.ts
-export async function dotPin(dataIn, encoding = 'utf-8') {
+async function dotPin(dataIn, encoding = 'utf-8') {
   const data = Buffer.from(dataIn, encoding);
   const formData = new FormData();
   formData.append('file', data);
@@ -28,3 +29,10 @@ export async function dotPin(dataIn, encoding = 'utf-8') {
     return Promise.reject(e);
   });
 }
+
+async function main() {
+  const file = fs.readFileSync(process.argv[2]);
+  await dotPin(file);
+}
+
+main();
