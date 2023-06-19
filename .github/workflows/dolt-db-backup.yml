@@ -1,0 +1,45 @@
+name: Dolt Backup to IPFS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker
+      uses: docker/setup-docker@v1
+
+    - name: Pull Docker image
+      run: docker pull dolthub/dolt:latest
+
+    - name: Clone juicebox dolt repository
+      run: dolt clone jigglyjams/juicebox
+
+    - name: Change directory to juicebox
+      run: cd juicebox
+
+    - name: Run doltdump and save output
+      run: docker run --name dolt-container dolthub/dolt:latest doltdump > ../dolt_output.txt
+
+    - name: Install Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Upload output to IPFS
+      run: |
+        npm install axios form-data
+        node ipfsPin.js
+        env:
+          INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
+          INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
+    - name: Display IPFS CID
+      run: |
+        echo "IPFS CID: ${{ steps.upload-ipfs.outputs.ipfs-cid }}"
