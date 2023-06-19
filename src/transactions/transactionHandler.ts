@@ -9,7 +9,6 @@ import { SQLCustomTransaction } from '../dolt/schema';
 
 const supportedTokens = ['DAI', 'USDC', 'JBX', 'JBXv1', 'TicketBoothV1'];
 const multiSendContractAddress = '0x40A2aCCbd92BCA938b02010E17A5b8929b49130D';
-const savedABI: { address: string, abi: any }[] = [];
 // eslint-disable-next-line max-len, quote-props, key-spacing, @typescript-eslint/quotes
 const builderHeader = { "version":"1.0", "chainId":"1", "createdAt": "", "meta":{ "name":"nance batch", "description":"", "txBuilderVersion":"1.14.1", "createdFromSafeAddress":"0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e", "createdFromOwnerAddress":"", "checksum":"" } };
 

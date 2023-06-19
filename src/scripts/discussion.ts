@@ -1,17 +1,18 @@
-import { getConfig, cidConfig } from '../configLoader'
+import { doltConfig } from '../configLoader'
 import { Nance } from '../nance';
+import { getLastSlash, sleep } from '../utils';
 
 async function main() {
-  const config = await getConfig();
+  const { config } = await doltConfig(process.env.CONFIG || '');
   const nance = new Nance(config);
-  nance.setDiscussionInterval(30);
-}
-
-async function cidMain() {
-  const config = await cidConfig('juicebox');
-  console.log(config);
-  // const nance = new Nance(config);
-  // nance.setDiscussionInterval(30);
+  const proposals = await nance.dProposalHandler.getToDiscuss();
+  // eslint-disable-next-line no-await-in-loop
+  while (!nance.dialogHandler.ready()) { await sleep(50); }
+  proposals.map(async (proposal) => {
+    const discussionThreadURL = await nance.dialogHandler.startDiscussion(proposal);
+    nance.dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+    nance.dProposalHandler.updateDiscussionURL({ ...proposal, discussionThreadURL });
+  })
 }
 
 main();

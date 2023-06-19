@@ -1,5 +1,4 @@
 import express from 'express';
-import fs from 'fs';
 import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
@@ -19,7 +18,7 @@ import { NanceConfig, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { headToUrl } from '../dolt/doltAPI';
-import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
+import { encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 
 const router = express.Router();
@@ -356,21 +355,6 @@ router.get(`${spacePrefix}/transfers`, async (_, res) => {
     res.json({ success: false, error: e });
   });
 });
-
-// tenderly fork simulation
-// router.get(`${spacePrefix}/fork/simulate/:uuid`, async (req, res) => {
-//   const { uuid } = req.params;
-//   const { dolt, config } = res.locals as Locals;
-//   const transaction = await dolt.getTransactionsByUuid(uuid);
-//   const encodeFunctionData = await encodeCustomTransaction(transaction);
-//   const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
-//   await tenderly.getForkProvider(transaction.transactionName);
-//   tenderly.sendTransaction(encodeFunctionData, config.juicebox.gnosisSafeAddress).then((data) => {
-//     res.json({ success: true, data });
-//   }).catch((e) => {
-//     res.json({ success: false, error: e });
-//   });
-// });
 
 // tenderly simulation of multiple transactions, encoded using gnosis MultiCall
 // pass in comma separated uuids of transactions to simulate as a query ex: ?uuids=uuid1,uuid2,uuid3...

@@ -3,12 +3,12 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { CancelProposal } from '@snapshot-labs/snapshot.js/dist/sign/types';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { keys } from '../../keys';
-import { unixTimeStampNow } from '../../utils';
+import { unixTimeStampNow, myProvider } from '../../utils';
 
 const SPACE = 'jigglyjams.eth';
 
 async function deleteProposals() {
-  const provider = new ethers.providers.AlchemyProvider('mainnet', keys.PROVIDER_KEY);
+  const provider = myProvider();
   const wallet = new ethers.Wallet(keys.PRIVATE_KEY, provider);
 
   const hub = 'https://hub.snapshot.org';
