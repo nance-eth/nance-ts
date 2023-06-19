@@ -458,12 +458,12 @@ export class DoltHandler {
     const {relevanceCalculation, orConditions} = this.relevanceMatch(keyword);
 
     return this.queryProposals(`
-    SELECT *, (${this.relevanceMatch(keyword)}) AS relevance from ${proposalsTable}
+    SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       AND (
         ${orConditions}
       )
-      ORDER BY proposalId ASC, relevance DESC
+      ORDER BY relevance DESC
     `);
   }
 
@@ -474,14 +474,14 @@ export class DoltHandler {
     SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
       WHERE
       ${orConditions}
-      ORDER BY proposalId ASC, relevance DESC
+      ORDER BY relevance DESC
     `);
   }
 
   relevanceMatch(keyword: string) {
-    const searchKeywords = keyword.replaceAll('+', ' ').replaceAll('%20', ' ').split(' ').map((kw) => kw.trim()).filter(Boolean);
+    const searchKeywords = keyword.split(' ').map((kw) => kw.trim()).filter(Boolean);
     const relevanceCalculation = searchKeywords
-      .map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) + (LOWER(title) LIKE LOWER('%${kw}%'))`)
+      .map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) + 2 * (LOWER(title) LIKE LOWER('%${kw}%'))`)
       .join(' + ');
 
     const orConditions = searchKeywords
