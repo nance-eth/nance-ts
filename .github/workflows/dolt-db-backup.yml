@@ -18,7 +18,7 @@ jobs:
           sudo bash -c 'curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | sudo bash'
 
       - name: Clone juicebox repository
-        run: git clone https://github.com/jigglyjams/juicebox.git
+        run: dolt clone jigglyjams/juicebox
 
       - name: Change directory to juicebox
         run: cd juicebox
@@ -32,6 +32,7 @@ jobs:
           node-version: '14'
 
       - name: Upload output to IPFS
+        id: ipfsPin
         run: |
           npm install axios form-data
           node ipfsPin.js
@@ -41,4 +42,4 @@ jobs:
             
       - name: Display IPFS CID
         run: |
-          echo "IPFS CID: ${{ steps.upload-ipfs.outputs.ipfs-cid }}"
+          echo "IPFS CID: ${{ steps.ipfsPin.outputs.ipfs-cid }}"
