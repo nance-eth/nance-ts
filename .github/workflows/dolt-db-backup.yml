@@ -1,4 +1,4 @@
-name: Dolt Backup to IPFS
+name: Dolt Action
 
 on:
   push:
@@ -10,36 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Docker
-      uses: docker/setup-docker@v1
+      - name: Install Dolt
+        run: |
+          sudo bash -c 'curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | sudo bash'
 
-    - name: Pull Docker image
-      run: docker pull dolthub/dolt:latest
+      - name: Clone juicebox repository
+        run: git clone https://github.com/jigglyjams/juicebox.git
 
-    - name: Clone juicebox dolt repository
-      run: dolt clone jigglyjams/juicebox
+      - name: Change directory to juicebox
+        run: cd juicebox
 
-    - name: Change directory to juicebox
-      run: cd juicebox
+      - name: Run doltdump and save output
+        run: dolt doltdump > ../dolt_output.txt
+                
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-    - name: Run doltdump and save output
-      run: docker run --name dolt-container dolthub/dolt:latest doltdump > ../dolt_output.txt
-
-    - name: Install Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-
-    - name: Upload output to IPFS
-      run: |
-        npm install axios form-data
-        node ipfsPin.js
-        env:
-          INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
-          INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
-    - name: Display IPFS CID
-      run: |
-        echo "IPFS CID: ${{ steps.upload-ipfs.outputs.ipfs-cid }}"
+      - name: Upload output to IPFS
+        run: |
+          npm install axios form-data
+          node ipfsPin.js
+          env:
+            INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
+            INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
+            
+      - name: Display IPFS CID
+        run: |
+          echo "IPFS CID: ${{ steps.upload-ipfs.outputs.ipfs-cid }}"
