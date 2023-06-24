@@ -348,6 +348,25 @@ router.put(`${spacePrefix}/payouts`, async (req, res) => {
   } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to edit payouts' }); }
 });
 
+router.get(`${spacePrefix}/payouts/stale`, async (req, res) => {
+  const { dolt } = res.locals as Locals;
+  dolt.setStalePayouts().then((updated: number) => {
+    res.json({ success: true, data: { numUpdated: updated } });
+  });
+});
+
+router.get(`${spacePrefix}/payouts/rollup`, async (req, res) => {
+  const { config, dolt } = res.locals as Locals;
+  const dialogHandler = new DiscordHandler(config);
+  const payouts = await dolt.getPayoutsDb();
+  const currentGovernanceCycle = (await dolt.getCurrentGovernanceCycle()).toString();
+  // eslint-disable-next-line no-await-in-loop
+  while (!dialogHandler.ready()) { await sleep(50); }
+  dialogHandler.sendPayoutsTable(payouts, currentGovernanceCycle).then(() => {
+    res.json({ success: true });
+  }).catch((e: any) => { res.json({ success: false, error: e }); });
+});
+
 // ===================================== //
 // ======== transfer functions ========= //
 // ===================================== //
