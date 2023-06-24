@@ -79,8 +79,8 @@ router.get(`${spacePrefix}/proposals`, async (req, res) => {
 
   try {
     // calculate offset for SQL pagination
-    const _limit = limit ? parseInt(limit) : 0;
-    const _page = page ? parseInt(page) : 0;
+    const _limit = limit ? Number(limit) : 0;
+    const _page = page ? Number(page) : 0;
     const _offset = _page ? (_page - 1) * _limit : 0;
 
     if (!keyword && !cycle) {

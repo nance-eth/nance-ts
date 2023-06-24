@@ -536,7 +536,7 @@ export class DoltHandler {
     `, [authorAddress]);
   }
 
-  async getPayoutsDb(version: string): Promise<SQLPayout[]> {
+  async getPayoutsDb(version = 'V3'): Promise<SQLPayout[]> {
     const treasuryVersion = Number(version.split('V')[1]);
     const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
     const results = this.queryDb(`
