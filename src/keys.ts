@@ -9,6 +9,7 @@ const requiredVariables = [
   'DOLT_KEY',
   'TENDERLY_KEY',
   'PUBLIC_ADDRESS',
+  'DOLT_CERT'
 ];
 
 const missingVariables = requiredVariables.filter((variable) => { return !process.env[variable]; });
@@ -30,3 +31,4 @@ export const keys = {
 };
 
 export const nanceAddress = process.env.PUBLIC_ADDRESS!;
+export const DOLT_CERT = process.env.DOLT_CERT!;

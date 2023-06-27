@@ -38,7 +38,9 @@ router.use(spacePrefix, async (req, res, next) => {
     res.locals = { space, spaceOwners, config, calendar, notion, dolt };
     next();
   } catch (e) {
-    res.json({ success: false, error: `space ${space} not found!` });
+    const error = `DB error: ${e}`;
+    logger.error(error);
+    res.json({ success: false, error: e });
   }
 });
 

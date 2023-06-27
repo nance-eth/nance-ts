@@ -4,6 +4,7 @@ export type DBConfig = {
   password?: string;
   port?: number;
   database?: string;
+  ssl?: { rejectUnauthorized: boolean; ca: string };
 };
 
 export type DoltBranch = {
