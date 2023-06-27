@@ -20,7 +20,7 @@ export class DoltSQL {
     options: DBConfig,
   ) {
     this.options = options;
-    this.db = mysql.createPool(options).promise();
+    this.db = mysql.createConnection(options).promise();
   }
 
   async closeConnection() {

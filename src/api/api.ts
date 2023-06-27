@@ -38,8 +38,8 @@ async function handlers(query: string) {
 // ================================ //
 router.get('/:space', async (req, res) => {
   const { space } = req.params;
-  const { dolt, calendar, config } = await handlers(space);
   try {
+    const { dolt, calendar, config } = await handlers(space);
     const currentEvent = calendar.getCurrentEvent();
     const currentCycle = await dolt.getCurrentGovernanceCycle();
     const head = await dolt.getHead();
@@ -56,7 +56,6 @@ router.get('/:space', async (req, res) => {
       }
     });
   } catch (e) {
-    dolt.localDolt.closeConnection();
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
   }
 });
