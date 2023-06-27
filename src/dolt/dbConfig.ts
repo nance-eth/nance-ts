@@ -9,9 +9,9 @@ export const dbOptions = (repo: string): DBConfig => {
     port: Number(process.env.DOLT_PORT),
     user: process.env.DOLT_USER,
     password: process.env.DOLT_PASSWORD,
-    ssl: {
-      rejectUnauthorized: false,
-      ca: DOLT_CERT,
-    }
+    // ssl: {
+    //   rejectUnauthorized: false,
+    //   ca: DOLT_CERT,
+    // }
   };
 };
