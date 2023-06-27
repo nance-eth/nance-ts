@@ -458,7 +458,7 @@ export class DoltHandler {
   }
 
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string, limit?: number, offset?: number) {
-    const {relevanceCalculation, orConditions} = this.relevanceMatch(keyword);
+    const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
     const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
@@ -473,7 +473,7 @@ export class DoltHandler {
   }
 
   async getProposalsByKeyword(keyword: string, limit?: number, offset?: number) {
-    const {relevanceCalculation, orConditions} = this.relevanceMatch(keyword);
+    const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
     const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
@@ -485,17 +485,18 @@ export class DoltHandler {
     `);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   relevanceMatch(keyword: string) {
-    const searchKeywords = keyword.split(' ').map((kw) => kw.trim()).filter(Boolean);
+    const searchKeywords = keyword.split(' ').map((kw) => { return kw.trim(); }).filter(Boolean);
     const relevanceCalculation = searchKeywords
-      .map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) + 2 * (LOWER(title) LIKE LOWER('%${kw}%'))`)
+      .map((kw) => { return `(LOWER(body) LIKE LOWER('%${kw}%')) + 2 * (LOWER(title) LIKE LOWER('%${kw}%'))`; })
       .join(' + ');
 
     const orConditions = searchKeywords
-      .map((kw) => `(LOWER(body) LIKE LOWER('%${kw}%')) OR (LOWER(title) LIKE LOWER('%${kw}%'))`)
+      .map((kw) => { return `(LOWER(body) LIKE LOWER('%${kw}%')) OR (LOWER(title) LIKE LOWER('%${kw}%'))`; })
       .join(' OR ');
 
-    return {relevanceCalculation, orConditions};
+    return { relevanceCalculation, orConditions };
   }
 
   async getContentMarkdown(hash: string) {
