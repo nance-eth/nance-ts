@@ -26,6 +26,7 @@ export async function cidConfig(query: string): Promise<{ config: NanceConfig, c
 export async function doltConfig(query: string): Promise<{ config: NanceConfig, calendarText: string, spaceOwners: string[] }> {
   const dolt = new DoltSysHandler();
   return dolt.getSpaceConfig(query).then((res) => {
+    dolt.localDolt.closeConnection();
     if (res) return { config: res.config, calendarText: res.calendar, spaceOwners: res.spaceOwners };
     // eslint-disable-next-line prefer-promise-reject-errors
     return Promise.reject(`space ${query} not found`);

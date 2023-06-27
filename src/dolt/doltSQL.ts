@@ -23,6 +23,10 @@ export class DoltSQL {
     this.db = mysql.createPool(options).promise();
   }
 
+  async closeConnection() {
+    this.db.end();
+  }
+
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
     return this.db.query(`CALL DOLT_REMOTE('add', ?, ?)`, [remoteName, remote]).then((res) => {
       return resStatus(res) === 0;
