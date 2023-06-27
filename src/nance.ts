@@ -13,6 +13,7 @@ import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { dotPin } from './storage/storageHandler';
 import { DoltHandler } from './dolt/doltHandler';
 import { GovernanceCycle } from './dolt/schema';
+import { dbOptions } from './dolt/dbConfig';
 
 export class Nance {
   proposalHandler;
@@ -27,10 +28,7 @@ export class Nance {
     if (config.notion) this.proposalHandler = new NotionHandler(config);
     this.dialogHandler = new DiscordHandler(config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, this.config);
-    this.dProposalHandler = new DoltHandler(
-      { database: config.dolt.repo, host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT), user: process.env.DOLT_USER, password: process.env.DOLT_PASSWORD },
-      this.config.propertyKeys
-    );
+    this.dProposalHandler = new DoltHandler(dbOptions(config.name), this.config.propertyKeys);
     this.dProposalHandler.localDolt.showActiveBranch().then((res) => {
       logger.info(`dolt branch: ${res}`);
     });

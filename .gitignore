@@ -11,3 +11,5 @@ tmp/
 src/dolt/databases
 
 .sqlhistory
+
+*.pem
