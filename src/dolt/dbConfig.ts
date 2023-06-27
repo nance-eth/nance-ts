@@ -10,7 +10,7 @@ export const dbOptions = (repo: string): DBConfig => {
     user: process.env.DOLT_USER,
     password: process.env.DOLT_PASSWORD,
     ssl: {
-      rejectUnauthorized: true,
+      rejectUnauthorized: false,
       ca: DOLT_CERT,
     }
   };
