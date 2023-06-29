@@ -1,5 +1,4 @@
 import express from 'express';
-import fs from 'fs';
 import { Nance } from '../nance';
 import { NotionHandler } from '../notion/notionHandler';
 import { NanceTreasury } from '../treasury';
@@ -18,12 +17,11 @@ import { NanceConfig, Proposal } from '../types';
 import { diffBody } from './helpers/diff';
 import { isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { headToUrl } from '../dolt/doltAPI';
-import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
+import { encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 import { addressFromJWT } from './helpers/auth';
 
 const router = express.Router();
-const spacePrefix = '/:space';
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 type Locals = {
@@ -36,32 +34,26 @@ type Locals = {
   address: string | null
 };
 
-router.use(spacePrefix, async (req, res, next) => {
-  const { space } = req.params;
-  try {
-    const { config, calendarText, spaceOwners } = await doltConfig(space);
-    let notion = null;
-    if (config.notion?.enabled) { notion = new NotionHandler(config); }
-    const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
-    const calendar = new CalendarHandler(calendarText);
-    const jwt = req.headers.authorization?.split('Bearer ')[1];
-    const address = jwt ? await addressFromJWT(jwt) : null;
-    res.locals = { space, spaceOwners, config, calendar, notion, dolt, address };
-    next();
-  } catch (e) {
-    res.json({ success: false, error: `space ${space} not found!` });
-  }
-});
+async function handlerReq(query: string, auth: string | undefined) {
+  const { config, calendarText, spaceOwners } = await doltConfig(query);
+  const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
+  const calendar = new CalendarHandler(calendarText);
+  const jwt = auth?.split('Bearer ')[1];
+  const address = jwt ? await addressFromJWT(jwt) : null;
+  return { spaceOwners, address, config, calendar, dolt };
+}
 
 // ================================ //
 // ======== info functions ======== //
 // ================================ //
-router.get(`${spacePrefix}`, async (_, res) => {
-  const { dolt, space, calendar, config } = res.locals as Locals;
+router.get('/:space', async (req, res) => {
+  const { space } = req.params;
   try {
+    const { dolt, calendar, config } = await handlerReq(space, req.headers.authorization);
     const currentEvent = calendar.getCurrentEvent();
     const currentCycle = await dolt.getCurrentGovernanceCycle();
     const head = await dolt.getHead();
+    dolt.localDolt.closeConnection();
     return res.send({
       sucess: true,
       data: {
@@ -83,31 +75,40 @@ router.get(`${spacePrefix}`, async (_, res) => {
 // ===================================== //
 
 // query proposals
-router.get(`${spacePrefix}/proposals`, async (req, res) => {
-  const { cycle, keyword, author } = req.query as { cycle: string, keyword: string, author: string };
-  const { dolt, config } = res.locals as Locals;
+router.get('/:space/proposals', async (req, res) => {
+  const { space } = req.params;
+  const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
+  const { dolt, config } = await handlerReq(space, req.headers.authorization);
   const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [] };
+
   try {
+    // calculate offset for SQL pagination
+    const _limit = limit ? Number(limit) : 0;
+    const _page = page ? Number(page) : 0;
+    const _offset = _page ? (_page - 1) * _limit : 0;
+
     if (!keyword && !cycle) {
       const cycleSearch = cycle || (await dolt.getCurrentGovernanceCycle()).toString();
-      data.proposals = await dolt.getProposalsByGovernanceCycle(cycleSearch);
+      data.proposals = await dolt.getProposalsByGovernanceCycle(cycleSearch, _limit, _offset);
     }
-    if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle); }
-    if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword); }
-    if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword); }
+    if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle, _limit, _offset); }
+    if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword, _limit, _offset); }
+    if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword, _limit, _offset); }
     if (author) { data.proposals = await dolt.getProposalsByAuthorAddress(author); }
+    dolt.localDolt.closeConnection();
     return res.send({ success: true, data });
   } catch (e) {
+    dolt.localDolt.closeConnection();
     return res.send({ success: false, error: `[NANCE] ${e}` });
   }
 });
 
 // upload new proposal
-router.post(`${spacePrefix}/proposals`, async (req, res) => {
+router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   const { proposal } = req.body as ProposalUploadRequest;
-  const { config, calendar, notion, dolt, address } = res.locals as Locals;
-  if (!proposal) res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' });
+  const { config, calendar, dolt, address } = await handlerReq(space, req.headers.authorization);
+  if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   logger.debug(`[UPLOAD] space: ${space}, address: ${address} good`);
   if (!proposal.governanceCycle) {
@@ -119,7 +120,6 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
   else {
     dolt.addProposalToDb(proposal).then(async (hash: string) => {
       proposal.hash = hash;
-      if (notion) notion.addProposalToDb(proposal);
       dolt.actionDirector(proposal);
 
       // send discord message
@@ -130,14 +130,15 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
         try {
           const discussionThreadURL = await dialogHandler.startDiscussion(proposal);
           dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
-          if (notion) notion.updateDiscussionURL({ ...proposal, discussionThreadURL });
           dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
         } catch (e) {
           logger.error(`[DISCORD] ${e}`);
         }
       }
+      dolt.localDolt.closeConnection();
       res.json({ success: true, data: { hash } });
     }).catch((e: any) => {
+      dolt.localDolt.closeConnection();
       res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
     });
   }
@@ -148,26 +149,29 @@ router.post(`${spacePrefix}/proposals`, async (req, res) => {
 // =========================================== //
 
 // get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #
-router.get(`${spacePrefix}/proposal/:pid`, async (req, res) => {
-  const { pid } = req.params;
-  const { dolt } = res.locals as Locals;
+router.get('/:space/proposal/:pid', async (req, res) => {
+  const { space, pid } = req.params;
+  const { dolt } = await handlerReq(space, req.headers.authorization);
   return res.send(
     await dolt.getProposalByAnyId(pid).then((proposal: Proposal) => {
+      dolt.localDolt.closeConnection();
       return { sucess: true, data: proposal };
     }).catch((e: any) => {
+      dolt.localDolt.closeConnection();
       return { success: false, error: e };
     })
   );
 });
 
 // edit single proposal
-router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
+router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   const { proposal } = req.body as ProposalUploadRequest;
-  const { dolt, config, address } = res.locals as Locals;
+  const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   const proposalByUuid = await dolt.getProposalByAnyId(pid);
   if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft' && proposalByUuid.status !== 'Temperature Check') {
+    dolt.localDolt.closeConnection();
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
   }
@@ -199,19 +203,23 @@ router.put(`${spacePrefix}/proposal/:pid`, async (req, res) => {
       const discord = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!discord.ready()) { await sleep(50); }
+      proposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
+      await discord.editDiscussionTitle(proposal);
       await discord.sendProposalDiff(getLastSlash(proposalByUuid.discussionThreadURL), diff, pid);
       discord.logout();
     }
+    dolt.localDolt.closeConnection();
     res.json({ success: true, data: { hash } });
   }).catch((e: any) => {
+    dolt.localDolt.closeConnection();
     res.json({ success: false, error: JSON.stringify(e) });
   });
 });
 
 // delete single proposal
-router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
-  const { hash } = req.params;
-  const { dolt, config, spaceOwners, address } = res.locals as Locals;
+router.delete('/:space/proposal/:hash', async (req, res) => {
+  const { space, hash } = req.params;
+  const { dolt, config, spaceOwners, address } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   dolt.getProposalByAnyId(hash).then(async (proposalByUuid: Proposal) => {
     if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft') {
@@ -227,13 +235,19 @@ router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
     if (permissions) {
       logger.info(`DELETE issued by ${address}`);
       dolt.deleteProposal(hash).then(async (affectedRows: number) => {
+        dolt.localDolt.closeConnection();
         res.json({ success: true, data: { affectedRows } });
       }).catch((e: any) => {
+        dolt.localDolt.closeConnection();
         res.json({ success: false, error: e });
       });
-    } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to  proposal' }); }
+    } else {
+      dolt.localDolt.closeConnection();
+      res.json({ success: false, error: '[PERMISSIONS] User not authorized to  proposal' });
+    }
   }).catch((e) => {
     console.log(e);
+    dolt.localDolt.closeConnection();
     res.json({ success: false, error: 'proposal not found' });
   });
 });
@@ -242,24 +256,28 @@ router.delete(`${spacePrefix}/proposal/:hash`, async (req, res) => {
 // ======== multisig functions ======== //
 // ==================================== //
 
-router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
+router.get('/:space/reconfigure', async (req, res) => {
+  const { space } = req.params;
   const { version = 'V3', address = ZERO_ADDRESS, datetime = new Date(), network = 'mainnet' } = req.query as unknown as FetchReconfigureRequest;
-  const { config, dolt } = res.locals as Locals;
+  const { config, dolt } = await handlerReq(space, req.headers.authorization);
   const ens = await getENS(address);
   const { gnosisSafeAddress } = config.juicebox;
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
   const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network).then((nonce: string) => {
     return nonce;
   }).catch((e: any) => {
+    dolt.localDolt.closeConnection();
     return res.json({ success: false, error: e });
   });
   if (!currentNonce) { return res.json({ success: false, error: 'safe not found' }); }
   const nonce = (Number(currentNonce) + 1).toString();
   const treasury = new NanceTreasury(config, dolt, myProvider(config.juicebox.network));
+  dolt.localDolt.closeConnection();
   return res.send(
     await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
       return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
     }).catch((e: any) => {
+      dolt.localDolt.closeConnection();
       return { success: false, error: e };
     })
   );
@@ -270,42 +288,50 @@ router.get(`${spacePrefix}/reconfigure`, async (req, res) => {
 // ===================================== //
 
 // increment governance cycle
-router.put(`${spacePrefix}/incrementGC`, async (_, res) => {
-  const { dolt, spaceOwners, address } = res.locals as Locals;
+router.put('/:space/incrementGC', async (req, res) => {
+  const { space } = req.params;
+  const { dolt, spaceOwners, address } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: no address' }); return; }
   if (isNanceAddress(address) || isNanceSpaceOwner(spaceOwners, address)) {
     logger.info(`INCREMENT GC by ${address}`);
     dolt.incrementGovernanceCycle().then((data) => {
+      dolt.localDolt.closeConnection();
       res.json({ success: true, data });
     }).catch((e) => {
+      dolt.localDolt.closeConnection();
       res.json({ success: false, error: e });
     });
   }
 });
 
 // edit discord titles
-router.get(`${spacePrefix}/editTitles/:status`, async (req, res) => {
-  const { status } = req.params;
+router.get('/:space/editTitles/:status', async (req, res) => {
+  const { space, status } = req.params;
   const { message } = req.query;
-  const { config } = res.locals as Locals;
+  const { config } = await handlerReq(space, req.headers.authorization);
   const nance = new Nance(config);
   // eslint-disable-next-line no-await-in-loop
   while (!nance.dialogHandler.ready()) { await sleep(50); }
   nance.editTitles(status, message as string).then((data) => {
+    nance.dProposalHandler.localDolt.closeConnection();
     res.json({ success: true, data });
   }).catch((e) => {
+    nance.dProposalHandler.localDolt.closeConnection();
     res.json({ success: false, error: e });
   });
 });
 
 // check for changes to db, push to dolt if true
-router.get(`${spacePrefix}/dolthub`, async (req, res) => {
+router.get('/:space/dolthub', async (req, res) => {
+  const { space } = req.params;
   const { table } = req.query as { table: string | undefined };
-  const { dolt, calendar } = res.locals as Locals;
+  const { dolt, calendar } = await handlerReq(space, req.headers.authorization);
   const currentEvent = calendar.getCurrentEvent();
   dolt.checkAndPush(table, currentEvent?.title || '').then((data: string) => {
+    dolt.localDolt.closeConnection();
     return res.json({ success: true, data });
   }).catch((e: string) => {
+    dolt.localDolt.closeConnection();
     return res.json({ success: false, error: e });
   });
 });
@@ -315,27 +341,59 @@ router.get(`${spacePrefix}/dolthub`, async (req, res) => {
 // ===================================== //
 
 // get payouts table
-router.get(`${spacePrefix}/payouts`, async (_, res) => {
-  const { dolt } = res.locals as Locals;
+router.get('/:space/payouts', async (req, res) => {
+  const { space } = req.params;
+  const { dolt } = await handlerReq(space, req.headers.authorization);
   dolt.getPayoutsDb('V3').then((data: SQLPayout[]) => {
+    dolt.localDolt.closeConnection();
     res.json({ success: true, data });
   }).catch((e: any) => {
+    dolt.localDolt.closeConnection();
     res.json({ success: false, error: e });
   });
 });
 
 // edit payouts table
-router.put(`${spacePrefix}/payouts`, async (req, res) => {
-  const { config, dolt, address } = res.locals as Locals;
+router.put('/:space/payouts', async (req, res) => {
+  const { space } = req.params;
+  const { config, dolt, address } = await handlerReq(space, req.headers.authorization);
   const { payouts } = req.body as EditPayoutsRequest;
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
+  if (!address) { dolt.localDolt.closeConnection(); res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   const safeAddress = config.juicebox.gnosisSafeAddress;
   if (await isMultisig(safeAddress, address) || isNanceAddress(address)) {
     logger.info(`EDIT PAYOUTS by ${address}`);
     dolt.bulkEditPayouts(payouts).then(() => {
+      dolt.localDolt.closeConnection();
       res.json({ success: true });
     }).catch((e: any) => { res.json({ success: false, error: e }); });
+    dolt.localDolt.closeConnection();
   } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to edit payouts' }); }
+});
+
+router.get('/:space/payouts/stale', async (req, res) => {
+  const { space } = req.params;
+  const { dolt } = await handlerReq(space, req.headers.authorization);
+  dolt.setStalePayouts().then((updated: number) => {
+    dolt.localDolt.closeConnection();
+    res.json({ success: true, data: { numUpdated: updated } });
+  });
+});
+
+router.get('/:space/payouts/rollup', async (req, res) => {
+  const { space } = req.params;
+  const { config, dolt } = await handlerReq(space, req.headers.authorization);
+  const dialogHandler = new DiscordHandler(config);
+  const payouts = await dolt.getPayoutsDb();
+  const currentGovernanceCycle = (await dolt.getCurrentGovernanceCycle()).toString();
+  // eslint-disable-next-line no-await-in-loop
+  while (!dialogHandler.ready()) { await sleep(50); }
+  dialogHandler.sendPayoutsTable(payouts, currentGovernanceCycle).then(() => {
+    dolt.localDolt.closeConnection();
+    res.json({ success: true });
+  }).catch((e: any) => {
+    dolt.localDolt.closeConnection();
+    res.json({ success: false, error: e });
+  });
 });
 
 // ===================================== //
@@ -343,43 +401,34 @@ router.put(`${spacePrefix}/payouts`, async (req, res) => {
 // ===================================== //
 
 // get transfers table
-router.get(`${spacePrefix}/transfers`, async (_, res) => {
-  const { dolt } = res.locals as Locals;
+router.get('/:space/transfers', async (req, res) => {
+  const { space } = req.params;
+  const { dolt } = await handlerReq(space, req.headers.authorization);
   dolt.getTransfersDb().then((data: SQLTransfer[]) => {
+    dolt.localDolt.closeConnection();
     res.json({ success: true, data });
   }).catch((e: any) => {
+    dolt.localDolt.closeConnection();
     res.json({ success: false, error: e });
   });
 });
 
-// tenderly fork simulation
-// router.get(`${spacePrefix}/fork/simulate/:uuid`, async (req, res) => {
-//   const { uuid } = req.params;
-//   const { dolt, config } = res.locals as Locals;
-//   const transaction = await dolt.getTransactionsByUuid(uuid);
-//   const encodeFunctionData = await encodeCustomTransaction(transaction);
-//   const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
-//   await tenderly.getForkProvider(transaction.transactionName);
-//   tenderly.sendTransaction(encodeFunctionData, config.juicebox.gnosisSafeAddress).then((data) => {
-//     res.json({ success: true, data });
-//   }).catch((e) => {
-//     res.json({ success: false, error: e });
-//   });
-// });
-
 // tenderly simulation of multiple transactions, encoded using gnosis MultiCall
 // pass in comma separated uuids of transactions to simulate as a query ex: ?uuids=uuid1,uuid2,uuid3...
-router.get(`${spacePrefix}/simulate/multicall`, async (req, res) => {
+router.get('/:space/simulate/multicall', async (req, res) => {
+  const { space } = req.params;
   const { uuids, uuidOfProposal } = req.query as { uuids: string, uuidOfProposal: string };
-  const { dolt, config } = res.locals as Locals;
+  const { dolt, config } = await handlerReq(space, req.headers.authorization);
   const txn = (uuidOfProposal) ? await dolt.getTransactionsByProposalUuid(uuidOfProposal) : await dolt.getTransactionsByUuids(uuids.split(','));
   if (!txn || txn.length === 0) { res.json({ success: false, error: 'no transaction found' }); return; }
   const signer = (await GnosisHandler.getSigners(config.juicebox.gnosisSafeAddress))[0]; // get the first signer to encode MultiCall
   const encodedTransactions = await encodeGnosisMulticall(txn, signer);
   const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
   tenderly.simulate(encodedTransactions.data, config.juicebox.gnosisSafeAddress, signer, true).then((tenderlyResults) => {
+    dolt.localDolt.closeConnection();
     res.json({ success: true, data: { ...tenderlyResults, transactionCount: encodedTransactions.count, transactions: encodedTransactions.transactions } });
   }).catch((e) => {
+    dolt.localDolt.closeConnection();
     res.json({ success: false, error: e });
   });
 });

@@ -458,36 +458,57 @@ export class DoltHandler {
     });
   }
 
-  async getProposalsByGovernanceCycle(governanceCycle: string) {
+  async getProposalsByGovernanceCycle(governanceCycle: string, limit?: number, offset?: number) {
+    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
+
     return this.queryProposals(`
       SELECT *, HEX(${proposalsTable}.title) as title from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       ORDER BY proposalId ASC
+      ${pagination}
     `);
   }
 
-  async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string) {
-    const search = keyword.replaceAll('%20', ' ');
+  async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string, limit?: number, offset?: number) {
+    const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
+    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
+
     return this.queryProposals(`
-    SELECT * from ${proposalsTable}
+    SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       AND (
-        LOWER(body) like LOWER('%${search}%')
-        OR LOWER(title) like LOWER('%${search}%')
+        ${orConditions}
       )
-      ORDER BY proposalId ASC
+      ORDER BY relevance DESC
+      ${pagination}
     `);
   }
 
-  async getProposalsByKeyword(keyword: string) {
-    const search = keyword.replaceAll('%20', ' ');
+  async getProposalsByKeyword(keyword: string, limit?: number, offset?: number) {
+    const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
+    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
+
     return this.queryProposals(`
-    SELECT * from ${proposalsTable}
+    SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
       WHERE
-      LOWER(body) like LOWER('%${search}%')
-      OR LOWER(title) like LOWER('%${search}%')
-      ORDER BY proposalId ASC
+      ${orConditions}
+      ORDER BY relevance DESC
+      ${pagination}
     `);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  relevanceMatch(keyword: string) {
+    const searchKeywords = keyword.split(' ').map((kw) => { return kw.trim(); }).filter(Boolean);
+    const relevanceCalculation = searchKeywords
+      .map((kw) => { return `(LOWER(body) LIKE LOWER('%${kw}%')) + 2 * (LOWER(title) LIKE LOWER('%${kw}%'))`; })
+      .join(' + ');
+
+    const orConditions = searchKeywords
+      .map((kw) => { return `(LOWER(body) LIKE LOWER('%${kw}%')) OR (LOWER(title) LIKE LOWER('%${kw}%'))`; })
+      .join(' OR ');
+
+    return { relevanceCalculation, orConditions };
   }
 
   async getContentMarkdown(hash: string) {
@@ -528,7 +549,7 @@ export class DoltHandler {
     `, [authorAddress]);
   }
 
-  async getPayoutsDb(version: string): Promise<SQLPayout[]> {
+  async getPayoutsDb(version = 'V3'): Promise<SQLPayout[]> {
     const treasuryVersion = Number(version.split('V')[1]);
     const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
     const results = this.queryDb(`

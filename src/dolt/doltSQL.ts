@@ -2,12 +2,6 @@
 import mysql, { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { DBConfig, DoltBranch } from './types';
 
-// DB DEFAULTS
-const HOST = '127.0.0.1';
-const USER = 'root';
-const PASSWORD = '';
-const PORT = 3306;
-
 export const resStatus = (res: any): number => {
   return (<RowDataPacket>res[0])[0].status;
 };
@@ -26,16 +20,11 @@ export class DoltSQL {
     options: DBConfig,
   ) {
     this.options = options;
-    const { host = HOST, user = USER, password = PASSWORD, database, port = PORT } = options;
-    this.db = mysql.createPool({ host, user, password, database, port }).promise();
+    this.db = mysql.createConnection(options).promise();
   }
 
-  async testConnection() {
-    return this.db.getConnection().then((res) => {
-      return res.config.database;
-    }).catch((e) => {
-      throw Error(e);
-    });
+  async closeConnection() {
+    this.db.end();
   }
 
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
