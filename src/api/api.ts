@@ -24,22 +24,17 @@ import { addressFromJWT } from './helpers/auth';
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-type Locals = {
-  space: string,
-  spaceOwners: string[],
-  config: NanceConfig,
-  calendar: CalendarHandler,
-  notion: NotionHandler,
-  dolt: DoltHandler
-  address: string | null
-};
-
 async function handlerReq(query: string, auth: string | undefined) {
   const { config, calendarText, spaceOwners } = await doltConfig(query);
   const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
   const calendar = new CalendarHandler(calendarText);
   const jwt = auth?.split('Bearer ')[1];
-  const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
+  let address = null;
+  try {
+    address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
+  } catch (e) {
+    logger.error(e);
+  }
   return { spaceOwners, address, config, calendar, dolt };
 }
 
@@ -116,8 +111,12 @@ router.post('/:space/proposals', async (req, res) => {
     proposal.governanceCycle = currentGovernanceCycle + 1;
   }
   if (!proposal.authorAddress) { proposal.authorAddress = address; }
-  if (proposal.status === 'Private') dolt.addPrivateProposalToDb(proposal);
-  else {
+  if (proposal.status === 'Private') {
+    dolt.addPrivateProposalToDb(proposal).then(async (hash: string) => {
+      dolt.localDolt.closeConnection();
+      res.json({ success: true, data: { hash } });
+    });
+  } else {
     dolt.addProposalToDb(proposal).then(async (hash: string) => {
       proposal.hash = hash;
       dolt.actionDirector(proposal);
