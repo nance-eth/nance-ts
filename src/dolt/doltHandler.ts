@@ -10,6 +10,7 @@ import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
 
 const proposalsTable = 'proposals';
+const privateProposalsTable = 'privateProposals';
 const payoutsTable = 'payouts';
 const reservesTable = 'reserves';
 const governanceCyclesTable = 'governanceCycles';
@@ -160,6 +161,18 @@ export class DoltHandler {
   // ===================================== //
   // ========== add functions ============ //
   // ===================================== //
+
+  async addPrivateProposalToDb(proposal: Proposal) {
+    const now = new Date().toISOString();
+    proposal.hash = proposal.hash || uuidGen();
+    await this.localDolt.db.query(oneLine`
+      INSERT INTO ${privateProposalsTable}
+      (uuid, createdTime, lastEditedTime, title, body, authorAddress, coauthors, actions)
+      VALUES(?,?,?,?,?,?,?,?)`,
+    [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, JSON.stringify(proposal.coauthors), JSON.stringify(proposal.actions)],
+    );
+    return proposal.hash;
+  }
 
   async addProposalToDb(proposal: Proposal) {
     const now = new Date().toISOString();
