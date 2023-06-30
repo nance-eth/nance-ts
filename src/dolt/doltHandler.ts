@@ -171,6 +171,7 @@ export class DoltHandler {
       VALUES(?,?,?,?,?,?,?,?)`,
     [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, JSON.stringify(proposal.coauthors), JSON.stringify(proposal.actions)],
     );
+    return proposal.hash;
   }
 
   async addProposalToDb(proposal: Proposal) {

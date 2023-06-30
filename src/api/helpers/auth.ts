@@ -1,5 +1,6 @@
 import { decode } from 'next-auth/jwt';
 import { unixTimeStampNow } from '../../utils';
+import { keys } from '../../keys';
 
 interface DecodedJWT {
   sub: string;
@@ -10,7 +11,7 @@ interface DecodedJWT {
 
 export async function addressFromJWT(jwt: string): Promise<string> {
   try {
-    const decoded = await decode({ token: jwt, secret: process.env.NEXTAUTH_SECRET || '' });
+    const decoded = await decode({ token: jwt, secret: keys.NEXTAUTH_SECRET });
     if (!decoded) return await Promise.reject(new Error('No decoded JWT'));
     const { sub, iat, exp } = decoded as unknown as DecodedJWT;
     const now = unixTimeStampNow();

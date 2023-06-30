@@ -39,7 +39,7 @@ async function handlerReq(query: string, auth: string | undefined) {
   const dolt = new DoltHandler(dbOptions(config.dolt.repo), config.propertyKeys);
   const calendar = new CalendarHandler(calendarText);
   const jwt = auth?.split('Bearer ')[1];
-  const address = jwt ? await addressFromJWT(jwt) : null;
+  const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
   return { spaceOwners, address, config, calendar, dolt };
 }
 
