@@ -9,6 +9,7 @@ import { checkSignature } from './helpers/signature';
 import { ConfigSpaceRequest } from './models';
 import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar } from '../utils';
 import logger from '../logging';
+import { pools } from '../dolt/pools';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.get('/', (_, res) => {
 
 router.get('/config/:space', async (req, res) => {
   const { space } = req.params;
-  const dolt = new DoltSysHandler();
+  const dolt = new DoltSysHandler(pools.nance_sys);
   dolt.getSpaceConfig(space).then((doltConfig) => {
     if (doltConfig) { res.json({ success: true, data: doltConfig }); return; }
     res.json({ success: false, error: `config ${space} not found!` });
@@ -28,10 +29,10 @@ router.get('/config/:space', async (req, res) => {
 });
 
 router.get('/all', async (_, res) => {
-  const doltSys = new DoltSysHandler();
+  const doltSys = new DoltSysHandler(pools.nance_sys);
   doltSys.getAllSpaceNames().then(async (data) => {
     const infos = await Promise.all(data.map(async (entry) => {
-      const dolt = new DoltHandler(dbOptions(entry.config.dolt.repo), entry.config.propertyKeys);
+      const dolt = new DoltHandler(pools[entry.space], entry.config.propertyKeys);
       const calendar = new CalendarHandler(entry.calendar);
       const currentCycle = await dolt.getCurrentGovernanceCycle();
       const currentEvent = calendar.getCurrentEvent();
@@ -59,7 +60,7 @@ router.post('/config', async (req, res) => {
   if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); return; }
 
   // check if space exists and confiugurer is spaceOwner
-  const dolt = new DoltSysHandler();
+  const dolt = new DoltSysHandler(pools.nance_sys);
   const spaceConfig = await dolt.getSpaceConfig(space);
   if (spaceConfig && !spaceConfig.spaceOwners.includes(signature.address)) {
     res.json({ success: false, error: '[NANCE ERROR] configurer not spaceOwner!' });

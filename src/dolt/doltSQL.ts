@@ -20,11 +20,7 @@ export class DoltSQL {
     options: DBConfig,
   ) {
     this.options = options;
-    this.db = mysql.createConnection(options).promise();
-  }
-
-  async closeConnection() {
-    this.db.end();
+    this.db = mysql.createPool(options).promise();
   }
 
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {

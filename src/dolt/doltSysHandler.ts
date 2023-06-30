@@ -7,12 +7,15 @@ import { SpaceConfig } from './schema';
 
 const systemDb = 'nance_sys';
 const system = 'config';
+const contracts = 'contracts';
 
 export class DoltSysHandler {
   localDolt;
 
-  constructor() {
-    this.localDolt = new DoltSQL(dbOptions(systemDb));
+  constructor(
+    localDolt: DoltSQL,
+  ) {
+    this.localDolt = localDolt;
   }
 
   async createSpaceDB(space: string): Promise<number> {
@@ -75,5 +78,24 @@ export class DoltSysHandler {
       SELECT * FROM ${system}`).then((res) => {
       return res as unknown as SpaceConfig[];
     }).catch((e) => { return Promise.reject(e); });
+  }
+
+  async writeContractData(symbol: string, type: string, address: string, abi: any[]) {
+    return this.localDolt.queryResults(oneLine`
+      INSERT INTO ${contracts} (symbol, contractType, contractAddress, contractAbi)
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE contractAddress = VALUES(contractAddress), contractAbi = VALUES(contractAbi)
+    `, [symbol, type, address, JSON.stringify(abi)]).then((res) => {
+      return res;
+    });
+  }
+
+  async getABI(symbol: string): Promise<string> {
+    return this.localDolt.queryRows(oneLine`
+      SELECT contractAbi FROM ${contracts}
+      WHERE symbol = ? LIMIT 1
+    `, [symbol]).then((res) => {
+      return res[0].contractAbi;
+    });
   }
 }

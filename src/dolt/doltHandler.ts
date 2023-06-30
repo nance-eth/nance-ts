@@ -25,10 +25,10 @@ export class DoltHandler {
   public currentGovernanceCycle = 0;
 
   constructor(
-    options: DBConfig,
+    localDolt: DoltSQL,
     propertyKeys: PropertyKeys
   ) {
-    this.localDolt = new DoltSQL(options);
+    this.localDolt = localDolt;
     this.propertyKeys = propertyKeys;
   }
 

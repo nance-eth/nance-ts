@@ -152,6 +152,7 @@ export interface NanceConfig {
     network: 'mainnet' | 'goerli';
     projectId: string;
     gnosisSafeAddress: string;
+    governorAddress: string;
   };
   discord: {
     API_KEY: string;
@@ -241,4 +242,12 @@ export type PartialTransaction = {
   value: string;
   data: string;
   operation?: number;
+};
+
+export type GovernorProposeTransaction = {
+  targets: string[];
+  values: number[];
+  calldatas: string[];
+  description: string;
+  signatures?: string[];
 };
