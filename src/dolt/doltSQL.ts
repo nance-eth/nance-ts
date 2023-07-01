@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/quotes */
 import mysql, { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { DBConfig, DoltBranch } from './types';
+import logger from '../logging';
 
 export const resStatus = (res: any): number => {
   return (<RowDataPacket>res[0])[0].status;
@@ -21,6 +22,12 @@ export class DoltSQL {
   ) {
     this.options = options;
     this.db = mysql.createPool(options).promise();
+    this.db.on('acquire', (conn) => {
+      conn.on('error', (err) => {
+        logger.error(err);
+        this.db = mysql.createPool(options).promise();
+      });
+    });
   }
 
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
