@@ -23,6 +23,7 @@ export class DoltSQL {
     this.options = options;
     this.db = mysql.createPool(options).promise();
     this.db.on('acquire', (conn) => {
+      this.db.setMaxListeners(15);
       conn.on('error', (err) => {
         logger.error(err);
         this.db = mysql.createPool(options).promise();
