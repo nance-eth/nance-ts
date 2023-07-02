@@ -22,16 +22,6 @@ export class DoltSQL {
   ) {
     this.options = options;
     this.db = mysql.createPool(options).promise();
-    this.db.on('acquire', (conn) => {
-      logger.info(`Connection ${conn.threadId} acquired`);
-      this.db.setMaxListeners(15);
-      conn.on('error', (err) => {
-        logger.error(err);
-        conn.end().then(() => {
-          this.db = mysql.createPool(options).promise();
-        });
-      });
-    });
   }
 
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
