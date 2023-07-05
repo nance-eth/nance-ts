@@ -355,11 +355,11 @@ router.get('/:space/payouts', async (req, res) => {
 // edit payouts table
 router.put('/:space/payouts', async (req, res) => {
   const { space } = req.params;
-  const { config, dolt, address } = await handlerReq(space, req.headers.authorization);
+  const { config, dolt, address, spaceOwners } = await handlerReq(space, req.headers.authorization);
   const { payouts } = req.body as EditPayoutsRequest;
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   const safeAddress = config.juicebox.gnosisSafeAddress;
-  if (await isMultisig(safeAddress, address) || isNanceAddress(address)) {
+  if (await isMultisig(safeAddress, address) || isNanceAddress(address) || isNanceSpaceOwner(spaceOwners, address)) {
     logger.info(`EDIT PAYOUTS by ${address}`);
     dolt.bulkEditPayouts(payouts).then(() => {
       res.json({ success: true });

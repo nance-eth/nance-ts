@@ -3,13 +3,14 @@ import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
-import { dbOptions } from '../dolt/dbConfig';
 import { dotPin } from '../storage/storageHandler';
 import { checkSignature } from './helpers/signature';
 import { ConfigSpaceRequest } from './models';
 import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
+import { dbOptions } from '../dolt/dbConfig';
+import { DoltSQL } from '../dolt/doltSQL';
 
 const router = express.Router();
 
@@ -73,7 +74,11 @@ router.post('/config', async (req, res) => {
       await dolt.createSchema(space);
       await createDolthubDB(space);
       await dolt.localDolt.addRemote(`https://doltremoteapi.dolthub.com/nance/${space}`);
-    }).catch((e) => { logger.error(`[CREATE SPACE]: ${e}`); });
+      pools[space] = new DoltSQL(dbOptions(space));
+    }).catch((e) => {
+      logger.error('[CREATE SPACE]:');
+      logger.error(e);
+    });
   }
 
   // config the space
