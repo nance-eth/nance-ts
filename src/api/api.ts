@@ -73,7 +73,7 @@ router.get('/:space', async (req, res) => {
 router.get('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
-  const { dolt, config } = await handlerReq(space, req.headers.authorization);
+  const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
   const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [] };
 
   try {
@@ -89,7 +89,9 @@ router.get('/:space/proposals', async (req, res) => {
     if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle, _limit, _offset); }
     if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword, _limit, _offset); }
     if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword, _limit, _offset); }
-    if (author) { data.proposals = await dolt.getProposalsByAuthorAddress(author); }
+    if (author) { data.proposals.push(...await dolt.getProposalsByAuthorAddress(author)); }
+    // check for any private proposals
+    if (address) data.proposals = await dolt.getPrivateProposalsByAuthorAddress(address);
     return res.send({ success: true, data });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });
@@ -145,14 +147,22 @@ router.post('/:space/proposals', async (req, res) => {
 // get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #
 router.get('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
-  const { dolt } = await handlerReq(space, req.headers.authorization);
-  return res.send(
-    await dolt.getProposalByAnyId(pid).then((proposal: Proposal) => {
-      return { sucess: true, data: proposal };
-    }).catch((e: any) => {
-      return { success: false, error: e };
-    })
-  );
+  const { dolt, address } = await handlerReq(space, req.headers.authorization);
+  let proposal: Proposal;
+  try {
+    proposal = await dolt.getProposalByAnyId(pid);
+    res.send({ success: true, data: proposal });
+    return;
+  } catch (e) {
+    if (address) {
+      try {
+        proposal = await dolt.getPrivateProposal(pid, address);
+        res.send({ success: true, data: proposal });
+      } catch {
+        res.send({ success: false, error: e });
+      }
+    }
+  }
 });
 
 // edit single proposal
