@@ -14,7 +14,7 @@ import { DiscordHandler } from '../discord/discordHandler';
 import { SQLPayout, SQLTransfer } from '../dolt/schema';
 import { Proposal, GovernorProposeTransaction, BasicTransaction } from '../types';
 import { diffBody } from './helpers/diff';
-import { isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
+import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { headToUrl } from '../dolt/doltAPI';
 import { encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
@@ -89,9 +89,12 @@ router.get('/:space/proposals', async (req, res) => {
     if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle, _limit, _offset); }
     if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword, _limit, _offset); }
     if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword, _limit, _offset); }
-    if (author) { data.proposals.push(...await dolt.getProposalsByAuthorAddress(author)); }
+    if (author) { data.proposals = await dolt.getProposalsByAuthorAddress(author); }
     // check for any private proposals
-    if (address) data.proposals = await dolt.getPrivateProposalsByAuthorAddress(address);
+    if (address) {
+      const privates = await dolt.getPrivateProposalsByAuthorAddress(address);
+      data.proposals.push(...privates);
+    }
     return res.send({ success: true, data });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });
@@ -171,8 +174,15 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   const { proposal } = req.body as ProposalUploadRequest;
   const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
-  const proposalByUuid = await dolt.getProposalByAnyId(pid);
-  if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft' && proposalByUuid.status !== 'Temperature Check') {
+  let proposalByUuid: Proposal;
+  let isPrivate = false;
+  try {
+    proposalByUuid = await dolt.getProposalByAnyId(pid);
+  } catch {
+    proposalByUuid = await dolt.getPrivateProposal(pid, address);
+    isPrivate = true;
+  }
+  if (!canEditProposal(proposalByUuid.status)) {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
   }
@@ -182,11 +192,12 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   }
   proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === 'Discussion') ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
   logger.info(`EDIT issued by ${address} for uuid: ${proposal.hash}`);
-  dolt.editProposal(proposal).then(async (hash: string) => {
+  const editFunction = (p: Proposal) => { return isPrivate ? dolt.editPrivateProposal(p) : dolt.editProposal(p); };
+  editFunction(proposal).then(async (hash: string) => {
     const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
-    dolt.actionDirector(proposal);
+    if (!isPrivate) dolt.actionDirector(proposal);
     // if proposal moved form Draft to Discussion, send discord message
-    if (proposalByUuid.status === 'Draft' && proposal.status === 'Discussion') {
+    if ((proposalByUuid.status === 'Draft' || proposalByUuid.status === 'Private') && proposal.status === 'Discussion') {
       const discord = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!discord.ready()) { await sleep(50); }
@@ -219,32 +230,38 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 router.delete('/:space/proposal/:hash', async (req, res) => {
   const { space, hash } = req.params;
   const { dolt, config, spaceOwners, address } = await handlerReq(space, req.headers.authorization);
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
-  dolt.getProposalByAnyId(hash).then(async (proposalByUuid: Proposal) => {
-    if (proposalByUuid.status !== 'Discussion' && proposalByUuid.status !== 'Draft') {
-      res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
-      return;
-    }
-    const permissions = (
-      address === proposalByUuid.authorAddress
-      || await isMultisig(config.juicebox.gnosisSafeAddress, address)
-      || isNanceSpaceOwner(spaceOwners, address)
-      || isNanceAddress(address)
-    );
-    if (permissions) {
-      logger.info(`DELETE issued by ${address}`);
-      dolt.deleteProposal(hash).then(async (affectedRows: number) => {
-        res.json({ success: true, data: { affectedRows } });
-      }).catch((e: any) => {
-        res.json({ success: false, error: e });
-      });
-    } else {
-      res.json({ success: false, error: '[PERMISSIONS] User not authorized to  proposal' });
-    }
-  }).catch((e) => {
-    console.log(e);
-    res.json({ success: false, error: 'proposal not found' });
-  });
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal delete' }); return; }
+  let proposalByUuid: Proposal;
+  let isPrivate = false;
+  try {
+    proposalByUuid = await dolt.getProposalByAnyId(hash);
+  } catch {
+    try {
+      proposalByUuid = await dolt.getPrivateProposal(hash, address);
+      isPrivate = true;
+    } catch { res.send({ success: false, error: '[NANCE ERROR]: proposal not found' }); return; }
+  }
+  if (!canEditProposal(proposalByUuid.status)) {
+    res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
+    return;
+  }
+  const permissions = (
+    address === proposalByUuid.authorAddress
+    || await isMultisig(config.juicebox.gnosisSafeAddress, address)
+    || isNanceSpaceOwner(spaceOwners, address)
+    || isNanceAddress(address)
+  );
+  const deleteFunction = (uuid: string) => { return isPrivate ? dolt.deletePrivateProposal(uuid) : dolt.deleteProposal(uuid); };
+  if (permissions) {
+    logger.info(`DELETE issued by ${address}`);
+    deleteFunction(hash).then(async (affectedRows: number) => {
+      res.json({ success: true, data: { affectedRows } });
+    }).catch((e: any) => {
+      res.json({ success: false, error: e });
+    });
+  } else {
+    res.json({ success: false, error: '[PERMISSIONS] User not authorized to  proposal' });
+  }
 });
 
 // ==================================== //

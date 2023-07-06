@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS proposals (
   PRIMARY KEY (uuid)
 );
 
-CREATE TABLE IF NOT EXISTS privateProposals (
+INSERT INTO dolt_ignore VALUES ("private_%", true);
+
+CREATE TABLE IF NOT EXISTS private_proposals (
   uuid VARCHAR(35),
   createdTime DATETIME,
   lastEditedTime DATETIME,

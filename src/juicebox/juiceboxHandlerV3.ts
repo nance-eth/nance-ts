@@ -146,6 +146,18 @@ export class JuiceboxHandlerV3 {
     return distributionLimit;
   }
 
+  async getQueuedDistributionLimit() {
+    const queuedConfiguration = (await this.queuedConfiguration()).configuration;
+    const terminal = await getJBDirectory(this.provider, { network: this.network }).terminalsOf(this.projectId);
+    const distributionLimit = await this.JBFundAccessConstraintsStore.distributionLimitOf(
+      this.projectId,
+      queuedConfiguration,
+      terminal[0],
+      TOKEN_ETH
+    );
+    return distributionLimit;
+  }
+
   async getProjectOwner() {
     return getJBProjects(this.provider, { network: this.network }).ownerOf(this.projectId);
   }
@@ -255,8 +267,8 @@ export class JuiceboxHandlerV3 {
     return { address: this.JBController.address, bytes: encodedReconfiguration };
   }
 
-  async encodeDistributeFundsOf() {
-    const currentConfiguration = (await this.currentConfiguration()).configuration;
+  async encodeDistributeFundsOf(queued = false) {
+    const currentConfiguration = queued ? (await this.queuedConfiguration()).configuration : (await this.currentConfiguration()).configuration;
     const distributionLimit = await this.JBFundAccessConstraintsStore.distributionLimitOf(
       this.projectId,
       currentConfiguration,

@@ -10,7 +10,7 @@ import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
 
 const proposalsTable = 'proposals';
-const privateProposalsTable = 'privateProposals';
+const privateProposalsTable = 'private_proposals';
 const payoutsTable = 'payouts';
 const reservesTable = 'reserves';
 const governanceCyclesTable = 'governanceCycles';
@@ -107,6 +107,18 @@ export class DoltHandler {
       proposalId: proposal.proposalId || undefined,
       discussionURL: proposal.discussionThreadURL || undefined,
       governanceCycle: proposal.governanceCycle || undefined,
+      authorAddress: proposal.authorAddress || undefined,
+      coauthors: JSON.stringify(proposal.coauthors) || undefined,
+    };
+    return omitBy(sqlProposal, isNil);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  toPrivateSQLProposal(proposal: Partial<Proposal>): Partial<SQLProposal> {
+    const sqlProposal = {
+      uuid: proposal.hash,
+      title: proposal.title || undefined,
+      body: proposal.body || undefined,
       authorAddress: proposal.authorAddress || undefined,
       coauthors: JSON.stringify(proposal.coauthors) || undefined,
     };
@@ -294,6 +306,20 @@ export class DoltHandler {
     return proposal.hash || Promise.reject('Proposal hash not found');
   }
 
+  async editPrivateProposal(proposal: Partial<Proposal>) {
+    const updates: string[] = [];
+    const cleanedProposal = this.toPrivateSQLProposal(proposal);
+    cleanedProposal.lastEditedTime = new Date();
+    Object.keys(cleanedProposal).forEach((key) => {
+      updates.push(`${key} = ?`);
+    });
+    await this.localDolt.db.query(oneLine`
+      UPDATE ${privateProposalsTable} SET
+      ${updates.join(',')} WHERE uuid = ?`,
+    [...Object.values(cleanedProposal), cleanedProposal.uuid]);
+    return proposal.hash || Promise.reject('Proposal hash not found');
+  }
+
   async bulkEditPayouts(payouts: SQLPayout[]) {
     await Promise.all(payouts.map(async (payout) => {
       const treasuryVersion = DEFAULT_TREASURY_VERSION;
@@ -326,6 +352,11 @@ export class DoltHandler {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  async deletePrivateProposal(hash: string) {
+    const res = await this.queryDbResults(oneLine`DELETE FROM ${privateProposalsTable} WHERE uuid = '${hash}'`);
+    return res.affectedRows;
   }
 
   async updateStatus(hash: string, status: string) {
@@ -558,8 +589,8 @@ export class DoltHandler {
 
   async getPrivateProposalsByAuthorAddress(authorAddress: string) {
     return this.queryProposals(oneLine`
-      SELECT *, HEX(body) as body, HEX(title) as title FROM ${privateProposalsTable} WHERE
-      authorAddress = ?`, [authorAddress]);
+    SELECT *, HEX(title) as title FROM ${privateProposalsTable} WHERE
+    authorAddress = ?`, [authorAddress]);
   }
 
   async getPrivateProposal(hash: string, authorAddress: string) {

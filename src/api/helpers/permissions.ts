@@ -14,3 +14,13 @@ export const isNanceAddress = (address: string) => {
 export const isNanceSpaceOwner = (spaceOwners: string[], address: string) => {
   return spaceOwners.includes(address);
 };
+
+export function canEditProposal(status: string) {
+  return ([
+    'Discussion',
+    'Draft',
+    'Temperature Check',
+    'Private',
+    undefined,
+  ].includes(status));
+}
