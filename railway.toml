@@ -1,0 +1,9 @@
+[[templates]]
+version = "1.0.0"
+
+[build]
+builder = "nixpacks"
+buildCommand = "echo building... && npm run build:api"
+
+[deploy]
+startCommand = "echo starting... && npm run start:api"
