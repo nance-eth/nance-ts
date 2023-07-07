@@ -192,10 +192,15 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   }
   proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === 'Discussion') ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
   logger.info(`EDIT issued by ${address} for uuid: ${proposal.hash}`);
-  const editFunction = (p: Proposal) => { return isPrivate ? dolt.editPrivateProposal(p) : dolt.editProposal(p); };
+  const editFunction = (p: Proposal) => {
+    if (isPrivate && (proposal.status === 'Discussion' || proposal.status === 'Draft')) return dolt.addProposalToDb(p);
+    if (isPrivate) return dolt.editPrivateProposal(p);
+    return dolt.editProposal(p);
+  };
   editFunction(proposal).then(async (hash: string) => {
     const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
     if (!isPrivate) dolt.actionDirector(proposal);
+    if (isPrivate) dolt.deletePrivateProposal(hash);
     // if proposal moved form Draft to Discussion, send discord message
     if ((proposalByUuid.status === 'Draft' || proposalByUuid.status === 'Private') && proposal.status === 'Discussion') {
       const discord = new DiscordHandler(config);
