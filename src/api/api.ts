@@ -7,7 +7,7 @@ import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, EditPayoutsRequest, ProposalsPacket } from './models';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
-import { getLastSlash, myProvider, sleep } from '../utils';
+import { getLastSlash, myProvider, sleep, unixTimeStampNow, secondsToDayHoursMinutes } from '../utils';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
@@ -21,22 +21,23 @@ import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
+import { JuiceboxHandlerV3 } from '../juicebox/juiceboxHandlerV3';
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 async function handlerReq(query: string, auth: string | undefined) {
-  const { config, calendarText, spaceOwners } = await doltConfig(query);
-  const dolt = new DoltHandler(pools[query], config.propertyKeys);
-  const calendar = new CalendarHandler(calendarText);
-  const jwt = auth?.split('Bearer ')[1];
-  let address = null;
   try {
-    address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
+    const { config, calendarText, spaceOwners } = await doltConfig(query);
+    const dolt = new DoltHandler(pools[query], config.propertyKeys);
+    const calendar = new CalendarHandler(calendarText);
+    const jwt = auth?.split('Bearer ')[1];
+    const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
+    return { spaceOwners, address, config, calendar, dolt };
   } catch (e) {
     logger.error(e);
+    return Promise.reject(e);
   }
-  return { spaceOwners, address, config, calendar, dolt };
 }
 
 // ================================ //
@@ -62,6 +63,30 @@ router.get('/:space', async (req, res) => {
     });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
+  }
+});
+
+router.get('/:space/reminder', async (req, res) => {
+  const { space } = req.params;
+  try {
+    const { config } = await handlerReq(space, req.headers.authorization);
+    const juicebox = new JuiceboxHandlerV3(config.juicebox.projectId, myProvider(config.juicebox.network), config.juicebox.network);
+    const currentConfiguration = await juicebox.currentConfiguration();
+    const start = currentConfiguration.start.toNumber();
+    const duration = currentConfiguration.duration.toNumber();
+    const end = start + duration;
+    const remainingSeconds = end - unixTimeStampNow();
+    const remainingDHM = secondsToDayHoursMinutes(remainingSeconds);
+    const currentCycle = currentConfiguration.number.toString();
+    const currentDay = (secondsToDayHoursMinutes(duration - remainingSeconds).days).toString();
+    const discord = new DiscordHandler(config);
+    // eslint-disable-next-line no-await-in-loop
+    while (!discord.ready()) { await sleep(50); }
+    discord.sendImageReminder(currentDay, currentCycle, '', true, remainingDHM, end).then(() => {
+      res.send({ success: true });
+    });
+  } catch (e) {
+    res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
   }
 });
 
@@ -119,12 +144,14 @@ router.post('/:space/proposals', async (req, res) => {
       res.json({ success: true, data: { hash } });
     });
   } else {
+    if (config.submitAsApproved) { proposal.status = 'Approved'; }
     dolt.addProposalToDb(proposal).then(async (hash: string) => {
       proposal.hash = hash;
       dolt.actionDirector(proposal);
 
       // send discord message
-      if (proposal.status === 'Discussion' && calendar.shouldSendDiscussion()) {
+      const discordEnabled = config.discord.channelIds.proposals.length === 18;
+      if ((proposal.status === 'Discussion' || proposal.status === 'Approved') && calendar.shouldSendDiscussion() && discordEnabled) {
         const dialogHandler = new DiscordHandler(config);
         // eslint-disable-next-line no-await-in-loop
         while (!dialogHandler.ready()) { await sleep(50); }

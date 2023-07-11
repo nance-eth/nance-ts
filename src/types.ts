@@ -200,6 +200,7 @@ export interface NanceConfig {
     passingRatio: number;
   };
   calendarCID?: string;
+  submitAsApproved?: boolean;
 }
 
 export type DoltConfig = {
@@ -250,4 +251,10 @@ export type GovernorProposeTransaction = {
   calldatas: string[];
   description: string;
   signatures?: string[];
+};
+
+export type DayHourMinutes = {
+  days: number;
+  hours: number;
+  minutes: number;
 };

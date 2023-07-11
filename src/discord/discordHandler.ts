@@ -12,7 +12,7 @@ import {
 } from 'discord.js';
 import logger from '../logging';
 import { limitLength, getLastSlash, DEFAULT_DASHBOARD } from '../utils';
-import { Proposal, PollResults, NanceConfig } from '../types';
+import { Proposal, PollResults, NanceConfig, DayHourMinutes } from '../types';
 
 import * as discordTemplates from './discordTemplates';
 import { SQLPayout } from '../dolt/schema';
@@ -129,7 +129,7 @@ export class DiscordHandler {
     });
   }
 
-  async sendImageReminder(day: string, governanceCycle: string, type: string) {
+  async sendImageReminder(day: string, governanceCycle: string, type: string, noImage = false, timeLeft?: DayHourMinutes, endSeconds?: number) {
     // delete old messages
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {
@@ -141,7 +141,9 @@ export class DiscordHandler {
         return null;
       })
     );
-    const { message, attachments } = discordTemplates.dailyImageReminder(this.config.name, day, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
+    const { message, attachments } = (noImage && timeLeft)
+      ? discordTemplates.dailyTextReminder(governanceCycle, day, timeLeft, endSeconds, `${DEFAULT_DASHBOARD}/s/${this.config.name}`)
+      : discordTemplates.dailyImageReminder(this.config.name, day, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {
         return channel.send({ embeds: [message], files: attachments });

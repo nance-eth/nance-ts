@@ -5,7 +5,7 @@ import path from 'path';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { NanceConfig, Network } from './types';
+import { DayHourMinutes, NanceConfig, Network } from './types';
 import { keys } from './keys';
 
 export const myProvider = (network = 'mainnet' as Network) => {
@@ -65,6 +65,13 @@ export function addSecondsToDate(date: Date, seconds: number) {
 
 export const minutesToDays = (minutes: number) => {
   return minutes / 24 / 60;
+};
+
+export const secondsToDayHoursMinutes = (seconds: number): DayHourMinutes => {
+  const days = Math.floor(seconds / (24 * 3600));
+  const hours = Math.floor((seconds % (24 * 3600)) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return { days, hours, minutes };
 };
 
 export function getLastSlash(url: string) {

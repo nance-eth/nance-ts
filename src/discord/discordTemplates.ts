@@ -6,7 +6,7 @@ import {
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { dateToUnixTimeStamp, limitLength, numToPrettyString } from '../utils';
-import { PollResults, PollEmojis, Proposal } from '../types';
+import { PollResults, PollEmojis, Proposal, DayHourMinutes } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
@@ -139,6 +139,15 @@ export const dailyImageReminder = (space: string, day: string, governanceCycle: 
     message,
     attachments: [thumbnail, image]
   };
+};
+
+export const dailyTextReminder = (governanceCycle: string, day: string, timeLeft: DayHourMinutes, endSeconds?: number, contentLink?: string) => {
+  const message = new MessageEmbed().setTitle('Governance Status').setDescription(
+    stripIndents`
+    Today is day ${day} of GC#${governanceCycle} (ends <t:${endSeconds}:f>)\n
+    There are ${timeLeft.days} days, ${timeLeft.hours} hours, and ${timeLeft.minutes} minutes left to submit a [proposal](${contentLink})\n`
+  );
+  return { message, attachments: [] };
 };
 
 export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, proposalLinkPrefix: string, proposalIdPrefix: string) => {

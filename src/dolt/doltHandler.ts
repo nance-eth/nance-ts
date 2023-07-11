@@ -163,15 +163,16 @@ export class DoltHandler {
 
   async actionDirector(proposal: Proposal) {
     const governanceCycle = proposal.governanceCycle || await this.getCurrentGovernanceCycle();
+    const actionStatus = proposal.status === 'Approved' ? 'active' : 'voting';
     proposal.actions?.forEach((action) => {
       if (action.type === 'Payout') {
-        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid, proposal.status);
+        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid, actionStatus);
       } else if (action.type === 'Transfer') {
-        this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid);
+        this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid, undefined, actionStatus);
       } else if (action.type === 'Reserve') {
-        this.addReserveToDb(action.payload as Reserve, proposal.hash, governanceCycle, action.uuid);
+        this.addReserveToDb(action.payload as Reserve, proposal.hash, governanceCycle, action.uuid, actionStatus);
       } else if (action.type === 'Custom Transaction') {
-        this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid);
+        this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid, actionStatus);
       }
     });
   }
@@ -218,7 +219,6 @@ export class DoltHandler {
     const numberOfPayouts = payout.count;
     const amount = payout.amountUSD;
     const currency = 'usd';
-    const payStatus = status || 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${payoutsTable}
       (uuidOfPayout, uuidOfProposal, treasuryVersion, governanceCycleStart, numberOfPayouts,
@@ -226,12 +226,11 @@ export class DoltHandler {
       VALUES(?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
       governanceCycleStart = VALUES(governanceCycleStart), numberOfPayouts = VALUES(numberOfPayouts), amount = VALUES(amount), currency = VALUES(currency),
       payAddress = VALUES(payAddress), payProject = VALUES(payProject), payStatus = VALUES(payStatus), payName = VALUES(payName)`,
-    [uuid || uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payout.address, payout.project, payStatus, payName]);
+    [uuid || uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payout.address, payout.project, status, payName]);
   }
 
   async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, uuid?: string, transferCount = 1, status?: string) {
     const { to, contract, amount, tokenName } = transfer;
-    const transferStatus = 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transfersTable}
       (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
@@ -239,14 +238,13 @@ export class DoltHandler {
       transferGovernanceCycle = VALUES(transferGovernanceCycle), transferCount = VALUES(transferCount), transferName = VALUES(transferName),
       transferAddress = VALUES(transferAddress), transferTokenName = VALUES(transferTokenName), transferTokenAddress = VALUES(transferTokenAddress),
       transferAmount = VALUES(transferAmount), transferStatus = VALUES(transferStatus)`,
-    [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, transferStatus]);
+    [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, status]);
   }
 
   async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, uuid?: string, status?: string, transactionCount = 1) {
     const address = customTransaction.contract;
     const { value, functionName, args } = customTransaction;
     const argsArray = JSON.stringify(args);
-    const transactionStatus = status || 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transactionsTable}
       (uuidOfTransaction, uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName,
@@ -256,17 +254,16 @@ export class DoltHandler {
       transactionAddress = VALUES(transactionAddress), transactionValue = VALUES(transactionValue), transactionFunctionName = VALUES(transactionFunctionName),
       transactionFunctionArgs = VALUES(transactionFunctionArgs), transactionStatus = VALUES(transactionStatus)`,
     [uuid || uuidGen(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray,
-      transactionStatus, customTransaction.tenderlyId]);
+      status, customTransaction.tenderlyId]);
   }
 
   async addReserveToDb(reserve: Reserve, uuidOfProposal: string, reserveGovernanceCycle: number, uuid?: string, status?: string) {
-    const reserveStatus = status || 'voting';
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${reservesTable}
       (uuidOfReserve, uuidOfProposal, reserveGovernanceCycle, splits, reserveStatus)
       VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE
       reserveGovernanceCycle = VALUES(reserveGovernanceCycle), splits = VALUES(splits), reserveStatus = VALUES(reserveStatus)`,
-    [uuid || uuidGen(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(reserve.splits), reserveStatus]);
+    [uuid || uuidGen(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(reserve.splits), status]);
   }
 
   async addGovernanceCycleToDb(g: GovernanceCycle) {
