@@ -467,19 +467,20 @@ router.get('/:space/transfers', async (req, res) => {
 // tenderly simulation of multiple transactions, encoded using gnosis MultiCall
 // pass in comma separated uuids of transactions to simulate as a query ex: ?uuids=uuid1,uuid2,uuid3...
 router.get('/:space/simulate/multicall', async (req, res) => {
-  const { space } = req.params;
-  const { uuids, uuidOfProposal } = req.query as { uuids: string, uuidOfProposal: string };
-  const { dolt, config } = await handlerReq(space, req.headers.authorization);
-  const txn = (uuidOfProposal) ? await dolt.getTransactionsByProposalUuid(uuidOfProposal) : await dolt.getTransactionsByUuids(uuids.split(','));
-  if (!txn || txn.length === 0) { res.json({ success: false, error: 'no transaction found' }); return; }
-  const signer = (await GnosisHandler.getSigners(config.juicebox.gnosisSafeAddress))[0]; // get the first signer to encode MultiCall
-  const encodedTransactions = await encodeGnosisMulticall(txn, signer);
-  const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
-  tenderly.simulate(encodedTransactions.data, config.juicebox.gnosisSafeAddress, signer, true).then((tenderlyResults) => {
+  try {
+    const { space } = req.params;
+    const { uuids, uuidOfProposal } = req.query as { uuids: string, uuidOfProposal: string };
+    const { dolt, config } = await handlerReq(space, req.headers.authorization);
+    const txn = (uuidOfProposal) ? await dolt.getTransactionsByProposalUuid(uuidOfProposal) : await dolt.getTransactionsByUuids(uuids.split(','));
+    if (!txn || txn.length === 0) { res.json({ success: false, error: 'no transaction found' }); return; }
+    const signer = (await GnosisHandler.getSigners(config.juicebox.gnosisSafeAddress))[0]; // get the first signer to encode MultiCall
+    const encodedTransactions = await encodeGnosisMulticall(txn, signer);
+    const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
+    const tenderlyResults = await tenderly.simulate(encodedTransactions.data, config.juicebox.gnosisSafeAddress, signer, true);
     res.json({ success: true, data: { ...tenderlyResults, transactionCount: encodedTransactions.count, transactions: encodedTransactions.transactions } });
-  }).catch((e) => {
+  } catch (e) {
     res.json({ success: false, error: e });
-  });
+  }
 });
 
 export default router;

@@ -50,7 +50,7 @@ export const fetchABI = async (address: string) => {
   });
 };
 
-export function encodeCustomTransaction(txn: SQLCustomTransaction): BasicTransaction {
+export function encodeCustomTransaction(txn: SQLCustomTransaction) {
   try {
     const functionName = txn.transactionFunctionName;
     const iface = new ethers.utils.Interface([functionName]);
@@ -61,33 +61,37 @@ export function encodeCustomTransaction(txn: SQLCustomTransaction): BasicTransac
     };
   } catch (e) {
     console.log(e);
-    throw Error('Error encoding transaction');
+    return Promise.reject(e);
   }
 }
 
 export async function encodeGnosisMulticall(txn: SQLCustomTransaction[], signer: string) {
-  const partials = (await Promise.all(txn.map((t) => { return encodeCustomTransaction(t); }))).map((t) => {
-    return {
-      to: t.address,
-      value: '0',
-      data: t.bytes
-    };
-  });
-  const { abi } = localABI('SAFE');
-  const iface = new ethers.utils.Interface(abi);
-  const multicall = encodeBatchTransactions(partials);
+  try {
+    const partials = (await Promise.all(txn.map((t) => { return encodeCustomTransaction(t); }))).map((t) => {
+      return {
+        to: t.address,
+        value: '0',
+        data: t.bytes
+      };
+    });
+    const { abi } = localABI('SAFE');
+    const iface = new ethers.utils.Interface(abi);
+    const multicall = encodeBatchTransactions(partials);
 
-  const encodedData = iface.encodeFunctionData('execTransaction', [
-    multiSendContractAddress,
-    '0',
-    multicall.data,
-    1,
-    '0',
-    '0',
-    '0',
-    '0x0000000000000000000000000000000000000000',
-    '0x0000000000000000000000000000000000000000',
-    `0x000000000000000000000000${signer.split('0x')[1]}000000000000000000000000000000000000000000000000000000000000000001` // include signature
-  ]);
-  return { data: encodedData, count: partials.length, transactions: partials };
+    const encodedData = iface.encodeFunctionData('execTransaction', [
+      multiSendContractAddress,
+      '0',
+      multicall.data,
+      1,
+      '0',
+      '0',
+      '0',
+      '0x0000000000000000000000000000000000000000',
+      '0x0000000000000000000000000000000000000000',
+      `0x000000000000000000000000${signer.split('0x')[1]}000000000000000000000000000000000000000000000000000000000000000001` // include signature
+    ]);
+    return { data: encodedData, count: partials.length, transactions: partials };
+  } catch (e) {
+    return Promise.reject(e);
+  }
 }
