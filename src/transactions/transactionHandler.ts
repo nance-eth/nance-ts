@@ -54,6 +54,12 @@ export function encodeCustomTransaction(txn: SQLCustomTransaction) {
   try {
     const functionName = txn.transactionFunctionName;
     const iface = new ethers.utils.Interface([functionName]);
+    // check for empty string or bytes and replace with 0x (required for ethersjs to encode properly)
+    // eslint-disable-next-line no-param-reassign
+    txn.transactionFunctionArgs = txn.transactionFunctionArgs.map((arg) => {
+      if (arg === '') return '0x';
+      return arg;
+    });
     const encodedData = iface.encodeFunctionData(functionName.split('function ')[1], txn.transactionFunctionArgs);
     return {
       address: txn.transactionAddress,

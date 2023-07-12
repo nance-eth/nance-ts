@@ -16,7 +16,7 @@ import { Proposal, GovernorProposeTransaction, BasicTransaction } from '../types
 import { diffBody } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { headToUrl } from '../dolt/doltAPI';
-import { encodeGnosisMulticall } from '../transactions/transactionHandler';
+import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
@@ -462,6 +462,23 @@ router.get('/:space/transfers', async (req, res) => {
   }).catch((e: any) => {
     res.json({ success: false, error: e });
   });
+});
+
+// basic simulation of a single customTransaction sent from the space gnosis safe
+router.get('/:space/simulate/:uuid', async (req, res) => {
+  try {
+    const { space, uuid } = req.params;
+    const { dolt, config } = await handlerReq(space, req.headers.authorization);
+    const txn = await dolt.getTransactionsByUuids([uuid]);
+    if (!txn || txn.length === 0) { res.json({ success: false, error: 'no transaction found' }); return; }
+    const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
+    const encodedTransaction = await encodeCustomTransaction(txn[0]);
+    const from = config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress;
+    const tenderlyResults = await tenderly.simulate(encodedTransaction.bytes, encodedTransaction.address, from);
+    res.json({ success: true, data: { ...tenderlyResults } });
+  } catch (e) {
+    res.json({ success: false, error: e });
+  }
 });
 
 // tenderly simulation of multiple transactions, encoded using gnosis MultiCall

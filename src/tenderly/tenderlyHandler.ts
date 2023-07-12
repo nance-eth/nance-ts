@@ -31,7 +31,7 @@ export class TenderlyHandler {
   }
 
   async getForkProvider(description?: string) {
-    const data = { network_id: '1', description };
+    const data = { network_id: '1', description, shared: true };
     return axios({ method: 'POST', headers: this.headers, url: `${this.API}/fork`, data }).then(async (res) => {
       this.forkId = res.data.simulation_fork.id;
       const forkRPC = `https://rpc.tenderly.co/fork/${this.forkId}`;
@@ -87,10 +87,17 @@ export class TenderlyHandler {
       };
     }
     return axios({ method: 'POST', headers: this.headers, url: `${this.API}/simulate`, data }).then(async (res) => {
-      return {
-        success: res.data.transaction.status,
-        url: `${DASHBOARD}/${this.config.account}/${this.config.project}/simulator/${res.data.simulation.id}`
-      };
+      // make simulation shared
+      // https://api.tenderly.co/api/v1/account/:accountID/project/:projectSlug/simulations/:simulationID/share
+      const simulationID = res.data.simulation.id;
+      return axios({ method: 'POST', headers: this.headers, url: `${this.API}/simulations/${simulationID}/share` }).then(() => {
+        return {
+          success: res.data.transaction.status,
+          url: `${DASHBOARD}/shared/simulation/${simulationID}`
+        };
+      }).catch((e) => {
+        return Promise.reject(e.response.data);
+      });
     });
   }
 }
