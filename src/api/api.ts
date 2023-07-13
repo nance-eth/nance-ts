@@ -1,5 +1,5 @@
 import express from 'express';
-import { utils, Contract } from 'ethers';
+import { Contract } from 'ethers';
 import { Nance } from '../nance';
 import { NanceTreasury } from '../treasury';
 import { doltConfig } from '../configLoader';
@@ -7,7 +7,7 @@ import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, EditPayoutsRequest, ProposalsPacket } from './models';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
-import { getLastSlash, myProvider, sleep, unixTimeStampNow, secondsToDayHoursMinutes } from '../utils';
+import { getLastSlash, myProvider, sleep } from '../utils';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
@@ -21,7 +21,7 @@ import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
-import { JuiceboxHandlerV3 } from '../juicebox/juiceboxHandlerV3';
+import { juiceboxTime } from './helpers/juicebox';
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -47,7 +47,16 @@ router.get('/:space', async (req, res) => {
   const { space } = req.params;
   try {
     const { dolt, calendar, config } = await handlerReq(space, req.headers.authorization);
-    const currentEvent = calendar.getCurrentEvent();
+    let currentEvent = calendar.getCurrentEvent();
+    if (!currentEvent) {
+      console.log('no current event');
+      const { startTimestamp, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
+      currentEvent = {
+        title: 'Open for proposals',
+        start: new Date(startTimestamp * 1000),
+        end: new Date(endTimestamp * 1000),
+      };
+    }
     const currentCycle = await dolt.getCurrentGovernanceCycle();
     const head = await dolt.getHead();
     return res.send({
@@ -70,19 +79,11 @@ router.get('/:space/reminder', async (req, res) => {
   const { space } = req.params;
   try {
     const { config } = await handlerReq(space, req.headers.authorization);
-    const juicebox = new JuiceboxHandlerV3(config.juicebox.projectId, myProvider(config.juicebox.network), config.juicebox.network);
-    const currentConfiguration = await juicebox.currentConfiguration();
-    const start = currentConfiguration.start.toNumber();
-    const duration = currentConfiguration.duration.toNumber();
-    const end = start + duration;
-    const remainingSeconds = end - unixTimeStampNow();
-    const remainingDHM = secondsToDayHoursMinutes(remainingSeconds);
-    const currentCycle = currentConfiguration.number.toString();
-    const currentDay = (secondsToDayHoursMinutes(duration - remainingSeconds).days).toString();
+    const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
     const discord = new DiscordHandler(config);
     // eslint-disable-next-line no-await-in-loop
     while (!discord.ready()) { await sleep(50); }
-    discord.sendImageReminder(currentDay, currentCycle, '', true, remainingDHM, end).then(() => {
+    discord.sendImageReminder(currentDay, currentCycle, '', true, remainingDHM, endTimestamp).then(() => {
       res.send({ success: true });
     });
   } catch (e) {
