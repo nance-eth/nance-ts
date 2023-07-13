@@ -49,7 +49,6 @@ router.get('/:space', async (req, res) => {
     const { dolt, calendar, config } = await handlerReq(space, req.headers.authorization);
     let currentEvent = calendar.getCurrentEvent();
     if (!currentEvent) {
-      console.log('no current event');
       const { startTimestamp, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
       currentEvent = {
         title: 'Open for proposals',
