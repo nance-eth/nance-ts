@@ -97,11 +97,11 @@ router.get('/:space/reminder', async (req, res) => {
 // query proposals
 router.get('/:space/proposals', async (req, res) => {
   const { space } = req.params;
-  const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
-  const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
-  const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [] };
-
   try {
+    const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
+    const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
+    const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [] };
+
     // calculate offset for SQL pagination
     const _limit = limit ? Number(limit) : 0;
     const _page = page ? Number(page) : 0;

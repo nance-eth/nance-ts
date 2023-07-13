@@ -1,3 +1,4 @@
+/* eslint-disable prefer-promise-reject-errors */
 import axios from 'axios';
 import fs from 'fs';
 import { DoltSysHandler } from './dolt/doltSysHandler';
@@ -16,10 +17,10 @@ export async function getConfig(query?: string): Promise<NanceConfig> {
 }
 
 export async function doltConfig(query: string): Promise<{ config: NanceConfig, calendarText: string, spaceOwners: string[] }> {
+  if (!query) return Promise.reject(`space ${query} not found`);
   const dolt = new DoltSysHandler(pools.nance_sys);
   return dolt.getSpaceConfig(query).then((res) => {
     if (res) return { config: res.config, calendarText: res.calendar, spaceOwners: res.spaceOwners };
-    // eslint-disable-next-line prefer-promise-reject-errors
     return Promise.reject(`space ${query} not found`);
   });
 }
