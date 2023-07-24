@@ -447,11 +447,13 @@ export class DoltHandler {
   // ===================================== //
 
   async getToDiscuss() {
+    const currentCycle = await this.getCurrentGovernanceCycle();
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Discussion'
-      AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
+      AND governanceCycle >= ${currentCycle}
       AND discussionURL IS NULL
+      ORDER BY proposalId ASC
     `);
   }
 
@@ -462,6 +464,7 @@ export class DoltHandler {
       AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
       AND discussionURL IS NOT NULL
       AND title IS NOT NULL
+      ORDER BY proposalId ASC
     `);
   }
 
@@ -480,6 +483,7 @@ export class DoltHandler {
       proposalStatus = 'Voting'
       AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
       AND snapshotId IS ${uploaded ? 'NOT ' : ''}NULL
+      ORDER BY proposalId ASC
     `);
   }
 

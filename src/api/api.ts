@@ -100,7 +100,7 @@ router.get('/:space/proposals', async (req, res) => {
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
     const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
-    const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [] };
+    const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [], privateProposals: [] };
 
     // calculate offset for SQL pagination
     const _limit = limit ? Number(limit) : 0;
@@ -118,7 +118,7 @@ router.get('/:space/proposals', async (req, res) => {
     // check for any private proposals
     if (address) {
       const privates = await dolt.getPrivateProposalsByAuthorAddress(address);
-      data.proposals.push(...privates);
+      data.privateProposals.push(...privates);
     }
     return res.send({ success: true, data });
   } catch (e) {
