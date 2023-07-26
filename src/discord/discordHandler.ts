@@ -16,6 +16,7 @@ import { Proposal, PollResults, NanceConfig, DayHourMinutes } from '../types';
 
 import * as discordTemplates from './discordTemplates';
 import { SQLPayout } from '../dolt/schema';
+import { getENS } from '../api/helpers/ens';
 
 export class DiscordHandler {
   private discord;
@@ -67,7 +68,8 @@ export class DiscordHandler {
 
   async startDiscussion(proposal: Proposal): Promise<string> {
     proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
-    const message = discordTemplates.startDiscussionMessage(proposal);
+    const authorENS = await getENS(proposal.authorAddress || '');
+    const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
     const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
       name: limitLength(proposal.title),
@@ -207,7 +209,8 @@ export class DiscordHandler {
   async editDiscussionTitle(proposal: Proposal) {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
     proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
-    const message = discordTemplates.startDiscussionMessage(proposal);
+    const authorENS = await getENS(proposal.authorAddress || '');
+    const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
     if (messageObj.embeds[0].title !== message.title || messageObj.embeds[0].url !== proposal.url) {
       messageObj.edit({ embeds: [message] });
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
@@ -269,5 +272,17 @@ export class DiscordHandler {
   async sendProposalDiff(threadId: string, diffText: string, hash: string) {
     const message = discordTemplates.proposalDiff(this.config.name, diffText, hash);
     await this.getChannelById(threadId).send(message);
+  }
+
+  async sendProposalArchive(proposal: Proposal) {
+    const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
+    const message = discordTemplates.archiveDiscussionMessage(proposal);
+    // keep url the same
+    message.url = messageObj.embeds[0].url;
+    messageObj.edit({ embeds: [message] });
+    messageObj.thread?.edit({ name: limitLength(message.title || proposal.title) });
+    // send alert to thread
+    const archiveMessage = discordTemplates.proposalArchiveAlert();
+    await messageObj.thread?.send({ content: archiveMessage });
   }
 }

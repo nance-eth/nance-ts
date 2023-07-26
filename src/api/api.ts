@@ -139,6 +139,7 @@ router.post('/:space/proposals', async (req, res) => {
     proposal.governanceCycle = currentGovernanceCycle + 1;
   }
   if (!proposal.authorAddress) { proposal.authorAddress = address; }
+  if (proposal.status === 'Archived') { proposal.status = 'Discussion'; } // proposal forked from an archive, set to discussion
   if (proposal.status === 'Private') {
     dolt.addPrivateProposalToDb(proposal).then(async (hash: string) => {
       res.json({ success: true, data: { hash } });
@@ -150,8 +151,8 @@ router.post('/:space/proposals', async (req, res) => {
       dolt.actionDirector(proposal);
 
       // send discord message
-      const discordEnabled = config.discord.channelIds.proposals.length === 18;
-      if ((proposal.status === 'Discussion' || proposal.status === 'Approved') && calendar.shouldSendDiscussion() && discordEnabled) {
+      const discordEnabled = config.discord.channelIds.proposals !== null;
+      if ((proposal.status === 'Discussion' || proposal.status === 'Approved') && discordEnabled) {
         const dialogHandler = new DiscordHandler(config);
         // eslint-disable-next-line no-await-in-loop
         while (!dialogHandler.ready()) { await sleep(50); }
@@ -224,34 +225,34 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     if (isPrivate) return dolt.editPrivateProposal(p);
     return dolt.editProposal(p);
   };
+  const discord = new DiscordHandler(config);
+  // eslint-disable-next-line no-await-in-loop
+  while (!discord.ready()) { await sleep(50); }
   editFunction(proposal).then(async (hash: string) => {
     const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
     if (!isPrivate) dolt.actionDirector(proposal);
     if (isPrivate) dolt.deletePrivateProposal(hash);
     // if proposal moved form Draft to Discussion, send discord message
     if ((proposalByUuid.status === 'Draft' || proposalByUuid.status === 'Private') && proposal.status === 'Discussion') {
-      const discord = new DiscordHandler(config);
-      // eslint-disable-next-line no-await-in-loop
-      while (!discord.ready()) { await sleep(50); }
       try {
         const discussionThreadURL = await discord.startDiscussion(proposal);
         await discord.setupPoll(getLastSlash(discussionThreadURL));
         await dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
-        discord.logout();
       } catch (e) {
         logger.error(`[DISCORD] ${e}`);
       }
     }
+    if (proposal.status === 'Archived') {
+      try { await discord.sendProposalArchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
+    }
+
     // send diff to discord
     if (proposalByUuid.discussionThreadURL && diff) {
-      const discord = new DiscordHandler(config);
-      // eslint-disable-next-line no-await-in-loop
-      while (!discord.ready()) { await sleep(50); }
       proposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
       await discord.editDiscussionTitle(proposal);
       await discord.sendProposalDiff(getLastSlash(proposalByUuid.discussionThreadURL), diff, pid);
-      discord.logout();
     }
+    discord.logout();
     res.json({ success: true, data: { hash } });
   }).catch((e: any) => {
     res.json({ success: false, error: JSON.stringify(e) });

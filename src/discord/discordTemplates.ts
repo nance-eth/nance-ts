@@ -5,16 +5,23 @@ import {
   MessageAttachment, MessageEmbed, ThreadChannel, EmbedFieldData, EmbedField
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
-import { dateToUnixTimeStamp, limitLength, numToPrettyString } from '../utils';
+import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, limitLength, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal, DayHourMinutes } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
+import { getENS } from '../api/helpers/ens';
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
   return `https://nance.app/s/${space}/${proposal.proposalId || proposal.hash}`;
 };
 
-export const startDiscussionMessage = (proposal: Proposal) => {
-  return new MessageEmbed().setTitle(`📃 ${proposal.title}`).setURL(proposal.url);
+export const startDiscussionMessage = (proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
+  return new MessageEmbed().setTitle(`📃 ${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`).setURL(proposal.url).addFields([
+    { name: 'author', value: `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})`, inline: true },
+  ]);
+};
+
+export const archiveDiscussionMessage = (proposal: Proposal) => {
+  return new MessageEmbed().setTitle(`[ARCHIVED] ${proposal.title}`);
 };
 
 export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {
@@ -224,5 +231,10 @@ export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPay
 
 export const proposalDiff = (space: string, diffText: string, hash: string) => {
   const message = `Proposal edited\n\`\`\`diff\n${limitLength(diffText, 1900)}\`\`\`\nhttps://jbdao.org/s/${space}/${hash}`;
+  return message;
+};
+
+export const proposalArchiveAlert = () => {
+  const message = 'This proposal has been archived by the author. It will no longer be carried through the proposal process.';
   return message;
 };
