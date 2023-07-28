@@ -68,7 +68,7 @@ export class DiscordHandler {
 
   async startDiscussion(proposal: Proposal): Promise<string> {
     proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
-    const authorENS = await getENS(proposal.authorAddress || '');
+    const authorENS = await getENS(proposal.authorAddress);
     const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
     const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
@@ -209,7 +209,7 @@ export class DiscordHandler {
   async editDiscussionTitle(proposal: Proposal) {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
     proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
-    const authorENS = await getENS(proposal.authorAddress || '');
+    const authorENS = await getENS(proposal.authorAddress);
     const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
     if (messageObj.embeds[0].title !== message.title || messageObj.embeds[0].url !== proposal.url) {
       messageObj.edit({ embeds: [message] });
