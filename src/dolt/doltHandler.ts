@@ -502,7 +502,7 @@ export class DoltHandler {
     const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
-      SELECT *, HEX(${proposalsTable}.title) as title from ${proposalsTable}
+      ${SELECT_ACTIONS} FROM ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       ORDER BY proposalId ASC
       ${pagination}
@@ -514,7 +514,7 @@ export class DoltHandler {
     const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
-    SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
+    ${SELECT_ACTIONS}, (${relevanceCalculation}) AS relevance from ${proposalsTable}
       WHERE governanceCycle = ${governanceCycle}
       AND (
         ${orConditions}
@@ -529,7 +529,7 @@ export class DoltHandler {
     const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
-    SELECT *, (${relevanceCalculation}) AS relevance from ${proposalsTable}
+    ${SELECT_ACTIONS}, (${relevanceCalculation}) AS relevance from ${proposalsTable}
       WHERE
       ${orConditions}
       ORDER BY relevance DESC
@@ -553,7 +553,7 @@ export class DoltHandler {
 
   async getContentMarkdown(hash: string) {
     const proposal = await this.queryDb(`
-      ${SELECT_ACTIONS}
+      ${SELECT_ACTIONS} FROM ${proposalsTable}
       WHERE uuid = '${hash}'
     `) as SQLExtended[];
     if (proposal.length === 0) return [];
@@ -574,7 +574,7 @@ export class DoltHandler {
       where = `${where}.proposalId = ${hashOrId}`;
     } else return Promise.reject('bad proposalId');
     return this.queryProposals(oneLine`
-      ${SELECT_ACTIONS}
+      ${SELECT_ACTIONS} FROM ${proposalsTable}
       ${where} LIMIT 1
     `).then((res) => {
       if (res.length === 0) return Promise.reject('proposalId not found');

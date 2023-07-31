@@ -73,5 +73,4 @@ SELECT proposals.*, HEX(proposals.body) as body, HEX(proposals.title) as title,
     ),
     ']'
   ) as actions
-FROM proposals
 `;
