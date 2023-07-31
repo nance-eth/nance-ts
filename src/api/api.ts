@@ -214,6 +214,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
   }
+  proposal.authorAddress = proposalByUuid.authorAddress;
   proposal.coauthors = proposalByUuid.coauthors ?? [];
   if (address && !proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
     proposal.coauthors.push(address);
@@ -229,7 +230,6 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   // eslint-disable-next-line no-await-in-loop
   while (!discord.ready()) { await sleep(50); }
   editFunction(proposal).then(async (hash: string) => {
-    const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
     if (!isPrivate) dolt.actionDirector(proposal);
     if (isPrivate) dolt.deletePrivateProposal(hash);
     // if proposal moved form Draft to Discussion, send discord message
@@ -247,6 +247,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     }
 
     // send diff to discord
+    const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
     if (proposalByUuid.discussionThreadURL && diff) {
       proposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
       await discord.editDiscussionTitle(proposal);
