@@ -164,7 +164,7 @@ export class DiscordHandler {
       users = await pollReactionsCollection.users.fetch()
         .then((results: Collection<string, User>) => {
           return results.filter((user): boolean => { return !user.bot; })
-            .map((user) => { return user.tag; });
+            .map((user) => { return user.username; });
         });
     }
     return users;
@@ -284,5 +284,12 @@ export class DiscordHandler {
     // send alert to thread
     const archiveMessage = discordTemplates.proposalArchiveAlert();
     await messageObj.thread?.send({ content: archiveMessage });
+  }
+
+  async deleteMessage(messageId: string) {
+    const messageObj = await this.getAlertChannel().messages.fetch(messageId);
+    const res = await messageObj.delete();
+    logger.info(`Deleted message ${messageId} with result ${res}`);
+    return res;
   }
 }
