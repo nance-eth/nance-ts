@@ -100,7 +100,15 @@ router.get('/:space/proposals', async (req, res) => {
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
     const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
-    const data: ProposalsPacket = { proposalInfo: { proposalIdPrefix: config.propertyKeys.proposalIdPrefix, minTokenPassingAmount: config.snapshot.minTokenPassingAmount }, proposals: [], privateProposals: [] };
+    const data: ProposalsPacket = {
+      proposalInfo: {
+        snapshotSpace: config.snapshot.space,
+        proposalIdPrefix: config.propertyKeys.proposalIdPrefix,
+        minTokenPassingAmount: config.snapshot.minTokenPassingAmount
+      },
+      proposals: [],
+      privateProposals: []
+    };
 
     // calculate offset for SQL pagination
     const _limit = limit ? Number(limit) : 0;
