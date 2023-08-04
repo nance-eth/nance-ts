@@ -197,11 +197,14 @@ router.get('/:space/proposal/:pid', async (req, res) => {
       try {
         proposal = await dolt.getPrivateProposal(pid, address);
         res.send({ success: true, data: proposal });
+        return;
       } catch {
         res.send({ success: false, error: e });
+        return;
       }
     }
   }
+  res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
 });
 
 // edit single proposal
