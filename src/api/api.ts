@@ -211,7 +211,7 @@ router.get('/:space/proposal/:pid', async (req, res) => {
 router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   const { proposal } = req.body as ProposalUploadRequest;
-  const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
+  const { dolt, config, address, spaceOwners } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   let proposalByUuid: Proposal;
   let isPrivate = false;
@@ -225,6 +225,19 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
   }
+
+  // only allow archives by original author, multisig, or spaceOwner
+  const permissions = (
+    address === proposalByUuid.authorAddress
+    || await isMultisig(config.juicebox.gnosisSafeAddress, address)
+    || isNanceSpaceOwner(spaceOwners, address)
+    || isNanceAddress(address)
+  );
+  if (proposal.status === 'Archived' && !permissions) {
+    res.json({ success: false, error: '[PERMISSIONS] User not authorized to archive proposal' });
+    return;
+  }
+
   proposal.authorAddress = proposalByUuid.authorAddress;
   proposal.coauthors = proposalByUuid.coauthors ?? [];
   if (address && !proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
@@ -253,8 +266,13 @@ router.put('/:space/proposal/:pid', async (req, res) => {
         logger.error(`[DISCORD] ${e}`);
       }
     }
+    // archive alert
     if (proposal.status === 'Archived') {
       try { await discord.sendProposalArchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
+    }
+    // unarchive alert
+    if (proposal.status === 'Discussion' && proposalByUuid.status === 'Archived') {
+      try { await discord.sendProposalUnarchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
     }
 
     // send diff to discord
@@ -305,7 +323,7 @@ router.delete('/:space/proposal/:hash', async (req, res) => {
       res.json({ success: false, error: e });
     });
   } else {
-    res.json({ success: false, error: '[PERMISSIONS] User not authorized to  proposal' });
+    res.json({ success: false, error: '[PERMISSIONS] User not authorized to delete proposal' });
   }
 });
 

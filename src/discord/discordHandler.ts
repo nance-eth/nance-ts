@@ -286,6 +286,19 @@ export class DiscordHandler {
     await messageObj.thread?.send({ content: archiveMessage });
   }
 
+  async sendProposalUnarchive(proposal: Proposal) {
+    const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
+    const authorENS = await getENS(proposal.authorAddress);
+    const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
+    // keep url the same
+    message.url = messageObj.embeds[0].url;
+    messageObj.edit({ embeds: [message] });
+    messageObj.thread?.edit({ name: limitLength(message.title || proposal.title) });
+    // send alert to thread
+    const archiveMessage = discordTemplates.proposalUnarchiveAlert();
+    await messageObj.thread?.send({ content: archiveMessage });
+  }
+
   async deleteMessage(messageId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
     const res = await messageObj.delete();

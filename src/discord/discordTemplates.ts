@@ -235,6 +235,11 @@ export const proposalDiff = (space: string, diffText: string, hash: string) => {
 };
 
 export const proposalArchiveAlert = () => {
-  const message = 'This proposal has been archived by the author. It will no longer be carried through the proposal process.';
+  const message = '🚫 This proposal has been archived by the author. It will no longer be carried through the proposal process 🚫';
+  return message;
+};
+
+export const proposalUnarchiveAlert = () => {
+  const message = '✅ This proposal has been unarchived by the author. It will be carried through the regular proposal process ✅';
   return message;
 };
