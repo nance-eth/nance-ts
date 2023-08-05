@@ -60,7 +60,7 @@ export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, pro
     );
 };
 
-export const voteResultsRollUpMessage = (url: string, space: string, proposals: Proposal[]) => {
+export const voteResultsRollUpMessage = (url: string, space: string, proposalIdPrefix: string, proposals: Proposal[]) => {
   return new MessageEmbed().setColor('#2772af').setTitle(
     'Voting has ended. Thanks for participating!'
   ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
@@ -72,7 +72,7 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposals: 
           );
           const proposalURL = getProposalURL(space, proposal);
           return {
-            name: `*${proposal.proposalId}*: ${proposal.title}`,
+            name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
             value: stripIndents`
             [${proposal.internalVoteResults?.outcomeEmoji} ${proposal.internalVoteResults?.outcomePercentage}% | ${proposal.internalVoteResults?.totalVotes} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposalURL})
             ------------------------------`,

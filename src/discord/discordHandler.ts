@@ -106,6 +106,7 @@ export class DiscordHandler {
     const message = discordTemplates.voteResultsRollUpMessage(
       DEFAULT_DASHBOARD,
       this.config.name,
+      this.config.propertyKeys.proposalIdPrefix,
       proposals
     );
     await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
