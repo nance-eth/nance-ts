@@ -18,6 +18,8 @@ import * as discordTemplates from './discordTemplates';
 import { SQLPayout } from '../dolt/schema';
 import { getENS } from '../api/helpers/ens';
 
+const SILENT_FLAG = 1 << 12;
+
 export class DiscordHandler {
   private discord;
   private roleTag;
@@ -149,7 +151,7 @@ export class DiscordHandler {
       : discordTemplates.dailyImageReminder(this.config.name, day, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {
-        return channel.send({ embeds: [message], files: attachments });
+        return channel.send({ embeds: [message], files: attachments, flags: [SILENT_FLAG] });
       })
     );
   }
