@@ -31,7 +31,8 @@ export class DiscordHandler {
       intents: [
         Intents.FLAGS.GUILDS,
         Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MESSAGE_REACTIONS
+        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+        Intents.FLAGS.GUILD_MEMBERS,
       ]
     });
     this.discord.login(process.env[this.config.discord.API_KEY]).then(async () => {
@@ -156,34 +157,48 @@ export class DiscordHandler {
     );
   }
 
-  private static async getUserReactions(
+  private async getUserReactions(
     messageObj: Message,
     emoji: string
-  ): Promise<string[]> {
+  ): Promise<{ verified: string[], unverified: string[] }> {
     // https://stackoverflow.com/questions/64241315/is-there-a-way-to-get-reactions-on-an-old-message-in-discordjs/64242640#64242640
     const pollReactionsCollection = messageObj.reactions.cache.get(emoji);
-    let users = [''];
+    let users: string[] = [];
+    const unverified: string[] = [];
+    // fetch members
+    await this.discord.guilds.cache.get(this.config.discord.guildId)?.members.fetch();
+    const { verifyRole } = this.config.discord.poll;
     if (pollReactionsCollection !== undefined) {
       users = await pollReactionsCollection.users.fetch()
         .then((results: Collection<string, User>) => {
-          return results.filter((user): boolean => { return !user.bot; })
-            .map((user) => { return user.username; });
+          return results.filter((user): boolean => {
+            if (!verifyRole) return !user.bot;
+            const member = messageObj?.guild?.members.cache.get(user.id);
+            if (!member) return false;
+            const hasRole = member.roles.cache.has(verifyRole);
+            if (!hasRole && !user.bot) unverified.push(user.username);
+            return !user.bot && hasRole;
+          }).map((user) => { return user.username; });
         });
     }
-    return users;
+    return { verified: users, unverified };
   }
 
   async getPollVoters(messageId: string): Promise<PollResults> {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
-    const yesVoteUserList = await DiscordHandler.getUserReactions(
+    const yesVoteUserList = await this.getUserReactions(
       messageObj,
       this.config.discord.poll.voteYesEmoji
     );
-    const noVoteUserList = await DiscordHandler.getUserReactions(
+    const noVoteUserList = await this.getUserReactions(
       messageObj,
       this.config.discord.poll.voteNoEmoji
     );
-    return { voteYesUsers: yesVoteUserList, voteNoUsers: noVoteUserList };
+    return {
+      voteYesUsers: yesVoteUserList.verified,
+      voteNoUsers: noVoteUserList.verified,
+      unverifiedUsers: [...yesVoteUserList.unverified, ...noVoteUserList.unverified]
+    };
   }
 
   async sendPollResults(pollResults: PollResults, outcome: boolean, threadId: string) {

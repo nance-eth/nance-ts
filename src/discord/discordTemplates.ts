@@ -103,6 +103,7 @@ export const pollResultsMessage = (
   outcome: boolean,
   pollEmojis: PollEmojis
 ) => {
+  const unverifiedMessage = (pollResults.unverifiedUsers.length > 0) ? `There are ${pollResults.unverifiedUsers.length} unverified users (not counted in poll):\n${pollResults.unverifiedUsers.join(', ')}` : '';
   return new MessageEmbed().setTitle(
     `Temperature Check ${(outcome) ? pollEmojis.voteYesEmoji : pollEmojis.voteNoEmoji}`
   ).setDescription(
@@ -113,6 +114,7 @@ export const pollResultsMessage = (
 
       ${pollResults.voteNoUsers.length} ${pollEmojis.voteNoEmoji}\n
       ${pollResults.voteNoUsers.join('\n')}\n
+      ${unverifiedMessage}
     `
   );
 };

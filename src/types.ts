@@ -174,6 +174,7 @@ export interface NanceConfig {
       minYesVotes: number;
       yesNoRatio: number;
       showResults: boolean;
+      verifyRole: string;
     };
     reminder: {
       channelIds: string[];
@@ -218,6 +219,7 @@ export interface DateEvent {
 export interface PollResults {
   voteYesUsers: string[];
   voteNoUsers: string[];
+  unverifiedUsers: string[];
 }
 
 export interface PollEmojis {
