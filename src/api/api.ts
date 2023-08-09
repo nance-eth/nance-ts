@@ -143,7 +143,7 @@ router.get('/:space/proposals', async (req, res) => {
 router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   const { proposal } = req.body as ProposalUploadRequest;
-  const { config, calendar, dolt, address } = await handlerReq(space, req.headers.authorization);
+  const { config, dolt, address } = await handlerReq(space, req.headers.authorization);
   if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   logger.debug(`[UPLOAD] space: ${space}, address: ${address} good`);
@@ -430,6 +430,28 @@ router.get('/:space/dolthub', async (req, res) => {
   }).catch((e: string) => {
     return res.json({ success: false, error: e });
   });
+});
+
+// create discussion and poll (used if it failed to automatically create)
+router.get('/:space/discussion/:uuid', async (req, res) => {
+  const { space, uuid } = req.params;
+  const { config, dolt } = await handlerReq(space, req.headers.authorization);
+  const proposal = await dolt.getProposalByAnyId(uuid);
+  let discussionThreadURL = '';
+  if (proposal.status === 'Discussion' && !proposal.discussionThreadURL) {
+    const dialogHandler = new DiscordHandler(config);
+    // eslint-disable-next-line no-await-in-loop
+    while (!dialogHandler.ready()) { await sleep(50); }
+    try {
+      discussionThreadURL = await dialogHandler.startDiscussion(proposal);
+      await dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+      await dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+    } catch (e) {
+      logger.error(`[DISCORD] ${e}`);
+    }
+    return res.json({ success: true, data: discussionThreadURL });
+  }
+  return res.send({ success: false, error: 'proposal already has a discussion created' });
 });
 
 // ===================================== //
