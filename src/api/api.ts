@@ -80,7 +80,7 @@ router.get('/:space/reminder', async (req, res) => {
   try {
     const { config } = await handlerReq(space, req.headers.authorization);
     const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
-    if (textReminderDays.includes(Number(currentDay))) {
+    if (textReminderDays.includes(remainingDHM.days)) {
       const discord = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!discord.ready()) { await sleep(50); }
