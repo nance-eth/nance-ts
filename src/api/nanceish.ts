@@ -4,13 +4,15 @@ import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
 import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { dotPin } from '../storage/storageHandler';
-import { checkSignature } from './helpers/signature';
 import { ConfigSpaceRequest } from './models';
-import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar } from '../utils';
+import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar, omitKey } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
 import { dbOptions } from '../dolt/dbConfig';
 import { DoltSQL } from '../dolt/doltSQL';
+import { addressFromJWT } from './helpers/auth';
+import { createCalendarFromForm } from './helpers/calendar';
+import { NanceConfig } from '../types';
 
 const router = express.Router();
 
@@ -54,40 +56,46 @@ router.get('/all', async (_, res) => {
 });
 
 router.post('/config', async (req, res) => {
-  const { config, signature, calendar, owners } = req.body as ConfigSpaceRequest;
+  const { config, owners, dryrun } = req.body as ConfigSpaceRequest;
   const space = config.name;
-  // signature must be valid
-  const { valid } = checkSignature(signature, 'ish', 'config', { ...config, calendar, owners });
-  if (!valid) { res.json({ success: false, error: '[NANCE ERROR]: bad signature' }); return; }
+  // get address from jwt (SIWE)
+  const jwt = req.headers.authorization?.split('Bearer ')[1];
+  const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: no SIWE address found' }); return; }
 
-  // check if space exists and confiugurer is spaceOwner
+  // check if space exists and configurer is spaceOwner
   const dolt = new DoltSysHandler(pools.nance_sys);
   const spaceConfig = await dolt.getSpaceConfig(space);
-  if (spaceConfig && !spaceConfig.spaceOwners.includes(signature.address)) {
+  if (spaceConfig && !spaceConfig.spaceOwners.includes(address)) {
     res.json({ success: false, error: '[NANCE ERROR] configurer not spaceOwner!' });
     return;
   }
 
   // create space if it doesn't exist
+  logger.info(`[CREATE SPACE]: ${JSON.stringify(config)}`);
   if (!spaceConfig) {
-    dolt.createSpaceDB(space).then(async () => {
-      await dolt.createSchema(space);
-      await createDolthubDB(space);
-      await dolt.localDolt.addRemote(`https://doltremoteapi.dolthub.com/nance/${space}`);
-      pools[space] = new DoltSQL(dbOptions(space));
-    }).catch((e) => {
-      logger.error('[CREATE SPACE]:');
-      logger.error(e);
-    });
+    if (!dryrun) {
+      dolt.createSpaceDB(space).then(async () => {
+        try { await dolt.createSchema(space); } catch (e) { logger.error(e); }
+        try { await createDolthubDB(space); } catch (e) { logger.error(e); }
+        try { await dolt.localDolt.addRemote(`https://doltremoteapi.dolthub.com/nance/${space}`); } catch (e) { logger.error(e); }
+        pools[space] = new DoltSQL(dbOptions(space));
+        try { await dolt.localDolt.push(true); } catch (e) { logger.error(e); }
+      }).catch((e) => {
+        logger.error('[CREATE SPACE]:');
+        logger.error(e);
+      });
+    }
   }
 
   // config the space
-  const calendarIn = calendar || fetchTemplateCalendar();
-  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, config) : mergeTemplateConfig(config);
-  const packedConfig = JSON.stringify({ signature, config: configIn, calendar: calendarIn });
+  const calendar = (config.governanceCycleForm) ? createCalendarFromForm(config.governanceCycleForm) : fetchTemplateCalendar();
+  const cleanedConfig = omitKey(config, 'governanceCycleForm') as NanceConfig;
+  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, cleanedConfig) : mergeTemplateConfig(config);
+  const packedConfig = JSON.stringify({ address, config: configIn, calendar });
   const cid = await dotPin(packedConfig);
-  const ownersIn = [...(owners ?? []), signature.address];
-  dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendarIn).then(() => {
+  const ownersIn = [...(owners ?? []), address];
+  dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendar).then(() => {
     res.json({ success: true, data: { space, spaceOwners: ownersIn } });
   }).catch((e) => {
     res.json({ success: false, error: e });

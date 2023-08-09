@@ -44,7 +44,7 @@ export function formatUTCTime(date: Date) {
   );
 }
 
-export function dateToArray(date: Date) {
+export function dateToArray(date: Date): [number, number, number, number, number, number] {
   return [
     date.getUTCFullYear(),
     date.getUTCMonth() + 1,
@@ -53,6 +53,11 @@ export function dateToArray(date: Date) {
     date.getUTCMinutes(),
     date.getUTCSeconds()
   ];
+}
+
+export function addDaysToDateArray(dateArray: [number, number, number, number, number, number], days: number) {
+  const date = new Date(Date.UTC(dateArray[0], dateArray[1] - 1, dateArray[2], dateArray[3], dateArray[4], dateArray[5]));
+  return dateToArray(new Date(date.getTime() + (days * 24 * 60 * 60 * 1000)));
 }
 
 export function addDaysToTimeStamp(timestamp: number, days: number) {
@@ -119,7 +124,7 @@ export function numToPrettyString(num: number | undefined) {
   return num.toFixed(1);
 }
 
-export function omitKey(object: object, key: string) {
+export function omitKey(object: object, key: string): Partial<typeof object> {
   const { [key as keyof object]: unused, ...newObject } = object;
   return newObject;
 }

@@ -25,8 +25,10 @@ export class DoltSQL {
   }
 
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
-    return this.db.query(`CALL DOLT_REMOTE('add', ?, ?)`, [remoteName, remote]).then((res) => {
-      return resStatus(res) === 0;
+    return this.db.query(`CALL DOLT_REMOTE('remove', ?, ?)`, [remoteName, remote]).then(async () => { // remove first to avoid duplicate key error
+      return this.db.query(`CALL DOLT_REMOTE('add', ?, ?)`, [remoteName, remote]).then((res) => {
+        return resStatus(res) === 0;
+      });
     });
   }
 
@@ -87,8 +89,8 @@ export class DoltSQL {
     });
   }
 
-  async push(branch?: string): Promise<boolean> {
-    return this.db.query(`CALL DOLT_PUSH(${(branch) ? 'origin, ?' : ''})`, [branch]).then((res) => {
+  async push(firstPush = false, branch = 'main'): Promise<boolean> {
+    return this.db.query(`CALL DOLT_PUSH(${firstPush ? '\'--force\', ' : ''}'origin', ?)`, [branch]).then((res) => {
       return cleanSingleRes(res).success === 1;
     }).catch((e) => {
       return Promise.reject(e);

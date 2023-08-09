@@ -146,6 +146,20 @@ export type PropertyKeys = {
   publicURLPrefix: string;
 };
 
+export type GovernanceCycleForm = {
+  time: {
+    ampm: string;
+    hour: number;
+    minute: string;
+    timezoneOffset: number;
+  };
+  startDate: string;
+  temperatureCheckLength: string;
+  voteLength: string;
+  delayLength: string;
+  executionLength: string;
+};
+
 export interface NanceConfig {
   name: string;
   juicebox: {
@@ -202,6 +216,7 @@ export interface NanceConfig {
   };
   calendarCID?: string;
   submitAsApproved?: boolean;
+  governanceCycleForm?: GovernanceCycleForm; // used for create space then removed
 }
 
 export type DoltConfig = {

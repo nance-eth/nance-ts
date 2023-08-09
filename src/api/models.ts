@@ -84,6 +84,7 @@ export interface ConfigSpaceRequest extends BaseRequest {
   config: NanceConfig;
   calendar?: string;
   owners?: string[];
+  dryrun?: boolean;
 }
 
 export interface EditPayoutsRequest extends BaseRequest {
