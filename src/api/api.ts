@@ -262,7 +262,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     if (!isPrivate) dolt.actionDirector(proposal);
     if (isPrivate) dolt.deletePrivateProposal(hash);
     // if proposal moved form Draft to Discussion, send discord message
-    if ((proposalByUuid.status === 'Draft' || proposalByUuid.status === 'Private') && proposal.status === 'Discussion') {
+    if ((proposalByUuid.status === 'Draft' || proposalByUuid.status === 'Private') && proposal.status === 'Discussion' && proposalByUuid.discussionThreadURL === null) {
       try {
         const discussionThreadURL = await discord.startDiscussion(proposal);
         await discord.setupPoll(getLastSlash(discussionThreadURL));
