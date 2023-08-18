@@ -83,7 +83,10 @@ export interface ConfigSpaceRequest extends BaseRequest {
   signature: Signature;
   config: NanceConfig;
   calendar?: string;
-  owners?: string[];
+  owners: string[];
+  cycleCurrentDay: number;
+  cycleTriggerTime: string;
+  cycleStageLengths: number[];
   dryrun?: boolean;
 }
 

@@ -1,8 +1,6 @@
 import express from 'express';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
-import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
-import { CalendarHandler } from '../calendar/CalendarHandler';
-import { DoltHandler } from '../dolt/doltHandler';
+import { createDolthubDB } from '../dolt/doltAPI';
 import { dotPin } from '../storage/storageHandler';
 import { ConfigSpaceRequest } from './models';
 import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar, omitKey } from '../utils';
@@ -13,6 +11,7 @@ import { DoltSQL } from '../dolt/doltSQL';
 import { addressFromJWT } from './helpers/auth';
 import { createCalendarFromForm } from './helpers/calendar';
 import { NanceConfig } from '../types';
+import getAllSpaces from './helpers/getAllSpaces';
 
 const router = express.Router();
 
@@ -32,31 +31,16 @@ router.get('/config/:space', async (req, res) => {
 });
 
 router.get('/all', async (_, res) => {
-  const doltSys = new DoltSysHandler(pools.nance_sys);
-  doltSys.getAllSpaceNames().then(async (data) => {
-    const infos = await Promise.all(data.map(async (entry) => {
-      const dolt = new DoltHandler(pools[entry.space], entry.config.propertyKeys);
-      const calendar = new CalendarHandler(entry.calendar);
-      const currentCycle = await dolt.getCurrentGovernanceCycle();
-      const currentEvent = calendar.getCurrentEvent();
-      const head = await dolt.getHead();
-      return {
-        name: entry.space,
-        currentCycle,
-        currentEvent,
-        snapshotSpace: entry.config.snapshot.space,
-        juiceboxProjectId: entry.config.juicebox.projectId,
-        dolthubLink: headToUrl(entry.config.dolt.owner, entry.config.dolt.repo, head),
-      };
-    }));
+  try {
+    const infos = await getAllSpaces();
     res.json({ success: true, data: infos });
-  }).catch((e) => {
+  } catch (e) {
     res.json({ success: false, error: e });
-  });
+  }
 });
 
 router.post('/config', async (req, res) => {
-  const { config, owners, dryrun } = req.body as ConfigSpaceRequest;
+  const { config, owners, dryrun, cycleCurrentDay, cycleStageLengths, cycleTriggerTime } = req.body as ConfigSpaceRequest;
   const space = config.name;
   // get address from jwt (SIWE)
   const jwt = req.headers.authorization?.split('Bearer ')[1];
@@ -95,7 +79,7 @@ router.post('/config', async (req, res) => {
   const packedConfig = JSON.stringify({ address, config: configIn, calendar });
   const cid = await dotPin(packedConfig);
   const ownersIn = [...(owners ?? []), address];
-  dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendar).then(() => {
+  dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendar, cycleCurrentDay, cycleTriggerTime, cycleStageLengths).then(() => {
     res.json({ success: true, data: { space, spaceOwners: ownersIn } });
   }).catch((e) => {
     res.json({ success: false, error: e });

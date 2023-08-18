@@ -129,7 +129,7 @@ export class DoltSQL {
     });
   }
 
-  async queryResults(query: string, variables?: (number | string | undefined)[]) {
+  async queryResults(query: string, variables?: (number | number[] | string | undefined)[]) {
     return this.db.query(query, variables).then((res) => {
       return res[0] as unknown as ResultSetHeader;
     }).catch((e) => {

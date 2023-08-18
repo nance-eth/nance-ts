@@ -3,7 +3,7 @@ import { DoltSQL, cleanResultsHeader } from './doltSQL';
 import { dbOptions } from './dbConfig';
 import { sqlSchemaToString } from '../utils';
 import { NanceConfig } from '../types';
-import { SpaceConfig } from './schema';
+import { DialogHandlerMessageIds, SpaceConfig } from './schema';
 
 const systemDb = 'nance_sys';
 const system = 'config';
@@ -54,14 +54,62 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, calendar: string) {
+  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, calendar: string, cycleCurrentDay: number, cycleTriggerTime: string, cycleStageLengths: number[]) {
     return this.localDolt.queryResults(oneLine`
-      INSERT INTO ${system} (space, cid, spaceOwners, config, calendar, lastUpdated)
-      VALUES (?, ?, ?, ?, ?, NOW())
-      ON DUPLICATE KEY UPDATE cid = VALUES(cid), spaceOwners = VALUES(spaceOwners), config = VALUES(config), calendar = VALUES(calendar), lastUpdated = NOW()
-    `, [space, cid, JSON.stringify(spaceOwners), JSON.stringify(config), calendar]).then((res) => {
+      INSERT INTO ${system} (
+        space, cid, spaceOwners, config, calendar,
+        cycleCurrentDay, cycleTriggerTime, cycleStageLengths, lastUpdated
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      ON DUPLICATE KEY UPDATE
+        cid = VALUES(cid),
+        spaceOwners = VALUES(spaceOwners),
+        config = VALUES(config),
+        calendar = VALUES(calendar),
+        cycleCurrentDay = VALUES(cycleCurrentDay),
+        cycleTriggerTime = VALUES(cycleTriggerTime),
+        cycleStageLengths = VALUES(cycleStageLengths),
+        lastUpdated = NOW()
+    `, [space, cid, JSON.stringify(spaceOwners), JSON.stringify(config), calendar, cycleCurrentDay, cycleTriggerTime, cycleStageLengths]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e.sqlMessage); });
+  }
+
+  async incrementCycleDay(space: string) {
+    return this.localDolt.queryResults(oneLine`
+    UPDATE ${system}
+    SET cycleCurrentDay = CASE
+      WHEN cycleCurrentDay + 1 >
+        JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[0]')) +
+        JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[1]')) +
+        JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[2]')) +
+        JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[3]'))
+            THEN 1
+        ELSE cycleCurrentDay + 1
+        END
+    WHERE space = ?;
+    `, [space]).then((res) => {
+      return res.affectedRows;
+    }).catch((e) => { return Promise.reject(e); });
+  }
+
+  async updateDialogHandlerMessageIds(space: string, dialogHandlerMessageIds: DialogHandlerMessageIds) {
+    return this.localDolt.queryResults(oneLine`
+    UPDATE ${system}
+    SET dialogHandlerMessageIds = ?
+    WHERE space = ?;
+    `, [JSON.stringify(dialogHandlerMessageIds), space]).then((res) => {
+      return res.affectedRows;
+    }).catch((e) => { return Promise.reject(e); });
+  }
+
+  async getDialogHandlerMessageIds(space: string): Promise<DialogHandlerMessageIds> {
+    return this.localDolt.queryRows(oneLine`
+    SELECT dialogHandlerMessageIds FROM ${system}
+    WHERE space = ? LIMIT 1
+    `, [space]).then((res) => {
+      return res[0].dialogHandlerMessageIds;
+    }).catch((e) => { return Promise.reject(e); });
   }
 
   async getSpaceConfig(space: string): Promise<SpaceConfig | undefined> {
