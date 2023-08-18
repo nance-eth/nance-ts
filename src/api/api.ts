@@ -143,45 +143,47 @@ router.get('/:space/proposals', async (req, res) => {
 router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   const { proposal } = req.body as ProposalUploadRequest;
-  const { config, dolt, address } = await handlerReq(space, req.headers.authorization);
-  if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
-  logger.debug(`[UPLOAD] space: ${space}, address: ${address} good`);
-  if (!proposal.governanceCycle) {
-    const currentGovernanceCycle = await dolt.getCurrentGovernanceCycle();
-    proposal.governanceCycle = currentGovernanceCycle + 1;
-  }
-  if (!proposal.authorAddress) { proposal.authorAddress = address; }
-  if (proposal.status === 'Archived') { proposal.status = 'Discussion'; } // proposal forked from an archive, set to discussion
-  if (proposal.status === 'Private') {
-    dolt.addPrivateProposalToDb(proposal).then(async (hash: string) => {
-      res.json({ success: true, data: { hash } });
-    });
-  } else {
-    if (config.submitAsApproved) { proposal.status = 'Approved'; }
-    dolt.addProposalToDb(proposal).then(async (hash: string) => {
-      proposal.hash = hash;
-      dolt.actionDirector(proposal);
+  try {
+    const { config, dolt, address } = await handlerReq(space, req.headers.authorization);
+    if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
+    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
+    logger.debug(`[UPLOAD] space: ${space}, address: ${address} good`);
+    if (!proposal.governanceCycle) {
+      const currentGovernanceCycle = await dolt.getCurrentGovernanceCycle();
+      proposal.governanceCycle = currentGovernanceCycle + 1;
+    }
+    if (!proposal.authorAddress) { proposal.authorAddress = address; }
+    if (proposal.status === 'Archived') { proposal.status = 'Discussion'; } // proposal forked from an archive, set to discussion
+    if (proposal.status === 'Private') {
+      dolt.addPrivateProposalToDb(proposal).then(async (hash: string) => {
+        res.json({ success: true, data: { hash } });
+      });
+    } else {
+      if (config.submitAsApproved) { proposal.status = 'Approved'; }
+      dolt.addProposalToDb(proposal).then(async (hash: string) => {
+        proposal.hash = hash;
+        dolt.actionDirector(proposal);
 
-      // send discord message
-      const discordEnabled = config.discord.channelIds.proposals !== null;
-      if ((proposal.status === 'Discussion' || proposal.status === 'Approved') && discordEnabled) {
-        const dialogHandler = new DiscordHandler(config);
-        // eslint-disable-next-line no-await-in-loop
-        while (!dialogHandler.ready()) { await sleep(50); }
-        try {
-          const discussionThreadURL = await dialogHandler.startDiscussion(proposal);
-          dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
-          dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
-        } catch (e) {
-          logger.error(`[DISCORD] ${e}`);
+        // send discord message
+        const discordEnabled = config.discord.channelIds.proposals !== null;
+        if ((proposal.status === 'Discussion' || proposal.status === 'Approved') && discordEnabled) {
+          const dialogHandler = new DiscordHandler(config);
+          // eslint-disable-next-line no-await-in-loop
+          while (!dialogHandler.ready()) { await sleep(50); }
+          try {
+            const discussionThreadURL = await dialogHandler.startDiscussion(proposal);
+            dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+            dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+          } catch (e) {
+            logger.error(`[DISCORD] ${e}`);
+          }
         }
-      }
-      res.json({ success: true, data: { hash } });
-    }).catch((e: any) => {
-      res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
-    });
-  }
+        res.json({ success: true, data: { hash } });
+      }).catch((e: any) => {
+        res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
+      });
+    }
+  } catch (e) { res.json({ success: false, error: `[NANCE ERROR]: ${e}` }); }
 });
 
 // =========================================== //
@@ -461,12 +463,16 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
 // get payouts table
 router.get('/:space/payouts', async (req, res) => {
   const { space } = req.params;
-  const { dolt } = await handlerReq(space, req.headers.authorization);
-  dolt.getPayoutsDb('V3').then((data: SQLPayout[]) => {
-    res.json({ success: true, data });
-  }).catch((e: any) => {
+  try {
+    const { dolt } = await handlerReq(space, req.headers.authorization);
+    dolt.getPayoutsDb('V3').then((data: SQLPayout[]) => {
+      res.json({ success: true, data });
+    }).catch((e: any) => {
+      res.json({ success: false, error: e });
+    });
+  } catch (e) {
     res.json({ success: false, error: e });
-  });
+  }
 });
 
 // edit payouts table

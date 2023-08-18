@@ -83,6 +83,12 @@ export class DoltHandler {
       coauthors: proposal.coauthors,
       actions: actions()
     };
+    if (proposal.voteType !== 'basic') {
+      cleanProposal.voteSetup = {
+        type: proposal.voteType,
+        choices: proposal.choices
+      };
+    }
     if (proposal.snapshotVotes) {
       cleanProposal.voteResults = {
         choices: proposal.choices,
