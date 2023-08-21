@@ -1,5 +1,6 @@
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { ContractTransaction, ethers, Wallet } from 'ethers';
+import { Logger } from 'ethers/lib/utils';
 import {
   getJBFundingCycleStore,
   getJBController3_1 as getJBController,
@@ -8,7 +9,10 @@ import {
   getJBProjects,
   getJB3DayReconfigurationBufferBallot,
   getJB7DayReconfigurationBufferBallot,
-  getJBETHPaymentTerminal3_1 as getJBETHPaymentTerminal,
+  getJBETHPaymentTerminal,
+  getJBETHPaymentTerminal3_1,
+  getJBETHPaymentTerminal3_1_1,
+  getJBETHPaymentTerminal3_1_2,
   getJBFundAccessConstraintsStore
 } from '@jigglyjams/juice-sdk-v3';
 import { BigNumber } from '@ethersproject/bignumber';
@@ -22,6 +26,9 @@ import {
   getJBFundAccessConstraintsStruct,
   ReconfigurationBallotAddresses,
   BallotKey,
+  JBETHPaymentTerminal3_1,
+  JBETHPaymentTerminal3_1_1,
+  JBETHPaymentTerminal3_1_2,
 } from './typesV3';
 import { SQLPayout, SQLReserve } from '../dolt/schema';
 import { keys } from '../keys';
@@ -44,6 +51,7 @@ const DEFAULT_PROJECT_ID = 0;
 const DEFAULT_MEMO = 'yours truly ~nance~';
 
 const CSV_HEADING = 'beneficiary,percent,preferClaimed,lockedUntil,projectId,allocator';
+ethers.utils.Logger.setLogLevel(Logger.levels.ERROR);
 
 export class JuiceboxHandlerV3 {
   provider;
@@ -51,7 +59,7 @@ export class JuiceboxHandlerV3 {
   JBSplitsStore;
   JBController;
   JBReconfigurationBallotAddresses;
-  JBETHPaymentTerminal;
+  JBETHPaymentTerminal: any;
   JBFundAccessConstraintsStore;
 
   constructor(
@@ -68,9 +76,16 @@ export class JuiceboxHandlerV3 {
       3: getJB3DayReconfigurationBufferBallot(this.provider, { network: this.network }).address,
       7: getJB7DayReconfigurationBufferBallot(this.provider, { network: this.network }).address
     } as ReconfigurationBallotAddresses;
-    this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network });
     this.JBFundAccessConstraintsStore = getJBFundAccessConstraintsStore(this.provider, { network: this.network });
   }
+
+  fetchCurrentTerminal = async () => {
+    const directory = getJBDirectory(this.provider, { network: this.network });
+    const terminal = (await directory.terminalsOf(this.projectId))[0];
+    if (terminal === JBETHPaymentTerminal3_1) this.JBETHPaymentTerminal = getJBETHPaymentTerminal(this.provider, { network: this.network });
+    if (terminal === JBETHPaymentTerminal3_1_1) this.JBETHPaymentTerminal = getJBETHPaymentTerminal3_1_1(this.provider, { network: this.network });
+    if (terminal === JBETHPaymentTerminal3_1_2) this.JBETHPaymentTerminal = getJBETHPaymentTerminal3_1_2(this.provider, { network: this.network });
+  };
 
   currentConfiguration = async () => {
     return getJBFundingCycleStore(
@@ -229,6 +244,7 @@ export class JuiceboxHandlerV3 {
 
   async encodeGetReconfigureFundingCyclesOf(groupedSplits: JBGroupedSplitsStruct[], distributionLimit: number, memo = DEFAULT_MEMO, reconfigurationBallot?: BallotKey) {
     const { fundingCycle, metadata } = await this.JBController.queuedFundingCycleOf(this.projectId);
+    await this.fetchCurrentTerminal().catch((err) => { console.log(err); });
     const reconfigFundingCycleData = getJBFundingCycleDataStruct(
       fundingCycle,
       BigNumber.from(DEFAULT_WEIGHT),
@@ -269,6 +285,7 @@ export class JuiceboxHandlerV3 {
 
   async encodeDistributeFundsOf(queued = false) {
     const currentConfiguration = queued ? (await this.queuedConfiguration()).configuration : (await this.currentConfiguration()).configuration;
+    await this.fetchCurrentTerminal().catch((err) => { console.log(err); });
     const distributionLimit = await this.JBFundAccessConstraintsStore.distributionLimitOf(
       this.projectId,
       currentConfiguration,
@@ -295,6 +312,7 @@ export class JuiceboxHandlerV3 {
   }
 
   async sendDistributeFundsOf(d: DistributePayoutsOfData): Promise<ContractTransaction> {
+    await this.fetchCurrentTerminal().catch((err) => { console.log(err); });
     return getJBETHPaymentTerminal(this.wallet, { network: this.network }).distributePayoutsOf(...d);
   }
 }

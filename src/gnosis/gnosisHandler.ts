@@ -1,4 +1,4 @@
-import { ethers, Wallet } from 'ethers';
+import { ethers, Signer, Wallet } from 'ethers';
 import axios from 'axios';
 import EthersAdapter from '@gnosis.pm/safe-ethers-lib';
 import { SafeTransactionDataPartial } from '@gnosis.pm/safe-core-sdk-types';
@@ -31,7 +31,7 @@ export class GnosisHandler {
     const wallet = new ethers.Wallet(keys.PRIVATE_KEY, provider);
     const ethAdapter = new EthersAdapter({
       ethers,
-      signer: wallet
+      signerOrProvider: wallet,
     });
     const safe = await Safe.create({ ethAdapter, safeAddress });
     return new GnosisHandler(safeAddress, safe, wallet, network);
