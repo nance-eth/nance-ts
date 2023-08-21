@@ -464,12 +464,23 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
 router.get('/:space/payouts', async (req, res) => {
   const { space } = req.params;
   try {
+    const { cycle } = req.query as { cycle: string };
     const { dolt } = await handlerReq(space, req.headers.authorization);
-    dolt.getPayoutsDb('V3').then((data: SQLPayout[]) => {
-      res.json({ success: true, data });
-    }).catch((e: any) => {
-      res.json({ success: false, error: e });
-    });
+
+    if (!cycle) {
+      dolt.getPayoutsDb('V3').then((data: SQLPayout[]) => {
+        res.json({ success: true, data });
+      }).catch((e: any) => {
+        res.json({ success: false, error: e });
+      });
+    } else {
+      dolt.getPreviousPayoutsDb('V3', parseInt(cycle)).then((data: SQLPayout[]) => {
+        res.json({ success: true, data });
+      }).catch((e: any) => {
+        res.json({ success: false, error: e });
+      });
+    }
+
   } catch (e) {
     res.json({ success: false, error: e });
   }
