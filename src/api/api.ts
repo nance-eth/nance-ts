@@ -474,13 +474,12 @@ router.get('/:space/payouts', async (req, res) => {
         res.json({ success: false, error: e });
       });
     } else {
-      dolt.getPreviousPayoutsDb('V3', parseInt(cycle)).then((data: SQLPayout[]) => {
+      dolt.getPreviousPayoutsDb('V3', Number(cycle)).then((data: SQLPayout[]) => {
         res.json({ success: true, data });
       }).catch((e: any) => {
         res.json({ success: false, error: e });
       });
     }
-
   } catch (e) {
     res.json({ success: false, error: e });
   }
@@ -558,7 +557,7 @@ router.get('/:space/simulate/:uuid', async (req, res) => {
 
 // tenderly simulation of multiple transactions, encoded using gnosis MultiCall
 // pass in comma separated uuids of transactions to simulate as a query ex: ?uuids=uuid1,uuid2,uuid3...
-router.get('/:space/simulate/multicall', async (req, res) => {
+router.get('/:space/simulateMulticall', async (req, res) => {
   try {
     const { space } = req.params;
     const { uuids, uuidOfProposal } = req.query as { uuids: string, uuidOfProposal: string };
