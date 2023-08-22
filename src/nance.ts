@@ -1,6 +1,5 @@
 /* eslint-disable no-param-reassign */
 import { DiscordHandler } from './discord/discordHandler';
-import { NotionHandler } from './notion/notionHandler';
 import { keys } from './keys';
 import {
   getLastSlash as getIdFromURL,
@@ -17,7 +16,6 @@ import { GovernanceCycle } from './dolt/schema';
 import { dbOptions } from './dolt/dbConfig';
 
 export class Nance {
-  proposalHandler;
   dialogHandler;
   votingHandler;
   dProposalHandler;
@@ -26,7 +24,6 @@ export class Nance {
   constructor(
     public config: NanceConfig
   ) {
-    if (config.notion) this.proposalHandler = new NotionHandler(config);
     this.dialogHandler = new DiscordHandler(config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, this.config);
     this.dProposalHandler = new DoltHandler(new DoltSQL(dbOptions(config.name)), this.config.propertyKeys);
@@ -46,7 +43,6 @@ export class Nance {
   }
 
   async incrementGovernanceCycle(governanceCycle: GovernanceCycle) {
-    if (this.proposalHandler) this.proposalHandler.incrementGovernanceCycle();
     this.dProposalHandler.addGovernanceCycleToDb(governanceCycle);
   }
 
@@ -110,7 +106,6 @@ export class Nance {
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
       proposal.status = this.config.propertyKeys.statusTemperatureCheck;
       await this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
-      if (this.proposalHandler) await this.proposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
       this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
       logger.info(`${this.config.name}: temperatureCheckSetup() complete`);
@@ -137,11 +132,6 @@ export class Nance {
         this.dialogHandler.sendPollResults(pollResults, pass, threadId);
       }
       this.dialogHandler.sendPollResultsEmoji(pass, threadId);
-      if (pass) {
-        if (this.proposalHandler) await this.proposalHandler.updateStatusVoting(proposal.hash);
-      } else if (!pass) {
-        if (this.proposalHandler) await this.proposalHandler.updateStatusCancelled(proposal.hash);
-      }
       try { await this.dProposalHandler.updateTemperatureCheckClose(proposal); } catch (e) { logger.error(`dDB: ${e}`); }
     })).then(() => {
       logger.info(`${this.config.name}: temperatureCheckClose() complete`);
@@ -165,7 +155,6 @@ export class Nance {
         endDate,
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
-      if (this.proposalHandler) await this.proposalHandler.updateVoteAndIPFS(proposal);
       try { await this.dProposalHandler.updateVotingSetup(proposal); } catch (e) { logger.error(`dDB: ${e}`); }
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
     })).then(() => {
@@ -201,11 +190,9 @@ export class Nance {
         if (this.votePassCheck(proposalMatch.internalVoteResults)) {
           proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[0]]);
           proposalMatch.internalVoteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
-          proposalMatch.status = (this.proposalHandler) ? await this.proposalHandler.updateStatusApproved(proposalHash) : this.config.propertyKeys.statusApproved;
         } else {
           proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[1]]);
           proposalMatch.internalVoteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
-          proposalMatch.status = (this.proposalHandler) ? await this.proposalHandler.updateStatusCancelled(proposalHash) : this.config.propertyKeys.statusCancelled;
         }
         try { await this.dProposalHandler.updateVotingClose(proposalMatch); } catch (e) { logger.error(`dDB: ${e}`); }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }

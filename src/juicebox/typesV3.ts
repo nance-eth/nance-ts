@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 import {
@@ -136,3 +137,7 @@ export const getJBSplit = (split: JBSplitStructOutput): JBSplitStruct => {
     allocator: split.allocator,
   };
 };
+
+export const JBETHPaymentTerminal3_1 = '0xFA391De95Fcbcd3157268B91d8c7af083E607A5C';
+export const JBETHPaymentTerminal3_1_1 = '0x457cD63bee88ac01f3cD4a67D5DCc921D8C0D573';
+export const JBETHPaymentTerminal3_1_2 = '0x1d9619E10086FdC1065B114298384aAe3F680CC0';

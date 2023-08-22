@@ -41,6 +41,10 @@ export function encodeBatchTransactions(transactions: PartialTransaction[]) {
   return encodeMulti(transactions, multiSendContractAddress);
 }
 
+export function safeTransactionBuilderFormatting() {
+  return builderHeader;
+}
+
 export const fetchABI = async (address: string) => {
   const url = `https://api.etherscan.io/api?module=contract&action=getabi&address=${address}&apikey=${keys.ETHERSCAN_KEY}`;
   return axios.get(url).then((res) => {
@@ -59,6 +63,10 @@ export function encodeCustomTransaction(txn: SQLCustomTransaction) {
     txn.transactionFunctionArgs = txn.transactionFunctionArgs.map((arg) => {
       if (arg === '') return '0x';
       return arg;
+    });
+    // eslint-disable-next-line no-param-reassign
+    txn.transactionFunctionArgs = txn.transactionFunctionArgs.map((arg) => {
+      try { return JSON.parse(arg); } catch (e) { return arg; }
     });
     const encodedData = iface.encodeFunctionData(functionName.split('function ')[1], txn.transactionFunctionArgs);
     return {
