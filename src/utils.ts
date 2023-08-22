@@ -78,6 +78,18 @@ export const secondsToDayHoursMinutes = (seconds: number): DayHourMinutes => {
   const minutes = Math.floor((seconds % 3600) / 60);
   return { days, hours, minutes };
 };
+export const dateAtTime = (date: Date, time: string) => {
+  const [hour, minute, seconds] = time.split(':');
+  date.setUTCHours(Number(hour));
+  date.setUTCMinutes(Number(minute));
+  date.setUTCSeconds(Number(seconds));
+  date.setUTCMilliseconds(0);
+  return date;
+};
+
+export const dateToMySQLDateTime = (date: Date) => {
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+};
 
 export function getLastSlash(url: string) {
   if (!url) return '';

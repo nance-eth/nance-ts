@@ -91,7 +91,9 @@ export class DiscordHandler {
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
     const message = discordTemplates.temperatureCheckRollUpMessage(this.config.propertyKeys.proposalIdPrefix, proposals, this.config.name, endDate);
-    await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
+    return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
+      return messageObj.id;
+    });
   }
 
   async sendVoteRollup(proposals: Proposal[], endDate: Date) {
@@ -127,11 +129,8 @@ export class DiscordHandler {
         date,
         url
       );
-    await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
-      setTimeout(
-        () => { messageObj.delete().catch((e) => { logger.error(e); }); },
-        deleteTimeOut * 1000
-      );
+    return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
+      return messageObj.id;
     });
   }
 

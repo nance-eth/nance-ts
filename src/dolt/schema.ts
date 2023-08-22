@@ -69,6 +69,9 @@ export type DialogHandlerMessageIds = {
   temperatureCheckRollup: string;
   votingRollup: string;
   votingResultsRollup: string;
+  temperatureCheckStartAlert: string;
+  temperatureCheckEndAlert: string;
+  votingEndAlert: string;
 };
 
 export type SpaceConfig = {
@@ -82,6 +85,7 @@ export type SpaceConfig = {
   cycleStageLengths: number[];
   dialogHandlerMessageIds: DialogHandlerMessageIds;
   lastUpdated: Date;
+  cycleLastUpdated: Date;
 };
 
 export type SQLTransfer = {

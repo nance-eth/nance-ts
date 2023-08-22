@@ -93,12 +93,12 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async updateDialogHandlerMessageIds(space: string, dialogHandlerMessageIds: DialogHandlerMessageIds) {
+  async updateDialogHandlerMessageId(space: string, messageName: keyof DialogHandlerMessageIds, messageId: string) {
     return this.localDolt.queryResults(oneLine`
     UPDATE ${system}
-    SET dialogHandlerMessageIds = ?
+    SET dialogHandlerMessageIds = JSON_SET(dialogHandlerMessageIds, '$.${messageName}', ?)
     WHERE space = ?;
-    `, [JSON.stringify(dialogHandlerMessageIds), space]).then((res) => {
+    `, [messageId, space]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });
   }
