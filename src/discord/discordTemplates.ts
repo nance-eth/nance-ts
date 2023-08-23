@@ -128,7 +128,7 @@ export const dailyImageReminder = (space: string, day: string, governanceCycle: 
   const thumbnail = new MessageAttachment(`${baseDir}/day${day}/thumbnail.png`, 'thumbnail.png');
   const image = new MessageAttachment(`${baseDir}/day${day}/${day}.png`, 'image.png');
   const preamble = () => {
-    if (type === 'delay') { return 'Submit a proposal'; }
+    if (type.includes('delay')) { return 'Submit a proposal'; }
     if (type === 'execution') { return 'Multisig members assemble and configure the next funding cycle'; }
     if (type === 'temperature check') { return 'Take part in the temperature checks'; }
     if (type === 'vote') { return 'Take part in the voting'; }
@@ -150,11 +150,12 @@ export const dailyImageReminder = (space: string, day: string, governanceCycle: 
   };
 };
 
-export const dailyTextReminder = (governanceCycle: string, day: string, timeLeft: DayHourMinutes, endSeconds?: number, contentLink?: string) => {
+export const dailyTextReminder = (governanceCycle: string, day: string, endSeconds?: number, contentLink?: string) => {
   const message = new MessageEmbed().setTitle('Governance Status').setDescription(
     stripIndents`
-    Today is day ${day} of GC#${governanceCycle} (ends <t:${endSeconds}:f>)\n
-    There are ${timeLeft.days} days, ${timeLeft.hours} hours, and ${timeLeft.minutes} minutes left to submit a [proposal](${contentLink})\n`
+    Today is day ${day} of GC#${governanceCycle}\n
+    A reconfiguration must be submitted by <t:${endSeconds}:f> (<t:${endSeconds}:R>)\n
+    submit a proposal [here](${contentLink})\n`
   );
   return { message, attachments: [] };
 };

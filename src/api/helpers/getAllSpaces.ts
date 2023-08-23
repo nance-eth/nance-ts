@@ -3,6 +3,7 @@ import { DoltHandler } from '../../dolt/doltHandler';
 import { CalendarHandler } from '../../calendar/CalendarHandler';
 import { pools } from '../../dolt/pools';
 import { SpaceAuto } from '../models';
+import { mySQLTimeToUTC } from '../../utils';
 
 const getAllSpaces = async (): Promise<SpaceAuto[]> => {
   try {
@@ -17,7 +18,8 @@ const getAllSpaces = async (): Promise<SpaceAuto[]> => {
           name: entry.space,
           currentCycle,
           currentEvent,
-          cycleLastUpdated: entry.cycleLastUpdated,
+          currentDay: entry.cycleCurrentDay,
+          cycleDayLastUpdated: mySQLTimeToUTC(entry.cycleDayLastUpdated),
           dialog: { ...entry.dialogHandlerMessageIds },
           config: entry.config,
         };

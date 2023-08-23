@@ -17,6 +17,8 @@ export type SpaceInfo = {
 };
 
 export type SpaceAuto = Pick<SpaceInfo, 'name' | 'currentCycle' | 'currentEvent'> & {
+  currentDay: number;
+  cycleDayLastUpdated: Date;
   dialog: DialogHandlerMessageIds;
   config: NanceConfig;
 };

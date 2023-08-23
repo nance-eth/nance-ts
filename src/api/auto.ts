@@ -9,6 +9,9 @@ import {
   handleTemperatureCheckClose,
   handleDeleteTemperatureCheckEndAlert
 } from './helpers/auto/temperatureCheck';
+import { handleDailyCheck } from './helpers/auto/dailyCheck';
+
+const enabledFor = ['nance', 'waterbox', 'thirstythirsty'];
 
 const router = express.Router();
 
@@ -27,15 +30,18 @@ router.get('/events', async (req, res) => {
     res.status(401).send('Unauthorized');
     return;
   }
-  const allSpaces = await getAllSpaces();
+  const allSpaces = (await getAllSpaces()).filter((space) => { return enabledFor.includes(space.name); });
   Promise.allSettled(allSpaces.map(async (space) => {
+    // Daily reminder
+    handleDailyCheck(space);
+
     // Temperature Check
-    handleSendTemperatureCheckStartAlert(space);
-    handleDeleteTemperatureCheckStartAlert(space);
-    handleSendTemperatureCheckRollup(space);
-    handleSendTemperatureCheckEndAlert(space);
-    handleTemperatureCheckClose(space);
-    handleDeleteTemperatureCheckEndAlert(space);
+    // handleSendTemperatureCheckStartAlert(space);
+    // handleSendTemperatureCheckRollup(space);
+    // handleDeleteTemperatureCheckStartAlert(space);
+    // handleSendTemperatureCheckEndAlert(space);
+    // handleTemperatureCheckClose(space);
+    // handleDeleteTemperatureCheckEndAlert(space);
     // Vote
     // TODO
     //

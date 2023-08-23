@@ -86,8 +86,27 @@ export class DoltSysHandler {
         JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[3]'))
             THEN 1
         ELSE cycleCurrentDay + 1
+        END,
+        currentGovernanceCycle = CASE
+          WHEN cycleCurrentDay + 1 >
+            JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[0]')) +
+            JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[1]')) +
+            JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[2]')) +
+            JSON_UNQUOTE(JSON_EXTRACT(cycleStageLengths, '$[3]'))
+          THEN currentGovernanceCycle + 1
+          ELSE currentGovernanceCycle
         END
     WHERE space = ?;
+    `, [space]).then((res) => {
+      return res.affectedRows;
+    }).catch((e) => { return Promise.reject(e); });
+  }
+
+  async updateCycleDayLastUpdated(space: string) {
+    return this.localDolt.queryResults(oneLine`
+      UPDATE ${system}
+      SET cycleDayLastUpdated = NOW()
+      WHERE space = ?;
     `, [space]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });

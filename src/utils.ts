@@ -87,8 +87,8 @@ export const dateAtTime = (date: Date, time: string) => {
   return date;
 };
 
-export const dateToMySQLDateTime = (date: Date) => {
-  return date.toISOString().slice(0, 19).replace('T', ' ');
+export const mySQLTimeToUTC = (date: Date) => {
+  return new Date(`${date} UTC`);
 };
 
 export function getLastSlash(url: string) {

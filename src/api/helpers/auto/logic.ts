@@ -1,5 +1,5 @@
 import { SpaceAuto } from '../../models';
-import { addSecondsToDate } from '../../../utils';
+import { addDaysToDate, addSecondsToDate } from '../../../utils';
 import { FIVE_MINUTES_SECONDS, ONE_HOUR_SECONDS, events } from './constants';
 
 export const shouldSendTemperatureCheckStartAlert = (space: SpaceAuto) => {
@@ -52,5 +52,12 @@ export const shouldDeleteTemperatureCheckEndAlert = (space: SpaceAuto) => {
     (space.currentEvent.title === events.TEMPERATURE_CHECK
     && addSecondsToDate(space.currentEvent.end, FIVE_MINUTES_SECONDS) <= now
     && space.dialog.temperatureCheckEndAlert !== '')
+  );
+};
+
+export const shouldIncrementDay = (space: SpaceAuto) => {
+  const now = new Date();
+  return (
+    addDaysToDate(space.cycleDayLastUpdated, 1) <= now
   );
 };

@@ -134,7 +134,7 @@ export class DiscordHandler {
     });
   }
 
-  async sendImageReminder(day: string, governanceCycle: string, type: string, noImage = false, timeLeft?: DayHourMinutes, endSeconds?: number) {
+  async sendImageReminder(day: string, governanceCycle: string, type: string, noImage = false, endSeconds?: number) {
     // delete old messages
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {
@@ -146,8 +146,8 @@ export class DiscordHandler {
         return null;
       })
     );
-    const { message, attachments } = (noImage && timeLeft)
-      ? discordTemplates.dailyTextReminder(governanceCycle, day, timeLeft, endSeconds, `${DEFAULT_DASHBOARD}/s/${this.config.name}`)
+    const { message, attachments } = (noImage)
+      ? discordTemplates.dailyTextReminder(governanceCycle, day, endSeconds, `${DEFAULT_DASHBOARD}/s/${this.config.name}`)
       : discordTemplates.dailyImageReminder(this.config.name, day, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {

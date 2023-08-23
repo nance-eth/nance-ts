@@ -85,7 +85,8 @@ export type SpaceConfig = {
   cycleStageLengths: number[];
   dialogHandlerMessageIds: DialogHandlerMessageIds;
   lastUpdated: Date;
-  cycleLastUpdated: Date;
+  cycleDayLastUpdated: Date;
+  currentGovernanceCycle: number;
 };
 
 export type SQLTransfer = {

@@ -84,7 +84,7 @@ router.get('/:space/reminder', async (req, res) => {
       const discord = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!discord.ready()) { await sleep(50); }
-      discord.sendImageReminder(currentDay, currentCycle, '', true, remainingDHM, endTimestamp).then(() => {
+      discord.sendImageReminder(currentDay, currentCycle, '', true, endTimestamp).then(() => {
         res.send({ success: true });
       });
     } else {
