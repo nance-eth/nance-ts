@@ -118,7 +118,13 @@ export class DoltSysHandler {
 
   async getAllSpaceNames(): Promise<SpaceConfig[]> {
     return this.localDolt.queryRows(oneLine`
-      SELECT * FROM ${system}`).then((res) => {
+      SELECT * FROM ${system}
+      WHERE cycleStageLengths IS NOT NULL AND
+      cycleTriggerTime IS NOT NULL AND
+      cycleCurrentDay IS NOT NULL AND
+      cycleDayLastUpdated IS NOT NULL AND
+      currentGovernanceCycle IS NOT NULL
+      `).then((res) => {
       return res as unknown as SpaceConfig[];
     }).catch((e) => { return Promise.reject(e); });
   }
