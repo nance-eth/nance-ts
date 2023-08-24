@@ -4,6 +4,7 @@ import { CalendarHandler } from '../../calendar/CalendarHandler';
 import { pools } from '../../dolt/pools';
 import { SpaceAuto } from '../models';
 import { mySQLTimeToUTC } from '../../utils';
+import { getCurrentEvent } from '../../dolt/helpers/cycleConfigToDateEvent';
 
 const getAllSpaces = async (): Promise<SpaceAuto[]> => {
   try {
@@ -13,11 +14,14 @@ const getAllSpaces = async (): Promise<SpaceAuto[]> => {
         const dolt = new DoltHandler(pools[entry.space], entry.config.propertyKeys);
         const calendar = new CalendarHandler(entry.calendar);
         const currentCycle = await dolt.getCurrentGovernanceCycle();
-        const currentEvent = calendar.getCurrentEvent();
+        const [currentEvent, nextEvent] = getCurrentEvent(entry);
+        const totalCycleDays = (entry.cycleStageLengths) ? entry.cycleStageLengths.reduce((a, b) => { return a + b; }, 0) : 0;
         return {
           name: entry.space,
           currentCycle,
           currentEvent,
+          nextEvent,
+          totalCycleDays,
           currentDay: entry.cycleCurrentDay,
           cycleTriggerTime: entry.cycleTriggerTime,
           cycleDayLastUpdated: mySQLTimeToUTC(entry.cycleDayLastUpdated),

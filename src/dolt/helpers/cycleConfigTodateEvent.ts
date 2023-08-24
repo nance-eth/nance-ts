@@ -1,38 +1,43 @@
 import { DateEvent } from '../../types';
-import { addDaysToDate } from '../../utils';
+import { addDaysToDate, dateAtTime } from '../../utils';
 import { SpaceConfig } from '../schema';
 
 const cycleStageNames = ['Temperature Check', 'Snapshot Vote', 'Execution', 'Delay'];
 
-export const getTriggerTimeToday = (info: SpaceConfig): Date => {
-  const date = new Date();
-  const [triggerHour, triggerMinute, triggerSeconds] = info.cycleTriggerTime.split(':');
-  date.setUTCHours(Number(triggerHour));
-  date.setUTCMinutes(Number(triggerMinute));
-  date.setUTCSeconds(Number(triggerSeconds));
-  date.setUTCMilliseconds(0);
-  return date;
-};
-
-export const getEventDate = (
+const getEventDate = (
   info: SpaceConfig,
   cycleStartDays: number[],
-  stageIndex: number
-): DateEvent => {
-  const now = getTriggerTimeToday(info);
+  stageIndex: number,
+): DateEvent[] => {
+  const now = new Date();
+  const startOfToday = dateAtTime(now, info.cycleTriggerTime);
   const daysSinceStart = info.cycleCurrentDay - cycleStartDays[stageIndex];
   const daysRemaining = info.cycleStageLengths[stageIndex] - daysSinceStart;
-  const start = addDaysToDate(now, -1 * daysSinceStart);
-  const end = addDaysToDate(now, daysRemaining);
-  return {
+  const start = addDaysToDate(startOfToday, -1 * daysSinceStart);
+  const end = addDaysToDate(startOfToday, daysRemaining);
+  const currentEvent = {
     title: cycleStageNames[stageIndex],
     start,
     end,
   };
+  // find next stage index event
+  const nextStageIndex = (stageIndex + 1) % cycleStartDays.length;
+  const nextStart = end;
+  const nextEnd = addDaysToDate(end, info.cycleStageLengths[nextStageIndex]);
+  const nextEvent = {
+    title: cycleStageNames[nextStageIndex],
+    start: nextStart,
+    end: nextEnd,
+  };
+  return [
+    currentEvent,
+    nextEvent,
+  ];
 };
 
 export const getCurrentEvent = (info: SpaceConfig) => {
   let accumulatedDays = 0;
+  if (!info.cycleStageLengths) return [];
   const cycleStartDays = info.cycleStageLengths.map((day, index) => {
     if (index === 0) return 1;
     accumulatedDays += day;

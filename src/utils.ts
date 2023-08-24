@@ -142,7 +142,8 @@ export function omitKey(object: object, key: string): Partial<typeof object> {
 }
 
 export async function downloadImages(space: string, baseURL: string, images: string[]) {
-  const baseDir = `./dist/tmp/${space}`;
+  const src = `${(process.env.RAILWAY_GIT_COMMIT_SHA) ? 'dist' : 'src'}`;
+  const baseDir = `./${src}/tmp/${space}`;
   if (!fs.existsSync(`${baseDir}`)) {
     fs.mkdirSync(`${baseDir}`);
   }

@@ -8,23 +8,31 @@ import { dateAtTime, downloadImages } from '../../../utils';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
+const safeIncrement = (space: SpaceAuto) => {
+  const determineCycleDay = (space.currentDay + 1 <= space.totalCycleDays) ? space.currentDay + 1 : 1;
+  const determineGovernanceCycle = determineCycleDay === 1 ? space.currentCycle + 1 : space.currentCycle;
+  const determineCurrentEvent = determineCycleDay === 1 ? space.nextEvent : space.currentEvent;
+  return {
+    cycleCurrentDay: determineCycleDay,
+    currentGovernanceCycle: determineGovernanceCycle,
+    currentEvent: determineCurrentEvent,
+  };
+};
+
 export const handleDaily = async (space: SpaceAuto) => {
   if (shouldIncrementDay(space)) {
-    await doltSys.incrementCycleDay(space.name);
-    // reread space config to see if cycleCurrentDay needs to roll over and if governanceCycle was updated
-    const recheck = await doltSys.getSpaceConfig(space.name);
-    if (recheck) {
-      await downloadImages(space.name, space.config.discord.reminder.imagesCID, space.config.discord.reminder.imageNames);
-      const { cycleCurrentDay, currentGovernanceCycle } = recheck;
-      const dialogHandler = await discordLogin(space.config);
-      const currentEvent = space.currentEvent.title.toLowerCase();
-      // const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(space.config?.juicebox?.projectId);
-      await dialogHandler.sendImageReminder(cycleCurrentDay.toString(), currentGovernanceCycle.toString(), currentEvent).then(async () => {
-        await doltSys.updateCycleDayLastUpdated(
-          space.name,
-          dateAtTime(new Date(), space.cycleTriggerTime) // set to trigger time for next run
-        );
-      });
-    }
+    const { cycleCurrentDay, currentGovernanceCycle, currentEvent } = safeIncrement(space);
+    await downloadImages(space.name, space.config.discord.reminder.imagesCID, space.config.discord.reminder.imageNames);
+    const dialogHandler = await discordLogin(space.config);
+    const currentEventTitle = currentEvent.title.toLowerCase();
+    // const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(space.config?.juicebox?.projectId);
+    await dialogHandler.sendImageReminder(cycleCurrentDay.toString(), currentGovernanceCycle.toString(), currentEventTitle).then(async () => {
+      await doltSys.updateCycle(
+        space.name,
+        cycleCurrentDay,
+        currentGovernanceCycle,
+        dateAtTime(new Date(), space.cycleTriggerTime), // set to trigger time for next run
+      );
+    });
   }
 };
