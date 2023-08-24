@@ -142,7 +142,7 @@ export function omitKey(object: object, key: string): Partial<typeof object> {
 }
 
 export async function downloadImages(space: string, baseURL: string, images: string[]) {
-  const baseDir = `./src/tmp/${space}`;
+  const baseDir = `./dist/tmp/${space}`;
   if (!fs.existsSync(`${baseDir}`)) {
     fs.mkdirSync(`${baseDir}`);
   }
