@@ -9,7 +9,7 @@ import {
   handleTemperatureCheckClose,
   handleDeleteTemperatureCheckEndAlert
 } from './helpers/auto/temperatureCheck';
-import { handleDailyCheck } from './helpers/auto/dailyCheck';
+import { handleDaily } from './helpers/auto/daily';
 
 const enabledFor = ['nance', 'waterbox', 'thirstythirsty'];
 
@@ -33,20 +33,25 @@ router.get('/events', async (req, res) => {
   const allSpaces = (await getAllSpaces()).filter((space) => { return enabledFor.includes(space.name); });
   Promise.allSettled(allSpaces.map(async (space) => {
     // Daily reminder
-    handleDailyCheck(space);
+    handleDaily(space);
 
     // Temperature Check
-    // handleSendTemperatureCheckStartAlert(space);
-    // handleSendTemperatureCheckRollup(space);
-    // handleDeleteTemperatureCheckStartAlert(space);
-    // handleSendTemperatureCheckEndAlert(space);
-    // handleTemperatureCheckClose(space);
-    // handleDeleteTemperatureCheckEndAlert(space);
+    handleSendTemperatureCheckStartAlert(space);
+    handleSendTemperatureCheckRollup(space);
+    handleDeleteTemperatureCheckStartAlert(space);
+    handleSendTemperatureCheckEndAlert(space);
+    handleTemperatureCheckClose(space);
+    handleDeleteTemperatureCheckEndAlert(space);
+
     // Vote
     // TODO
-    //
+    // handleVoteSetup(space);
+    // handleSendVoteRollup(space);
+    // handleSendVoteEndAlert(space);
+    // handleVoteClose(space);
+    // handleDeleteVoteEndAlert(space);
   })).then(() => {
-    res.send('ok');
+    res.json({ success: true, data: '' }); // add list of updates here, may be useful
   }).catch((e) => {
     console.error(e);
     res.status(500).send('Internal Server Error');

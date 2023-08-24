@@ -19,6 +19,7 @@ const getAllSpaces = async (): Promise<SpaceAuto[]> => {
           currentCycle,
           currentEvent,
           currentDay: entry.cycleCurrentDay,
+          cycleTriggerTime: entry.cycleTriggerTime,
           cycleDayLastUpdated: mySQLTimeToUTC(entry.cycleDayLastUpdated),
           dialog: { ...entry.dialogHandlerMessageIds },
           config: entry.config,

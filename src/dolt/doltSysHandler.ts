@@ -102,12 +102,12 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async updateCycleDayLastUpdated(space: string) {
+  async updateCycleDayLastUpdated(space: string, time: Date) {
     return this.localDolt.queryResults(oneLine`
       UPDATE ${system}
-      SET cycleDayLastUpdated = NOW()
+      SET cycleDayLastUpdated = ?
       WHERE space = ?;
-    `, [space]).then((res) => {
+    `, [time.toISOString(), space]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });
   }
