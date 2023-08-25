@@ -149,7 +149,7 @@ export async function downloadImages(space: string, baseURL: string, images: str
   }
   Promise.all(images.map(async (day) => {
     if (!fs.existsSync(`${baseDir}/day${day}`)) {
-      fs.mkdirSync(`${baseDir}/day${day}`);
+      fs.mkdirSync(`${baseDir}/day${day}`, { recursive: true });
     }
     axios({
       method: 'get',
