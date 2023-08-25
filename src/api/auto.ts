@@ -11,7 +11,7 @@ import {
 } from './helpers/auto/temperatureCheck';
 import { handleDaily } from './helpers/auto/daily';
 
-const enabledFor = ['nance', 'waterbox'];
+const enabledFor = ['nance', 'waterbox', 'thirstythirsty'];
 
 const router = express.Router();
 
