@@ -3,7 +3,7 @@ import { discordLogin } from '../discord';
 import { shouldIncrementDay } from './logic';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import { pools } from '../../../dolt/pools';
-import { dateAtTime, downloadImages } from '../../../utils';
+import { dateAtTime } from '../../../utils';
 // import { juiceboxTime } from '../juicebox';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
@@ -22,7 +22,6 @@ const safeIncrement = (space: SpaceAuto) => {
 export const handleDaily = async (space: SpaceAuto) => {
   if (shouldIncrementDay(space)) {
     const { cycleCurrentDay, currentGovernanceCycle, currentEvent } = safeIncrement(space);
-    await downloadImages(space.name, space.config.discord.reminder.imagesCID, space.config.discord.reminder.imageNames);
     const dialogHandler = await discordLogin(space.config);
     const currentEventTitle = currentEvent.title.toLowerCase();
     // const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(space.config?.juicebox?.projectId);

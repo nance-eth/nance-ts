@@ -1,14 +1,14 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable max-len */
 /* eslint-disable newline-per-chained-call */
+import axios from 'axios';
 import {
   MessageAttachment, MessageEmbed, ThreadChannel, EmbedFieldData, EmbedField
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
-import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, limitLength, numToPrettyString } from '../utils';
+import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal, DayHourMinutes } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
-import { getENS } from '../api/helpers/ens';
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
   return `https://nance.app/s/${space}/${proposal.proposalId || proposal.hash}`;
@@ -123,10 +123,10 @@ export const threadToURL = (thread: ThreadChannel) => {
   return `https://discord.com/channels/${thread.guildId}/${thread.parentId}/${thread.id}`;
 };
 
-export const dailyImageReminder = (space: string, day: string, governanceCycle: string, type: string, contentLink: string, processLink: string) => {
-  const baseDir = `./src/tmp/${space}`;
-  const thumbnail = new MessageAttachment(`${baseDir}/day${day}/thumbnail.png`, 'thumbnail.png');
-  const image = new MessageAttachment(`${baseDir}/day${day}/${day}.png`, 'image.png');
+export const dailyImageReminder = async (day: string, imagesCID: string, governanceCycle: string, type: string, contentLink: string, processLink: string) => {
+  const { thumbnail, image } = await getReminderImages(imagesCID, day);
+  const thumbnailAttachment = new MessageAttachment(thumbnail, 'thumbnail.png');
+  const imageAttachment = new MessageAttachment(image, 'image.png');
   const preamble = () => {
     if (type.includes('delay')) { return 'Submit a proposal'; }
     if (type === 'execution') { return 'Multisig members assemble and configure the next funding cycle'; }
@@ -146,7 +146,7 @@ export const dailyImageReminder = (space: string, day: string, governanceCycle: 
   );
   return {
     message,
-    attachments: [thumbnail, image]
+    attachments: [thumbnailAttachment, imageAttachment]
   };
 };
 

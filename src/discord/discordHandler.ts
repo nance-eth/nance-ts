@@ -148,12 +148,12 @@ export class DiscordHandler {
     );
     const { message, attachments } = (noImage)
       ? discordTemplates.dailyTextReminder(governanceCycle, day, endSeconds, `${DEFAULT_DASHBOARD}/s/${this.config.name}`)
-      : discordTemplates.dailyImageReminder(this.config.name, day, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
+      : await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
     Promise.all(
       this.getDailyUpdateChannels().map((channel) => {
         return channel.send({ embeds: [message], files: attachments, flags: [SILENT_FLAG] });
       })
-    );
+    ).catch((e) => { return Promise.reject(e); });
   }
 
   private async getUserReactions(

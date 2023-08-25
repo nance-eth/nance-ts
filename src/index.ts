@@ -2,7 +2,6 @@ import schedule from 'node-schedule';
 import {
   sleep,
   addSecondsToDate,
-  downloadImages,
   myProvider,
 } from './utils';
 import { Nance } from './nance';
@@ -25,10 +24,6 @@ async function setup() {
   ({ config, calendarText } = await doltConfig(process.env.CONFIG || ''));
   nance = new Nance(config);
   treasury = new NanceTreasury(config, nance.dProposalHandler, myProvider('mainnet'));
-}
-
-async function getReminderImages() {
-  downloadImages(config.name, config.discord.reminder.imagesCID, config.discord.reminder.imageNames);
 }
 
 function isNotScheduled(jobName: string) {
@@ -143,7 +138,6 @@ async function scheduleCleanup() {
 }
 
 setup().then(() => {
-  getReminderImages();
   scheduleCycle().then(async () => {
     await sleep(1000);
     scheduleCleanup();

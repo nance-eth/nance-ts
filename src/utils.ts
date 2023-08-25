@@ -141,33 +141,22 @@ export function omitKey(object: object, key: string): Partial<typeof object> {
   return newObject;
 }
 
-export async function downloadImages(space: string, baseURL: string, images: string[]) {
-  const src = `${(process.env.RAILWAY_GIT_COMMIT_SHA) ? 'dist' : 'src'}`;
-  const baseDir = `./${src}/tmp/${space}`;
-  if (!fs.existsSync(`${baseDir}`)) {
-    fs.mkdirSync(`${baseDir}`);
-  }
-  Promise.all(images.map(async (day) => {
-    if (!fs.existsSync(`${baseDir}/day${day}`)) {
-      fs.mkdirSync(`${baseDir}/day${day}`, { recursive: true });
-    }
-    axios({
-      method: 'get',
-      url: `${baseURL}/day${day}/${day}.png`,
-      responseType: 'stream'
-    }).then((res) => {
-      res.data.pipe(fs.createWriteStream(`${baseDir}/day${day}/${day}.png`));
-    }).catch((e) => { console.log(e); });
-
-    axios({
-      method: 'get',
-      url: `${baseURL}/day${day}/thumbnail.png`,
-      responseType: 'stream'
-    }).then((res) => {
-      res.data.pipe(fs.createWriteStream(`${baseDir}/day${day}/thumbnail.png`));
-    }).catch((e) => { console.log(e); });
-  }));
-  return Promise.resolve();
+export async function getReminderImages(baseURL: string, day: string) {
+  const thumbnail = await axios({
+    method: 'get',
+    url: `${baseURL}/day${day}/thumbnail.png`,
+    responseType: 'stream'
+  }).then((res) => {
+    return res.data;
+  });
+  const image = await axios({
+    method: 'get',
+    url: `${baseURL}/day${day}/${day}.png`,
+    responseType: 'stream'
+  }).then((res) => {
+    return res.data;
+  });
+  return { thumbnail, image };
 }
 
 export function uuidGen(): string {
