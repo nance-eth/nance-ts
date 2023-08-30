@@ -104,7 +104,9 @@ export class DiscordHandler {
       this.config.name,
       endDate
     );
-    await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
+    return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
+      return messageObj.id;
+    });
   }
 
   async sendVoteResultsRollup(proposals: Proposal[]) {

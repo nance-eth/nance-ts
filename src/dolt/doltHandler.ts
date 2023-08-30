@@ -6,7 +6,6 @@ import { Proposal, PropertyKeys, Transfer, Payout, CustomTransaction, Reserve } 
 import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
-import { DBConfig } from './types';
 import { SELECT_ACTIONS } from './queries';
 
 const proposalsTable = 'proposals';

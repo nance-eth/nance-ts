@@ -9,9 +9,16 @@ import {
   handleTemperatureCheckClose,
   handleDeleteTemperatureCheckEndAlert
 } from './helpers/auto/temperatureCheck';
+import {
+  handleVoteSetup,
+  handleSendVoteRollup,
+  handleSendVoteEndAlert,
+  handleVoteClose,
+  handleDeleteVoteEndAlert
+} from './helpers/auto/vote';
 import { handleDaily } from './helpers/auto/daily';
 
-const enabledFor = ['nance', 'waterbox', 'thirstythirsty'];
+const enabledFor = ['waterbox'];
 
 const router = express.Router();
 
@@ -33,23 +40,22 @@ router.get('/events', async (req, res) => {
   const allSpaces = (await getAllSpaces()).filter((space) => { return enabledFor.includes(space.name); });
   Promise.allSettled(allSpaces.map(async (space) => {
     // Daily reminder
-    handleDaily(space);
+    await handleDaily(space);
 
     // Temperature Check
-    handleSendTemperatureCheckStartAlert(space);
-    handleSendTemperatureCheckRollup(space);
-    handleDeleteTemperatureCheckStartAlert(space);
-    handleSendTemperatureCheckEndAlert(space);
-    handleTemperatureCheckClose(space);
-    handleDeleteTemperatureCheckEndAlert(space);
+    // await handleSendTemperatureCheckStartAlert(space);
+    // await handleSendTemperatureCheckRollup(space);
+    // await handleDeleteTemperatureCheckStartAlert(space);
+    // await handleSendTemperatureCheckEndAlert(space);
+    // await handleTemperatureCheckClose(space);
+    // await handleDeleteTemperatureCheckEndAlert(space);
 
-    // Vote
-    // TODO
-    // handleVoteSetup(space);
-    // handleSendVoteRollup(space);
-    // handleSendVoteEndAlert(space);
-    // handleVoteClose(space);
-    // handleDeleteVoteEndAlert(space);
+    // // Vote
+    // await handleVoteSetup(space);
+    // await handleSendVoteRollup(space);
+    // await handleSendVoteEndAlert(space);
+    // await handleVoteClose(space);
+    // await handleDeleteVoteEndAlert(space);
   })).then(() => {
     res.json({ success: true, data: '' }); // add list of updates here, may be useful
   }).catch((e) => {

@@ -61,3 +61,39 @@ export const shouldIncrementDay = (space: SpaceAuto) => {
     addDaysToDate(space.cycleDayLastUpdated, 1) <= now
   );
 };
+
+export const shouldSendVoteRollup = (space: SpaceAuto) => {
+  const now = new Date();
+  return (
+    (space.currentEvent.title === events.SNAPSHOT_VOTE
+    && space.currentEvent.start <= now
+    && space.dialog.votingRollup === '')
+  );
+};
+
+export const shouldSendVoteEndAlert = (space: SpaceAuto) => {
+  const now = new Date();
+  return (
+    (space.currentEvent.title === events.SNAPSHOT_VOTE
+    && addSecondsToDate(space.currentEvent.end, -ONE_HOUR_SECONDS) <= now
+    && space.dialog.votingEndAlert === '')
+  );
+};
+
+export const shouldCloseVote = (space: SpaceAuto) => {
+  const now = new Date();
+  return (
+    (space.currentEvent.title === events.EXECUTION
+    && space.currentEvent.start <= now)
+    && space.dialog.votingResultsRollup === ''
+  );
+};
+
+export const shouldDeleteVoteEndAlert = (space: SpaceAuto) => {
+  const now = new Date();
+  return (
+    (space.currentEvent.title === events.EXECUTION
+    && addSecondsToDate(space.currentEvent.start, FIVE_MINUTES_SECONDS) <= now
+    && space.dialog.votingEndAlert !== '')
+  );
+};
