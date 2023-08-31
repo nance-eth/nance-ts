@@ -29,7 +29,9 @@ export const handleSendTemperatureCheckStartAlert = async (space: SpaceAuto) => 
       temperatureCheckStartReminder
     );
     dialogHandler.logout();
+    return true;
   }
+  return false;
 };
 
 export const handleDeleteTemperatureCheckStartAlert = async (space: SpaceAuto) => {
@@ -38,7 +40,9 @@ export const handleDeleteTemperatureCheckStartAlert = async (space: SpaceAuto) =
     await dialogHandler.deleteMessage(space.dialog.temperatureCheckStartAlert);
     await doltSys.updateDialogHandlerMessageId(space.name, 'temperatureCheckStartAlert', '');
     dialogHandler.logout();
+    return true;
   }
+  return false;
 };
 
 export const handleSendTemperatureCheckRollup = async (space: SpaceAuto) => {
@@ -53,7 +57,9 @@ export const handleSendTemperatureCheckRollup = async (space: SpaceAuto) => {
     // TODO: update status of proposals to temperatureCheck
     await doltSys.updateDialogHandlerMessageId(space.name, 'temperatureCheckRollup', temperatureCheckRollup);
     dialogHandler.logout();
+    return true;
   }
+  return false;
 };
 
 export const handleSendTemperatureCheckEndAlert = async (space: SpaceAuto) => {
@@ -70,13 +76,17 @@ export const handleSendTemperatureCheckEndAlert = async (space: SpaceAuto) => {
       temperatureCheckEndReminder
     );
     dialogHandler.logout();
+    return true;
   }
+  return false;
 };
 
 export const handleTemperatureCheckClose = async (space: SpaceAuto) => {
   if (shouldSendTemperatureCheckClose(space)) {
     // TODO: run nance close temperatureCheck
+    return true;
   }
+  return false;
 };
 
 export const handleDeleteTemperatureCheckEndAlert = async (space: SpaceAuto) => {
@@ -85,5 +95,7 @@ export const handleDeleteTemperatureCheckEndAlert = async (space: SpaceAuto) => 
     await dialogHandler.deleteMessage(space.dialog.temperatureCheckEndAlert);
     await doltSys.updateDialogHandlerMessageId(space.name, 'temperatureCheckEndAlert', '');
     dialogHandler.logout();
+    return true;
   }
+  return false;
 };

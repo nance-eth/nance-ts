@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import express from 'express';
 import { NANCE_AUTO_KEY } from '../keys';
 import getAllSpaces from './helpers/getAllSpaces';
@@ -18,9 +19,31 @@ import {
 } from './helpers/auto/vote';
 import { handleDaily } from './helpers/auto/daily';
 
-const enabledFor = ['waterbox', 'thirstythirsty'];
+const enabledFor = ['waterbox', 'nance', 'thirstythirsty'];
+const actionsToRun = [
+  handleDaily,
+  handleSendTemperatureCheckStartAlert,
+  handleDeleteTemperatureCheckStartAlert,
+  handleSendTemperatureCheckRollup,
+  handleSendTemperatureCheckEndAlert,
+  handleTemperatureCheckClose,
+  handleDeleteTemperatureCheckEndAlert,
+  handleVoteSetup,
+  handleSendVoteRollup,
+  handleSendVoteEndAlert,
+  handleVoteClose,
+  handleDeleteVoteEndAlert
+];
 
 const router = express.Router();
+
+type AutoResults = {
+  space: string;
+  actions: {
+    name: string;
+    success: any;
+  }[];
+};
 
 function handleAuth(auth: string | undefined) {
   const key = auth?.split('Bearer ')[1];
@@ -38,30 +61,23 @@ router.get('/events', async (req, res) => {
     return;
   }
   const allSpaces = (await getAllSpaces()).filter((space) => { return enabledFor.includes(space.name); });
-  Promise.allSettled(allSpaces.map(async (space) => {
-    // Daily reminder
-    await handleDaily(space);
-
-    // Temperature Check
-    // await handleSendTemperatureCheckStartAlert(space);
-    // await handleSendTemperatureCheckRollup(space);
-    // await handleDeleteTemperatureCheckStartAlert(space);
-    // await handleSendTemperatureCheckEndAlert(space);
-    // await handleTemperatureCheckClose(space);
-    // await handleDeleteTemperatureCheckEndAlert(space);
-
-    // // Vote
-    // await handleVoteSetup(space);
-    // await handleSendVoteRollup(space);
-    // await handleSendVoteEndAlert(space);
-    // await handleVoteClose(space);
-    // await handleDeleteVoteEndAlert(space);
-  })).then(() => {
-    res.json({ success: true, data: '' }); // add list of updates here, may be useful
-  }).catch((e) => {
-    console.error(e);
-    res.status(500).send('Internal Server Error');
-  });
+  const resultsPacket = [] as AutoResults[];
+  for await (const space of allSpaces) {
+    const actionsResults = [];
+    for await (const action of actionsToRun) {
+      try {
+        const success = await action(space);
+        if (success) actionsResults.push({ name: action.name, success });
+      } catch (err) {
+        actionsResults.push({ name: action.name, success: err });
+      }
+    }
+    resultsPacket.push({
+      space: space.name,
+      actions: actionsResults
+    });
+  }
+  res.json(resultsPacket);
 });
 
 export default router;

@@ -64,9 +64,16 @@ export class DiscordHandler {
   }
 
   private getDailyUpdateChannels(): TextChannel[] {
-    return this.config.discord.reminder.channelIds.map((channelId) => {
-      return this.discord.channels.cache.get(channelId) as TextChannel;
+    const channels = [] as TextChannel[];
+    this.config.discord.reminder.channelIds.forEach((channelId) => {
+      try {
+        this.discord.channels.cache.get(channelId);
+        channels.push(this.discord.channels.cache.get(channelId) as TextChannel);
+      } catch (e) {
+        logger.error(`Could not get channel ${channelId} for space ${this.config.name}`);
+      }
     });
+    return channels;
   }
 
   async startDiscussion(proposal: Proposal): Promise<string> {
@@ -116,7 +123,9 @@ export class DiscordHandler {
       this.config.propertyKeys.proposalIdPrefix,
       proposals
     );
-    await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] });
+    return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
+      return messageObj.id;
+    });
   }
 
   async sendReminder(event: string, date: Date, type: string, url = '', deleteTimeOut = 60 * 65) {
@@ -137,25 +146,26 @@ export class DiscordHandler {
   }
 
   async sendImageReminder(day: string, governanceCycle: string, type: string, noImage = false, endSeconds?: number) {
-    // delete old messages
-    Promise.all(
-      this.getDailyUpdateChannels().map((channel) => {
+    const { message, attachments } = (noImage)
+      ? discordTemplates.dailyTextReminder(governanceCycle, day, endSeconds, `${DEFAULT_DASHBOARD}/s/${this.config.name}`)
+      : await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
+    const channelsSent = this.getDailyUpdateChannels().map((channel) => {
+      if (channel) {
+        // delete old messages
         channel.messages.fetch({ limit: 20 }).then((messages) => {
           messages.filter((m) => { return m.author === this.discord.user && m.embeds[0].title === 'Governance Status'; }).map((me) => {
             return me.delete();
           });
         });
-        return null;
-      })
-    );
-    const { message, attachments } = (noImage)
-      ? discordTemplates.dailyTextReminder(governanceCycle, day, endSeconds, `${DEFAULT_DASHBOARD}/s/${this.config.name}`)
-      : await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
-    Promise.all(
-      this.getDailyUpdateChannels().map((channel) => {
-        return channel.send({ embeds: [message], files: attachments, flags: [SILENT_FLAG] });
-      })
-    ).catch((e) => { return Promise.reject(e); });
+        channel.send({ embeds: [message], files: attachments, flags: [SILENT_FLAG] });
+      }
+      return channel;
+    });
+    if (channelsSent.includes(undefined as unknown as TextChannel)) {
+      logger.error(`Could not send daily update to ${this.config.name}`);
+      return false;
+    }
+    return true;
   }
 
   private async getUserReactions(

@@ -20,18 +20,23 @@ const safeIncrement = (space: SpaceAuto) => {
 };
 
 export const handleDaily = async (space: SpaceAuto) => {
-  if (shouldIncrementDay(space)) {
-    const { cycleCurrentDay, currentGovernanceCycle, currentEvent } = safeIncrement(space);
-    const dialogHandler = await discordLogin(space.config);
-    const currentEventTitle = currentEvent.title.toLowerCase();
-    // const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(space.config?.juicebox?.projectId);
-    await dialogHandler.sendImageReminder(cycleCurrentDay.toString(), currentGovernanceCycle.toString(), currentEventTitle).then(async () => {
+  if (!shouldIncrementDay(space)) return false;
+  const { cycleCurrentDay, currentGovernanceCycle, currentEvent } = safeIncrement(space);
+  const dialogHandler = await discordLogin(space.config);
+  const currentEventTitle = currentEvent.title.toLowerCase();
+  // const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(space.config?.juicebox?.projectId);
+  try {
+    const messageSentToChannels = await dialogHandler.sendImageReminder(cycleCurrentDay.toString(), currentGovernanceCycle.toString(), currentEventTitle);
+    if (messageSentToChannels) {
       await doltSys.updateCycle(
         space.name,
         cycleCurrentDay,
         currentGovernanceCycle,
         dateAtTime(new Date(), space.cycleTriggerTime), // set to trigger time for next run
       );
-    });
+    }
+    return true;
+  } catch {
+    return false;
   }
 };
