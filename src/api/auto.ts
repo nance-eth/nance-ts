@@ -39,10 +39,7 @@ const router = express.Router();
 
 type AutoResults = {
   space: string;
-  actions: {
-    name: string;
-    success: any;
-  }[];
+  actions: string;
 };
 
 function handleAuth(auth: string | undefined) {
@@ -67,14 +64,14 @@ router.get('/events', async (req, res) => {
     for await (const action of actionsToRun) {
       try {
         const success = await action(space);
-        if (success) actionsResults.push({ name: action.name, success });
+        if (success) actionsResults.push([action.name, `success: ${success}`]);
       } catch (err) {
-        actionsResults.push({ name: action.name, success: err });
+        actionsResults.push([action.name, err]);
       }
     }
     resultsPacket.push({
       space: space.name,
-      actions: actionsResults
+      actions: actionsResults.flat().join()
     });
   }
   res.json(resultsPacket);

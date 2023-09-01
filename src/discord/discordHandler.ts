@@ -162,8 +162,7 @@ export class DiscordHandler {
       return channel;
     });
     if (channelsSent.includes(undefined as unknown as TextChannel)) {
-      logger.error(`Could not send daily update to ${this.config.name}`);
-      return false;
+      return Promise.reject(Error(`Could not send daily update to ${this.config.name}`));
     }
     return true;
   }

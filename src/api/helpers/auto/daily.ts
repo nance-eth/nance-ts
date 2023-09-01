@@ -35,8 +35,8 @@ export const handleDaily = async (space: SpaceAuto) => {
         dateAtTime(new Date(), space.cycleTriggerTime), // set to trigger time for next run
       );
     }
-    return true;
-  } catch {
-    return false;
+    return messageSentToChannels;
+  } catch (e) {
+    return Promise.reject(e);
   }
 };
