@@ -4,7 +4,8 @@ import { shouldIncrementDay } from './logic';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import { pools } from '../../../dolt/pools';
 import { dateAtTime } from '../../../utils';
-// import { juiceboxTime } from '../juicebox';
+import { juiceboxTime } from '../juicebox';
+import { events } from './constants';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
@@ -21,12 +22,23 @@ const safeIncrement = (space: SpaceAuto) => {
 
 export const handleDaily = async (space: SpaceAuto) => {
   if (!shouldIncrementDay(space)) return false;
-  const { cycleCurrentDay, currentGovernanceCycle, currentEvent } = safeIncrement(space);
+
+  let cycleCurrentDay;
+  let currentGovernanceCycle;
+  let currentEvent;
+  let endTimestamp;
+  const textReminderDays = [20, 15, 10, 5, 4, 3, 2, 1]; // TODO make a config variable, hardcoded for NANA for now
+
+  if (space.totalCycleDays !== 0) {
+    ({ cycleCurrentDay, currentGovernanceCycle, currentEvent } = safeIncrement(space));
+  } else {
+    ({ cycleCurrentDay, currentGovernanceCycle, endTimestamp } = await juiceboxTime(space.config?.juicebox?.projectId));
+    if (!textReminderDays.includes(cycleCurrentDay)) return false;
+  }
   const dialogHandler = await discordLogin(space.config);
-  const currentEventTitle = currentEvent.title.toLowerCase();
-  // const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(space.config?.juicebox?.projectId);
+  const currentEventTitle = currentEvent?.title.toLowerCase() || '';
   try {
-    const messageSentToChannels = await dialogHandler.sendImageReminder(cycleCurrentDay.toString(), currentGovernanceCycle.toString(), currentEventTitle);
+    const messageSentToChannels = await dialogHandler.sendImageReminder(cycleCurrentDay, currentGovernanceCycle, currentEventTitle, !!endTimestamp, endTimestamp);
     if (messageSentToChannels) {
       await doltSys.updateCycle(
         space.name,

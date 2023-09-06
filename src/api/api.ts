@@ -74,27 +74,6 @@ router.get('/:space', async (req, res) => {
   }
 });
 
-router.get('/:space/reminder', async (req, res) => {
-  const { space } = req.params;
-  const textReminderDays = [20, 15, 10, 5, 4, 3, 2, 1];
-  try {
-    const { config } = await handlerReq(space, req.headers.authorization);
-    const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
-    if (textReminderDays.includes(remainingDHM.days)) {
-      const discord = new DiscordHandler(config);
-      // eslint-disable-next-line no-await-in-loop
-      while (!discord.ready()) { await sleep(50); }
-      discord.sendImageReminder(currentDay, currentCycle, '', true, endTimestamp).then(() => {
-        res.send({ success: true });
-      });
-    } else {
-      res.send({ success: false, error: 'Not a reminder day' });
-    }
-  } catch (e) {
-    res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
-  }
-});
-
 // ===================================== //
 // ======== proposals functions ======== //
 // ===================================== //

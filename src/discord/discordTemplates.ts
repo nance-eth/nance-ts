@@ -123,7 +123,7 @@ export const threadToURL = (thread: ThreadChannel) => {
   return `https://discord.com/channels/${thread.guildId}/${thread.parentId}/${thread.id}`;
 };
 
-export const dailyImageReminder = async (day: string, imagesCID: string, governanceCycle: string, type: string, contentLink: string, processLink: string) => {
+export const dailyImageReminder = async (day: number, imagesCID: string, governanceCycle: number, type: string, contentLink: string, processLink: string) => {
   const { thumbnail, image } = await getReminderImages(imagesCID, day);
   const thumbnailAttachment = new MessageAttachment(thumbnail, 'thumbnail.png');
   const imageAttachment = new MessageAttachment(image, 'image.png');
@@ -136,7 +136,7 @@ export const dailyImageReminder = async (day: string, imagesCID: string, governa
   };
   const message = new MessageEmbed().setTitle('Governance Status').setDescription(
     stripIndents`
-    Today is day ${Number(day)} of GC#${governanceCycle}\n
+    Today is day ${day} of GC#${governanceCycle}\n
     ${preamble()} [here](${contentLink})!\n
     Read about our governance process [here](${processLink})`
   ).setThumbnail(
@@ -150,7 +150,7 @@ export const dailyImageReminder = async (day: string, imagesCID: string, governa
   };
 };
 
-export const dailyTextReminder = (governanceCycle: string, day: string, endSeconds?: number, contentLink?: string) => {
+export const dailyTextReminder = (governanceCycle: number, day: number, endSeconds?: number, contentLink?: string) => {
   const message = new MessageEmbed().setTitle('Governance Status').setDescription(
     stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n

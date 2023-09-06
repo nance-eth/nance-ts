@@ -141,7 +141,7 @@ export function omitKey(object: object, key: string): Partial<typeof object> {
   return newObject;
 }
 
-export async function getReminderImages(baseURL: string, day: string) {
+export async function getReminderImages(baseURL: string, day: number) {
   const thumbnail = await axios({
     method: 'get',
     url: `${baseURL}/day${day}/thumbnail.png`,

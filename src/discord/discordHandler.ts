@@ -128,6 +128,17 @@ export class DiscordHandler {
     });
   }
 
+  async editVoteResultsRollup(messageId: string, proposals: Proposal[]) {
+    const messageObj = await this.getAlertChannel().messages.fetch(messageId);
+    const message = discordTemplates.voteResultsRollUpMessage(
+      DEFAULT_DASHBOARD,
+      this.config.name,
+      this.config.propertyKeys.proposalIdPrefix,
+      proposals
+    );
+    messageObj.edit({ embeds: [message], flags: [SILENT_FLAG] });
+  }
+
   async sendReminder(event: string, date: Date, type: string, url = '', deleteTimeOut = 60 * 65) {
     const message = (type === 'start')
       ? discordTemplates.reminderStartMessage(
@@ -145,7 +156,7 @@ export class DiscordHandler {
     });
   }
 
-  async sendImageReminder(day: string, governanceCycle: string, type: string, noImage = false, endSeconds?: number) {
+  async sendImageReminder(day: number, governanceCycle: number, type: string, noImage = false, endSeconds?: number) {
     const { message, attachments } = (noImage)
       ? discordTemplates.dailyTextReminder(governanceCycle, day, endSeconds, `${DEFAULT_DASHBOARD}/s/${this.config.name}`)
       : await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);

@@ -10,8 +10,7 @@ export async function juiceboxTime(projectId: string, network = 'mainnet' as 'ma
   const duration = currentConfiguration.duration.toNumber();
   const end = start + duration - delay;
   const remainingSeconds = end - unixTimeStampNow();
-  const remainingDHM = secondsToDayHoursMinutes(remainingSeconds);
-  const currentCycle = currentConfiguration.number.toString();
-  const currentDay = (secondsToDayHoursMinutes(duration - remainingSeconds).days).toString();
-  return { currentCycle, currentDay, remainingDHM, startTimestamp: start, endTimestamp: end };
+  const cycleCurrentDay = secondsToDayHoursMinutes(remainingSeconds - delay).days;
+  const currentGovernanceCycle = currentConfiguration.number.toNumber();
+  return { currentGovernanceCycle, cycleCurrentDay, startTimestamp: start, endTimestamp: end };
 }

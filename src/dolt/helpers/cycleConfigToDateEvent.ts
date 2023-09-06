@@ -1,3 +1,4 @@
+import { events } from '../../api/helpers/auto/constants';
 import { DateEvent } from '../../types';
 import { addDaysToDate, dateAtTime } from '../../utils';
 import { SpaceConfig } from '../schema';
@@ -37,7 +38,7 @@ const getEventDate = (
 
 export const getCurrentEvent = (info: SpaceConfig) => {
   let accumulatedDays = 0;
-  if (!info.cycleStageLengths) return [];
+  if (!info.cycleStageLengths) return [{ title: events.NULL }, { title: events.NULL }] as DateEvent[];
   const cycleStartDays = info.cycleStageLengths.map((day, index) => {
     if (index === 0) return 1;
     accumulatedDays += day;

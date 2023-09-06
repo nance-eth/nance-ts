@@ -19,7 +19,7 @@ import {
 } from './helpers/auto/vote';
 import { handleDaily } from './helpers/auto/daily';
 
-const enabledFor = ['waterbox', 'nance', 'thirstythirsty'];
+const enabledFor = ['thirstythirsty', 'gnance', 'bananapus'];
 const actionsToRun = [
   handleDaily,
   handleSendTemperatureCheckStartAlert,
