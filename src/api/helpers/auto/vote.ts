@@ -19,7 +19,7 @@ import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 export const handleVoteSetup = async (space: SpaceAuto) => {
   const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
   const proposals = await dolt.getVoteProposals();
-  if (space.currentEvent.title === events.SNAPSHOT_VOTE && proposals.length > 0) {
+  if (space.currentEvent?.title === events.SNAPSHOT_VOTE && proposals.length > 0) {
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, space.config);
     Promise.all(proposals.map(async (proposal) => {
       const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
@@ -27,7 +27,7 @@ export const handleVoteSetup = async (space: SpaceAuto) => {
       const voteURL = await snapshot.createProposal(
         proposal,
         addSecondsToDate(new Date(), -10),
-        space.currentEvent.end,
+        space.currentEvent?.end,
         (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
       );
       await dolt.updateVotingSetup({ ...proposal, ipfsURL, voteURL });

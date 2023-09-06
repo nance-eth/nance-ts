@@ -5,7 +5,6 @@ import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import { pools } from '../../../dolt/pools';
 import { dateAtTime } from '../../../utils';
 import { juiceboxTime } from '../juicebox';
-import { events } from './constants';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 

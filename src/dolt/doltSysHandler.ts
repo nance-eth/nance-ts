@@ -9,6 +9,17 @@ const systemDb = 'nance_sys';
 const system = 'config';
 const contracts = 'contracts';
 
+const defaultDialogHandlerMessageIds: DialogHandlerMessageIds = {
+  votingRollup: '',
+  votingEndAlert: '',
+  votingResultsRollup: '',
+  temperatureCheckRollup: '',
+  temperatureCheckEndAlert: '',
+  temperatureCheckStartAlert: ''
+};
+
+const defaultGovernanceCycle = 1;
+
 export class DoltSysHandler {
   localDolt;
 
@@ -54,25 +65,44 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, calendar: string, cycleCurrentDay: number, cycleTriggerTime: string, cycleStageLengths: number[]) {
+  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, cycleCurrentDay: number, cycleTriggerTime: string, cycleStageLengths: number[], cycleDayLastUpdated: string) {
     return this.localDolt.queryResults(oneLine`
       INSERT INTO ${system} (
-        space, cid, spaceOwners, config, calendar,
-        cycleCurrentDay, cycleTriggerTime, cycleStageLengths, lastUpdated
+        space,
+        cid,
+        spaceOwners,
+        config,
+        cycleCurrentDay,
+        cycleTriggerTime,
+        cycleStageLengths,
+        dialogHandlerMessageIds,
+        cycleDayLastUpdated,
+        currentGovernanceCycle,
+        lastUpdated
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         cid = VALUES(cid),
         spaceOwners = VALUES(spaceOwners),
         config = VALUES(config),
-        calendar = VALUES(calendar),
         cycleCurrentDay = VALUES(cycleCurrentDay),
         cycleTriggerTime = VALUES(cycleTriggerTime),
         cycleStageLengths = VALUES(cycleStageLengths),
         lastUpdated = NOW()
-    `, [space, cid, JSON.stringify(spaceOwners), JSON.stringify(config), calendar, cycleCurrentDay, cycleTriggerTime, cycleStageLengths]).then((res) => {
+    `, [
+      space,
+      cid,
+      JSON.stringify(spaceOwners),
+      JSON.stringify(config),
+      cycleCurrentDay,
+      cycleTriggerTime,
+      JSON.stringify(cycleStageLengths),
+      JSON.stringify(defaultDialogHandlerMessageIds),
+      cycleDayLastUpdated,
+      defaultGovernanceCycle
+    ]).then((res) => {
       return res.affectedRows;
-    }).catch((e) => { return Promise.reject(e.sqlMessage); });
+    }).catch((e) => { return Promise.reject(e); });
   }
 
   async updateCycle(space: string, cycleCurrentDay: number, currentGovernanceCycle: number, time: Date) {
@@ -107,7 +137,7 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async getSpaceConfig(space: string): Promise<SpaceConfig | undefined> {
+  async getSpaceConfig(space: string): Promise<SpaceConfig> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
       WHERE space = ? LIMIT 1
@@ -119,9 +149,6 @@ export class DoltSysHandler {
   async getAllSpaceNames(): Promise<SpaceConfig[]> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
-      WHERE
-      cycleTriggerTime IS NOT NULL AND
-      cycleDayLastUpdated IS NOT NULL
       `).then((res) => {
       return res as unknown as SpaceConfig[];
     }).catch((e) => { return Promise.reject(e); });

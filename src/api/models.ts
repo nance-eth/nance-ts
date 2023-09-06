@@ -16,7 +16,7 @@ export type SpaceInfo = {
   dolthubLink: string;
 };
 
-export type SpaceAuto = Pick<SpaceInfo, 'name' | 'currentCycle' | 'currentEvent'> & {
+export type SpaceAuto = Pick<SpaceInfo, 'name' | 'currentCycle' | 'currentEvent' | 'dolthubLink'> & {
   currentDay: number;
   totalCycleDays: number;
   cycleDayLastUpdated: Date;
@@ -88,7 +88,6 @@ export interface SubmitTransactionRequest extends BaseRequest {
 export interface ConfigSpaceRequest extends BaseRequest {
   signature: Signature;
   config: NanceConfig;
-  calendar?: string;
   owners: string[];
   cycleCurrentDay: number;
   cycleTriggerTime: string;

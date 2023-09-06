@@ -65,7 +65,7 @@ export type GovernanceCycle = {
 };
 
 export type DialogHandlerMessageIds = {
-  dailyReminder: string;
+  dailyReminder?: string;
   temperatureCheckRollup: string;
   votingRollup: string;
   votingResultsRollup: string;

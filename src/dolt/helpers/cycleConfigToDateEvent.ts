@@ -13,8 +13,8 @@ const getEventDate = (
   const now = new Date();
   const startOfToday = dateAtTime(now, info.cycleTriggerTime);
   const daysSinceStart = info.cycleCurrentDay - cycleStartDays[stageIndex];
-  const daysRemaining = info.cycleStageLengths[stageIndex] - daysSinceStart;
-  const start = addDaysToDate(startOfToday, -1 * daysSinceStart);
+  const daysRemaining = info.cycleStageLengths[stageIndex] - daysSinceStart + 1;
+  const start = startOfToday;
   const end = addDaysToDate(startOfToday, daysRemaining);
   const currentEvent = {
     title: cycleStageNames[stageIndex],
@@ -38,7 +38,7 @@ const getEventDate = (
 
 export const getCurrentEvent = (info: SpaceConfig) => {
   let accumulatedDays = 0;
-  if (!info.cycleStageLengths) return [{ title: events.NULL }, { title: events.NULL }] as DateEvent[];
+  if (!info.cycleStageLengths) return [undefined, undefined] as unknown as DateEvent[];
   const cycleStartDays = info.cycleStageLengths.map((day, index) => {
     if (index === 0) return 1;
     accumulatedDays += day;

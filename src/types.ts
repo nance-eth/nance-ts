@@ -147,17 +147,19 @@ export type PropertyKeys = {
 };
 
 export type GovernanceCycleForm = {
-  time: {
-    ampm: string;
-    hour: number;
-    minute: string;
-    timezoneOffset: number;
-  };
+  time: FormTime;
   startDate: string;
   temperatureCheckLength: string;
   voteLength: string;
   delayLength: string;
   executionLength: string;
+};
+
+export type FormTime = {
+  ampm: string;
+  hour: number;
+  minute: string;
+  timezoneOffset: number;
 };
 
 export interface NanceConfig {
