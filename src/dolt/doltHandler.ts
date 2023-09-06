@@ -193,7 +193,7 @@ export class DoltHandler {
       INSERT INTO ${privateProposalsTable}
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, coauthors, actions)
       VALUES(?,?,?,?,?,?,?,?)`,
-    [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, JSON.stringify(proposal.coauthors), JSON.stringify(proposal.actions)],
+      [proposal.hash, now, now, proposal.title, proposal.body, proposal.authorAddress, JSON.stringify(proposal.coauthors), JSON.stringify(proposal.actions)],
     );
     return proposal.hash;
   }
@@ -211,10 +211,10 @@ export class DoltHandler {
         governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices,
         snapshotVotes, snapshotId, voteAddressCount)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [proposal.hash, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type,
+      [proposal.hash, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type,
       proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices),
       JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes
-    ]);
+      ]);
     return proposal.hash;
   }
 
@@ -231,7 +231,7 @@ export class DoltHandler {
       VALUES(?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
       governanceCycleStart = VALUES(governanceCycleStart), numberOfPayouts = VALUES(numberOfPayouts), amount = VALUES(amount), currency = VALUES(currency),
       payAddress = VALUES(payAddress), payProject = VALUES(payProject), payStatus = VALUES(payStatus), payName = VALUES(payName)`,
-    [uuid || uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payout.address, payout.project, status, payName]);
+      [uuid || uuidGen(), uuidOfProposal, treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payout.address, payout.project, status, payName]);
   }
 
   async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, uuid?: string, transferCount = 1, status?: string) {
@@ -243,7 +243,7 @@ export class DoltHandler {
       transferGovernanceCycle = VALUES(transferGovernanceCycle), transferCount = VALUES(transferCount), transferName = VALUES(transferName),
       transferAddress = VALUES(transferAddress), transferTokenName = VALUES(transferTokenName), transferTokenAddress = VALUES(transferTokenAddress),
       transferAmount = VALUES(transferAmount), transferStatus = VALUES(transferStatus)`,
-    [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, status]);
+      [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, status]);
   }
 
   async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, uuid?: string, status?: string, transactionCount = 1) {
@@ -258,8 +258,8 @@ export class DoltHandler {
       transactionGovernanceCycle = VALUES(transactionGovernanceCycle), transactionCount = VALUES(transactionCount), transactionName = VALUES(transactionName),
       transactionAddress = VALUES(transactionAddress), transactionValue = VALUES(transactionValue), transactionFunctionName = VALUES(transactionFunctionName),
       transactionFunctionArgs = VALUES(transactionFunctionArgs), transactionStatus = VALUES(transactionStatus)`,
-    [uuid || uuidGen(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray,
-      status, customTransaction.tenderlyId]);
+      [uuid || uuidGen(), uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName, address, value, functionName, argsArray,
+        status, customTransaction.tenderlyId]);
   }
 
   async addReserveToDb(reserve: Reserve, uuidOfProposal: string, reserveGovernanceCycle: number, uuid?: string, status?: string) {
@@ -268,7 +268,7 @@ export class DoltHandler {
       (uuidOfReserve, uuidOfProposal, reserveGovernanceCycle, splits, reserveStatus)
       VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE
       reserveGovernanceCycle = VALUES(reserveGovernanceCycle), splits = VALUES(splits), reserveStatus = VALUES(reserveStatus)`,
-    [uuid || uuidGen(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(reserve.splits), status]);
+      [uuid || uuidGen(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(reserve.splits), status]);
   }
 
   async addGovernanceCycleToDb(g: GovernanceCycle) {
@@ -304,7 +304,7 @@ export class DoltHandler {
     await this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
       ${updates.join(',')} WHERE uuid = ?`,
-    [...Object.values(cleanedProposal), cleanedProposal.uuid]);
+      [...Object.values(cleanedProposal), cleanedProposal.uuid]);
     return proposal.hash || Promise.reject('Proposal hash not found');
   }
 
@@ -318,7 +318,7 @@ export class DoltHandler {
     await this.localDolt.db.query(oneLine`
       UPDATE ${privateProposalsTable} SET
       ${updates.join(',')} WHERE uuid = ?`,
-    [...Object.values(cleanedProposal), cleanedProposal.uuid]);
+      [...Object.values(cleanedProposal), cleanedProposal.uuid]);
     return proposal.hash || Promise.reject('Proposal hash not found');
   }
 
@@ -338,7 +338,7 @@ export class DoltHandler {
         treasuryVersion = ?, governanceCycleStart = ?, numberOfPayouts = ?, amount = ?,
         currency = ?, payAddress = ?, payProject = ?, payStatus = ?, payName = ?
         WHERE uuidOfPayout = ?`,
-      [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, payout.uuidOfPayout]);
+        [treasuryVersion, governanceStart, numberOfPayouts, amount, currency, payAddress, payProject, payStatus, payName, payout.uuidOfPayout]);
     }));
   }
 
@@ -405,7 +405,7 @@ export class DoltHandler {
     const results = this.localDolt.db.query(`
       UPDATE ${proposalsTable} SET
       title = ?, proposalStatus = ?, snapshotId = ?, ipfsCID = ? WHERE uuid = ?`,
-    [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.ipfsURL, proposal.hash]);
+      [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.ipfsURL, proposal.hash]);
     return results;
   }
 
@@ -504,23 +504,25 @@ export class DoltHandler {
   }
 
   async getProposalsByGovernanceCycle(governanceCycle: string, limit?: number, offset?: number) {
+    const cycleWhereClause = this.cycleWhereClause(governanceCycle);
     const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
       ${SELECT_ACTIONS} FROM ${proposalsTable}
-      WHERE governanceCycle = ${governanceCycle}
+      WHERE ${cycleWhereClause}
       ORDER BY proposalId ASC
       ${pagination}
     `);
   }
 
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string, limit?: number, offset?: number) {
+    const cycleWhereClause = this.cycleWhereClause(governanceCycle);
     const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
     const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
 
     return this.queryProposals(`
     ${SELECT_ACTIONS}, (${relevanceCalculation}) AS relevance from ${proposalsTable}
-      WHERE governanceCycle = ${governanceCycle}
+      WHERE ${cycleWhereClause}
       AND (
         ${orConditions}
       )
@@ -540,6 +542,12 @@ export class DoltHandler {
       ORDER BY relevance DESC
       ${pagination}
     `);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  cycleWhereClause(cycle: string) {
+    if (cycle.includes("All")) return "1=1";
+    return `governanceCycle IN (${cycle.split("+").join(", ")})`;
   }
 
   // eslint-disable-next-line class-methods-use-this

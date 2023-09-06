@@ -106,6 +106,7 @@ router.get('/:space/proposals', async (req, res) => {
     const _page = page ? Number(page) : 0;
     const _offset = _page ? (_page - 1) * _limit : 0;
 
+    // Defauls to query current cycle
     if (!keyword && !cycle) {
       const cycleSearch = cycle || (await dolt.getCurrentGovernanceCycle()).toString();
       data.proposals = await dolt.getProposalsByGovernanceCycle(cycleSearch, _limit, _offset);
