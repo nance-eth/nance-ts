@@ -13,7 +13,7 @@ const getEventDate = (
   const startOfToday = dateAtTime(now, info.cycleTriggerTime);
   const daysSinceStart = info.cycleCurrentDay - cycleStartDays[stageIndex];
   const daysRemaining = info.cycleStageLengths[stageIndex] - daysSinceStart + 1;
-  const start = startOfToday;
+  const start = addDaysToDate(startOfToday, -daysSinceStart + 1);
   const end = addDaysToDate(startOfToday, daysRemaining);
   const currentEvent = {
     title: cycleStageNames[stageIndex],
