@@ -39,6 +39,7 @@ const router = express.Router();
 
 type AutoResults = {
   space: string;
+  info: string;
   actions: string;
 };
 
@@ -71,7 +72,8 @@ router.get('/events', async (req, res) => {
     }
     resultsPacket.push({
       space: space.name,
-      actions: actionsResults.flat().join()
+      info: `currentDay: ${space.currentDay}, currentEvent: ${space.currentEvent.title} ${space.currentEvent.start} - ${space.currentEvent.end}`,
+      actions: actionsResults.flat().join() // flat join for better viewing on vercel logger, could move the flattening to the frontend
     });
   }
   res.json(resultsPacket);

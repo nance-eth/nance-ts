@@ -1,4 +1,3 @@
-import { events } from '../../api/helpers/auto/constants';
 import { DateEvent } from '../../types';
 import { addDaysToDate, dateAtTime } from '../../utils';
 import { SpaceConfig } from '../schema';
