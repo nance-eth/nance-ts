@@ -144,14 +144,14 @@ export function omitKey(object: object, key: string): Partial<typeof object> {
 export async function getReminderImages(baseURL: string, day: number) {
   const thumbnail = await axios({
     method: 'get',
-    url: `${baseURL}/day${day}/thumbnail.png`,
+    url: `${baseURL}/${day}_thumbnail.png`,
     responseType: 'stream'
   }).then((res) => {
     return res.data;
   });
   const image = await axios({
     method: 'get',
-    url: `${baseURL}/day${day}/${day}.png`,
+    url: `${baseURL}/${day}.png`,
     responseType: 'stream'
   }).then((res) => {
     return res.data;

@@ -19,7 +19,6 @@ import {
 } from './helpers/auto/vote';
 import { handleDaily } from './helpers/auto/daily';
 
-const enabledFor = ['thirstythirsty', 'gnance', 'bananapus', 'juicebox'];
 const actionsToRun = [
   handleDaily,
   handleSendTemperatureCheckStartAlert,
@@ -59,7 +58,7 @@ router.get('/events', async (req, res) => {
     res.status(401).send('Unauthorized');
     return;
   }
-  const allSpaces = (await getAllSpaces()).filter((space) => { return enabledFor.includes(space.name); });
+  const allSpaces = await getAllSpaces('autoEnable = true');
   const resultsPacket = [] as AutoResults[];
   for await (const space of allSpaces) {
     const actionsResults = [];

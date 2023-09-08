@@ -10,5 +10,6 @@ CREATE TABLE IF NOT EXISTS config (
   cycleTriggerTime TIME,
   cycleStageLengths JSON DEFAULT '[]',
   dialogHandlerMessageIds JSON DEFAULT '{}',
+  autoEnable BOOLEAN,
   PRIMARY KEY(space)
 );
