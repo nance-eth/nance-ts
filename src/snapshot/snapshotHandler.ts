@@ -18,6 +18,13 @@ export type SnapshotProposal = {
   ipfsCID?: string;
 };
 
+type SnapshotVoteSettings = {
+  quorum: number;
+  period: number;
+  type: string;
+  delay: number;
+};
+
 const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
   return {
     hash: uuidGen(),
@@ -144,5 +151,21 @@ export class SnapshotHandler {
     });
     results = (forSync) ? results.map((result: SnapshotProposal) => { return snapshotProposalToProposal(result); }) : results;
     return results;
+  }
+
+  async getVotingSettings(): Promise<SnapshotVoteSettings> {
+    const query = gql`
+    {
+      space(id: "${this.config.snapshot.space}") {
+        voting {
+          quorum
+          period
+          type
+          delay
+        }
+      }
+    }`;
+    const results = await gqlRequest(`${this.hub}/graphql`, query);
+    return results.space.voting;
   }
 }

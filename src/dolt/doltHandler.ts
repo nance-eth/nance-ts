@@ -477,7 +477,6 @@ export class DoltHandler {
     return this.queryProposals(oneLine`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Temperature Check'
-      AND governanceCycle = '${await this.getCurrentGovernanceCycle()}'
       ORDER BY proposalId ASC
     `);
   }

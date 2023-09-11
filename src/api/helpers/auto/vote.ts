@@ -21,14 +21,22 @@ export const handleVoteSetup = async (space: SpaceAuto) => {
   const proposals = await dolt.getVoteProposals();
   if (space.currentEvent?.title === events.SNAPSHOT_VOTE && proposals.length > 0) {
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, space.config);
+    const snapshotVoteSettings = await snapshot.getVotingSettings();
+    const start = addSecondsToDate(new Date(), -10);
+
+    // if a space has a period set, a proposal must be submitted with that period
+    const end = (snapshotVoteSettings.period)
+      ? addSecondsToDate(start, snapshotVoteSettings.period)
+      : space.currentEvent?.end;
+
     Promise.all(proposals.map(async (proposal) => {
       const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
       const ipfsURL = await dotPin(proposalWithHeading);
       const voteURL = await snapshot.createProposal(
         proposal,
-        addSecondsToDate(new Date(), -10),
-        space.currentEvent?.end,
-        (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
+        start,
+        end,
+        (proposal.voteSetup) ? { type: proposal.voteSetup.type || snapshotVoteSettings.type, choices: proposal.voteSetup.choices } : undefined
       );
       await dolt.updateVotingSetup({ ...proposal, ipfsURL, voteURL });
     })).then(() => {
