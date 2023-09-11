@@ -1,12 +1,22 @@
-import { pools } from '../pools';
-import { DoltSysHandler } from '../doltSysHandler';
-import { getCurrentEvent } from '../helpers/cycleConfigToDateEvent';
+import { addDaysToDate } from '../../utils';
+import { getCycleStartDays, getStageIndex, getEventDates } from '../helpers/cycleConfigToDateEvent';
+import { SpaceConfig } from '../schema';
+
+const realCycleCurrentDay = 3;
+
+const mockConfig = {
+  cycleCurrentDay: 13,
+  cycleTriggerTime: '00:00:00',
+  cycleStageLengths: [3, 4, 4, 3],
+} as SpaceConfig;
+
+const mockNow = addDaysToDate(new Date(), mockConfig.cycleCurrentDay - realCycleCurrentDay + 1);
 
 async function main() {
-  const doltSys = new DoltSysHandler(pools.nance_sys);
-  const info = await doltSys.getSpaceConfig('juicebox');
-  console.log(info?.space);
-  if (info) console.log(getCurrentEvent(info));
+  const cycleStartDays = getCycleStartDays(mockConfig);
+  console.log('ctycleStartDays', cycleStartDays);
+  const stageIndex = getStageIndex(mockConfig, cycleStartDays);
+  console.log(getEventDates(mockNow, mockConfig, cycleStartDays, stageIndex));
 }
 
 main();

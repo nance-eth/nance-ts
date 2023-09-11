@@ -1,7 +1,6 @@
 import express from 'express';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
-import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { dotPin } from '../storage/storageHandler';
 import { ConfigSpaceRequest } from './models';

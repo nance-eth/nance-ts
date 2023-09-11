@@ -4,16 +4,16 @@ import { SpaceConfig } from '../schema';
 
 const cycleStageNames = ['Temperature Check', 'Snapshot Vote', 'Execution', 'Delay'];
 
-const getEventDate = (
+export const getEventDates = (
+  now: Date,
   info: SpaceConfig,
   cycleStartDays: number[],
   stageIndex: number,
 ): DateEvent[] => {
-  const now = new Date();
   const startOfToday = dateAtTime(now, info.cycleTriggerTime);
   const daysSinceStart = info.cycleCurrentDay - cycleStartDays[stageIndex];
-  const daysRemaining = info.cycleStageLengths[stageIndex] - daysSinceStart + 1;
-  const start = addDaysToDate(startOfToday, -daysSinceStart + 1);
+  const daysRemaining = info.cycleStageLengths[stageIndex] - daysSinceStart;
+  const start = addDaysToDate(startOfToday, -daysSinceStart);
   const end = addDaysToDate(startOfToday, daysRemaining);
   const currentEvent = {
     title: cycleStageNames[stageIndex],
@@ -35,15 +35,24 @@ const getEventDate = (
   ];
 };
 
-export const getCurrentEvent = (info: SpaceConfig) => {
+export const getCycleStartDays = (info: SpaceConfig) => {
   let accumulatedDays = 0;
-  if (!info.cycleStageLengths) return [undefined, undefined] as unknown as DateEvent[];
-  const cycleStartDays = info.cycleStageLengths.map((day, index) => {
+  return info.cycleStageLengths.map((day, index) => {
     if (index === 0) return 1;
     accumulatedDays += day;
     return accumulatedDays;
   });
-  // get first start day that is less than or equal to current day
-  const stageIndex = cycleStartDays.indexOf(cycleStartDays.filter((day) => { return day <= info.cycleCurrentDay; }).pop() as number);
-  return getEventDate(info, cycleStartDays, stageIndex);
+};
+
+export const getStageIndex = (info: SpaceConfig, cycleStartDays: number[]) => {
+  // get first start day that is less than or equal to current day = last element of cycle start days array
+  return cycleStartDays.indexOf(cycleStartDays.filter((day) => { return day <= info.cycleCurrentDay; }).pop() as number);
+};
+
+export const getCurrentAndNextEvent = (info: SpaceConfig) => {
+  if (!info.cycleStageLengths) return [undefined, undefined] as unknown as DateEvent[];
+  const cycleStartDays = getCycleStartDays(info);
+  const stageIndex = getStageIndex(info, cycleStartDays);
+  const now = new Date();
+  return getEventDates(now, info, cycleStartDays, stageIndex);
 };

@@ -20,7 +20,7 @@ import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { juiceboxTime } from './helpers/juicebox';
-import { getCurrentEvent } from '../dolt/helpers/cycleConfigToDateEvent';
+import { getCurrentAndNextEvent } from '../dolt/helpers/cycleConfigToDateEvent';
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -31,7 +31,7 @@ async function handlerReq(query: string, auth: string | undefined) {
   try {
     const spaceConfig = await doltSys.getSpaceConfig(query);
     const dolt = new DoltHandler(pools[query], spaceConfig.config.propertyKeys);
-    const [currentEvent, nextEvent] = getCurrentEvent(spaceConfig);
+    const [currentEvent, nextEvent] = getCurrentAndNextEvent(spaceConfig);
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
     return {

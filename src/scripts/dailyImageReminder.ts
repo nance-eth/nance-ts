@@ -1,6 +1,6 @@
 import { Nance } from '../nance';
 import { doltConfig } from '../configLoader';
-import { downloadImages, sleep } from '../utils';
+import { sleep } from '../utils';
 
 async function main() {
   const { config } = await doltConfig(process.env.CONFIG || '');
@@ -10,7 +10,7 @@ async function main() {
     console.log(c);
   }));
   const currentGovernanceCycle = (await nance.dProposalHandler.getCurrentGovernanceCycle()).toString();
-  nance.dialogHandler.sendImageReminder('4', currentGovernanceCycle, 'vote');
+  nance.dialogHandler.sendImageReminder('13', currentGovernanceCycle, 'delay');
 } 
 
 main();

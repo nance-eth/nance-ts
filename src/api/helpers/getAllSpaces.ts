@@ -3,7 +3,7 @@ import { DoltHandler } from '../../dolt/doltHandler';
 import { pools } from '../../dolt/pools';
 import { SpaceAuto } from '../models';
 import { mySQLTimeToUTC } from '../../utils';
-import { getCurrentEvent } from '../../dolt/helpers/cycleConfigToDateEvent';
+import { getCurrentAndNextEvent } from '../../dolt/helpers/cycleConfigToDateEvent';
 import { headToUrl } from '../../dolt/doltAPI';
 import { juiceboxTime } from './juicebox';
 
@@ -15,7 +15,7 @@ const getAllSpaces = async (where?: string): Promise<SpaceAuto[]> => {
         const dolt = new DoltHandler(pools[entry.space], entry.config.propertyKeys);
         // if no current cycle, fetch from juicebox
         const currentCycle = entry.currentGovernanceCycle || (await juiceboxTime(entry.config.juicebox.projectId)).currentGovernanceCycle;
-        const [currentEvent, nextEvent] = getCurrentEvent(entry);
+        const [currentEvent, nextEvent] = getCurrentAndNextEvent(entry);
         const totalCycleDays = (entry.cycleStageLengths) ? entry.cycleStageLengths.reduce((a, b) => { return a + b; }, 0) : 0;
         const head = await dolt.getHead();
         return {
