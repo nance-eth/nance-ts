@@ -41,15 +41,15 @@ export const shouldSendTemperatureCheckEndAlert = (space: SpaceAuto) => {
 export const shouldSendTemperatureCheckClose = (space: SpaceAuto) => {
   const now = new Date();
   return (
-    (space.currentEvent?.title === events.TEMPERATURE_CHECK
-    && space.currentEvent.end <= now)
+    (space.currentEvent?.title === events.SNAPSHOT_VOTE
+    && space.currentEvent.start <= now)
   );
 };
 
 export const shouldDeleteTemperatureCheckEndAlert = (space: SpaceAuto) => {
   const now = new Date();
   return (
-    (space.currentEvent?.title === events.TEMPERATURE_CHECK
+    (space.currentEvent?.title === events.SNAPSHOT_VOTE
     && addSecondsToDate(space.currentEvent.end, FIVE_MINUTES_SECONDS) <= now
     && space.dialog.temperatureCheckEndAlert !== '')
   );

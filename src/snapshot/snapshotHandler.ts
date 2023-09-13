@@ -40,6 +40,7 @@ const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
     voteURL: sProposal.id,
     voteSetup: {
       type: sProposal.type,
+      choices: sProposal.choices,
     },
     voteResults: {
       votes: sProposal.scores_total,
@@ -66,18 +67,18 @@ export class SnapshotHandler {
     this.snapshot = new snapshot.Client712(this.hub);
   }
 
-  async createProposal(proposal: Proposal, startDate: Date, endDate: Date, options?: SnapshotVoteOptions): Promise<string> {
+  async createProposal(proposal: Proposal, startDate: Date, endDate: Date, options: SnapshotVoteOptions): Promise<string> {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();
     const snapProposal = {
       space: this.config.snapshot.space,
-      type: (options?.type === '') ? 'basic' : options?.type ?? 'basic',
+      type: options.type,
       title: `${this.config.propertyKeys.proposalIdPrefix}${proposal.proposalId} - ${proposal.title}`,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       body: proposal.body!,
       discussion: proposal.discussionThreadURL,
-      choices: (options?.choices && options?.choices.length > 1) ? options?.choices : this.config.snapshot.choices,
+      choices: options.choices,
       start: startTimeStamp,
       end: endTimeStamp,
       snapshot: latestBlock,

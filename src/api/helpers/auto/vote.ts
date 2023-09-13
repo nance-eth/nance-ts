@@ -15,6 +15,7 @@ import { dotPin } from '../../../storage/storageHandler';
 import { addSecondsToDate, floatToPercentage } from '../../../utils';
 import { InternalVoteResults } from '../../../types';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
+import logger from '../../../logging';
 
 export const handleVoteSetup = async (space: SpaceAuto) => {
   const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
@@ -23,7 +24,6 @@ export const handleVoteSetup = async (space: SpaceAuto) => {
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, space.config);
     const snapshotVoteSettings = await snapshot.getVotingSettings();
     const start = addSecondsToDate(new Date(), -10);
-
     // if a space has a period set, a proposal must be submitted with that period
     const end = (snapshotVoteSettings.period)
       ? addSecondsToDate(start, snapshotVoteSettings.period)
@@ -32,16 +32,21 @@ export const handleVoteSetup = async (space: SpaceAuto) => {
     Promise.all(proposals.map(async (proposal) => {
       const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
       const ipfsURL = await dotPin(proposalWithHeading);
+      const type = (proposal.voteSetup) ? proposal.voteSetup.type : (snapshotVoteSettings.type || 'basic');
       const voteURL = await snapshot.createProposal(
         proposal,
         start,
         end,
-        (proposal.voteSetup) ? { type: proposal.voteSetup.type || snapshotVoteSettings.type, choices: proposal.voteSetup.choices } : undefined
+        { type, choices: proposal.voteSetup?.choices || space.config.snapshot.choices }
       );
       await dolt.updateVotingSetup({ ...proposal, ipfsURL, voteURL });
-    })).then(() => {
+    })).then(async () => {
+      const dialogHandler = await discordLogin(space.config);
+      dialogHandler.sendVoteRollup(proposals, end);
       return true;
     }).catch((e) => {
+      logger.error(`${space.name}: votingSetup() error:`);
+      logger.error(e);
       return Promise.reject(e);
     });
   }
