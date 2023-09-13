@@ -78,6 +78,18 @@ export const secondsToDayHoursMinutes = (seconds: number): DayHourMinutes => {
   const minutes = Math.floor((seconds % 3600) / 60);
   return { days, hours, minutes };
 };
+export const dateAtTime = (date: Date, time: string) => {
+  const [hour, minute, seconds] = time.split(':');
+  date.setUTCHours(Number(hour));
+  date.setUTCMinutes(Number(minute));
+  date.setUTCSeconds(Number(seconds));
+  date.setUTCMilliseconds(0);
+  return date;
+};
+
+export const mySQLTimeToUTC = (date: Date) => {
+  return new Date(`${date} UTC`);
+};
 
 export function getLastSlash(url: string) {
   if (!url) return '';
@@ -129,32 +141,22 @@ export function omitKey(object: object, key: string): Partial<typeof object> {
   return newObject;
 }
 
-export async function downloadImages(space: string, baseURL: string, images: string[]) {
-  const baseDir = `./src/tmp/${space}`;
-  if (!fs.existsSync(`${baseDir}`)) {
-    fs.mkdirSync(`${baseDir}`);
-  }
-  Promise.all(images.map(async (day) => {
-    if (!fs.existsSync(`${baseDir}/day${day}`)) {
-      fs.mkdirSync(`${baseDir}/day${day}`);
-    }
-    axios({
-      method: 'get',
-      url: `${baseURL}/day${day}/${day}.png`,
-      responseType: 'stream'
-    }).then((res) => {
-      res.data.pipe(fs.createWriteStream(`${baseDir}/day${day}/${day}.png`));
-    }).catch((e) => { console.log(e); });
-
-    axios({
-      method: 'get',
-      url: `${baseURL}/day${day}/thumbnail.png`,
-      responseType: 'stream'
-    }).then((res) => {
-      res.data.pipe(fs.createWriteStream(`${baseDir}/day${day}/thumbnail.png`));
-    }).catch((e) => { console.log(e); });
-  }));
-  return Promise.resolve();
+export async function getReminderImages(baseURL: string, day: number) {
+  const thumbnail = await axios({
+    method: 'get',
+    url: `${baseURL}/${day}_thumbnail.png`,
+    responseType: 'stream'
+  }).then((res) => {
+    return res.data;
+  });
+  const image = await axios({
+    method: 'get',
+    url: `${baseURL}/${day}.png`,
+    responseType: 'stream'
+  }).then((res) => {
+    return res.data;
+  });
+  return { thumbnail, image };
 }
 
 export function uuidGen(): string {

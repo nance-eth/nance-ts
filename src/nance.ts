@@ -37,11 +37,6 @@ export class Nance {
     logger.info(`${this.config.name}: clearDiscussionInterval()`);
   }
 
-  async sendImageReminder(day: string, type: string) {
-    const governanceCycle = await this.dProposalHandler.getCurrentGovernanceCycle();
-    this.dialogHandler.sendImageReminder(day, governanceCycle.toString(), type);
-  }
-
   async incrementGovernanceCycle(governanceCycle: GovernanceCycle) {
     this.dProposalHandler.addGovernanceCycleToDb(governanceCycle);
   }

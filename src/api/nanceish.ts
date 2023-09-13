@@ -1,20 +1,36 @@
 import express from 'express';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
-import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { dotPin } from '../storage/storageHandler';
 import { ConfigSpaceRequest } from './models';
-import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar, omitKey } from '../utils';
+import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar, omitKey, dateAtTime } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
 import { dbOptions } from '../dolt/dbConfig';
 import { DoltSQL } from '../dolt/doltSQL';
 import { addressFromJWT } from './helpers/auth';
-import { createCalendarFromForm } from './helpers/calendar';
-import { NanceConfig } from '../types';
+import { FormTime, GovernanceCycleForm, NanceConfig } from '../types';
+import getAllSpaces from './helpers/getAllSpaces';
 
 const router = express.Router();
+
+const formToSQLTime = (timeIn?: FormTime) => {
+  if (!timeIn) { return '00:00:00'; }
+  const hour = -1 * (timeIn.hour + (timeIn.timezoneOffset / 60) + (timeIn.ampm === 'PM' ? 12 : 0) - 24);
+  const hourString = hour.toString().padStart(2, '0');
+  return `${hourString}:${timeIn.minute}:00`;
+};
+
+const formToCycleStageLengths = (form?: GovernanceCycleForm) => {
+  if (!form) { return [3, 4, 4, 3]; }
+  return [
+    Number(form.temperatureCheckLength),
+    Number(form.voteLength),
+    Number(form.executionLength),
+    Number(form.delayLength),
+  ];
+};
 
 router.get('/', (_, res) => {
   res.send('nance-ish control panel');
@@ -33,20 +49,17 @@ router.get('/config/:space', async (req, res) => {
 
 router.get('/all', async (_, res) => {
   const doltSys = new DoltSysHandler(pools.nance_sys);
-  doltSys.getAllSpaceNames().then(async (data) => {
-    const infos = await Promise.all(data.map(async (entry) => {
-      const dolt = new DoltHandler(pools[entry.space], entry.config.propertyKeys);
-      const calendar = new CalendarHandler(entry.calendar);
-      const currentCycle = await dolt.getCurrentGovernanceCycle();
-      const currentEvent = calendar.getCurrentEvent();
+  getAllSpaces().then(async (data) => {
+    const infos = await Promise.all(data.map(async (space) => {
+      const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
       const head = await dolt.getHead();
       return {
-        name: entry.space,
-        currentCycle,
-        currentEvent,
-        snapshotSpace: entry.config.snapshot.space,
-        juiceboxProjectId: entry.config.juicebox.projectId,
-        dolthubLink: headToUrl(entry.config.dolt.owner, entry.config.dolt.repo, head),
+        name: space.name,
+        currentCycle: space.currentCycle,
+        currentEvent: space.currentEvent,
+        snapshotSpace: space.config.snapshot.space,
+        juiceboxProjectId: space.config.juicebox.projectId,
+        dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, head),
       };
     }));
     res.json({ success: true, data: infos });
@@ -56,7 +69,11 @@ router.get('/all', async (_, res) => {
 });
 
 router.post('/config', async (req, res) => {
-  const { config, owners, dryrun } = req.body as ConfigSpaceRequest;
+  const { config, dryrun, owners } = req.body as ConfigSpaceRequest;
+  const cycleCurrentDay = 1;
+  const cycleTriggerTime = formToSQLTime(config.governanceCycleForm?.time);
+  const cycleStageLengths = formToCycleStageLengths(config.governanceCycleForm);
+  const cycleDayLastUpdated = dateAtTime(new Date(), cycleTriggerTime).toISOString();
   const space = config.name;
   // get address from jwt (SIWE)
   const jwt = req.headers.authorization?.split('Bearer ')[1];
@@ -89,15 +106,15 @@ router.post('/config', async (req, res) => {
   }
 
   // config the space
-  const calendar = (config.governanceCycleForm) ? createCalendarFromForm(config.governanceCycleForm) : fetchTemplateCalendar();
   const cleanedConfig = omitKey(config, 'governanceCycleForm') as NanceConfig;
-  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, cleanedConfig) : mergeTemplateConfig(config);
-  const packedConfig = JSON.stringify({ address, config: configIn, calendar });
+  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, cleanedConfig) : mergeTemplateConfig(cleanedConfig);
+  const packedConfig = JSON.stringify({ address, config: configIn });
   const cid = await dotPin(packedConfig);
   const ownersIn = [...(owners ?? []), address];
-  dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendar).then(() => {
+  dolt.setSpaceConfig(space, cid, ownersIn, configIn, cycleCurrentDay, cycleTriggerTime, cycleStageLengths, cycleDayLastUpdated).then(() => {
     res.json({ success: true, data: { space, spaceOwners: ownersIn } });
   }).catch((e) => {
+    console.error(e);
     res.json({ success: false, error: e });
   });
 });

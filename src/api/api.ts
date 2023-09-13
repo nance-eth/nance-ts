@@ -2,17 +2,15 @@ import express from 'express';
 import { Contract } from 'ethers';
 import { Nance } from '../nance';
 import { NanceTreasury } from '../treasury';
-import { doltConfig } from '../configLoader';
 import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, EditPayoutsRequest, ProposalsPacket } from './models';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
 import { getLastSlash, myProvider, sleep } from '../utils';
-import { CalendarHandler } from '../calendar/CalendarHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { SQLPayout, SQLTransfer } from '../dolt/schema';
-import { Proposal, GovernorProposeTransaction, BasicTransaction } from '../types';
+import { Proposal, GovernorProposeTransaction, BasicTransaction, NanceConfig } from '../types';
 import { diffBody } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { headToUrl } from '../dolt/doltAPI';
@@ -22,18 +20,27 @@ import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { juiceboxTime } from './helpers/juicebox';
+import { getCurrentAndNextEvent } from '../dolt/helpers/cycleConfigToDateEvent';
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
+const doltSys = new DoltSysHandler(pools.nance_sys);
+
 async function handlerReq(query: string, auth: string | undefined) {
   try {
-    const { config, calendarText, spaceOwners } = await doltConfig(query);
-    const dolt = new DoltHandler(pools[query], config.propertyKeys);
-    const calendar = new CalendarHandler(calendarText);
+    const spaceConfig = await doltSys.getSpaceConfig(query);
+    const dolt = new DoltHandler(pools[query], spaceConfig.config.propertyKeys);
+    const [currentEvent, nextEvent] = getCurrentAndNextEvent(spaceConfig);
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
-    return { spaceOwners, address, config, calendar, dolt };
+    return {
+      spaceOwners: spaceConfig.spaceOwners,
+      address,
+      config: spaceConfig.config,
+      currentEvent,
+      dolt,
+    };
   } catch (e) {
     logger.error(e);
     return Promise.reject(e);
@@ -45,12 +52,12 @@ async function handlerReq(query: string, auth: string | undefined) {
 // ================================ //
 router.get('/:space', async (req, res) => {
   const { space } = req.params;
+  let currentJuiceboxEvent;
   try {
-    const { dolt, calendar, config } = await handlerReq(space, req.headers.authorization);
-    let currentEvent = calendar.getCurrentEvent();
+    const { dolt, config, currentEvent } = await handlerReq(space, req.headers.authorization);
     if (!currentEvent) {
       const { startTimestamp, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
-      currentEvent = {
+      currentJuiceboxEvent = {
         title: 'Open for proposals',
         start: new Date(startTimestamp * 1000),
         end: new Date(endTimestamp * 1000),
@@ -63,7 +70,7 @@ router.get('/:space', async (req, res) => {
       data: {
         name: space,
         currentCycle,
-        currentEvent,
+        currentEvent: currentEvent || currentJuiceboxEvent,
         snapshotSpace: config.snapshot.space,
         juiceboxProjectId: config.juicebox.projectId,
         dolthubLink: headToUrl(config.dolt.owner, config.dolt.repo, head),
@@ -71,27 +78,6 @@ router.get('/:space', async (req, res) => {
     });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
-  }
-});
-
-router.get('/:space/reminder', async (req, res) => {
-  const { space } = req.params;
-  const textReminderDays = [20, 15, 10, 5, 4, 3, 2, 1];
-  try {
-    const { config } = await handlerReq(space, req.headers.authorization);
-    const { currentDay, currentCycle, remainingDHM, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
-    if (textReminderDays.includes(remainingDHM.days)) {
-      const discord = new DiscordHandler(config);
-      // eslint-disable-next-line no-await-in-loop
-      while (!discord.ready()) { await sleep(50); }
-      discord.sendImageReminder(currentDay, currentCycle, '', true, remainingDHM, endTimestamp).then(() => {
-        res.send({ success: true });
-      });
-    } else {
-      res.send({ success: false, error: 'Not a reminder day' });
-    }
-  } catch (e) {
-    res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
   }
 });
 
@@ -346,7 +332,6 @@ router.get('/:space/reconfigure', async (req, res) => {
   const ens = await getENS(address);
   const { gnosisSafeAddress, governorAddress, network } = config.juicebox;
   const treasury = new NanceTreasury(config, dolt, myProvider(config.juicebox.network));
-  const doltSys = new DoltSysHandler(pools.nance_sys);
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
   // *** governor reconfiguration *** //
   if (governorAddress && !gnosisSafeAddress) {
@@ -426,8 +411,7 @@ router.get('/:space/editTitles/:status', async (req, res) => {
 router.get('/:space/dolthub', async (req, res) => {
   const { space } = req.params;
   const { table } = req.query as { table: string | undefined };
-  const { dolt, calendar } = await handlerReq(space, req.headers.authorization);
-  const currentEvent = calendar.getCurrentEvent();
+  const { dolt, currentEvent } = await handlerReq(space, req.headers.authorization);
   dolt.checkAndPush(table, currentEvent?.title || '').then((data: string) => {
     return res.json({ success: true, data });
   }).catch((e: string) => {

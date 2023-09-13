@@ -85,14 +85,14 @@ export function createCalendar(newOrg?: string, TEST?: boolean) {
       end: (eventDateTimes) ? eventDateTimes.execution?.end : dateToArray(TEST_EXEC_END),
       recurrenceRule: `FREQ=${FREQ};INTERVAL=2`
     },
-    // {
-    //   title: 'Delay Period',
-    //   startInputType: 'utc',
-    //   startOutputType: 'utc',
-    //   start: (eventDateTimes) ? eventDateTimes.delay?.start : dateToArray(TEST_DELAY_START),
-    //   end: (eventDateTimes) ? eventDateTimes.delay?.end : dateToArray(TEST_DELAY_END),
-    //   recurrenceRule: `FREQ=${FREQ};INTERVAL=2`
-    // }
+    {
+      title: 'Delay Period',
+      startInputType: 'utc',
+      startOutputType: 'utc',
+      start: (eventDateTimes) ? eventDateTimes.delay?.start : dateToArray(TEST_DELAY_START),
+      end: (eventDateTimes) ? eventDateTimes.delay?.end : dateToArray(TEST_DELAY_END),
+      recurrenceRule: `FREQ=${FREQ};INTERVAL=2`
+    }
   ]};
 
   const eventDateTimes: EventDateTimes = {

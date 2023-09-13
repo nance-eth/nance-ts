@@ -30,8 +30,14 @@ export class TenderlyHandler {
     return `https://dashboard.tenderly.co/${this.config.account}/${this.config.project}/fork/${this.forkId}`;
   }
 
-  async getForkProvider(description?: string) {
+  async getForkProvider(description?: string, forkId?: string) {
     const data = { network_id: '1', description, shared: true };
+    if (forkId) {
+      this.forkId = forkId;
+      const forkRPC = `https://rpc.tenderly.co/fork/${this.forkId}`;
+      this.provider = new ethers.providers.JsonRpcProvider(forkRPC);
+      return this.provider;
+    }
     return axios({ method: 'POST', headers: this.headers, url: `${this.API}/fork`, data }).then(async (res) => {
       this.forkId = res.data.simulation_fork.id;
       const forkRPC = `https://rpc.tenderly.co/fork/${this.forkId}`;

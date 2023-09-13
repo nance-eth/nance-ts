@@ -5,5 +5,11 @@ CREATE TABLE IF NOT EXISTS config (
   config JSON,
   calendar VARCHAR(16384),
   lastUpdated DATETIME,
+  cycleLastUpdated DATETIME,
+  cycleCurrentDay INT,
+  cycleTriggerTime TIME,
+  cycleStageLengths JSON DEFAULT '[]',
+  dialogHandlerMessageIds JSON DEFAULT '{}',
+  autoEnable BOOLEAN,
   PRIMARY KEY(space)
 );

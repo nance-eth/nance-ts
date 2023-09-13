@@ -1,5 +1,5 @@
-import { NanceConfig, Proposal, Signature } from '../types';
-import { SQLPayout } from '../dolt/schema';
+import { DateEvent, NanceConfig, Proposal, Signature } from '../types';
+import { SQLPayout, DialogHandlerMessageIds } from '../dolt/schema';
 
 interface APIResponse<T> {
   success: boolean;
@@ -10,14 +10,20 @@ interface APIResponse<T> {
 export type SpaceInfo = {
   name: string;
   currentCycle: number;
-  currentEvent: {
-    title: string;
-    start: string;
-    end: string;
-  };
+  currentEvent: DateEvent;
   snapshotSpace: string;
   juiceboxProjectId: string;
   dolthubLink: string;
+};
+
+export type SpaceAuto = Pick<SpaceInfo, 'name' | 'currentCycle' | 'currentEvent' | 'dolthubLink'> & {
+  currentDay: number;
+  totalCycleDays: number;
+  cycleDayLastUpdated: Date;
+  cycleTriggerTime: string;
+  nextEvent: DateEvent;
+  dialog: DialogHandlerMessageIds;
+  config: NanceConfig;
 };
 
 type ProposalInfo = {
@@ -82,8 +88,10 @@ export interface SubmitTransactionRequest extends BaseRequest {
 export interface ConfigSpaceRequest extends BaseRequest {
   signature: Signature;
   config: NanceConfig;
-  calendar?: string;
-  owners?: string[];
+  owners: string[];
+  cycleCurrentDay: number;
+  cycleTriggerTime: string;
+  cycleStageLengths: number[];
   dryrun?: boolean;
 }
 

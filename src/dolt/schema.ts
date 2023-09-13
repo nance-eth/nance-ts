@@ -64,13 +64,29 @@ export type GovernanceCycle = {
   acceptingProposals: boolean;
 };
 
+export type DialogHandlerMessageIds = {
+  dailyReminder?: string;
+  temperatureCheckRollup: string;
+  votingRollup: string;
+  votingResultsRollup: string;
+  temperatureCheckStartAlert: string;
+  temperatureCheckEndAlert: string;
+  votingEndAlert: string;
+};
+
 export type SpaceConfig = {
   space: string,
   spaceOwners: string[],
   cid: string;
   config: NanceConfig;
   calendar: string;
+  cycleCurrentDay: number;
+  cycleTriggerTime: string;
+  cycleStageLengths: number[];
+  dialogHandlerMessageIds: DialogHandlerMessageIds;
   lastUpdated: Date;
+  cycleDayLastUpdated: Date;
+  currentGovernanceCycle: number;
 };
 
 export type SQLTransfer = {

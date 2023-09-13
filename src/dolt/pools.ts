@@ -13,7 +13,11 @@ export async function fetchPools() {
   pools.nance_sys = sysDolt;
   const spaces = await sys.getAllSpaceNames();
   spaces.forEach((space) => {
-    pools[space.space] = new DoltSQL(dbOptions(space.space));
+    try {
+      pools[space.space] = new DoltSQL(dbOptions(space.space));
+    } catch (e) {
+      console.log(`Error creating pool for ${space.space}`);
+    }
   });
   return pools;
 }
