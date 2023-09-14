@@ -145,14 +145,14 @@ export async function getReminderImages(baseURL: string, day: number) {
   const thumbnail = await axios({
     method: 'get',
     url: `${baseURL}/${day}_thumbnail.png`,
-    responseType: 'stream'
+    responseType: 'arraybuffer'
   }).then((res) => {
     return res.data;
   });
   const image = await axios({
     method: 'get',
     url: `${baseURL}/${day}.png`,
-    responseType: 'stream'
+    responseType: 'arraybuffer'
   }).then((res) => {
     return res.data;
   });

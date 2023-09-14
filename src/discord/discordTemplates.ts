@@ -1,13 +1,12 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable max-len */
 /* eslint-disable newline-per-chained-call */
-import axios from 'axios';
 import {
-  MessageAttachment, MessageEmbed, ThreadChannel, EmbedFieldData, EmbedField
+  AttachmentBuilder, EmbedBuilder, ThreadChannel, EmbedField
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength, numToPrettyString } from '../utils';
-import { PollResults, PollEmojis, Proposal, DayHourMinutes } from '../types';
+import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
@@ -15,17 +14,17 @@ export const getProposalURL = (space: string, proposal: Proposal) => {
 };
 
 export const startDiscussionMessage = (proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
-  return new MessageEmbed().setTitle(`📃 ${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`).setURL(proposal.url).addFields([
+  return new EmbedBuilder().setTitle(`📃 ${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`).setURL(proposal.url).addFields([
     { name: 'author', value: `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})`, inline: true },
   ]);
 };
 
 export const archiveDiscussionMessage = (proposal: Proposal) => {
-  return new MessageEmbed().setTitle(`[ARCHIVED] ${proposal.title}`);
+  return new EmbedBuilder().setTitle(`[ARCHIVED] ${proposal.title}`);
 };
 
 export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {
-  return new MessageEmbed().setColor('#c1272d').setTitle(
+  return new EmbedBuilder().setColor('#c1272d').setTitle(
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(`${String(proposals.length)} proposals`).addFields(
     proposals.map((proposal: Proposal) => {
@@ -44,7 +43,7 @@ export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposal
 };
 
 export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {
-  return new MessageEmbed().setColor('#009460').setTitle(
+  return new EmbedBuilder().setColor('#009460').setTitle(
     `Voting is open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
@@ -61,7 +60,7 @@ export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, pro
 };
 
 export const voteResultsRollUpMessage = (url: string, space: string, proposalIdPrefix: string, proposals: Proposal[]) => {
-  return new MessageEmbed().setColor('#2772af').setTitle(
+  return new EmbedBuilder().setColor('#2772af').setTitle(
     'Voting has ended. Thanks for participating!'
   ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
@@ -87,13 +86,13 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
 };
 
 export const reminderEndMessage = (thingToRemind: string, endDate: Date, url = '') => {
-  return new MessageEmbed().setColor('#F19800').setTitle(
+  return new EmbedBuilder().setColor('#F19800').setTitle(
     `${thingToRemind} ending <t:${dateToUnixTimeStamp(endDate)}:R>!`
   ).setDescription(url);
 };
 
 export const reminderStartMessage = (thingToRemind: string, startDate: Date, url = '') => {
-  return new MessageEmbed().setColor('#F19800').setTitle(
+  return new EmbedBuilder().setColor('#F19800').setTitle(
     `${thingToRemind} starting <t:${dateToUnixTimeStamp(startDate)}:R>!`
   ).setDescription(url);
 };
@@ -104,7 +103,7 @@ export const pollResultsMessage = (
   pollEmojis: PollEmojis
 ) => {
   const unverifiedMessage = (pollResults.unverifiedUsers.length > 0) ? `There are ${pollResults.unverifiedUsers.length} unverified users (not counted in poll):\n${pollResults.unverifiedUsers.join(', ')}` : '';
-  return new MessageEmbed().setTitle(
+  return new EmbedBuilder().setTitle(
     `Temperature Check ${(outcome) ? pollEmojis.voteYesEmoji : pollEmojis.voteNoEmoji}`
   ).setDescription(
     stripIndents`
@@ -125,8 +124,8 @@ export const threadToURL = (thread: ThreadChannel) => {
 
 export const dailyImageReminder = async (day: number, imagesCID: string, governanceCycle: number, type: string, contentLink: string, processLink: string) => {
   const { thumbnail, image } = await getReminderImages(imagesCID, day);
-  const thumbnailAttachment = new MessageAttachment(thumbnail, 'thumbnail.png');
-  const imageAttachment = new MessageAttachment(image, 'image.png');
+  const thumbnailAttachment = new AttachmentBuilder(thumbnail, { name: 'thumbnail.png' });
+  const imageAttachment = new AttachmentBuilder(image, { name: 'image.png' });
   const preamble = () => {
     if (type.includes('delay')) { return 'Submit a proposal'; }
     if (type === 'execution') { return 'Multisig members assemble and configure the next funding cycle'; }
@@ -134,7 +133,7 @@ export const dailyImageReminder = async (day: number, imagesCID: string, governa
     if (type === 'vote') { return 'Take part in the voting'; }
     return undefined;
   };
-  const message = new MessageEmbed().setTitle('Governance Status').setDescription(
+  const message = new EmbedBuilder().setTitle('Governance Status').setDescription(
     stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n
     ${preamble()} [here](${contentLink})!\n
@@ -151,7 +150,7 @@ export const dailyImageReminder = async (day: number, imagesCID: string, governa
 };
 
 export const dailyTextReminder = (governanceCycle: number, day: number, endSeconds?: number, contentLink?: string) => {
-  const message = new MessageEmbed().setTitle('Governance Status').setDescription(
+  const message = new EmbedBuilder().setTitle('Governance Status').setDescription(
     stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n
     A reconfiguration must be submitted by <t:${endSeconds}:f> (<t:${endSeconds}:R>)\n
@@ -161,7 +160,7 @@ export const dailyTextReminder = (governanceCycle: number, day: number, endSecon
 };
 
 export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, proposalLinkPrefix: string, proposalIdPrefix: string) => {
-  const message = new MessageEmbed().setTitle(`Payouts for GC#${governanceCycle}`).setDescription('[submit new proposal](https://jbdao.org/edit)');
+  const message = new EmbedBuilder().setTitle(`Payouts for GC#${governanceCycle}`).setDescription('[submit new proposal](https://jbdao.org/edit)');
   const toAlert: string[] = [];
   payouts.forEach((payout) => {
     const payoutNum = Number(governanceCycle) - payout.governanceCycleStart + 1;
@@ -171,16 +170,16 @@ export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, prop
   return { message, toAlert: toAlert.join(' ') };
 };
 
-export const transactionThread = (nonce: number, operation: string, links: EmbedFieldData[]) => {
+export const transactionThread = (nonce: number, operation: string, links: EmbedField[]) => {
   const description = links.map((link) => {
     return `[${link.name}](${link.value})`;
   }).join('\n');
-  const message = new MessageEmbed().setTitle(`Tx ${nonce}: ${operation}`).setDescription(description);
+  const message = new EmbedBuilder().setTitle(`Tx ${nonce}: ${operation}`).setDescription(description);
   return message;
 };
 
 export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPayout[], removePayouts?: SQLPayout[], oldDistributionLimit?: number, newDistributionLimit?: number, otherProposals?: SQLProposal[]) => {
-  const message = new MessageEmbed().setTitle('Summary');
+  const message = new EmbedBuilder().setTitle('Summary');
   if (addPayouts) {
     const additions = addPayouts.map((payout) => {
       // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) --> **+$${payout.amount.toLocaleString()}** ${payout.payName} \`(${payout.payAddress || payout.payProject})\``;
@@ -190,7 +189,7 @@ export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPay
         { name: '-------', value: `+$${payout.amount.toLocaleString()}`, inline: true },
         { name: '-------', value: `${payout.payName} (${payout.payAddress || payout.payProject})`, inline: true }
       ];
-    }).flatMap((a) => { return a; }) as unknown as EmbedFieldData[];
+    }).flatMap((a) => { return a; }) as unknown as EmbedField[];
     message.addFields(
       { name: 'ADD', value: '=============' },
       { name: 'Proposal ID', value: '\u200b', inline: true },
@@ -208,7 +207,7 @@ export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPay
         { name: '-------', value: `-$${payout.amount.toLocaleString()}`, inline: true },
         { name: '-------', value: `${payout.payName} (${payout.payAddress || payout.payProject})`, inline: true }
       ];
-    }).flatMap((a) => { return a; }) as unknown as EmbedFieldData[];
+    }).flatMap((a) => { return a; }) as unknown as EmbedField[];
     message.addFields(
       { name: 'REMOVE', value: '=============' },
       { name: 'Proposal ID', value: '\u200b', inline: true },

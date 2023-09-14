@@ -9,8 +9,8 @@ async function main() {
   console.log(config.discord.reminder.channelIds.map((c) => {
     console.log(c);
   }));
-  const currentGovernanceCycle = (await nance.dProposalHandler.getCurrentGovernanceCycle()).toString();
-  nance.dialogHandler.sendImageReminder('13', currentGovernanceCycle, 'delay');
+  const currentGovernanceCycle = await nance.dProposalHandler.getCurrentGovernanceCycle();
+  nance.dialogHandler.sendImageReminder(6, currentGovernanceCycle, 'vote');
 } 
 
 main();

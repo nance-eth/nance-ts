@@ -148,7 +148,7 @@ export class Nance {
         proposal,
         addSecondsToDate(new Date(), -10),
         endDate,
-        (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : undefined
+        (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : { type: 'basic', choices: this.config.snapshot.choices }
       );
       try { await this.dProposalHandler.updateVotingSetup(proposal); } catch (e) { logger.error(`dDB: ${e}`); }
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);

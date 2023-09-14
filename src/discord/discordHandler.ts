@@ -1,18 +1,19 @@
+/* eslint-disable max-lines */
 /* eslint-disable no-param-reassign */
 import {
   Client as DiscordClient,
   Collection,
   User,
-  Intents,
+  GatewayIntentBits,
   Message,
   TextChannel,
   ThreadAutoArchiveDuration,
-  MessageEmbed,
-  EmbedFieldData,
+  EmbedBuilder,
+  EmbedField,
 } from 'discord.js';
 import logger from '../logging';
 import { limitLength, getLastSlash, DEFAULT_DASHBOARD } from '../utils';
-import { Proposal, PollResults, NanceConfig, DayHourMinutes } from '../types';
+import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
 import { SQLPayout } from '../dolt/schema';
@@ -29,10 +30,10 @@ export class DiscordHandler {
   ) {
     this.discord = new DiscordClient({
       intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-        Intents.FLAGS.GUILD_MEMBERS,
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMembers,
       ]
     });
     this.discord.login(process.env[this.config.discord.API_KEY]).then(async () => {
@@ -250,7 +251,7 @@ export class DiscordHandler {
     proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
     const authorENS = await getENS(proposal.authorAddress);
     const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
-    if (messageObj.embeds[0].title !== message.title || messageObj.embeds[0].url !== proposal.url) {
+    if (messageObj.embeds[0].title !== message.data.title || messageObj.embeds[0].url !== proposal.url) {
       messageObj.edit({ embeds: [message] });
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
     }
@@ -258,7 +259,7 @@ export class DiscordHandler {
 
   async editRollupMessage(proposals: Proposal[], status: string, messageId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
-    let message = new MessageEmbed();
+    let message = new EmbedBuilder();
     if (status === 'temperatureCheck') { message = discordTemplates.temperatureCheckRollUpMessage(this.config.propertyKeys.proposalIdPrefix, proposals, this.config.name, new Date()); }
     if (status === 'vote') {
       message = discordTemplates.voteRollUpMessage(
@@ -269,8 +270,9 @@ export class DiscordHandler {
         new Date());
     }
     const editedMessage = messageObj.embeds[0];
-    editedMessage.fields = message.fields;
-    editedMessage.description = message.description;
+    message.setTitle(editedMessage.title);
+    message.setDescription(editedMessage.description);
+    message.setURL(editedMessage.url);
     messageObj.edit({ embeds: [editedMessage] });
   }
 
@@ -279,24 +281,24 @@ export class DiscordHandler {
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 
-  async createTransactionThread(nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, links: EmbedFieldData[]) {
+  async createTransactionThread(nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, links: EmbedField[]) {
     const message = discordTemplates.transactionThread(nonce, operation, links);
     const thread = await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] }).then((messageObj) => {
       return messageObj.startThread({
-        name: limitLength(message.title ?? 'thread'),
+        name: limitLength(message.data.title ?? 'thread'),
         autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
       });
     });
     return thread.id;
   }
 
-  async editTransactionMessage(messageId: string, nonce: number, operation: string, links: EmbedFieldData[]) {
+  async editTransactionMessage(messageId: string, nonce: number, operation: string, links: EmbedField[]) {
     const messageObj = await this.getChannelById(this.config.discord.channelIds.transactions).messages.fetch(messageId);
     const editedMessage = messageObj.embeds[0];
     const message = discordTemplates.transactionThread(nonce, operation, links);
     // only edit description
-    editedMessage.title = message.title;
-    editedMessage.description = message.description;
+    message.setTitle(editedMessage.title);
+    message.setDescription(editedMessage.description);
     messageObj.edit({ embeds: [editedMessage] });
   }
 
@@ -317,9 +319,9 @@ export class DiscordHandler {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
     const message = discordTemplates.archiveDiscussionMessage(proposal);
     // keep url the same
-    message.url = messageObj.embeds[0].url;
+    message.setURL(messageObj.embeds[0].url);
     messageObj.edit({ embeds: [message] });
-    messageObj.thread?.edit({ name: limitLength(message.title || proposal.title) });
+    messageObj.thread?.edit({ name: limitLength(proposal.title) });
     // send alert to thread
     const archiveMessage = discordTemplates.proposalArchiveAlert();
     await messageObj.thread?.send({ content: archiveMessage });
@@ -330,9 +332,9 @@ export class DiscordHandler {
     const authorENS = await getENS(proposal.authorAddress);
     const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
     // keep url the same
-    message.url = messageObj.embeds[0].url;
+    message.setURL(messageObj.embeds[0].url);
     messageObj.edit({ embeds: [message] });
-    messageObj.thread?.edit({ name: limitLength(message.title || proposal.title) });
+    messageObj.thread?.edit({ name: limitLength(proposal.title) });
     // send alert to thread
     const archiveMessage = discordTemplates.proposalUnarchiveAlert();
     await messageObj.thread?.send({ content: archiveMessage });
