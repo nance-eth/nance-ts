@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import express from 'express';
 import { Contract } from 'ethers';
 import { Nance } from '../nance';
@@ -21,7 +22,7 @@ import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { juiceboxTime } from './helpers/juicebox';
 import { getCurrentAndNextEvent } from '../dolt/helpers/cycleConfigToDateEvent';
-import { events, status } from './helpers/auto/constants';
+import { EVENTS, STATUS } from './helpers/auto/constants';
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -122,7 +123,7 @@ router.get('/:space/proposals', async (req, res) => {
       const privates = await dolt.getPrivateProposalsByAuthorAddress(address);
       data.privateProposals.push(...privates);
     }
-    if (cycle || currentEvent.title !== events.TEMPERATURE_CHECK || currentEvent.title !== events.DELAY) {
+    if (cycle || currentEvent.title !== EVENTS.TEMPERATURE_CHECK || currentEvent.title !== EVENTS.DELAY) {
       res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
     }
     return res.send({ success: true, data });
@@ -144,20 +145,20 @@ router.post('/:space/proposals', async (req, res) => {
       proposal.governanceCycle = currentGovernanceCycle + 1;
     }
     if (!proposal.authorAddress) { proposal.authorAddress = address; }
-    if (proposal.status === 'Archived') { proposal.status = 'Discussion'; } // proposal forked from an archive, set to discussion
-    if (proposal.status === 'Private') {
+    if (proposal.status === STATUS.ARCHIVED) { proposal.status = STATUS.DISCUSSION; } // proposal forked from an archive, set to discussion
+    if (proposal.status === STATUS.PRIVATE) {
       dolt.addPrivateProposalToDb(proposal).then(async (hash: string) => {
         res.json({ success: true, data: { hash } });
       });
     } else {
-      if (config.submitAsApproved) { proposal.status = 'Approved'; }
+      if (config.submitAsApproved) { proposal.status = STATUS.APPROVED; }
       dolt.addProposalToDb(proposal).then(async (hash: string) => {
         proposal.hash = hash;
         dolt.actionDirector(proposal);
 
         // send discord message
         const discordEnabled = config.discord.channelIds.proposals !== null;
-        if ((proposal.status === 'Discussion' || proposal.status === 'Approved') && discordEnabled) {
+        if ((proposal.status === STATUS.DISCUSSION || proposal.status === STATUS.APPROVED) && discordEnabled) {
           const dialogHandler = new DiscordHandler(config);
           // eslint-disable-next-line no-await-in-loop
           while (!dialogHandler.ready()) { await sleep(50); }
@@ -194,7 +195,7 @@ router.get('/:space/proposal/:pid', async (req, res) => {
     if (address) {
       try {
         proposal = await dolt.getPrivateProposal(pid, address);
-        if (proposal.status !== status.TEMPERATURE_CHECK || proposal.status !== status.DISCUSSION) {
+        if (proposal.status !== STATUS.TEMPERATURE_CHECK || proposal.status !== STATUS.DISCUSSION) {
           res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
         }
         res.send({ success: true, data: proposal });
@@ -234,7 +235,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     || isNanceSpaceOwner(spaceOwners, address)
     || isNanceAddress(address)
   );
-  if (proposal.status === 'Archived' && !permissions) {
+  if (proposal.status === STATUS.ARCHIVED && !permissions) {
     res.json({ success: false, error: '[PERMISSIONS] User not authorized to archive proposal' });
     return;
   }
@@ -244,10 +245,10 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   if (address && !proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
     proposal.coauthors.push(address);
   }
-  proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === 'Discussion') ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
+  proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === STATUS.DISCUSSION) ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
   logger.info(`EDIT issued by ${address} for uuid: ${proposal.hash}`);
   const editFunction = (p: Proposal) => {
-    if (isPrivate && (proposal.status === 'Discussion' || proposal.status === 'Draft')) return dolt.addProposalToDb(p);
+    if (isPrivate && (proposal.status === STATUS.DISCUSSION || proposal.status === STATUS.DRAFT)) return dolt.addProposalToDb(p);
     if (isPrivate) return dolt.editPrivateProposal(p);
     return dolt.editProposal(p);
   };
@@ -258,7 +259,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     if (!isPrivate) dolt.actionDirector(proposal);
     if (isPrivate) dolt.deletePrivateProposal(hash);
     // if proposal moved form Draft to Discussion, send discord message
-    if ((proposalByUuid.status === 'Draft' || proposalByUuid.status === 'Private') && proposal.status === 'Discussion' && proposalByUuid.discussionThreadURL === null) {
+    if ((proposalByUuid.status === STATUS.DRAFT || proposalByUuid.status === STATUS.PRIVATE) && proposal.status === STATUS.DISCUSSION && proposalByUuid.discussionThreadURL === null) {
       try {
         const discussionThreadURL = await discord.startDiscussion(proposal);
         await discord.setupPoll(getLastSlash(discussionThreadURL));
@@ -268,11 +269,11 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       }
     }
     // archive alert
-    if (proposal.status === 'Archived') {
+    if (proposal.status === STATUS.ARCHIVED) {
       try { await discord.sendProposalArchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
     }
     // unarchive alert
-    if (proposal.status === 'Discussion' && proposalByUuid.status === 'Archived') {
+    if (proposal.status === STATUS.DISCUSSION && proposalByUuid.status === STATUS.ARCHIVED) {
       try { await discord.sendProposalUnarchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
     }
 
@@ -418,7 +419,7 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
   const { config, dolt } = await handlerReq(space, req.headers.authorization);
   const proposal = await dolt.getProposalByAnyId(uuid);
   let discussionThreadURL = '';
-  if (proposal.status === 'Discussion' && !proposal.discussionThreadURL) {
+  if (proposal.status === STATUS.DISCUSSION && !proposal.discussionThreadURL) {
     const dialogHandler = new DiscordHandler(config);
     // eslint-disable-next-line no-await-in-loop
     while (!dialogHandler.ready()) { await sleep(50); }
