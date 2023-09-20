@@ -38,6 +38,7 @@ async function handlerReq(query: string, auth: string | undefined) {
       spaceOwners: spaceConfig.spaceOwners,
       address,
       config: spaceConfig.config,
+      currentGovernanceCycle: spaceConfig.currentGovernanceCycle,
       currentEvent,
       dolt,
     };
@@ -54,7 +55,7 @@ router.get('/:space', async (req, res) => {
   const { space } = req.params;
   let currentJuiceboxEvent;
   try {
-    const { dolt, config, currentEvent } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     if (!currentEvent) {
       const { startTimestamp, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
       currentJuiceboxEvent = {
@@ -63,13 +64,12 @@ router.get('/:space', async (req, res) => {
         end: new Date(endTimestamp * 1000),
       };
     }
-    const currentCycle = await dolt.getCurrentGovernanceCycle();
     const head = await dolt.getHead();
     return res.send({
       sucess: true,
       data: {
         name: space,
-        currentCycle,
+        currentCycle: currentGovernanceCycle,
         currentEvent: currentEvent || currentJuiceboxEvent,
         snapshotSpace: config.snapshot.space,
         juiceboxProjectId: config.juicebox.projectId,
@@ -77,6 +77,7 @@ router.get('/:space', async (req, res) => {
       }
     });
   } catch (e) {
+    res.setHeader('Cache-Control', 'public, s-maxage=3600');
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
   }
 });
@@ -90,7 +91,7 @@ router.get('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
-    const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     const data: ProposalsPacket = {
       proposalInfo: {
         snapshotSpace: config.snapshot.space,
@@ -108,7 +109,7 @@ router.get('/:space/proposals', async (req, res) => {
 
     // Defauls to query current cycle
     if (!keyword && !cycle) {
-      const cycleSearch = cycle || (await dolt.getCurrentGovernanceCycle()).toString();
+      const cycleSearch = cycle || currentGovernanceCycle.toString();
       data.proposals = await dolt.getProposalsByGovernanceCycle(cycleSearch, _limit, _offset);
     }
     if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle, _limit, _offset); }
@@ -120,6 +121,7 @@ router.get('/:space/proposals', async (req, res) => {
       const privates = await dolt.getPrivateProposalsByAuthorAddress(address);
       data.privateProposals.push(...privates);
     }
+    if (cycle) res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
     return res.send({ success: true, data });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });
@@ -131,12 +133,11 @@ router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   const { proposal } = req.body as ProposalUploadRequest;
   try {
-    const { config, dolt, address } = await handlerReq(space, req.headers.authorization);
+    const { config, dolt, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
     logger.debug(`[UPLOAD] space: ${space}, address: ${address} good`);
     if (!proposal.governanceCycle) {
-      const currentGovernanceCycle = await dolt.getCurrentGovernanceCycle();
       proposal.governanceCycle = currentGovernanceCycle + 1;
     }
     if (!proposal.authorAddress) { proposal.authorAddress = address; }
@@ -495,13 +496,12 @@ router.get('/:space/payouts/stale', async (req, res) => {
 
 router.get('/:space/payouts/rollup', async (req, res) => {
   const { space } = req.params;
-  const { config, dolt } = await handlerReq(space, req.headers.authorization);
+  const { config, dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
   const dialogHandler = new DiscordHandler(config);
   const payouts = await dolt.getPayoutsDb();
-  const currentGovernanceCycle = (await dolt.getCurrentGovernanceCycle()).toString();
   // eslint-disable-next-line no-await-in-loop
   while (!dialogHandler.ready()) { await sleep(50); }
-  dialogHandler.sendPayoutsTable(payouts, currentGovernanceCycle).then(() => {
+  dialogHandler.sendPayoutsTable(payouts, currentGovernanceCycle.toString()).then(() => {
     res.json({ success: true });
   }).catch((e: any) => {
     res.json({ success: false, error: e });
