@@ -189,15 +189,15 @@ router.get('/:space/proposal/:pid', async (req, res) => {
   let proposal: Proposal;
   try {
     proposal = await dolt.getProposalByAnyId(pid);
+    if (proposal.status !== STATUS.TEMPERATURE_CHECK || proposal.status !== STATUS.DISCUSSION) {
+      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
+    }
     res.send({ success: true, data: proposal });
     return;
   } catch (e) {
     if (address) {
       try {
         proposal = await dolt.getPrivateProposal(pid, address);
-        if (proposal.status !== STATUS.TEMPERATURE_CHECK || proposal.status !== STATUS.DISCUSSION) {
-          res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
-        }
         res.send({ success: true, data: proposal });
         return;
       } catch {

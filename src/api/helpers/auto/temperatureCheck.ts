@@ -1,6 +1,6 @@
 import { discordLogin } from '../discord';
 import { SpaceAuto } from '../../models';
-import { events } from './constants';
+import { EVENTS } from './constants';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import { DoltHandler } from '../../../dolt/doltHandler';
 import { pools } from '../../../dolt/pools';
@@ -30,7 +30,7 @@ export const handleSendTemperatureCheckStartAlert = async (space: SpaceAuto) => 
   if (shouldSendTemperatureCheckStartAlert(space)) {
     const dialogHandler = await discordLogin(space.config);
     const temperatureCheckStartReminder = await dialogHandler.sendReminder(
-      events.TEMPERATURE_CHECK,
+      EVENTS.TEMPERATURE_CHECK,
       space.currentEvent.end,
       'start'
     );
@@ -77,7 +77,7 @@ export const handleSendTemperatureCheckEndAlert = async (space: SpaceAuto) => {
   if (shouldSendTemperatureCheckEndAlert(space)) {
     const dialogHandler = await discordLogin(space.config);
     const temperatureCheckEndReminder = await dialogHandler.sendReminder(
-      events.TEMPERATURE_CHECK,
+      EVENTS.TEMPERATURE_CHECK,
       space.currentEvent.end,
       'end'
     );

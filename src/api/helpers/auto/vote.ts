@@ -1,6 +1,6 @@
 import { discordLogin } from '../discord';
 import { SpaceAuto } from '../../models';
-import { events } from './constants';
+import { EVENTS } from './constants';
 import { SnapshotHandler } from '../../../snapshot/snapshotHandler';
 import { DoltHandler } from '../../../dolt/doltHandler';
 import { pools } from '../../../dolt/pools';
@@ -20,7 +20,7 @@ import logger from '../../../logging';
 export const handleVoteSetup = async (space: SpaceAuto) => {
   const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
   const proposals = await dolt.getVoteProposals();
-  if (space.currentEvent?.title === events.SNAPSHOT_VOTE && proposals.length > 0) {
+  if (space.currentEvent?.title === EVENTS.SNAPSHOT_VOTE && proposals.length > 0) {
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, space.config);
     const snapshotVoteSettings = await snapshot.getVotingSettings();
     const start = addSecondsToDate(new Date(), -10);
@@ -77,7 +77,7 @@ export const handleSendVoteEndAlert = async (space: SpaceAuto) => {
     const doltSys = new DoltSysHandler(pools.nance_sys);
     const dialogHandler = await discordLogin(space.config);
     const votingEndAlert = await dialogHandler.sendReminder(
-      events.SNAPSHOT_VOTE,
+      EVENTS.SNAPSHOT_VOTE,
       space.currentEvent.end,
       'end'
     );
