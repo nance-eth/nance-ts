@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import express from 'express';
 import { Contract } from 'ethers';
 import { Nance } from '../nance';
@@ -22,6 +21,7 @@ import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { juiceboxTime } from './helpers/juicebox';
 import { getCurrentAndNextEvent } from '../dolt/helpers/cycleConfigToDateEvent';
+import { events, status } from './helpers/auto/constants';
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -92,7 +92,7 @@ router.get('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
-    const { dolt, config, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, address, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     const data: ProposalsPacket = {
       proposalInfo: {
         snapshotSpace: config.snapshot.space,
@@ -122,7 +122,9 @@ router.get('/:space/proposals', async (req, res) => {
       const privates = await dolt.getPrivateProposalsByAuthorAddress(address);
       data.privateProposals.push(...privates);
     }
-    if (cycle) res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
+    if (cycle || currentEvent.title !== events.TEMPERATURE_CHECK || currentEvent.title !== events.DELAY) {
+      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
+    }
     return res.send({ success: true, data });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });
@@ -192,6 +194,9 @@ router.get('/:space/proposal/:pid', async (req, res) => {
     if (address) {
       try {
         proposal = await dolt.getPrivateProposal(pid, address);
+        if (proposal.status !== status.TEMPERATURE_CHECK || proposal.status !== status.DISCUSSION) {
+          res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
+        }
         res.send({ success: true, data: proposal });
         return;
       } catch {
