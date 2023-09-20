@@ -37,10 +37,6 @@ export class Nance {
     logger.info(`${this.config.name}: clearDiscussionInterval()`);
   }
 
-  async incrementGovernanceCycle(governanceCycle: GovernanceCycle) {
-    this.dProposalHandler.addGovernanceCycleToDb(governanceCycle);
-  }
-
   pollPassCheck(yesCount: number, noCount: number) {
     const ratio = yesCount / (yesCount + noCount);
     if (yesCount >= this.config.discord.poll.minYesVotes

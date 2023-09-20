@@ -14,11 +14,13 @@ export class NanceTreasury {
   juiceboxHandlerV2;
   juiceboxHandlerV3;
   provider;
+  currentGovernanceCycle: number;
 
   constructor(
     protected config: NanceConfig,
     protected proposalHandler: DoltHandler,
     provider: JsonRpcProvider,
+    currentCycle: number
   ) {
     this.juiceboxHandlerV1 = new JuiceboxHandlerV1(
       config.juicebox.projectId,
@@ -34,10 +36,11 @@ export class NanceTreasury {
       config.juicebox.network as 'mainnet' | 'goerli'
     );
     this.provider = this.juiceboxHandlerV3.provider;
+    this.currentGovernanceCycle = currentCycle;
   }
 
   async payoutTableToGroupedSplitsStruct(version = 'V2') {
-    const payouts = await this.proposalHandler.getPayoutsDb(version);
+    const payouts = await this.proposalHandler.getPayoutsDb(this.currentGovernanceCycle);
     const reserves = await this.proposalHandler.getReserveDb();
     const newDistributionLimit = (version === 'V2')
       ? this.juiceboxHandlerV2.calculateNewDistributionLimit(payouts)
@@ -60,7 +63,7 @@ export class NanceTreasury {
   }
 
   async payoutTableToMods(version = 'V1') {
-    const payouts = await this.proposalHandler.getPayoutsDb(version);
+    const payouts = await this.proposalHandler.getPayoutsDb(this.currentGovernanceCycle);
     const reserves = await this.proposalHandler.getReserveDb();
     const newDistributionLimit = this.juiceboxHandlerV1.calculateNewDistributionLimit(payouts);
     const { payoutMods, ticketMods } = await this.juiceboxHandlerV1.buildModsStruct(
@@ -123,7 +126,7 @@ export class NanceTreasury {
     const { number: numberV2 } = await this.getQueuedConfiguration('V2');
     const { number: numberV3, start: startV3, duration: durationV3 } = await this.getQueuedConfiguration('V3');
     const startDatetime = addSecondsToDate(new Date(startV3.toNumber() * 1000), durationV3.toNumber());
-    const cycleNumber = await this.proposalHandler.getCurrentGovernanceCycle() + 1;
+    const cycleNumber = this.currentGovernanceCycle + 1;
     const governance: GovernanceCycle = {
       cycleNumber,
       startDatetime,

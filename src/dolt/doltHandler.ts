@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* eslint-disable prefer-promise-reject-errors */
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
@@ -12,7 +13,6 @@ const proposalsTable = 'proposals';
 const privateProposalsTable = 'private_proposals';
 const payoutsTable = 'payouts';
 const reservesTable = 'reserves';
-const governanceCyclesTable = 'governanceCycles';
 const transfersTable = 'transfers';
 const transactionsTable = 'customTransactions';
 const DEFAULT_TREASURY_VERSION = 3;
@@ -21,7 +21,6 @@ const DEFAULT_TREASURY_VERSION = 3;
 export class DoltHandler {
   localDolt;
   propertyKeys;
-  public currentGovernanceCycle = 0;
 
   constructor(
     localDolt: DoltSQL,
@@ -130,54 +129,23 @@ export class DoltHandler {
     return omitBy(sqlProposal, isNil);
   }
 
-  async getCurrentGovernanceCycle(): Promise<number> {
-    let { cycleNumber } = (await this.queryDb(`
-    SELECT MAX(cycleNumber) as cycleNumber from ${governanceCyclesTable}
-    `) as unknown as Array<{ cycleNumber: number }>)[0];
-    cycleNumber ||= 1;
-    return cycleNumber;
-  }
-
-  async setCurrentGovernanceCycle(governanceCycle: number) {
-    const branches = await this.localDolt.showBranches();
-    const branchExists = branches.some((branch) => { return branch.name === (`GC${governanceCycle}`); });
-    return this.localDolt.checkout(`GC${governanceCycle}`, !branchExists).then((res) => {
-      this.currentGovernanceCycle = governanceCycle;
-      if (res === 0) { return true; }
-      return false;
-    }).catch((e) => {
-      return Promise.reject(e);
-    });
-  }
-
-  async incrementGovernanceCycle() {
-    return this.queryDbResults(`
-      INSERT INTO ${governanceCyclesTable} (cycleNumber)
-      SELECT COALESCE(MAX(cycleNumber) + 1, 1) FROM ${governanceCyclesTable}
-    `).then((res) => {
-      return res.affectedRows === 1;
-    }).catch((e) => {
-      return Promise.reject(e);
-    });
-  }
-
   proposalIdNumber = (proposalId: string): number | null => {
     const value = Number(proposalId.split(this.propertyKeys.proposalIdPrefix)[1]);
     return (Number.isNaN(value)) ? null : value;
   };
 
   async actionDirector(proposal: Proposal) {
-    const governanceCycle = proposal.governanceCycle || await this.getCurrentGovernanceCycle();
+    const cycle = proposal.governanceCycle || 1;
     const actionStatus = proposal.status === 'Approved' ? 'active' : 'voting';
     proposal.actions?.forEach((action) => {
       if (action.type === 'Payout') {
-        this.addPayoutToDb(action.payload as Payout, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid, actionStatus);
+        this.addPayoutToDb(action.payload as Payout, proposal.hash, cycle, action?.name || proposal.title, action.uuid, actionStatus);
       } else if (action.type === 'Transfer') {
-        this.addTransferToDb(action.payload as Transfer, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid, undefined, actionStatus);
+        this.addTransferToDb(action.payload as Transfer, proposal.hash, cycle, action?.name || proposal.title, action.uuid, undefined, actionStatus);
       } else if (action.type === 'Reserve') {
-        this.addReserveToDb(action.payload as Reserve, proposal.hash, governanceCycle, action.uuid, actionStatus);
+        this.addReserveToDb(action.payload as Reserve, proposal.hash, cycle, action.uuid, actionStatus);
       } else if (action.type === 'Custom Transaction') {
-        this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, governanceCycle, action?.name || proposal.title, action.uuid, actionStatus);
+        this.addCustomTransaction(action.payload as CustomTransaction, proposal.hash, cycle, action?.name || proposal.title, action.uuid, actionStatus);
       }
     });
   }
@@ -269,15 +237,6 @@ export class DoltHandler {
       VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE
       reserveGovernanceCycle = VALUES(reserveGovernanceCycle), splits = VALUES(splits), reserveStatus = VALUES(reserveStatus)`,
     [uuid || uuidGen(), uuidOfProposal, reserveGovernanceCycle, JSON.stringify(reserve.splits), status]);
-  }
-
-  async addGovernanceCycleToDb(g: GovernanceCycle) {
-    const results = this.localDolt.db.query(oneLine`
-      REPLACE INTO ${governanceCyclesTable}
-      (cycleNumber, startDateTime, endDateTime, jbV1FundingCycle, jbV2FundingCycle, jbV3FundingCycle, acceptingProposals)
-      VALUES(?,?,?,?,?,?,?)`, [g.cycleNumber, g.startDatetime, g.endDatetime, g.jbV1FundingCycle, g.jbV2FundingCycle, g.jbV3FundingCycle, true]
-    );
-    return results;
   }
 
   async assignProposalIds(proposals: Proposal[]) {
@@ -434,8 +393,7 @@ export class DoltHandler {
   `, [payStatus, proposal.hash]);
   }
 
-  async setStalePayouts(): Promise<number> {
-    const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
+  async setStalePayouts(currentGovernanceCycle: number): Promise<number> {
     const results = await this.queryDbResults(`
       UPDATE ${payoutsTable} SET payStatus = 'complete' WHERE
       payStatus = 'active' AND
@@ -452,11 +410,9 @@ export class DoltHandler {
   // ===================================== //
 
   async getToDiscuss() {
-    const currentCycle = await this.getCurrentGovernanceCycle();
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
       proposalStatus = 'Discussion'
-      AND governanceCycle >= ${currentCycle}
       AND discussionURL IS NULL
       ORDER BY proposalId ASC
     `);
@@ -614,9 +570,8 @@ export class DoltHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async getPayoutsDb(version = 'V3'): Promise<SQLPayout[]> {
-    const treasuryVersion = Number(version.split('V')[1]);
-    const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
+  async getPayoutsDb(currentGovernanceCycle: number): Promise<SQLPayout[]> {
+    const treasuryVersion = 3;
     const results = this.queryDb(`
       SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
       LEFT JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
@@ -651,8 +606,7 @@ export class DoltHandler {
     return results[0];
   }
 
-  async getTransfersDb(): Promise<SQLTransfer[]> {
-    const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
+  async getTransfersDb(currentGovernanceCycle: number): Promise<SQLTransfer[]> {
     const results = await this.queryDb(`
       SELECT * from ${transfersTable} WHERE
       transferGovernanceCycle <= ${currentGovernanceCycle} AND
@@ -685,8 +639,7 @@ export class DoltHandler {
     // call push in case we committed but push failed before
     await this.localDolt.push();
     if (await this.localDolt.changes(table)) {
-      const currentGovernanceCycle = await this.getCurrentGovernanceCycle();
-      return this.localDolt.commit(`GC${currentGovernanceCycle}-${message}`).then(async (res) => {
+      return this.localDolt.commit(message).then(async (res) => {
         if (res) {
           return this.localDolt.push().then(() => {
             return res; // commit hash

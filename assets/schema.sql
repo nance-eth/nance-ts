@@ -100,14 +100,3 @@ CREATE TABLE IF NOT EXISTS reconfigurations (
   JBFundingCycleMetaData JSON NOT NULL,
   PRIMARY KEY (uuidOfReconfiguration)
 );
-
-CREATE TABLE IF NOT EXISTS governanceCycles (
-  cycleNumber INT NOT NULL,
-  startDatetime DATETIME,
-  endDatetime DATETIME,
-  jbV1FundingCycle INT,
-  jbV2FundingCycle INT,
-  jbV3FundingCycle INT,
-  acceptingProposals BOOLEAN,
-  PRIMARY KEY (cycleNumber)
-);

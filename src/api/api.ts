@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import express from 'express';
 import { Contract } from 'ethers';
 import { Nance } from '../nance';
@@ -65,6 +66,7 @@ router.get('/:space', async (req, res) => {
       };
     }
     const head = await dolt.getHead();
+    res.setHeader('Cache-Control', 'public, s-maxage=3600');
     return res.send({
       sucess: true,
       data: {
@@ -77,7 +79,6 @@ router.get('/:space', async (req, res) => {
       }
     });
   } catch (e) {
-    res.setHeader('Cache-Control', 'public, s-maxage=3600');
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
   }
 });
@@ -329,10 +330,10 @@ router.delete('/:space/proposal/:hash', async (req, res) => {
 router.get('/:space/reconfigure', async (req, res) => {
   const { space } = req.params;
   const { version = 'V3', address = ZERO_ADDRESS, datetime = new Date() } = req.query as unknown as FetchReconfigureRequest;
-  const { dolt, config } = await handlerReq(space, req.headers.authorization);
+  const { dolt, config, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
   const ens = await getENS(address);
   const { gnosisSafeAddress, governorAddress, network } = config.juicebox;
-  const treasury = new NanceTreasury(config, dolt, myProvider(config.juicebox.network));
+  const treasury = new NanceTreasury(config, dolt, myProvider(config.juicebox.network), currentGovernanceCycle);
   const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
   // *** governor reconfiguration *** //
   if (governorAddress && !gnosisSafeAddress) {
@@ -378,21 +379,6 @@ router.get('/:space/reconfigure', async (req, res) => {
 // ======== admin-ish functions ======== //
 // ===================================== //
 
-// increment governance cycle
-router.put('/:space/incrementGC', async (req, res) => {
-  const { space } = req.params;
-  const { dolt, spaceOwners, address } = await handlerReq(space, req.headers.authorization);
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: no address' }); return; }
-  if (isNanceAddress(address) || isNanceSpaceOwner(spaceOwners, address)) {
-    logger.info(`INCREMENT GC by ${address}`);
-    dolt.incrementGovernanceCycle().then((data) => {
-      res.json({ success: true, data });
-    }).catch((e) => {
-      res.json({ success: false, error: e });
-    });
-  }
-});
-
 // edit discord titles
 router.get('/:space/editTitles/:status', async (req, res) => {
   const { space, status } = req.params;
@@ -412,8 +398,9 @@ router.get('/:space/editTitles/:status', async (req, res) => {
 router.get('/:space/dolthub', async (req, res) => {
   const { space } = req.params;
   const { table } = req.query as { table: string | undefined };
-  const { dolt, currentEvent } = await handlerReq(space, req.headers.authorization);
-  dolt.checkAndPush(table, currentEvent?.title || '').then((data: string) => {
+  const { dolt, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+  const message = `GC${currentGovernanceCycle}-${currentEvent}`;
+  dolt.checkAndPush(table, message).then((data: string) => {
     return res.json({ success: true, data });
   }).catch((e: string) => {
     return res.json({ success: false, error: e });
@@ -451,10 +438,10 @@ router.get('/:space/payouts', async (req, res) => {
   const { space } = req.params;
   try {
     const { cycle } = req.query as { cycle: string };
-    const { dolt } = await handlerReq(space, req.headers.authorization);
+    const { dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
 
     if (!cycle) {
-      dolt.getPayoutsDb('V3').then((data: SQLPayout[]) => {
+      dolt.getPayoutsDb(currentGovernanceCycle).then((data: SQLPayout[]) => {
         res.json({ success: true, data });
       }).catch((e: any) => {
         res.json({ success: false, error: e });
@@ -488,8 +475,8 @@ router.put('/:space/payouts', async (req, res) => {
 
 router.get('/:space/payouts/stale', async (req, res) => {
   const { space } = req.params;
-  const { dolt } = await handlerReq(space, req.headers.authorization);
-  dolt.setStalePayouts().then((updated: number) => {
+  const { dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+  dolt.setStalePayouts(currentGovernanceCycle).then((updated: number) => {
     res.json({ success: true, data: { numUpdated: updated } });
   });
 });
@@ -498,7 +485,7 @@ router.get('/:space/payouts/rollup', async (req, res) => {
   const { space } = req.params;
   const { config, dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
   const dialogHandler = new DiscordHandler(config);
-  const payouts = await dolt.getPayoutsDb();
+  const payouts = await dolt.getPayoutsDb(currentGovernanceCycle);
   // eslint-disable-next-line no-await-in-loop
   while (!dialogHandler.ready()) { await sleep(50); }
   dialogHandler.sendPayoutsTable(payouts, currentGovernanceCycle.toString()).then(() => {
@@ -515,8 +502,8 @@ router.get('/:space/payouts/rollup', async (req, res) => {
 // get transfers table
 router.get('/:space/transfers', async (req, res) => {
   const { space } = req.params;
-  const { dolt } = await handlerReq(space, req.headers.authorization);
-  dolt.getTransfersDb().then((data: SQLTransfer[]) => {
+  const { dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+  dolt.getTransfersDb(currentGovernanceCycle).then((data: SQLTransfer[]) => {
     res.json({ success: true, data });
   }).catch((e: any) => {
     res.json({ success: false, error: e });
