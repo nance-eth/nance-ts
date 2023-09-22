@@ -42,6 +42,7 @@ async function handlerReq(query: string, auth: string | undefined) {
       config: spaceConfig.config,
       currentGovernanceCycle: spaceConfig.currentGovernanceCycle,
       currentEvent,
+      nextEvent,
       dolt,
     };
   } catch (e) {
@@ -57,7 +58,7 @@ router.get('/:space', async (req, res) => {
   const { space } = req.params;
   let currentJuiceboxEvent;
   try {
-    const { dolt, config, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, currentEvent, currentGovernanceCycle, nextEvent } = await handlerReq(space, req.headers.authorization);
     if (!currentEvent) {
       const { startTimestamp, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
       currentJuiceboxEvent = {
@@ -74,6 +75,7 @@ router.get('/:space', async (req, res) => {
         name: space,
         currentCycle: currentGovernanceCycle,
         currentEvent: currentEvent || currentJuiceboxEvent,
+        nextEvent,
         snapshotSpace: config.snapshot.space,
         juiceboxProjectId: config.juicebox.projectId,
         dolthubLink: headToUrl(config.dolt.owner, config.dolt.repo, head),
