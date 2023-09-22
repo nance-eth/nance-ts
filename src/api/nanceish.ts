@@ -74,7 +74,7 @@ router.post('/config', async (req, res) => {
   const cycleTriggerTime = formToSQLTime(config.governanceCycleForm?.time);
   const cycleStageLengths = formToCycleStageLengths(config.governanceCycleForm);
   const cycleDayLastUpdated = dateAtTime(new Date(), cycleTriggerTime).toISOString();
-  const space = config.name;
+  const space = config.name.replaceAll(' ', '_');
   // get address from jwt (SIWE)
   const jwt = req.headers.authorization?.split('Bearer ')[1];
   const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
