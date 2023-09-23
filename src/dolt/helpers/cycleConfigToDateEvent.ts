@@ -11,7 +11,7 @@ export const getEventDates = (
   stageIndex: number,
 ): DateEvent[] => {
   const startOfToday = dateAtTime(now, info.cycleTriggerTime);
-  const daysSinceStart = info.cycleCurrentDay - cycleStartDays[stageIndex] - 1;
+  const daysSinceStart = info.cycleCurrentDay - cycleStartDays[stageIndex];
   const daysRemaining = info.cycleStageLengths[stageIndex] - daysSinceStart;
   const start = addDaysToDate(startOfToday, -daysSinceStart);
   const end = addDaysToDate(startOfToday, daysRemaining);
