@@ -14,15 +14,13 @@ import { SQLPayout, SQLTransfer } from '../dolt/schema';
 import { Proposal, GovernorProposeTransaction, BasicTransaction, NanceConfig } from '../types';
 import { diffBody } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
-import { headToUrl } from '../dolt/doltAPI';
 import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
-import { juiceboxTime } from './helpers/juicebox';
-import { getCurrentAndNextEvent } from '../dolt/helpers/cycleConfigToDateEvent';
 import { EVENTS, STATUS } from './helpers/auto/constants';
+import { getSpaceInfo } from './helpers/getSpaceInfo';
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -31,19 +29,19 @@ const doltSys = new DoltSysHandler(pools.nance_sys);
 
 async function handlerReq(query: string, auth: string | undefined) {
   try {
-    const spaceConfig = await doltSys.getSpaceConfig(query);
+    const spaceConfig = await getSpaceInfo(query);
     const dolt = new DoltHandler(pools[query], spaceConfig.config.propertyKeys);
-    const [currentEvent, nextEvent] = getCurrentAndNextEvent(spaceConfig);
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
     return {
       spaceOwners: spaceConfig.spaceOwners,
       address,
       config: spaceConfig.config,
-      currentGovernanceCycle: spaceConfig.currentGovernanceCycle,
-      currentEvent,
-      nextEvent,
+      currentGovernanceCycle: spaceConfig.currentCycle,
+      currentEvent: spaceConfig.currentEvent,
+      nextEvent: spaceConfig.nextEvent,
       dolt,
+      dolthubLink: spaceConfig.dolthubLink,
     };
   } catch (e) {
     logger.error(e);
@@ -58,16 +56,7 @@ router.get('/:space', async (req, res) => {
   const { space } = req.params;
   let currentJuiceboxEvent;
   try {
-    const { dolt, config, currentEvent, currentGovernanceCycle, nextEvent } = await handlerReq(space, req.headers.authorization);
-    if (!currentEvent) {
-      const { startTimestamp, endTimestamp } = await juiceboxTime(config.juicebox.projectId);
-      currentJuiceboxEvent = {
-        title: 'Open for proposals',
-        start: new Date(startTimestamp * 1000),
-        end: new Date(endTimestamp * 1000),
-      };
-    }
-    const head = await dolt.getHead();
+    const { config, currentEvent, currentGovernanceCycle, nextEvent, dolthubLink } = await handlerReq(space, req.headers.authorization);
     res.setHeader('Cache-Control', 'public, s-maxage=3600');
     return res.send({
       sucess: true,
@@ -78,7 +67,7 @@ router.get('/:space', async (req, res) => {
         nextEvent,
         snapshotSpace: config.snapshot.space,
         juiceboxProjectId: config.juicebox.projectId,
-        dolthubLink: headToUrl(config.dolt.owner, config.dolt.repo, head),
+        dolthubLink,
       }
     });
   } catch (e) {

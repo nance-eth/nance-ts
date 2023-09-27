@@ -1,7 +1,8 @@
 /* eslint-disable no-restricted-syntax */
 import express from 'express';
 import { NANCE_AUTO_KEY } from '../keys';
-import getAllSpaces from './helpers/getAllSpaces';
+import logger from '../logging';
+import { getAllSpaceInfo } from './helpers/getSpaceInfo';
 import {
   handleSendTemperatureCheckStartAlert,
   handleDeleteTemperatureCheckStartAlert,
@@ -20,7 +21,6 @@ import {
 import { handleDaily } from './helpers/auto/daily';
 
 const actionsToRun = [
-  handleDaily,
   handleSendTemperatureCheckStartAlert,
   handleDeleteTemperatureCheckStartAlert,
   handleSendTemperatureCheckRollup,
@@ -58,13 +58,14 @@ router.get('/events', async (req, res) => {
     res.status(401).send('Unauthorized');
     return;
   }
-  const allSpaces = await getAllSpaces('autoEnable = true');
+  const allSpaces = await getAllSpaceInfo('autoEnable = true');
   const resultsPacket = [] as AutoResults[];
   for await (const space of allSpaces) {
     const actionsResults = [];
+    const postDailySpaceInfo = await handleDaily(space);
     for await (const action of actionsToRun) {
       try {
-        const success = await action(space);
+        const success = await action(postDailySpaceInfo);
         if (success) actionsResults.push([action.name, `success: ${success}`]);
       } catch (err) {
         actionsResults.push([action.name, err]);
@@ -72,11 +73,13 @@ router.get('/events', async (req, res) => {
     }
     resultsPacket.push({
       space: space.name,
-      currentDay: space.currentDay,
-      currentEvent: (space.currentEvent) ? `${space.currentEvent.title} ${space.currentEvent.start.toISOString()} - ${space.currentEvent.end.toISOString()}` : undefined,
+      currentDay: postDailySpaceInfo.currentDay,
+      currentEvent: (postDailySpaceInfo.currentEvent) ? `${postDailySpaceInfo.currentEvent.title} ${postDailySpaceInfo.currentEvent.start.toISOString()} - ${postDailySpaceInfo.currentEvent.end.toISOString()}` : undefined,
       actions: actionsResults.flat().join() // flat join for better viewing on vercel logger, could move the flattening to the frontend
     });
   }
+  logger.info('nance-auto');
+  logger.info(resultsPacket);
   res.json(resultsPacket);
 });
 

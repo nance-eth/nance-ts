@@ -1,17 +1,16 @@
 import express from 'express';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
-import { DoltHandler } from '../dolt/doltHandler';
 import { dotPin } from '../storage/storageHandler';
 import { ConfigSpaceRequest } from './models';
-import { mergeTemplateConfig, mergeConfig, fetchTemplateCalendar, omitKey, dateAtTime } from '../utils';
+import { mergeTemplateConfig, mergeConfig, omitKey, dateAtTime } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
 import { dbOptions } from '../dolt/dbConfig';
 import { DoltSQL } from '../dolt/doltSQL';
 import { addressFromJWT } from './helpers/auth';
 import { FormTime, GovernanceCycleForm, NanceConfig } from '../types';
-import getAllSpaces from './helpers/getAllSpaces';
+import { getAllSpaceInfo } from './helpers/getSpaceInfo';
 
 const router = express.Router();
 
@@ -48,18 +47,15 @@ router.get('/config/:space', async (req, res) => {
 });
 
 router.get('/all', async (_, res) => {
-  const doltSys = new DoltSysHandler(pools.nance_sys);
-  getAllSpaces().then(async (data) => {
+  getAllSpaceInfo().then(async (data) => {
     const infos = await Promise.all(data.map(async (space) => {
-      const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
-      const head = await dolt.getHead();
       return {
         name: space.name,
         currentCycle: space.currentCycle,
         currentEvent: space.currentEvent,
         snapshotSpace: space.config.snapshot.space,
         juiceboxProjectId: space.config.juicebox.projectId,
-        dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, head),
+        dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, space.dolthubLink),
       };
     }));
     res.json({ success: true, data: infos });

@@ -1,5 +1,5 @@
 import { discordLogin } from '../discord';
-import { SpaceAuto } from '../../models';
+import { SpaceInfo } from '../../models';
 import { EVENTS } from './constants';
 import { SnapshotHandler } from '../../../snapshot/snapshotHandler';
 import { DoltHandler } from '../../../dolt/doltHandler';
@@ -17,7 +17,7 @@ import { InternalVoteResults } from '../../../types';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import logger from '../../../logging';
 
-export const handleVoteSetup = async (space: SpaceAuto) => {
+export const handleVoteSetup = async (space: SpaceInfo) => {
   const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
   const proposals = await dolt.getVoteProposals();
   if (space.currentEvent?.title === EVENTS.SNAPSHOT_VOTE && proposals.length > 0) {
@@ -53,7 +53,7 @@ export const handleVoteSetup = async (space: SpaceAuto) => {
   return false;
 };
 
-export const handleSendVoteRollup = async (space: SpaceAuto) => {
+export const handleSendVoteRollup = async (space: SpaceInfo) => {
   if (shouldSendVoteRollup(space)) {
     const doltSys = new DoltSysHandler(pools.nance_sys);
     const dialogHandler = await discordLogin(space.config);
@@ -72,7 +72,7 @@ export const handleSendVoteRollup = async (space: SpaceAuto) => {
   return false;
 };
 
-export const handleSendVoteEndAlert = async (space: SpaceAuto) => {
+export const handleSendVoteEndAlert = async (space: SpaceInfo) => {
   if (shouldSendVoteEndAlert(space)) {
     const doltSys = new DoltSysHandler(pools.nance_sys);
     const dialogHandler = await discordLogin(space.config);
@@ -88,7 +88,7 @@ export const handleSendVoteEndAlert = async (space: SpaceAuto) => {
   return false;
 };
 
-const getVotePercentages = (space: SpaceAuto, voteResults: InternalVoteResults) => {
+const getVotePercentages = (space: SpaceInfo, voteResults: InternalVoteResults) => {
   const yes = voteResults.scores[space.config.snapshot.choices[0]];
   const no = voteResults.scores[space.config.snapshot.choices[1]];
   const percentageYes = yes / (yes + no);
@@ -99,7 +99,7 @@ const getVotePercentages = (space: SpaceAuto, voteResults: InternalVoteResults) 
   };
 };
 
-const votePassCheck = (space: SpaceAuto, voteResults: InternalVoteResults) => {
+const votePassCheck = (space: SpaceInfo, voteResults: InternalVoteResults) => {
   const yes = voteResults.scores[space.config.snapshot.choices[0]];
   return (
     yes >= space.config.snapshot.minTokenPassingAmount
@@ -107,7 +107,7 @@ const votePassCheck = (space: SpaceAuto, voteResults: InternalVoteResults) => {
   );
 };
 
-export const handleVoteClose = async (space: SpaceAuto) => {
+export const handleVoteClose = async (space: SpaceInfo) => {
   if (shouldCloseVote(space)) {
     const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
     const proposals = await dolt.getVoteProposals(true);
@@ -148,7 +148,7 @@ export const handleVoteClose = async (space: SpaceAuto) => {
   return false;
 };
 
-export const handleDeleteVoteEndAlert = async (space: SpaceAuto) => {
+export const handleDeleteVoteEndAlert = async (space: SpaceInfo) => {
   if (shouldDeleteVoteEndAlert(space)) {
     const dialogHandler = await discordLogin(space.config);
     await dialogHandler.deleteMessage(space.dialog.votingEndAlert);

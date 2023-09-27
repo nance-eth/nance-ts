@@ -157,10 +157,12 @@ export class DiscordHandler {
     });
   }
 
-  async sendImageReminder(day: number, governanceCycle: number, type: string, noImage = false, endSeconds?: number) {
+  async sendImageReminder(day: number, governanceCycle: number, type: string, endDate: Date, noImage = false) {
+    const endSeconds = endDate.getTime() / 1000;
+    const link = `${DEFAULT_DASHBOARD}/s/${this.config.name}`;
     const { message, attachments } = (noImage)
-      ? discordTemplates.dailyTextReminder(governanceCycle, day, endSeconds, `${DEFAULT_DASHBOARD}/s/${this.config.name}`)
-      : await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, this.config.discord.reminder.links[type], this.config.discord.reminder.links.process);
+      ? discordTemplates.dailyTextReminder(governanceCycle, day, endSeconds, link)
+      : await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, link, endSeconds);
     const channelsSent = this.getDailyUpdateChannels().map((channel) => {
       if (channel) {
         // delete old messages

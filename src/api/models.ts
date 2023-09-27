@@ -14,9 +14,6 @@ export type SpaceInfo = {
   snapshotSpace: string;
   juiceboxProjectId: string;
   dolthubLink: string;
-};
-
-export type SpaceAuto = Pick<SpaceInfo, 'name' | 'currentCycle' | 'currentEvent' | 'dolthubLink'> & {
   currentDay: number;
   totalCycleDays: number;
   cycleDayLastUpdated: Date;
@@ -24,6 +21,7 @@ export type SpaceAuto = Pick<SpaceInfo, 'name' | 'currentCycle' | 'currentEvent'
   nextEvent: DateEvent;
   dialog: DialogHandlerMessageIds;
   config: NanceConfig;
+  spaceOwners: string[];
 };
 
 type ProposalInfo = {

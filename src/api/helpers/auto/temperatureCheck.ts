@@ -1,5 +1,5 @@
 import { discordLogin } from '../discord';
-import { SpaceAuto } from '../../models';
+import { SpaceInfo } from '../../models';
 import { EVENTS } from './constants';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import { DoltHandler } from '../../../dolt/doltHandler';
@@ -17,7 +17,7 @@ import {
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
-const pollPassCheck = (space: SpaceAuto, yesCount: number, noCount: number) => {
+const pollPassCheck = (space: SpaceInfo, yesCount: number, noCount: number) => {
   const ratio = yesCount / (yesCount + noCount);
   if (yesCount >= space.config.discord.poll.minYesVotes
     && ratio >= space.config.discord.poll.yesNoRatio) {
@@ -26,7 +26,7 @@ const pollPassCheck = (space: SpaceAuto, yesCount: number, noCount: number) => {
   return false;
 };
 
-export const handleSendTemperatureCheckStartAlert = async (space: SpaceAuto) => {
+export const handleSendTemperatureCheckStartAlert = async (space: SpaceInfo) => {
   if (shouldSendTemperatureCheckStartAlert(space)) {
     const dialogHandler = await discordLogin(space.config);
     const temperatureCheckStartReminder = await dialogHandler.sendReminder(
@@ -45,7 +45,7 @@ export const handleSendTemperatureCheckStartAlert = async (space: SpaceAuto) => 
   return false;
 };
 
-export const handleDeleteTemperatureCheckStartAlert = async (space: SpaceAuto) => {
+export const handleDeleteTemperatureCheckStartAlert = async (space: SpaceInfo) => {
   if (shouldDeleteTemperatureCheckStartAlert(space)) {
     const dialogHandler = await discordLogin(space.config);
     await dialogHandler.deleteMessage(space.dialog.temperatureCheckStartAlert);
@@ -56,7 +56,7 @@ export const handleDeleteTemperatureCheckStartAlert = async (space: SpaceAuto) =
   return false;
 };
 
-export const handleSendTemperatureCheckRollup = async (space: SpaceAuto) => {
+export const handleSendTemperatureCheckRollup = async (space: SpaceInfo) => {
   if (shouldSendTemperatureCheckRollup(space)) {
     const dialogHandler = await discordLogin(space.config);
     const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
@@ -73,7 +73,7 @@ export const handleSendTemperatureCheckRollup = async (space: SpaceAuto) => {
   return false;
 };
 
-export const handleSendTemperatureCheckEndAlert = async (space: SpaceAuto) => {
+export const handleSendTemperatureCheckEndAlert = async (space: SpaceInfo) => {
   if (shouldSendTemperatureCheckEndAlert(space)) {
     const dialogHandler = await discordLogin(space.config);
     const temperatureCheckEndReminder = await dialogHandler.sendReminder(
@@ -92,7 +92,7 @@ export const handleSendTemperatureCheckEndAlert = async (space: SpaceAuto) => {
   return false;
 };
 
-export const handleTemperatureCheckClose = async (space: SpaceAuto) => {
+export const handleTemperatureCheckClose = async (space: SpaceInfo) => {
   if (shouldSendTemperatureCheckClose(space)) {
     const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
     const dialogHandler = await discordLogin(space.config);
@@ -123,7 +123,7 @@ export const handleTemperatureCheckClose = async (space: SpaceAuto) => {
   return false;
 };
 
-export const handleDeleteTemperatureCheckEndAlert = async (space: SpaceAuto) => {
+export const handleDeleteTemperatureCheckEndAlert = async (space: SpaceInfo) => {
   if (shouldDeleteTemperatureCheckEndAlert(space)) {
     const dialogHandler = await discordLogin(space.config);
     await dialogHandler.deleteMessage(space.dialog.temperatureCheckEndAlert);

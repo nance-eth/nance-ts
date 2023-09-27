@@ -1,8 +1,8 @@
-import { SpaceAuto } from '../../models';
+import { SpaceInfo } from '../../models';
 import { addDaysToDate, addSecondsToDate } from '../../../utils';
 import { FIVE_MINUTES_SECONDS, ONE_HOUR_SECONDS, EVENTS } from './constants';
 
-export const shouldSendTemperatureCheckStartAlert = (space: SpaceAuto) => {
+export const shouldSendTemperatureCheckStartAlert = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.DELAY
@@ -11,7 +11,7 @@ export const shouldSendTemperatureCheckStartAlert = (space: SpaceAuto) => {
   );
 };
 
-export const shouldDeleteTemperatureCheckStartAlert = (space: SpaceAuto) => {
+export const shouldDeleteTemperatureCheckStartAlert = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.TEMPERATURE_CHECK
@@ -20,7 +20,7 @@ export const shouldDeleteTemperatureCheckStartAlert = (space: SpaceAuto) => {
   );
 };
 
-export const shouldSendTemperatureCheckRollup = (space: SpaceAuto) => {
+export const shouldSendTemperatureCheckRollup = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.TEMPERATURE_CHECK
@@ -29,7 +29,7 @@ export const shouldSendTemperatureCheckRollup = (space: SpaceAuto) => {
   );
 };
 
-export const shouldSendTemperatureCheckEndAlert = (space: SpaceAuto) => {
+export const shouldSendTemperatureCheckEndAlert = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.TEMPERATURE_CHECK
@@ -38,7 +38,7 @@ export const shouldSendTemperatureCheckEndAlert = (space: SpaceAuto) => {
   );
 };
 
-export const shouldSendTemperatureCheckClose = (space: SpaceAuto) => {
+export const shouldSendTemperatureCheckClose = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.SNAPSHOT_VOTE
@@ -46,23 +46,23 @@ export const shouldSendTemperatureCheckClose = (space: SpaceAuto) => {
   );
 };
 
-export const shouldDeleteTemperatureCheckEndAlert = (space: SpaceAuto) => {
+export const shouldDeleteTemperatureCheckEndAlert = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.SNAPSHOT_VOTE
-    && addSecondsToDate(space.currentEvent.end, FIVE_MINUTES_SECONDS) <= now
+    && addSecondsToDate(space.currentEvent.end, FIVE_MINUTES_SECONDS) >= now
     && space.dialog.temperatureCheckEndAlert !== '')
   );
 };
 
-export const shouldIncrementDay = (space: SpaceAuto) => {
+export const shouldIncrementDay = (space: SpaceInfo) => {
   const now = new Date();
   return (
     addDaysToDate(space.cycleDayLastUpdated, 1) <= now
   );
 };
 
-export const shouldSendVoteRollup = (space: SpaceAuto) => {
+export const shouldSendVoteRollup = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.SNAPSHOT_VOTE
@@ -71,7 +71,7 @@ export const shouldSendVoteRollup = (space: SpaceAuto) => {
   );
 };
 
-export const shouldSendVoteEndAlert = (space: SpaceAuto) => {
+export const shouldSendVoteEndAlert = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.SNAPSHOT_VOTE
@@ -80,7 +80,7 @@ export const shouldSendVoteEndAlert = (space: SpaceAuto) => {
   );
 };
 
-export const shouldCloseVote = (space: SpaceAuto) => {
+export const shouldCloseVote = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.EXECUTION
@@ -89,7 +89,7 @@ export const shouldCloseVote = (space: SpaceAuto) => {
   );
 };
 
-export const shouldDeleteVoteEndAlert = (space: SpaceAuto) => {
+export const shouldDeleteVoteEndAlert = (space: SpaceInfo) => {
   const now = new Date();
   return (
     (space.currentEvent?.title === EVENTS.EXECUTION

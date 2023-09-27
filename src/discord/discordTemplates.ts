@@ -88,7 +88,7 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
 export const reminderEndMessage = (thingToRemind: string, endDate: Date, url = '') => {
   return new EmbedBuilder().setColor('#F19800').setTitle(
     `${thingToRemind} ending <t:${dateToUnixTimeStamp(endDate)}:R>!`
-  ).setDescription(url);
+  );
 };
 
 export const reminderStartMessage = (thingToRemind: string, startDate: Date, url = '') => {
@@ -122,22 +122,23 @@ export const threadToURL = (thread: ThreadChannel) => {
   return `https://discord.com/channels/${thread.guildId}/${thread.parentId}/${thread.id}`;
 };
 
-export const dailyImageReminder = async (day: number, imagesCID: string, governanceCycle: number, type: string, contentLink: string, processLink: string) => {
+export const dailyImageReminder = async (day: number, imagesCID: string, governanceCycle: number, type: string, contentLink: string, endSeconds: number) => {
   const { thumbnail, image } = await getReminderImages(imagesCID, day);
   const thumbnailAttachment = new AttachmentBuilder(thumbnail, { name: 'thumbnail.png' });
   const imageAttachment = new AttachmentBuilder(image, { name: 'image.png' });
   const preamble = () => {
-    if (type.includes('delay')) { return 'Submit a proposal'; }
-    if (type === 'execution') { return 'Multisig members assemble and configure the next funding cycle'; }
-    if (type === 'temperature check') { return 'Take part in the temperature checks'; }
-    if (type === 'vote') { return 'Take part in the voting'; }
+    const typeLower = type.toLowerCase();
+    if (typeLower.includes('delay')) { return 'Submit a proposal'; }
+    if (typeLower.includes('execution')) { return 'Multisig members assemble and configure the next funding cycle'; }
+    if (typeLower.includes('temperature check')) { return 'Take part in the temperature checks'; }
+    if (typeLower.includes('vote')) { return 'Take part in the voting'; }
     return undefined;
   };
   const message = new EmbedBuilder().setTitle('Governance Status').setDescription(
     stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n
-    ${preamble()} [here](${contentLink})!\n
-    Read about our governance process [here](${processLink})`
+    ${preamble()} [here](${contentLink}) by <t:${endSeconds}:f> (<t:${endSeconds}:R>)!\n
+    Read about our governance process [here](${contentLink})`
   ).setThumbnail(
     'attachment://thumbnail.png'
   ).setImage(
