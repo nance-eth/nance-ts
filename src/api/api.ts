@@ -57,7 +57,6 @@ router.get('/:space', async (req, res) => {
   let currentJuiceboxEvent;
   try {
     const { config, currentEvent, currentGovernanceCycle, nextEvent, dolthubLink } = await handlerReq(space, req.headers.authorization);
-    res.setHeader('Cache-Control', 'public, s-maxage=3600');
     return res.send({
       sucess: true,
       data: {
@@ -85,10 +84,11 @@ router.get('/:space/proposals', async (req, res) => {
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
     const { dolt, config, address, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const proposalIdPrefix = config.propertyKeys.proposalIdPrefix.includes('-') ? config.propertyKeys.proposalIdPrefix : `${config.propertyKeys.proposalIdPrefix}-`;
     const data: ProposalsPacket = {
       proposalInfo: {
         snapshotSpace: config.snapshot.space,
-        proposalIdPrefix: config.propertyKeys.proposalIdPrefix,
+        proposalIdPrefix,
         minTokenPassingAmount: config.snapshot.minTokenPassingAmount
       },
       proposals: [],
