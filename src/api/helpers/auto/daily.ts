@@ -23,10 +23,7 @@ const safeIncrement = (space: SpaceInfo) => {
 export const handleDaily = async (space: SpaceInfo): Promise<SpaceInfo> => {
   if (!shouldIncrementDay(space)) return space;
 
-  const textReminderDays = [20, 15, 10, 5, 4, 3, 2, 1]; // TODO make a config variable, hardcoded for NANA for now
-
   const { updatedCurrentEvent, updatedCurrentGovernanceCycle, updatedCycleCurrentDay } = safeIncrement(space);
-  if (!textReminderDays.includes(updatedCycleCurrentDay)) return space;
 
   const dialogHandler = await discordLogin(space.config);
   try {
