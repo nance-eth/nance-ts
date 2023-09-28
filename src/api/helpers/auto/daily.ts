@@ -10,6 +10,7 @@ import logger from '../../../logging';
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
 const safeIncrement = (space: SpaceInfo) => {
+  if (!space.totalCycleDays) return { updatedCycleCurrentDay: space.currentDay, updatedCurrentGovernanceCycle: space.currentCycle, updatedCurrentEvent: space.currentEvent };
   const determineCycleDay = (space.currentDay + 1 <= space.totalCycleDays) ? space.currentDay + 1 : 1;
   const determineGovernanceCycle = determineCycleDay === 1 ? space.currentCycle + 1 : space.currentCycle;
   const determineCurrentEvent = determineCycleDay === 1 ? space.nextEvent : space.currentEvent;
@@ -37,7 +38,7 @@ export const handleDaily = async (space: SpaceInfo): Promise<SpaceInfo> => {
         dateAtTime(new Date(), space.cycleTriggerTime), // set to trigger time for next run
       );
     }
-    logger.info(`nance-auto: ${space.name} ${updatedCycleCurrentDay} ${updatedCurrentGovernanceCycle} ${eventTitle} ${updatedCurrentEvent.end.toISOString()}`);
+    logger.info(`nance-auto: [${space.name}] currentDay: ${updatedCycleCurrentDay}, currentCycle: ${updatedCurrentGovernanceCycle}, currentEvent ${eventTitle}, eventEnd ${updatedCurrentEvent.end.toISOString()}`);
     return { ...space, currentDay: updatedCycleCurrentDay, currentCycle: updatedCurrentGovernanceCycle, currentEvent: updatedCurrentEvent };
   } catch (e) {
     return Promise.reject(e);
