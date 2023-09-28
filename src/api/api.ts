@@ -78,12 +78,30 @@ router.get('/:space', async (req, res) => {
 // ======== proposals functions ======== //
 // ===================================== //
 
+// query private proposals
+router.get('/:space/privateProposals', async (req, res) => {
+  const { space } = req.params;
+  try {
+    const { dolt, address } = await handlerReq(space, req.headers.authorization);
+    const data: Proposal[] = [];
+
+    // check for any private proposals
+    if (address) {
+      const privates = await dolt.getPrivateProposalsByAuthorAddress(address);
+      data.push(...privates);
+    }
+    return res.send({ success: true, data });
+  } catch (e) {
+    return res.send({ success: false, error: `[NANCE] ${e}` });
+  }
+});
+
 // query proposals
 router.get('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
-    const { dolt, config, address, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     const proposalIdPrefix = config.propertyKeys.proposalIdPrefix.includes('-') ? config.propertyKeys.proposalIdPrefix : `${config.propertyKeys.proposalIdPrefix}-`;
     const data: ProposalsPacket = {
       proposalInfo: {
@@ -91,8 +109,7 @@ router.get('/:space/proposals', async (req, res) => {
         proposalIdPrefix,
         minTokenPassingAmount: config.snapshot.minTokenPassingAmount
       },
-      proposals: [],
-      privateProposals: []
+      proposals: []
     };
 
     // calculate offset for SQL pagination
@@ -109,11 +126,7 @@ router.get('/:space/proposals', async (req, res) => {
     if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword, _limit, _offset); }
     if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword, _limit, _offset); }
     if (author) { data.proposals = await dolt.getProposalsByAuthorAddress(author); }
-    // check for any private proposals
-    if (address) {
-      const privates = await dolt.getPrivateProposalsByAuthorAddress(address);
-      data.privateProposals.push(...privates);
-    }
+
     if (cycle || currentEvent.title !== EVENTS.TEMPERATURE_CHECK || currentEvent.title !== EVENTS.DELAY) {
       res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
     }
