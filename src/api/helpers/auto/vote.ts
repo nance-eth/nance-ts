@@ -16,7 +16,6 @@ import { addSecondsToDate, floatToPercentage } from '../../../utils';
 import { InternalVoteResults } from '../../../types';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import logger from '../../../logging';
-import { getSpaceInfo } from '../getSpaceInfo';
 
 export const handleVoteSetup = async (space: SpaceInfo) => {
   const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
@@ -92,8 +91,7 @@ export const handleSendQuorumRollup = async (space: SpaceInfo) => {
       },
     };
   });
-  const waterbox = await getSpaceInfo('waterbox');
-  const dialogHandler = await discordLogin(waterbox.config);
+  const dialogHandler = await discordLogin(space.config);
   dialogHandler.sendQuorumRollup(proposalsUnderQuorum, space.currentEvent.end);
 };
 
