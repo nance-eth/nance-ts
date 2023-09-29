@@ -15,6 +15,13 @@ export const STATUS = {
   CANCELLED: 'Cancelled',
   ARCHIVED: 'Archived',
   PRIVATE: 'Private',
+  ACTION: {
+    ACTIVE: 'active',
+    COMPLETE: 'complete',
+    CANCELLED: 'cancelled',
+    VOTING: 'voting',
+    PAUSED: 'paused',
+  }
 };
 
 export const ONE_HOUR_SECONDS = 3600;

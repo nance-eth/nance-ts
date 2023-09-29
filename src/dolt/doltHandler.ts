@@ -8,6 +8,7 @@ import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTr
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
 import { SELECT_ACTIONS } from './queries';
+import { STATUS } from '../api/helpers/auto/constants';
 
 const proposalsTable = 'proposals';
 const privateProposalsTable = 'private_proposals';
@@ -136,7 +137,9 @@ export class DoltHandler {
 
   async actionDirector(proposal: Proposal) {
     const cycle = proposal.governanceCycle || 1;
-    const actionStatus = proposal.status === 'Approved' ? 'active' : 'voting';
+    let actionStatus = STATUS.ACTION.VOTING; // default to voting
+    if (proposal.status === STATUS.APPROVED) { actionStatus = STATUS.ACTION.ACTIVE; }
+    if (proposal.status === STATUS.CANCELLED) { actionStatus = STATUS.ACTION.CANCELLED; }
     proposal.actions?.forEach((action) => {
       if (action.type === 'Payout') {
         this.addPayoutToDb(action.payload as Payout, proposal.hash, cycle, action?.name || proposal.title, action.uuid, actionStatus);
@@ -379,9 +382,7 @@ export class DoltHandler {
       proposalStatus = ?
       WHERE uuid = ?
     `, [voteChoices, voteResults, proposal.internalVoteResults?.totalVotes, proposal.status, proposal.hash]);
-    if (proposal.type?.toLowerCase().includes('pay')) {
-      await this.updatePayoutStatus(proposal);
-    }
+    this.actionDirector(proposal);
   }
 
   async updatePayoutStatus(proposal: Proposal) {
