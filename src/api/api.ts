@@ -56,7 +56,7 @@ router.get('/:space', async (req, res) => {
   const { space } = req.params;
   let currentJuiceboxEvent;
   try {
-    const { config, currentEvent, currentGovernanceCycle, nextEvent, dolthubLink } = await handlerReq(space, req.headers.authorization);
+    const { config, currentEvent, currentGovernanceCycle, nextEvent, dolthubLink, spaceOwners } = await handlerReq(space, req.headers.authorization);
     return res.send({
       sucess: true,
       data: {
@@ -64,6 +64,7 @@ router.get('/:space', async (req, res) => {
         currentCycle: currentGovernanceCycle,
         currentEvent: currentEvent || currentJuiceboxEvent,
         nextEvent,
+        spaceOwners,
         snapshotSpace: config.snapshot.space,
         juiceboxProjectId: config.juicebox.projectId,
         dolthubLink,
