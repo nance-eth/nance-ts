@@ -117,6 +117,16 @@ export class DiscordHandler {
     });
   }
 
+  async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
+    const message = discordTemplates.proposalsUnderQuorumMessage(proposals, this.config.name, this.config.propertyKeys.proposalIdPrefix, endDate);
+    return this.getAlertChannel().send(
+      { content: `:hotsprings: ${this.roleTag} there are proposals under quorum! vote now! :hotsprings:`,
+        embeds: [message]
+      }).then((messageObj) => {
+      return messageObj.id;
+    });
+  }
+
   async sendVoteResultsRollup(proposals: Proposal[]) {
     const message = discordTemplates.voteResultsRollUpMessage(
       DEFAULT_DASHBOARD,

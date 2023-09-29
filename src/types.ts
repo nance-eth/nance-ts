@@ -95,9 +95,11 @@ export type InternalVoteResults = {
   totalVotes: number;
   scoresState: string;
   scores: Record<string, number>;
+  scoresTotal: number;
   percentages: Record<string, number>;
   outcomePercentage: string;
   outcomeEmoji: string;
+  quorumMet: boolean;
 };
 
 export type VoteResults = {

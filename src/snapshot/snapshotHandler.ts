@@ -3,19 +3,22 @@ import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
 import { Proposal, InternalVoteResults, SnapshotVoteOptions, NanceConfig } from '../types';
 import { dateToUnixTimeStamp, myProvider, uuidGen } from '../utils';
+import { STATUS } from '../api/helpers/auto/constants';
 
 export type SnapshotProposal = {
   id: string;
   type: string;
   start: string;
   choices: string[];
-  votes: number[];
+  votes: number;
+  scores: number[];
   scores_total: number;
   title?: string;
   body?: string;
   author?: string;
   discussion?: string;
   ipfsCID?: string;
+  state?: string;
 };
 
 type SnapshotVoteSettings = {
@@ -26,13 +29,18 @@ type SnapshotVoteSettings = {
 };
 
 const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
+  let status = STATUS.VOTING;
+  if (sProposal.state === 'closed') {
+    status = sProposal.scores[0] > sProposal.scores[1] ? STATUS.APPROVED : STATUS.CANCELLED;
+  }
+  const proposalId = Number(sProposal.title?.match(/.*-(\d+)/)?.[1]) || null;
   return {
     hash: uuidGen(),
     title: sProposal.title || 'Title Unknown',
     body: sProposal.body || 'Body Unknown',
-    status: 'Voted',
+    status,
     authorAddress: sProposal.author,
-    proposalId: null,
+    proposalId,
     createdTime: new Date(Number(sProposal.start) * 1000),
     url: '',
     discussionThreadURL: sProposal.discussion || '',
@@ -43,8 +51,8 @@ const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
       choices: sProposal.choices,
     },
     voteResults: {
-      votes: sProposal.scores_total,
-      scores: sProposal.votes,
+      votes: sProposal.votes,
+      scores: sProposal.scores,
       choices: sProposal.choices,
     }
   };
@@ -118,6 +126,7 @@ export class SnapshotHandler {
         voteProposalId: proposal.id,
         totalVotes: proposal.votes,
         scoresState: proposal.scores_state,
+        scoresTotal: proposal.scores_total,
         scores: proposal.choices.reduce((output: any, choice: string, index: number) => {
           return {
             ...output, [choice]: proposal.scores[index]
@@ -134,12 +143,13 @@ export class SnapshotHandler {
         where: {
           space: "${this.config.snapshot.space}"
         }
-        first: 1000
+        first: 5
       ) {
         id
         votes
         type
         start
+        state
         choices
         scores
         scores_total

@@ -16,6 +16,7 @@ import { addSecondsToDate, floatToPercentage } from '../../../utils';
 import { InternalVoteResults } from '../../../types';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import logger from '../../../logging';
+import { getSpaceInfo } from '../getSpaceInfo';
 
 export const handleVoteSetup = async (space: SpaceInfo) => {
   const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
@@ -70,6 +71,30 @@ export const handleSendVoteRollup = async (space: SpaceInfo) => {
     return true;
   }
   return false;
+};
+
+export const handleSendQuorumRollup = async (space: SpaceInfo) => {
+  const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
+  const proposals = await dolt.getVoteProposals(true);
+  const snapshot = new SnapshotHandler('', space.config); // dont need private key for this call
+  const proposalSnapshotIdStrings = proposals.map((proposal) => { return `"${proposal.voteURL}"`; });
+  const voteResults = await snapshot.getProposalVotes(proposalSnapshotIdStrings);
+  const proposalsUnderQuorum = voteResults.filter((vote) => {
+    return vote.scoresTotal < space.config.snapshot.minTokenPassingAmount;
+  }).map((vote) => {
+    const findProposal = proposals.find((proposal) => { return proposal.voteURL === vote.voteProposalId; });
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      ...findProposal!,
+      internalVoteResults: {
+        ...vote,
+        quorumMet: false
+      },
+    };
+  });
+  const waterbox = await getSpaceInfo('waterbox');
+  const dialogHandler = await discordLogin(waterbox.config);
+  dialogHandler.sendQuorumRollup(proposalsUnderQuorum, space.currentEvent.end);
 };
 
 export const handleSendVoteEndAlert = async (space: SpaceInfo) => {

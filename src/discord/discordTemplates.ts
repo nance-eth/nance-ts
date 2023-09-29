@@ -85,6 +85,23 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
     );
 };
 
+export const proposalsUnderQuorumMessage = (proposals: Proposal[], space: string, proposalIdPrefix: string, endDate: Date) => {
+  return new EmbedBuilder().setColor('#f5b942').setTitle(
+    `Voting is open until <t:${dateToUnixTimeStamp(endDate)}> (<t:${dateToUnixTimeStamp(endDate)}:R>)`
+  ).setURL(`${DEFAULT_DASHBOARD}/s/${space}`).setDescription(`${String(proposals.length)} proposals`)
+    .addFields(
+      proposals.map((proposal: Proposal) => {
+        proposal.url = getProposalURL(space, proposal);
+        return {
+          name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
+          value: stripIndents`
+          [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.url})
+          ------------------------------`,
+        };
+      })
+    );
+};
+
 export const reminderEndMessage = (thingToRemind: string, endDate: Date, url = '') => {
   return new EmbedBuilder().setColor('#F19800').setTitle(
     `${thingToRemind} ending <t:${dateToUnixTimeStamp(endDate)}:R>!`
