@@ -3,7 +3,7 @@ import { discordLogin } from '../discord';
 import { shouldIncrementDay } from './logic';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import { pools } from '../../../dolt/pools';
-import { dateAtTime } from '../../../utils';
+import { addDaysToDate, dateAtTime } from '../../../utils';
 import { EVENTS } from './constants';
 import logger from '../../../logging';
 
@@ -14,10 +14,12 @@ const safeIncrement = (space: SpaceInfo) => {
   const determineCycleDay = (space.currentDay + 1 <= space.totalCycleDays) ? space.currentDay + 1 : 1;
   const determineGovernanceCycle = determineCycleDay === 1 ? space.currentCycle + 1 : space.currentCycle;
   const determineCurrentEvent = determineCycleDay === 1 ? space.nextEvent : space.currentEvent;
+  // the start end dates are off by one if we have incremented the currrent day
+  const correctedCurrentEvent = { title: determineCurrentEvent.title, start: addDaysToDate(determineCurrentEvent.start, -1), end: addDaysToDate(determineCurrentEvent.end, -1) };
   return {
     updatedCycleCurrentDay: determineCycleDay,
     updatedCurrentGovernanceCycle: determineGovernanceCycle,
-    updatedCurrentEvent: determineCurrentEvent,
+    updatedCurrentEvent: correctedCurrentEvent,
   };
 };
 
