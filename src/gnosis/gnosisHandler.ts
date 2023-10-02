@@ -118,7 +118,6 @@ export class GnosisHandler {
       url: `${this.TRANSACTION_API}/api/v1/safes/${this.safeAddress}/all-transactions`,
       headers,
       params: {
-        ordering: 'nonce',
         limit: 10,
         executed: false,
         queued,
@@ -137,7 +136,6 @@ export class GnosisHandler {
       url: `${API()}/api/v1/safes/${safeAddress}/all-transactions`,
       headers,
       params: {
-        ordering: 'nonce',
         limit: 10,
         executed: false,
         queued,
