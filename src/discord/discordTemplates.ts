@@ -23,6 +23,10 @@ export const archiveDiscussionMessage = (proposal: Proposal) => {
   return new EmbedBuilder().setTitle(`[ARCHIVED] ${proposal.title}`);
 };
 
+export const deletedDiscussionMessage = (proposal: Proposal) => {
+  return new EmbedBuilder().setTitle(`[DELETED] ${proposal.title}`);
+};
+
 export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {
   return new EmbedBuilder().setColor('#c1272d').setTitle(
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
@@ -261,5 +265,10 @@ export const proposalArchiveAlert = () => {
 
 export const proposalUnarchiveAlert = () => {
   const message = '✅ This proposal has been unarchived by the author. It will be carried through the regular proposal process ✅';
+  return message;
+};
+
+export const proposalDeleteAlert = () => {
+  const message = '🗑️ This proposal has been deleted by the author. It has been permanently removed from the Nance database 🗑️';
   return message;
 };

@@ -106,13 +106,14 @@ export class DiscordHandler {
 
   async sendVoteRollup(proposals: Proposal[], endDate: Date) {
     const message = discordTemplates.voteRollUpMessage(
-      `${this.config.snapshot.base}`,
+      `${DEFAULT_DASHBOARD}/s/${this.config.name}`,
       this.config.propertyKeys.proposalIdPrefix,
       proposals,
       this.config.name,
       endDate
     );
-    return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
+    const content = this.config.discord.roles.governance ? this.roleTag : undefined;
+    return this.getAlertChannel().send({ content, embeds: [message] }).then((messageObj) => {
       return messageObj.id;
     });
   }
@@ -357,5 +358,19 @@ export class DiscordHandler {
     const res = await messageObj.delete();
     logger.info(`Deleted message ${messageId} with result ${res}`);
     return res;
+  }
+
+  async sendProposalDelete(proposal: Proposal) {
+    const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
+    const message = discordTemplates.deletedDiscussionMessage(proposal);
+    // keep url the same
+    message.setURL(messageObj.embeds[0].url);
+    messageObj.edit({ embeds: [message] });
+    messageObj.thread?.edit({ name: limitLength(proposal.title) });
+    // send alert to thread
+    const deleteMessage = discordTemplates.proposalDeleteAlert();
+    // remove all reacts
+    await messageObj.reactions.removeAll();
+    await messageObj.thread?.send({ content: deleteMessage });
   }
 }

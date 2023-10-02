@@ -329,6 +329,10 @@ router.delete('/:space/proposal/:hash', async (req, res) => {
   if (permissions) {
     logger.info(`DELETE issued by ${address}`);
     deleteFunction(hash).then(async (affectedRows: number) => {
+      const discord = new DiscordHandler(config);
+      // eslint-disable-next-line no-await-in-loop
+      while (!discord.ready()) { await sleep(50); }
+      try { await discord.sendProposalDelete(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
       res.json({ success: true, data: { affectedRows } });
     }).catch((e: any) => {
       res.json({ success: false, error: e });
