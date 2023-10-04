@@ -5,7 +5,7 @@ import path from 'path';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { DayHourMinutes, NanceConfig, Network } from './types';
+import { NanceConfig, Network } from './types';
 import { keys } from './keys';
 
 export const myProvider = (network = 'mainnet' as Network) => {
