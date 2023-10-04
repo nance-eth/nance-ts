@@ -273,9 +273,3 @@ export type GovernorProposeTransaction = {
   description: string;
   signatures?: string[];
 };
-
-export type DayHourMinutes = {
-  days: number;
-  hours: number;
-  minutes: number;
-};
