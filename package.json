@@ -10,6 +10,8 @@
     "start:api": "export CONSOLE_LOG=on && node ./dist/api/index.js",
     "dev:api": "export CONSOLE_LOG=on && export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
     "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 && cp -r ./src/config/ ./dist/config/ && cp -r ./src/transactions/abi ./dist/transactions/abi",
+    "build:nance-auto": "tsc src/api/auto/auto.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021",
+    "start:nance-auto": "export CONSOLE_LOG=on && node ./dist/api/auto/auto.js",
     "dolt-client": "source .env && mysql -h$DOLT_HOST -u$DOLT_USER -p$DOLT_PASSWORD"
   },
   "dependencies": {

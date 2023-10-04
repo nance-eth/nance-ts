@@ -8,7 +8,6 @@ const cycleStageLengthsToInterval = (cycleStageLengths: number[]) => {
 
 export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date): DateEvent[] => {
   const interval = cycleStageLengthsToInterval(cycleStageLengths);
-  const dateDelta = inputDate.getTime() - new Date(events[0].start).getTime();
   const repeats = Math.floor((inputDate.getTime() - new Date(events[0].start).getTime()) / interval);
   const nextEvents: DateEvent[] = [];
   events.forEach((event) => {
@@ -16,20 +15,28 @@ export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], 
     const originalEnd = new Date(event.end);
     const start = new Date(originalStart.getTime() + repeats * interval);
     const end = new Date(originalEnd.getTime() + repeats * interval);
-    if (inputDate > end) { return; }
-    nextEvents.push({
-      title: event.title,
-      start,
-      end,
-    });
+    const nextStart = new Date(start.getTime() + interval);
+    const nextEnd = new Date(end.getTime() + interval);
+    nextEvents.push(
+      {
+        title: event.title,
+        start,
+        end,
+      },
+      {
+        title: event.title,
+        start: nextStart,
+        end: nextEnd,
+      }
+    );
   });
-  // always add one more of the first event so that if we are at the last event in cycle we know the next one
-  nextEvents.push({
-    title: events[0].title,
-    start: new Date(nextEvents[nextEvents.length - 1].end.getTime()),
-    end: new Date(new Date(events[0].end).getTime() + ((repeats + 1) * interval)),
+  // sort by start date and remove events that have ended
+  const nextEventsCleaned = nextEvents.sort((a, b) => {
+    return a.start.getTime() - b.start.getTime();
+  }).filter((event) => {
+    return event.end.getTime() > inputDate.getTime();
   });
-  return nextEvents;
+  return nextEventsCleaned;
 };
 
 export const getCurrentEvent = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date) => {

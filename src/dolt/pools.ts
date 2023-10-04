@@ -12,9 +12,9 @@ export async function fetchPools() {
   const sys = new DoltSysHandler(sysDolt);
   pools.nance_sys = sysDolt;
   const spaces = await sys.getAllSpaceNames();
-  console.log('loading pools...');
+  // console.log('loading pools...');
   spaces.forEach((space) => {
-    console.log(space.space);
+    // console.log(space.space);
     try {
       pools[space.space] = new DoltSQL(dbOptions(space.space));
     } catch (e) {

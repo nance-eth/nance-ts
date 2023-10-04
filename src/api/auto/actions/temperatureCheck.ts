@@ -1,4 +1,4 @@
-import { discordLogin } from '../discord';
+import { discordLogin } from '../../helpers/discord';
 import { SpaceInfo } from '../../models';
 import { EVENTS } from '../../../constants';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
@@ -6,6 +6,7 @@ import { DoltHandler } from '../../../dolt/doltHandler';
 import { pools } from '../../../dolt/pools';
 import { getLastSlash } from '../../../utils';
 import logger from '../../../logging';
+import { NanceConfig } from '../../../types';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
@@ -18,15 +19,15 @@ const pollPassCheck = (space: SpaceInfo, yesCount: number, noCount: number) => {
   return false;
 };
 
-export const sendTemperatureCheckStartAlert = async (space: SpaceInfo) => {
-  const dialogHandler = await discordLogin(space.config);
+export const sendTemperatureCheckStartAlert = async (config: NanceConfig, date: Date) => {
+  const dialogHandler = await discordLogin(config);
   const temperatureCheckStartReminder = await dialogHandler.sendReminder(
     EVENTS.TEMPERATURE_CHECK,
-    space.currentEvent.end,
+    date,
     'start'
   );
   await doltSys.updateDialogHandlerMessageId(
-    space.name,
+    config.name,
     'temperatureCheckStartAlert',
     temperatureCheckStartReminder
   );
@@ -34,24 +35,24 @@ export const sendTemperatureCheckStartAlert = async (space: SpaceInfo) => {
   return true;
 };
 
-export const deleteTemperatureCheckStartAlert = async (space: SpaceInfo) => {
-  const dialogHandler = await discordLogin(space.config);
-  await dialogHandler.deleteMessage(space.dialog.temperatureCheckStartAlert);
-  await doltSys.updateDialogHandlerMessageId(space.name, 'temperatureCheckStartAlert', '');
+export const deleteTemperatureCheckStartAlert = async (config: NanceConfig, messageId: string) => {
+  const dialogHandler = await discordLogin(config);
+  await dialogHandler.deleteMessage(messageId);
+  await doltSys.updateDialogHandlerMessageId(config.name, 'temperatureCheckStartAlert', '');
   dialogHandler.logout();
   return true;
 };
 
-export const sendTemperatureCheckRollup = async (space: SpaceInfo) => {
-  const dialogHandler = await discordLogin(space.config);
-  const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
+export const sendTemperatureCheckRollup = async (config: NanceConfig, date: Date) => {
+  const dialogHandler = await discordLogin(config);
+  const dolt = new DoltHandler(pools[config.name], config.propertyKeys);
   const proposals = await dolt.getDiscussionProposals();
   const temperatureCheckRollup = await dialogHandler.sendTemperatureCheckRollup(
     proposals,
-    space.currentEvent.end,
+    date,
   );
   // TODO: update status of proposals to temperatureCheck
-  await doltSys.updateDialogHandlerMessageId(space.name, 'temperatureCheckRollup', temperatureCheckRollup);
+  await doltSys.updateDialogHandlerMessageId(config.name, 'temperatureCheckRollup', temperatureCheckRollup);
   dialogHandler.logout();
   return true;
 };

@@ -198,7 +198,6 @@ export interface NanceConfig {
       channelIds: string[];
       imagesCID: string;
       imageNames: string[];
-      links: Record<string, string>;
     };
   };
   propertyKeys: PropertyKeys;
