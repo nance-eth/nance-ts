@@ -1,4 +1,4 @@
-import { NanceConfig, JBSplitStruct, Action } from '../types';
+import { NanceConfig, JBSplitStruct, Action, DateEvent } from '../types';
 
 export type SQLProposal = {
   uuid: string;
@@ -79,8 +79,7 @@ export type SpaceConfig = {
   spaceOwners: string[],
   cid: string;
   config: NanceConfig;
-  calendar: string;
-  cycleCurrentDay: number;
+  calendar: DateEvent[];
   cycleTriggerTime: string;
   cycleStageLengths: number[];
   dialogHandlerMessageIds: DialogHandlerMessageIds;

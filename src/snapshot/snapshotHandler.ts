@@ -3,7 +3,7 @@ import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
 import { Proposal, InternalVoteResults, SnapshotVoteOptions, NanceConfig } from '../types';
 import { dateToUnixTimeStamp, myProvider, uuidGen } from '../utils';
-import { STATUS } from '../api/helpers/auto/constants';
+import { STATUS } from '../constants';
 
 export type SnapshotProposal = {
   id: string;

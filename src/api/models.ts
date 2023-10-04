@@ -15,10 +15,8 @@ export type SpaceInfo = {
   juiceboxProjectId: string;
   dolthubLink: string;
   currentDay: number;
-  totalCycleDays: number;
   cycleDayLastUpdated: Date;
   cycleTriggerTime: string;
-  nextEvent: DateEvent;
   dialog: DialogHandlerMessageIds;
   config: NanceConfig;
   spaceOwners: string[];

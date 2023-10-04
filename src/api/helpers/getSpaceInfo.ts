@@ -3,11 +3,11 @@ import { DoltHandler } from '../../dolt/doltHandler';
 import { pools } from '../../dolt/pools';
 import { SpaceInfo } from '../models';
 import { mySQLTimeToUTC } from '../../utils';
-import { getCurrentAndNextEvent } from '../../dolt/helpers/cycleConfigToDateEvent';
 import { headToUrl } from '../../dolt/doltAPI';
 import { juiceboxTime } from './juicebox';
 import { DateEvent } from '../../types';
-import { EVENTS } from './auto/constants';
+import { EVENTS } from '../../constants';
+import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../../calendar/events';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
@@ -17,17 +17,18 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
     const dolt = new DoltHandler(pools[space], entry.config.propertyKeys);
     let juiceboxTimeOutput;
     let currentEvent: DateEvent;
-    let nextEvent: DateEvent | null;
-    let { cycleCurrentDay, currentGovernanceCycle } = entry;
-    [currentEvent, nextEvent] = getCurrentAndNextEvent(entry);
+    let cycleCurrentDay: number;
+    let { currentGovernanceCycle } = entry;
+    const currentEventFromCalendar = getCurrentEvent(entry.calendar, entry.cycleStageLengths, new Date());
     // if no current cycle information, fetch from juicebox
-    if (!entry.currentGovernanceCycle && !entry.cycleCurrentDay) {
+    if (!currentEventFromCalendar) {
       juiceboxTimeOutput = await juiceboxTime(entry.config.juicebox.projectId);
       ({ cycleCurrentDay, currentGovernanceCycle } = juiceboxTimeOutput);
       currentEvent = { title: EVENTS.NULL, start: new Date(juiceboxTimeOutput.startTimestamp), end: new Date(juiceboxTimeOutput.endTimestamp) };
-      nextEvent = currentEvent;
+    } else {
+      currentEvent = currentEventFromCalendar;
+      cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, entry.cycleStageLengths, new Date());
     }
-    const totalCycleDays = (entry.cycleStageLengths) ? entry.cycleStageLengths.reduce((a, b) => { return a + b; }, 0) : 0;
     const dolthubLink = await dolt.getHead().then((head) => {
       return headToUrl(entry.config.dolt.owner, entry.config.dolt.repo, head);
     }).catch((e) => {
@@ -38,8 +39,6 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
       name: space,
       currentCycle: currentGovernanceCycle,
       currentEvent,
-      nextEvent,
-      totalCycleDays,
       currentDay: cycleCurrentDay,
       cycleTriggerTime: entry.cycleTriggerTime,
       cycleDayLastUpdated: mySQLTimeToUTC(entry.cycleDayLastUpdated),

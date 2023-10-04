@@ -11,7 +11,7 @@ import { getLastSlash, myProvider, sleep } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { SQLPayout, SQLTransfer } from '../dolt/schema';
-import { Proposal, GovernorProposeTransaction, BasicTransaction, NanceConfig } from '../types';
+import { Proposal, GovernorProposeTransaction, BasicTransaction } from '../types';
 import { diffBody } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
@@ -19,7 +19,7 @@ import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
-import { EVENTS, STATUS } from './helpers/auto/constants';
+import { EVENTS, STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpaceInfo';
 
 const router = express.Router();
@@ -29,19 +29,18 @@ const doltSys = new DoltSysHandler(pools.nance_sys);
 
 async function handlerReq(query: string, auth: string | undefined) {
   try {
-    const spaceConfig = await getSpaceInfo(query);
-    const dolt = new DoltHandler(pools[query], spaceConfig.config.propertyKeys);
+    const spaceInfo = await getSpaceInfo(query);
+    const dolt = new DoltHandler(pools[query], spaceInfo.config.propertyKeys);
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
     return {
-      spaceOwners: spaceConfig.spaceOwners,
+      spaceOwners: spaceInfo.spaceOwners,
       address,
-      config: spaceConfig.config,
-      currentGovernanceCycle: spaceConfig.currentCycle,
-      currentEvent: spaceConfig.currentEvent,
-      nextEvent: spaceConfig.nextEvent,
+      config: spaceInfo.config,
+      currentGovernanceCycle: spaceInfo.currentCycle,
+      currentEvent: spaceInfo.currentEvent,
       dolt,
-      dolthubLink: spaceConfig.dolthubLink,
+      dolthubLink: spaceInfo.dolthubLink,
     };
   } catch (e) {
     logger.error(e);
@@ -54,16 +53,14 @@ async function handlerReq(query: string, auth: string | undefined) {
 // ================================ //
 router.get('/:space', async (req, res) => {
   const { space } = req.params;
-  let currentJuiceboxEvent;
   try {
-    const { config, currentEvent, currentGovernanceCycle, nextEvent, dolthubLink, spaceOwners } = await handlerReq(space, req.headers.authorization);
+    const { config, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners } = await handlerReq(space, req.headers.authorization);
     return res.send({
       sucess: true,
       data: {
         name: space,
         currentCycle: currentGovernanceCycle,
-        currentEvent: currentEvent || currentJuiceboxEvent,
-        nextEvent,
+        currentEvent,
         spaceOwners,
         snapshotSpace: config.snapshot.space,
         juiceboxProjectId: config.juicebox.projectId,

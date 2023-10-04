@@ -72,12 +72,6 @@ export const minutesToDays = (minutes: number) => {
   return minutes / 24 / 60;
 };
 
-export const secondsToDayHoursMinutes = (seconds: number): DayHourMinutes => {
-  const days = Math.floor(seconds / (24 * 3600));
-  const hours = Math.floor((seconds % (24 * 3600)) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return { days, hours, minutes };
-};
 export const dateAtTime = (date: Date, time: string) => {
   const [hour, minute, seconds] = time.split(':');
   date.setUTCHours(Number(hour));

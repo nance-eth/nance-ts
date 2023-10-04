@@ -72,7 +72,6 @@ export class DoltSysHandler {
         cid,
         spaceOwners,
         config,
-        cycleCurrentDay,
         cycleTriggerTime,
         cycleStageLengths,
         dialogHandlerMessageIds,
@@ -85,7 +84,6 @@ export class DoltSysHandler {
         cid = VALUES(cid),
         spaceOwners = VALUES(spaceOwners),
         config = VALUES(config),
-        cycleCurrentDay = VALUES(cycleCurrentDay),
         cycleTriggerTime = VALUES(cycleTriggerTime),
         cycleStageLengths = VALUES(cycleStageLengths),
         lastUpdated = NOW()
@@ -94,7 +92,6 @@ export class DoltSysHandler {
       cid,
       JSON.stringify(spaceOwners),
       JSON.stringify(config),
-      cycleCurrentDay,
       cycleTriggerTime,
       JSON.stringify(cycleStageLengths),
       JSON.stringify(defaultDialogHandlerMessageIds),
@@ -105,15 +102,14 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async updateCycle(space: string, cycleCurrentDay: number, currentGovernanceCycle: number, time: Date) {
+  async updateCycle(space: string, currentGovernanceCycle: number, time: Date) {
     return this.localDolt.queryResults(oneLine`
       UPDATE ${system}
       SET
-        cycleCurrentDay = ?,
         currentGovernanceCycle = ?,
         cycleDayLastUpdated = ?
       WHERE space = ?;
-    `, [cycleCurrentDay, currentGovernanceCycle, time.toISOString(), space]).then((res) => {
+    `, [currentGovernanceCycle, time.toISOString(), space]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });
   }

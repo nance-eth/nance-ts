@@ -26,3 +26,4 @@ export const STATUS = {
 
 export const ONE_HOUR_SECONDS = 3600;
 export const FIVE_MINUTES_SECONDS = 300;
+export const ONE_DAY_MILLISECONDS = 24 * 60 * 60 * 1000;

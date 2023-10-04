@@ -1,23 +1,17 @@
 import { discordLogin } from '../discord';
 import { SpaceInfo } from '../../models';
-import { EVENTS } from './constants';
+import { EVENTS } from '../../../constants';
 import { SnapshotHandler } from '../../../snapshot/snapshotHandler';
 import { DoltHandler } from '../../../dolt/doltHandler';
 import { pools } from '../../../dolt/pools';
 import { keys } from '../../../keys';
-import {
-  shouldSendVoteRollup,
-  shouldSendVoteEndAlert,
-  shouldDeleteVoteEndAlert,
-  shouldCloseVote
-} from './logic';
 import { dotPin } from '../../../storage/storageHandler';
 import { addSecondsToDate, floatToPercentage } from '../../../utils';
 import { InternalVoteResults } from '../../../types';
 import { DoltSysHandler } from '../../../dolt/doltSysHandler';
 import logger from '../../../logging';
 
-export const handleVoteSetup = async (space: SpaceInfo) => {
+export const voteSetup = async (space: SpaceInfo) => {
   const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
   const proposals = await dolt.getVoteProposals();
   if (space.currentEvent?.title === EVENTS.SNAPSHOT_VOTE && proposals.length > 0) {
@@ -53,26 +47,23 @@ export const handleVoteSetup = async (space: SpaceInfo) => {
   return false;
 };
 
-export const handleSendVoteRollup = async (space: SpaceInfo) => {
-  if (shouldSendVoteRollup(space)) {
-    const doltSys = new DoltSysHandler(pools.nance_sys);
-    const dialogHandler = await discordLogin(space.config);
-    const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
-    const proposals = await dolt.getVoteProposals(true);
-    const votingRollup = await dialogHandler.sendVoteRollup(
-      proposals,
-      space.currentEvent.end,
-    );
-    await doltSys.updateDialogHandlerMessageId(space.name, 'votingRollup', votingRollup);
-    await doltSys.updateDialogHandlerMessageId(space.name, 'votingEndAlert', '');
-    await doltSys.updateDialogHandlerMessageId(space.name, 'votingResultsRollup', '');
-    dialogHandler.logout();
-    return true;
-  }
-  return false;
+export const sendVoteRollup = async (space: SpaceInfo) => {
+  const doltSys = new DoltSysHandler(pools.nance_sys);
+  const dialogHandler = await discordLogin(space.config);
+  const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
+  const proposals = await dolt.getVoteProposals(true);
+  const votingRollup = await dialogHandler.sendVoteRollup(
+    proposals,
+    space.currentEvent.end,
+  );
+  await doltSys.updateDialogHandlerMessageId(space.name, 'votingRollup', votingRollup);
+  await doltSys.updateDialogHandlerMessageId(space.name, 'votingEndAlert', '');
+  await doltSys.updateDialogHandlerMessageId(space.name, 'votingResultsRollup', '');
+  dialogHandler.logout();
+  return true;
 };
 
-export const handleSendQuorumRollup = async (space: SpaceInfo) => {
+export const sendQuorumRollup = async (space: SpaceInfo) => {
   const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
   const proposals = await dolt.getVoteProposals(true);
   const snapshot = new SnapshotHandler('', space.config); // dont need private key for this call
@@ -95,20 +86,17 @@ export const handleSendQuorumRollup = async (space: SpaceInfo) => {
   dialogHandler.sendQuorumRollup(proposalsUnderQuorum, space.currentEvent.end);
 };
 
-export const handleSendVoteEndAlert = async (space: SpaceInfo) => {
-  if (shouldSendVoteEndAlert(space)) {
-    const doltSys = new DoltSysHandler(pools.nance_sys);
-    const dialogHandler = await discordLogin(space.config);
-    const votingEndAlert = await dialogHandler.sendReminder(
-      EVENTS.SNAPSHOT_VOTE,
-      space.currentEvent.end,
-      'end'
-    );
-    await doltSys.updateDialogHandlerMessageId(space.name, 'votingEndAlert', votingEndAlert);
-    dialogHandler.logout();
-    return true;
-  }
-  return false;
+export const sendVoteEndAlert = async (space: SpaceInfo) => {
+  const doltSys = new DoltSysHandler(pools.nance_sys);
+  const dialogHandler = await discordLogin(space.config);
+  const votingEndAlert = await dialogHandler.sendReminder(
+    EVENTS.SNAPSHOT_VOTE,
+    space.currentEvent.end,
+    'end'
+  );
+  await doltSys.updateDialogHandlerMessageId(space.name, 'votingEndAlert', votingEndAlert);
+  dialogHandler.logout();
+  return true;
 };
 
 const getVotePercentages = (space: SpaceInfo, voteResults: InternalVoteResults) => {
@@ -130,56 +118,50 @@ const votePassCheck = (space: SpaceInfo, voteResults: InternalVoteResults) => {
   );
 };
 
-export const handleVoteClose = async (space: SpaceInfo) => {
-  if (shouldCloseVote(space)) {
-    const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
-    const proposals = await dolt.getVoteProposals(true);
-    if (proposals.length === 0) return false;
-    const proposalSnapshotIdStrings = proposals.map((proposal) => { return `"${proposal.voteURL}"`; });
-    const snapshot = new SnapshotHandler('', space.config); // dont need private key for this call
-    const voteResults = await snapshot.getProposalVotes(proposalSnapshotIdStrings);
-    return Promise.all(voteResults.map(async (vote) => {
-      const findProposal = proposals.find((proposal) => { return proposal.voteURL === vote.voteProposalId; });
-      if (!findProposal) { return; }
-      const pass = (votePassCheck(space, vote));
-      const percentages = getVotePercentages(space, vote);
-      const outcomeEmoji = pass ? space.config.discord.poll.voteCancelledEmoji : space.config.discord.poll.voteCancelledEmoji;
-      const outcomePercentage = pass ? floatToPercentage(percentages[space.config.snapshot.choices[0]]) : floatToPercentage(percentages[space.config.snapshot.choices[1]]);
-      const outcomeStatus = pass ? space.config.propertyKeys.statusApproved : space.config.propertyKeys.statusCancelled;
-      const updatedProposal = {
-        ...findProposal,
-        status: outcomeStatus,
-        internalVoteResults: {
-          ...vote,
-          percentages,
-          outcomeEmoji,
-          outcomePercentage,
-        },
-      };
-      await dolt.updateVotingClose(updatedProposal);
-    })).then(async () => {
-      const dialogHandler = await discordLogin(space.config);
-      const doltSys = new DoltSysHandler(pools.nance_sys);
-      return dialogHandler.sendVoteResultsRollup(proposals).then((messageId) => {
-        doltSys.updateDialogHandlerMessageId(space.name, 'votingResultsRollup', messageId);
-        return true;
-      }).catch((e) => {
-        return Promise.reject(e);
-      });
+export const voteClose = async (space: SpaceInfo) => {
+  const dolt = new DoltHandler(pools[space.name], space.config.propertyKeys);
+  const proposals = await dolt.getVoteProposals(true);
+  if (proposals.length === 0) return false;
+  const proposalSnapshotIdStrings = proposals.map((proposal) => { return `"${proposal.voteURL}"`; });
+  const snapshot = new SnapshotHandler('', space.config); // dont need private key for this call
+  const voteResults = await snapshot.getProposalVotes(proposalSnapshotIdStrings);
+  return Promise.all(voteResults.map(async (vote) => {
+    const findProposal = proposals.find((proposal) => { return proposal.voteURL === vote.voteProposalId; });
+    if (!findProposal) { return; }
+    const pass = (votePassCheck(space, vote));
+    const percentages = getVotePercentages(space, vote);
+    const outcomeEmoji = pass ? space.config.discord.poll.voteCancelledEmoji : space.config.discord.poll.voteCancelledEmoji;
+    const outcomePercentage = pass ? floatToPercentage(percentages[space.config.snapshot.choices[0]]) : floatToPercentage(percentages[space.config.snapshot.choices[1]]);
+    const outcomeStatus = pass ? space.config.propertyKeys.statusApproved : space.config.propertyKeys.statusCancelled;
+    const updatedProposal = {
+      ...findProposal,
+      status: outcomeStatus,
+      internalVoteResults: {
+        ...vote,
+        percentages,
+        outcomeEmoji,
+        outcomePercentage,
+      },
+    };
+    await dolt.updateVotingClose(updatedProposal);
+  })).then(async () => {
+    const dialogHandler = await discordLogin(space.config);
+    const doltSys = new DoltSysHandler(pools.nance_sys);
+    return dialogHandler.sendVoteResultsRollup(proposals).then((messageId) => {
+      doltSys.updateDialogHandlerMessageId(space.name, 'votingResultsRollup', messageId);
+      return true;
+    }).catch((e) => {
+      return Promise.reject(e);
     });
-  }
-  return false;
+  });
 };
 
-export const handleDeleteVoteEndAlert = async (space: SpaceInfo) => {
-  if (shouldDeleteVoteEndAlert(space)) {
-    const dialogHandler = await discordLogin(space.config);
-    await dialogHandler.deleteMessage(space.dialog.votingEndAlert);
-    const doltSys = new DoltSysHandler(pools.nance_sys);
-    await doltSys.updateDialogHandlerMessageId(space.name, 'votingEndAlert', '');
-    await doltSys.updateDialogHandlerMessageId(space.name, 'votingRollup', '');
-    dialogHandler.logout();
-    return true;
-  }
-  return false;
+export const deleteVoteEndAlert = async (space: SpaceInfo) => {
+  const dialogHandler = await discordLogin(space.config);
+  await dialogHandler.deleteMessage(space.dialog.votingEndAlert);
+  const doltSys = new DoltSysHandler(pools.nance_sys);
+  await doltSys.updateDialogHandlerMessageId(space.name, 'votingEndAlert', '');
+  await doltSys.updateDialogHandlerMessageId(space.name, 'votingRollup', '');
+  dialogHandler.logout();
+  return true;
 };

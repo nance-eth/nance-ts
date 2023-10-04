@@ -2,7 +2,6 @@ import cors from 'cors';
 import express from 'express';
 import api from './api';
 import ish from './nanceish';
-import auto from './auto';
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -13,8 +12,6 @@ app.use(cors({
 app.set('json spaces', 2);
 
 app.use('/ish', ish);
-
-app.use('/auto', auto);
 
 app.use('/', api);
 

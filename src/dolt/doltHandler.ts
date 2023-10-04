@@ -4,11 +4,11 @@
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
 import { Proposal, PropertyKeys, Transfer, Payout, CustomTransaction, Reserve } from '../types';
-import { GovernanceCycle, SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
+import { SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
 import { SELECT_ACTIONS } from './queries';
-import { STATUS } from '../api/helpers/auto/constants';
+import { STATUS } from '../constants';
 
 const proposalsTable = 'proposals';
 const privateProposalsTable = 'private_proposals';
