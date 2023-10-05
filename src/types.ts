@@ -195,6 +195,7 @@ export interface NanceConfig {
       verifyRole: string;
     };
     reminder: {
+      type: string;
       channelIds: string[];
       imagesCID: string;
       imageNames: string[];

@@ -87,13 +87,6 @@ export const scheduleEvents = (events: DateEvent[], spaceConfig: SpaceConfig) =>
         console.log(`voteClose sent for ${space}`);
       });
 
-      // Send Snapshot Vote results rollup
-      const svResultsRollupTitle = formatJobTitle(space, 'snapshotVoteResultsRollup', event.end);
-      scheduleJob(svResultsRollupTitle, event.end, () => {
-        sendVoteRollup(config, event.end);
-        console.log(`sendVoteRollup sent for ${space}`);
-      });
-
       // Delete Snapshot Vote end alert
       const snapshotVoteStartAlertDeleteTime = addSecondsToDate(event.end, FIVE_MINUTES_SECONDS);
       const svDeleteAlertTitle = formatJobTitle(space, 'deleteSnapshotVoteStartAlert', snapshotVoteStartAlertDeleteTime);
@@ -115,7 +108,7 @@ export const scheduleDailyAlerts = (spaceConfig: SpaceConfig) => {
     if (!currentEvent) return;
     const currentGovernanceCycleDay = getCurrentGovernanceCycleDay(currentEvent, cycleStageLengths, now);
     const dialogHandler = await discordLogin(config);
-    await dialogHandler.sendImageReminder(currentGovernanceCycleDay, currentGovernanceCycle, currentEvent.title, currentEvent.end);
+    await dialogHandler.sendDailyReminder(currentGovernanceCycleDay, currentGovernanceCycle, currentEvent.title, currentEvent.end);
     console.log(`dailyAlerts sent for ${space}`);
     console.log(`next innvocation at ${schedule.scheduledJobs[`${space}:dailyAlerts`].nextInvocation().toISOString()}`);
   });

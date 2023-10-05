@@ -10,6 +10,7 @@ import {
   ThreadAutoArchiveDuration,
   EmbedBuilder,
   EmbedField,
+  AttachmentBuilder,
 } from 'discord.js';
 import logger from '../logging';
 import { limitLength, getLastSlash, DEFAULT_DASHBOARD } from '../utils';
@@ -168,12 +169,25 @@ export class DiscordHandler {
     });
   }
 
-  async sendImageReminder(day: number, governanceCycle: number, type: string, endDate: Date, noImage = false) {
+  async sendDailyReminder(day: number, governanceCycle: number, type: string, endDate: Date, noImage = false) {
     const endSeconds = endDate.getTime() / 1000;
     const link = `${DEFAULT_DASHBOARD}/s/${this.config.name}`;
-    const { message, attachments } = (noImage)
-      ? discordTemplates.dailyTextReminder(governanceCycle, day, endSeconds, link)
-      : await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, link, endSeconds);
+    const reminderType = this.config.discord.reminder.type;
+    let message: EmbedBuilder;
+    let attachments: AttachmentBuilder[];
+    if (reminderType === 'image') {
+      try {
+        ({ message, attachments } = await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, link, endSeconds));
+      } catch (e) {
+        logger.error(`Could not send daily image reminder for ${this.config.name}`);
+        logger.error(e);
+        ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
+      }
+    } else if (reminderType === 'basic') {
+      ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
+    } else if (reminderType === 'juicebox') {
+      ({ message, attachments } = discordTemplates.dailyJuiceboxBasedReminder(governanceCycle, day, endSeconds, link));
+    }
     const channelsSent = this.getDailyUpdateChannels().map((channel) => {
       if (channel) {
         // delete old messages

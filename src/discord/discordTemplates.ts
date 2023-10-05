@@ -143,22 +143,24 @@ export const threadToURL = (thread: ThreadChannel) => {
   return `https://discord.com/channels/${thread.guildId}/${thread.parentId}/${thread.id}`;
 };
 
+const getPreamble = (type: string) => {
+  const typeLower = type.toLowerCase();
+  if (typeLower.includes('delay')) { return 'Submit a proposal'; }
+  if (typeLower.includes('execution')) { return 'Multisig members assemble and configure the next funding cycle'; }
+  if (typeLower.includes('temperature check')) { return 'Take part in the temperature checks'; }
+  if (typeLower.includes('vote')) { return 'Take part in the voting'; }
+  return undefined;
+};
+
 export const dailyImageReminder = async (day: number, imagesCID: string, governanceCycle: number, type: string, contentLink: string, endSeconds: number) => {
   const { thumbnail, image } = await getReminderImages(imagesCID, day);
   const thumbnailAttachment = new AttachmentBuilder(thumbnail, { name: 'thumbnail.png' });
   const imageAttachment = new AttachmentBuilder(image, { name: 'image.png' });
-  const preamble = () => {
-    const typeLower = type.toLowerCase();
-    if (typeLower.includes('delay')) { return 'Submit a proposal'; }
-    if (typeLower.includes('execution')) { return 'Multisig members assemble and configure the next funding cycle'; }
-    if (typeLower.includes('temperature check')) { return 'Take part in the temperature checks'; }
-    if (typeLower.includes('vote')) { return 'Take part in the voting'; }
-    return undefined;
-  };
+  const preamble = getPreamble(type);
   const message = new EmbedBuilder().setTitle('Governance Status').setDescription(
     stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n
-    ${preamble()} [here](${contentLink}) by <t:${endSeconds}:f> (<t:${endSeconds}:R>)!\n
+    ${preamble} [here](${contentLink}) by <t:${endSeconds}:f> (<t:${endSeconds}:R>)!\n
     Read about our governance process [here](${contentLink})`
   ).setThumbnail(
     'attachment://thumbnail.png'
@@ -171,12 +173,20 @@ export const dailyImageReminder = async (day: number, imagesCID: string, governa
   };
 };
 
-export const dailyTextReminder = (governanceCycle: number, day: number, endSeconds?: number, contentLink?: string) => {
+export const dailyJuiceboxBasedReminder = (governanceCycle: number, day: number, endSeconds?: number, contentLink?: string) => {
   const message = new EmbedBuilder().setTitle('Governance Status').setDescription(
     stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n
     A reconfiguration must be submitted by <t:${endSeconds}:f> (<t:${endSeconds}:R>)\n
     submit a proposal [here](${contentLink})\n`
+  );
+  return { message, attachments: [] };
+};
+
+export const dailyBasicReminder = (governanceCycle: number, day: number, type: string, endSeconds?: number, contentLink?: string) => {
+  const message = new EmbedBuilder().setTitle('Governance Status').setDescription(`Today is day ${day} of GC#${governanceCycle}\n`).addFields(
+    { name: 'Current Event', value: type },
+    { name: 'Ends At', value: `<t:${endSeconds}:f> (<t:${endSeconds}:R>)` },
   );
   return { message, attachments: [] };
 };
