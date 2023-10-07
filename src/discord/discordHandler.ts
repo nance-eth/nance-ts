@@ -178,14 +178,14 @@ export class DiscordHandler {
       } catch (e) {
         logger.error(`Could not send daily image reminder for ${this.config.name}`);
         logger.error(e);
-        ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
+        ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, endSeconds, link));
       }
     } else if (reminderType === 'basic') {
-      ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
+      ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, endSeconds, link));
     } else if (reminderType === 'juicebox') {
       ({ message, attachments } = discordTemplates.dailyJuiceboxBasedReminder(governanceCycle, day, endSeconds, juiceboxTimeDelay || (3 * 24 * 3600), link));
     } else { // default to basic
-      ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
+      ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, endSeconds, link));
     }
     const channelsSent = await Promise.all(this.getDailyUpdateChannels().map(async (channel) => {
       if (!channel) return undefined as unknown as TextChannel;
