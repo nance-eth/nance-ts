@@ -1,15 +1,16 @@
-import { getConfig } from '../configLoader';
-import { Nance } from '../nance';
-import { NanceTreasury } from '../treasury';
+import { discordLogin } from '../api/helpers/discord';
+import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { DoltHandler } from '../dolt/doltHandler';
+import { pools } from '../dolt/pools';
 import { sleep } from '../utils';
 
 async function main() {
-  const config = await getConfig();
-  const nance = new Nance(config);
+  const { config, currentCycle } = await getSpaceInfo(process.env.CONFIG || '');
   await sleep(2000);
-  const payouts = await nance.dProposalHandler.getPayoutsDb('V3');
-  const currentGovernanceCycle = await (await nance.dProposalHandler.getCurrentGovernanceCycle()).toString();
-  await nance.dialogHandler.sendPayoutsTable(payouts, currentGovernanceCycle);
+  const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+  const payouts = await dolt.getPayoutsDb(currentCycle);
+  const discord = await discordLogin(config);
+  await discord.sendPayoutsTable(payouts, currentCycle.toString());
 }
 
 main();

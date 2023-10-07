@@ -1,14 +1,14 @@
 import { DiscordHandler } from '../discord/discordHandler';
-import { keys } from '../keys';
-import { getConfig } from '../configLoader';
-import { sleep, addSecondsToDate } from '../utils';
-import { Nance } from '../nance';
+import { sleep } from '../utils';
+import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { EVENTS } from '../constants';
 
 async function sendReminder() {
-  const config = await getConfig();
-  const dialogHandler = new DiscordHandler(config);
-  await sleep(1000);
-  dialogHandler.sendReminder('Temperature Check', addSecondsToDate(new Date(), 6), 'end', '', 6 );
+  const spaceInfo = await getSpaceInfo('juicebox');
+  const dialogHandler = new DiscordHandler(spaceInfo.config);
+  await sleep(3000);
+  console.log(spaceInfo.currentEvent.end);
+  dialogHandler.sendReminder(EVENTS.TEMPERATURE_CHECK, spaceInfo.currentEvent.end, 'start', );
 }
 
 sendReminder();

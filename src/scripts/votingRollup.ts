@@ -1,17 +1,13 @@
 import { Nance } from '../nance';
-import { doltConfig } from '../configLoader';
-import { CalendarHandler } from '../calendar/CalendarHandler';
 import { sleep } from '../utils';
+import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
 
 async function getConfigs() {
-  const { config, calendarText } = await doltConfig(process.env.CONFIG || '');
-  const nance = new Nance(config);
+  const spaceInfo = await getSpaceInfo(process.env.CONFIG || '');
+  const nance = new Nance(spaceInfo.config);
   await sleep(2000);
-  const calendar = new CalendarHandler(calendarText);
-  const nextEvents = calendar.getNextEvents();
-  const nextVote = nextEvents.filter((event) => { return event.title === 'Snapshot Vote' })[0];
   nance.dProposalHandler.getVoteProposals(true).then((proposals) => {
-    nance.dialogHandler.sendVoteRollup(proposals, nextVote.end);
+    nance.dialogHandler.sendVoteRollup(proposals, new Date('2023-10-06T00:00:00.000Z'));
   });
 }
 

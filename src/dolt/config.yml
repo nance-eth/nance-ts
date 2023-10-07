@@ -5,3 +5,7 @@ listener:
   port: 3306
 
 data_dir: src/dolt/databases/
+
+user:
+  name: "root"
+  password: "root"

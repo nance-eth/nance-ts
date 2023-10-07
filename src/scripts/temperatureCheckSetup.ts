@@ -1,16 +1,15 @@
 import { Nance } from '../nance';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
-import { getCurrentAndNextEvent } from '../dolt/helpers/cycleConfigToDateEvent';
+import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
 async function main() {
-  const spaceConfig = await doltSys.getSpaceConfig(process.env.CONFIG || ''); ;
-  const [currentEvent, nextEvent] = getCurrentAndNextEvent(spaceConfig);
-  const nance = new Nance(spaceConfig.config);
-  console.log(currentEvent)
-  nance.temperatureCheckSetup(currentEvent.end);
+  const spaceInfo = await getSpaceInfo(process.env.CONFIG || '')
+  const nance = new Nance(spaceInfo.config);
+  console.log(spaceInfo.currentEvent)
+  nance.temperatureCheckSetup(spaceInfo.currentEvent.end);
 }
 
 main();

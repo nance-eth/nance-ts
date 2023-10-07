@@ -1,13 +1,13 @@
-import { doltConfig } from '../configLoader';
+import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { SnapshotHandler } from '../snapshot/snapshotHandler';
 import { sleep } from '../utils';
 
 async function main() {
-  const { config } = await doltConfig(process.env.CONFIG || '');
+  const { config } = await getSpaceInfo(process.env.CONFIG || '');
   await sleep(2000);
-  const dolt = new DoltHandler(pools[config.name], config.propertyKeys);
+  const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
   const snapshot = new SnapshotHandler('', config);
   const proposals = await snapshot.getAllProposalsByScore(true);
   // console.log(proposals)

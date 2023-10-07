@@ -1,9 +1,9 @@
-import { doltConfig } from '../configLoader'
+import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
 import { Nance } from '../nance';
 import { getLastSlash, sleep } from '../utils';
 
 async function main() {
-  const { config } = await doltConfig(process.env.CONFIG || '');
+  const { config } = await getSpaceInfo(process.env.CONFIG || '');
   const nance = new Nance(config);
   const proposals = await nance.dProposalHandler.getToDiscuss();
   // eslint-disable-next-line no-await-in-loop

@@ -25,3 +25,20 @@ export async function fetchPools() {
 }
 
 fetchPools();
+
+// on SIGINT or SIGTERM, close all pools
+const closePools = () => {
+  Object.values(pools).forEach((pool) => {
+    pool.db.removeAllListeners();
+  });
+};
+
+process.on('SIGINT', () => {
+  closePools();
+  process.exit();
+});
+
+process.on('SIGTERM', () => {
+  closePools();
+  process.exit();
+});

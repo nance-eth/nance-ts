@@ -14,6 +14,8 @@ import { getAllSpaceInfo } from './helpers/getSpaceInfo';
 
 const router = express.Router();
 
+const dolt = new DoltSysHandler(pools.nance_sys);
+
 const formToSQLTime = (timeIn?: FormTime) => {
   if (!timeIn) { return '00:00:00'; }
   const hour = -1 * (timeIn.hour + (timeIn.timezoneOffset / 60) + (timeIn.ampm === 'PM' ? 12 : 0) - 24);
@@ -37,7 +39,6 @@ router.get('/', (_, res) => {
 
 router.get('/config/:space', async (req, res) => {
   const { space } = req.params;
-  const dolt = new DoltSysHandler(pools.nance_sys);
   dolt.getSpaceConfig(space).then((doltConfig) => {
     if (doltConfig) { res.json({ success: true, data: doltConfig }); return; }
     res.json({ success: false, error: `config ${space} not found!` });
@@ -77,7 +78,6 @@ router.post('/config', async (req, res) => {
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: no SIWE address found' }); return; }
 
   // check if space exists and configurer is spaceOwner
-  const dolt = new DoltSysHandler(pools.nance_sys);
   const spaceConfig = await dolt.getSpaceConfig(space);
   if (spaceConfig && !spaceConfig.spaceOwners.includes(address)) {
     res.json({ success: false, error: '[NANCE ERROR] configurer not spaceOwner!' });

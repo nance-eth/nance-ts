@@ -1,14 +1,15 @@
 import { Nance } from '../nance';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { NanceTreasury } from '../treasury';
-import { getConfig } from '../configLoader';
+import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { myProvider } from '../utils';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 async function main() {
-  const config = await getConfig();
+  const { config, currentCycle } = await getSpaceInfo(process.env.CONFIG || '');
   const nance = new Nance(config);
-  const treasury = new NanceTreasury(config, nance.proposalHandler);
+  const treasury = new NanceTreasury(config, nance.dProposalHandler, myProvider(), currentCycle);
   const gnosis = await GnosisHandler.initializeSafe(config.juicebox.gnosisSafeAddress, config.juicebox.network);
  // const { address, bytes } = await treasury.V2encodeReconfigureFundingCyclesOf();
  const { address, bytes } = await treasury.juiceboxHandlerV3.encodeDistributeFundsOf();
