@@ -1,24 +1,12 @@
 import { JBSplitStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
 
-type ProposalType = 'Payout' | 'ReservedToken' | 'ParameterUpdate' | 'ProcessUpdate' | 'CustomTransaction';
-
 export { JBSplitStruct };
 export interface Proposal {
   hash: string;
   title: string;
   body?: string;
-  translation?: {
-    body?: string;
-    language?: string;
-  },
-  payout?: Payout;
-  notification?: Notification;
-  reserve?: Reserve;
-  url: string;
   governanceCycle?: number;
   date?: string,
-  translationURL?: string;
-  type?: string;
   status: string;
   proposalId: number | null;
   author?: string;
@@ -55,13 +43,6 @@ export type Payout = {
   uuid?: string;
 };
 
-type Notification = {
-  discordUserId: string;
-  expiry: boolean;
-  execution: boolean;
-  progress: boolean;
-};
-
 export type Reserve = { splits: JBSplitStruct[] };
 
 export type Transfer = {
@@ -81,13 +62,6 @@ export type CustomTransaction = {
   functionName: string;
   args: any[];
   tenderlyId: string;
-};
-
-export type ParameterUpdate = {
-  durationDays: number;
-  discountPercentage: number;
-  reservedPercentage: number;
-  redemptionPercentage: number;
 };
 
 export type InternalVoteResults = {
@@ -111,41 +85,6 @@ export type VoteResults = {
 export type BasicTransaction = {
   address: string;
   bytes: string;
-};
-
-export type ProposalNoHash = Omit<Proposal, 'hash'>;
-
-export type ProposalStore = Record<string, ProposalNoHash>;
-
-export type PropertyKeys = {
-  proposalId: string;
-  status: string;
-  statusTemperatureCheck: string;
-  statusVoting: string;
-  statusApproved: string;
-  statusCancelled: string;
-  proposalIdPrefix: string;
-  discussionThread: string;
-  ipfs: string;
-  vote: string;
-  type: string;
-  typeRecurringPayout: string;
-  typePayout: string;
-  governanceCycle: string;
-  governanceCyclePrefix: string;
-  reservePercentage: string;
-  payoutName: string;
-  payoutType: string;
-  payoutAmountUSD: string;
-  payoutAddress: string;
-  payoutCount: string;
-  payName: string;
-  treasuryVersion: string;
-  payoutFirstFC: string;
-  payoutLastFC: string;
-  payoutRenewalFC: string;
-  payoutProposalLink: string;
-  publicURLPrefix: string;
 };
 
 export type GovernanceCycleForm = {
@@ -201,15 +140,7 @@ export interface NanceConfig {
       imageNames: string[];
     };
   };
-  propertyKeys: PropertyKeys;
-  notion: {
-    API_KEY: string;
-    enabled: boolean;
-    database_id: string;
-    current_cycle_block_id: string;
-    payouts_database_id: string;
-    reserves_database_id: string;
-  };
+  proposalIdPrefix: string;
   dolt: DoltConfig,
   snapshot: {
     base: string;
@@ -218,7 +149,6 @@ export interface NanceConfig {
     minTokenPassingAmount: number;
     passingRatio: number;
   };
-  calendarCID?: string;
   submitAsApproved?: boolean;
   governanceCycleForm?: GovernanceCycleForm; // used for create space then removed
 }

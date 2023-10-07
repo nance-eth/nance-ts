@@ -10,11 +10,11 @@ import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
-  return `https://nance.app/s/${space}/${proposal.proposalId || proposal.hash}`;
+  return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.hash}`;
 };
 
-export const startDiscussionMessage = (proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
-  return new EmbedBuilder().setTitle(`📃 ${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`).setURL(proposal.url).addFields([
+export const startDiscussionMessage = (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
+  return new EmbedBuilder().setTitle(`📃 ${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`).setURL(getProposalURL(space, proposal)).addFields([
     { name: 'author', value: `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})`, inline: true },
   ]);
 };
@@ -32,14 +32,10 @@ export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposal
     `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setDescription(`${String(proposals.length)} proposals`).addFields(
     proposals.map((proposal: Proposal) => {
-      proposal.url = getProposalURL(space, proposal);
-      const proposalLinks = (proposal.translationURL)
-        ? `[proposal](${proposal.url}) [(zh)](${proposal.translationURL})`
-        : `[proposal](${proposal.url})`;
       return {
         name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
         value: stripIndents`
-        ${proposalLinks} | [discussion](${proposal.discussionThreadURL})
+        [proposal](${getProposalURL(space, proposal)}) | [discussion](${proposal.discussionThreadURL})
         ------------------------------`,
       };
     })
@@ -52,11 +48,10 @@ export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, pro
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
-        proposal.url = getProposalURL(space, proposal);
         return {
           name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
-          [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.url})
+          [discussion](${proposal.discussionThreadURL}) | [vote](${getProposalURL(space, proposal)})
           ------------------------------`,
         };
       })
@@ -89,33 +84,16 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
     );
 };
 
-export const proposalsUnderQuorumMessage = (proposals: Proposal[], space: string, proposalIdPrefix: string, endDate: Date) => {
-  return new EmbedBuilder().setColor('#f5b942').setTitle(
-    `Voting is open until <t:${dateToUnixTimeStamp(endDate)}> (<t:${dateToUnixTimeStamp(endDate)}:R>)`
-  ).setURL(`${DEFAULT_DASHBOARD}/s/${space}`).setDescription(`${String(proposals.length)} proposals`)
-    .addFields(
-      proposals.map((proposal: Proposal) => {
-        proposal.url = getProposalURL(space, proposal);
-        return {
-          name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
-          value: stripIndents`
-          [discussion](${proposal.discussionThreadURL}) | [vote](${proposal.url})
-          ------------------------------`,
-        };
-      })
-    );
-};
-
-export const reminderEndMessage = (thingToRemind: string, endDate: Date, url = '') => {
+export const reminderEndMessage = (thingToRemind: string, endDate: Date) => {
   return new EmbedBuilder().setColor('#F19800').setTitle(
     `${thingToRemind} ending <t:${dateToUnixTimeStamp(endDate)}:R>!`
   );
 };
 
-export const reminderStartMessage = (thingToRemind: string, startDate: Date, url = '') => {
+export const reminderStartMessage = (thingToRemind: string, startDate: Date) => {
   return new EmbedBuilder().setColor('#F19800').setTitle(
     `${thingToRemind} starting <t:${dateToUnixTimeStamp(startDate)}:R>!`
-  ).setDescription(url);
+  );
 };
 
 export const pollResultsMessage = (

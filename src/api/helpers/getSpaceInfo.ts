@@ -14,7 +14,7 @@ const doltSys = new DoltSysHandler(pools.nance_sys);
 export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
   try {
     const entry = await doltSys.getSpaceConfig(space);
-    const dolt = new DoltHandler(pools[space], entry.config.propertyKeys);
+    const dolt = new DoltHandler(pools[space], entry.config.proposalIdPrefix);
     let juiceboxTimeOutput;
     let currentEvent: DateEvent;
     let cycleCurrentDay: number;

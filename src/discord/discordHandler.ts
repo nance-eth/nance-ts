@@ -79,9 +79,8 @@ export class DiscordHandler {
   }
 
   async startDiscussion(proposal: Proposal): Promise<string> {
-    proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
     const authorENS = await getENS(proposal.authorAddress);
-    const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
+    const message = discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
     const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
       name: limitLength(proposal.title),
@@ -99,7 +98,7 @@ export class DiscordHandler {
   }
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
-    const message = discordTemplates.temperatureCheckRollUpMessage(this.config.propertyKeys.proposalIdPrefix, proposals, this.config.name, endDate);
+    const message = discordTemplates.temperatureCheckRollUpMessage(this.config.proposalIdPrefix, proposals, this.config.name, endDate);
     return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
       return messageObj.id;
     });
@@ -108,7 +107,7 @@ export class DiscordHandler {
   async sendVoteRollup(proposals: Proposal[], endDate: Date) {
     const message = discordTemplates.voteRollUpMessage(
       `${DEFAULT_DASHBOARD}/s/${this.config.name}`,
-      this.config.propertyKeys.proposalIdPrefix,
+      this.config.proposalIdPrefix,
       proposals,
       this.config.name,
       endDate
@@ -119,21 +118,21 @@ export class DiscordHandler {
     });
   }
 
-  async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
-    const message = discordTemplates.proposalsUnderQuorumMessage(proposals, this.config.name, this.config.propertyKeys.proposalIdPrefix, endDate);
-    return this.getAlertChannel().send(
-      { content: `:hotsprings: ${this.roleTag} there are proposals under quorum! vote now! :hotsprings:`,
-        embeds: [message]
-      }).then((messageObj) => {
-      return messageObj.id;
-    });
-  }
+  // async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
+  //   const message = discordTemplates.proposalsUnderQuorumMessage(proposals, this.config.name, this.config.propertyKeys.proposalIdPrefix, endDate);
+  //   return this.getAlertChannel().send(
+  //     { content: `:hotsprings: ${this.roleTag} there are proposals under quorum! vote now! :hotsprings:`,
+  //       embeds: [message]
+  //     }).then((messageObj) => {
+  //     return messageObj.id;
+  //   });
+  // }
 
   async sendVoteResultsRollup(proposals: Proposal[]) {
     const message = discordTemplates.voteResultsRollUpMessage(
       DEFAULT_DASHBOARD,
       this.config.name,
-      this.config.propertyKeys.proposalIdPrefix,
+      this.config.proposalIdPrefix,
       proposals
     );
     return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
@@ -146,23 +145,21 @@ export class DiscordHandler {
     const message = discordTemplates.voteResultsRollUpMessage(
       DEFAULT_DASHBOARD,
       this.config.name,
-      this.config.propertyKeys.proposalIdPrefix,
+      this.config.proposalIdPrefix,
       proposals
     );
     messageObj.edit({ embeds: [message], flags: [SILENT_FLAG] });
   }
 
-  async sendReminder(event: string, date: Date, type: string, url = '', deleteTimeOut = 60 * 65) {
+  async sendReminder(event: string, date: Date, type: string) {
     const message = (type === 'start')
       ? discordTemplates.reminderStartMessage(
         event,
         date,
-        url
       )
       : discordTemplates.reminderEndMessage(
         event,
         date,
-        url
       );
     return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
       return messageObj.id;
@@ -187,19 +184,26 @@ export class DiscordHandler {
       ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
     } else if (reminderType === 'juicebox') {
       ({ message, attachments } = discordTemplates.dailyJuiceboxBasedReminder(governanceCycle, day, endSeconds, link));
+    } else { // default to basic
+      ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
     }
-    const channelsSent = this.getDailyUpdateChannels().map((channel) => {
-      if (channel) {
-        // delete old messages
-        channel.messages.fetch({ limit: 20 }).then((messages) => {
-          messages.filter((m) => { return m.author === this.discord.user && m.embeds[0].title === 'Governance Status'; }).map((me) => {
-            return me.delete();
-          });
-        });
+    const channelsSent = await Promise.all(this.getDailyUpdateChannels().map(async (channel) => {
+      if (!channel) return undefined as unknown as TextChannel;
+      // delete old messages
+      const messages = await channel.messages.fetch({ limit: 20 });
+      const deletePromises = messages.filter((m) => {
+        return m.author === this.discord.user && m.embeds[0].title === 'Governance Status';
+      }).map((me) => { return me.delete(); });
+      await Promise.all(deletePromises);
+      try {
         channel.send({ embeds: [message], files: attachments, flags: [SILENT_FLAG] });
+        return channel;
+      } catch (e) {
+        logger.error(`Could not send daily update to ${channel.name} for ${this.config.name}`);
+        logger.error(e);
+        return undefined as unknown as TextChannel;
       }
-      return channel;
-    });
+    }));
     if (channelsSent.includes(undefined as unknown as TextChannel)) {
       return Promise.reject(Error(`Could not send daily update to ${this.config.name}`));
     }
@@ -275,10 +279,9 @@ export class DiscordHandler {
 
   async editDiscussionTitle(proposal: Proposal) {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-    proposal.url = discordTemplates.getProposalURL(this.config.name, proposal);
     const authorENS = await getENS(proposal.authorAddress);
-    const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
-    if (messageObj.embeds[0].title !== message.data.title || messageObj.embeds[0].url !== proposal.url) {
+    const message = discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+    if (messageObj.embeds[0].title !== message.data.title) {
       messageObj.edit({ embeds: [message] });
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
     }
@@ -287,11 +290,11 @@ export class DiscordHandler {
   async editRollupMessage(proposals: Proposal[], status: string, messageId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
     let message = new EmbedBuilder();
-    if (status === 'temperatureCheck') { message = discordTemplates.temperatureCheckRollUpMessage(this.config.propertyKeys.proposalIdPrefix, proposals, this.config.name, new Date()); }
+    if (status === 'temperatureCheck') { message = discordTemplates.temperatureCheckRollUpMessage(this.config.proposalIdPrefix, proposals, this.config.name, new Date()); }
     if (status === 'vote') {
       message = discordTemplates.voteRollUpMessage(
         `${this.config.snapshot.base}`,
-        this.config.propertyKeys.proposalIdPrefix,
+        this.config.proposalIdPrefix,
         proposals,
         this.config.snapshot.space,
         new Date());
@@ -304,7 +307,7 @@ export class DiscordHandler {
   }
 
   async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
-    const response = discordTemplates.payoutsTable(payouts, governanceCycle, this.config.snapshot.base, this.config.propertyKeys.proposalIdPrefix);
+    const response = discordTemplates.payoutsTable(payouts, governanceCycle, this.config.snapshot.base, this.config.proposalIdPrefix);
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 
@@ -330,9 +333,9 @@ export class DiscordHandler {
   }
 
   async sendTransactionSummary(threadId: string, addPayouts: SQLPayout[], removePayouts: SQLPayout[], oldDistributionLimit: number, newDistributionLimit: number) {
-    const message1 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, addPayouts);
-    const message2 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, undefined, removePayouts);
-    const message3 = discordTemplates.transactionSummary(this.config.propertyKeys.proposalIdPrefix, undefined, undefined, oldDistributionLimit, newDistributionLimit, undefined);
+    const message1 = discordTemplates.transactionSummary(this.config.proposalIdPrefix, addPayouts);
+    const message2 = discordTemplates.transactionSummary(this.config.proposalIdPrefix, undefined, removePayouts);
+    const message3 = discordTemplates.transactionSummary(this.config.proposalIdPrefix, undefined, undefined, oldDistributionLimit, newDistributionLimit, undefined);
 
     await this.getChannelById(threadId).send({ embeds: [message3, message1, message2] });
   }
@@ -357,7 +360,7 @@ export class DiscordHandler {
   async sendProposalUnarchive(proposal: Proposal) {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
     const authorENS = await getENS(proposal.authorAddress);
-    const message = discordTemplates.startDiscussionMessage(this.config.propertyKeys.proposalIdPrefix, proposal, authorENS);
+    const message = discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
     // keep url the same
     message.setURL(messageObj.embeds[0].url);
     messageObj.edit({ embeds: [message] });

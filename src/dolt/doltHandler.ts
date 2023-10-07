@@ -3,7 +3,7 @@
 /* eslint-disable no-param-reassign */
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
-import { Proposal, PropertyKeys, Transfer, Payout, CustomTransaction, Reserve } from '../types';
+import { Proposal, Transfer, Payout, CustomTransaction, Reserve } from '../types';
 import { SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
@@ -21,14 +21,14 @@ const DEFAULT_TREASURY_VERSION = 3;
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
 export class DoltHandler {
   localDolt;
-  propertyKeys;
+  proposalIdPrefix;
 
   constructor(
     localDolt: DoltSQL,
-    propertyKeys: PropertyKeys
+    proposalIdPrefix: string
   ) {
     this.localDolt = localDolt;
-    this.propertyKeys = propertyKeys;
+    this.proposalIdPrefix = proposalIdPrefix;
   }
 
   async queryDb(query: string) {
@@ -57,6 +57,7 @@ export class DoltHandler {
     });
   }
 
+  // eslint-disable-next-line class-methods-use-this
   toProposal(proposal: SQLExtended): Proposal {
     const voteURL = proposal.snapshotId ?? '';
     const actions = () => {
@@ -69,11 +70,9 @@ export class DoltHandler {
       hash: proposal.uuid,
       title: isHexString(proposal.title) ? Buffer.from(proposal.title, 'hex').toString('utf8') : proposal.title,
       body: isHexString(proposal.body) ? Buffer.from(proposal.body, 'hex').toString('utf8') : proposal.body,
-      type: proposal.category,
       status: proposal.proposalStatus || 'Private',
       proposalId: proposal.proposalId || null,
       discussionThreadURL: proposal.discussionURL ?? '',
-      url: `https://${this.propertyKeys.publicURLPrefix}/${proposal.uuid}`,
       ipfsURL: proposal.ipfsCID ? `${IPFS_GATEWAY}/ipfs/${proposal.ipfsCID}` : '',
       voteURL,
       date: proposal.createdTime.toISOString(),
@@ -104,10 +103,8 @@ export class DoltHandler {
   // eslint-disable-next-line class-methods-use-this
   toSQLProposal(proposal: Partial<Proposal>): Partial<SQLProposal> {
     const sqlProposal = {
-      uuid: proposal.hash,
       title: proposal.title || undefined,
       body: proposal.body || undefined,
-      category: proposal.type || undefined,
       proposalStatus: proposal.status,
       proposalId: proposal.proposalId || undefined,
       discussionURL: proposal.discussionThreadURL || undefined,
@@ -131,7 +128,7 @@ export class DoltHandler {
   }
 
   proposalIdNumber = (proposalId: string): number | null => {
-    const value = Number(proposalId.split(this.propertyKeys.proposalIdPrefix)[1]);
+    const value = Number(proposalId.split(this.proposalIdPrefix)[1]);
     return (Number.isNaN(value)) ? null : value;
   };
 
@@ -178,11 +175,11 @@ export class DoltHandler {
     proposal.proposalId = (proposal.status === 'Discussion') ? await this.getNextProposalId() : null;
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
-      (uuid, createdTime, lastEditedTime, title, body, authorAddress, category,
+      (uuid, createdTime, lastEditedTime, title, body, authorAddress,
         governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices,
         snapshotVotes, snapshotId, voteAddressCount)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [proposal.hash, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.type,
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [proposal.hash, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress,
       proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices),
       JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes
     ]);
@@ -386,7 +383,7 @@ export class DoltHandler {
   }
 
   async updatePayoutStatus(proposal: Proposal) {
-    const payStatus = (proposal.status === this.propertyKeys.statusApproved) ? 'active' : 'cancelled';
+    const payStatus = (proposal.status === STATUS.APPROVED) ? STATUS.ACTION.ACTIVE : STATUS.ACTION.CANCELLED;
     this.localDolt.db.query(`
       UPDATE ${payoutsTable} SET
       payStatus = ?
@@ -470,6 +467,15 @@ export class DoltHandler {
     `);
   }
 
+  async getVotedProposalsByGovernanceCycle(governanceCycle: string) {
+    return this.queryProposals(`
+      ${SELECT_ACTIONS} FROM ${proposalsTable}
+      WHERE governanceCycle = ${governanceCycle}
+      AND snapshotId IS NOT NULL
+      ORDER BY proposalId ASC
+      `);
+  }
+
   async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string, limit?: number, offset?: number) {
     const cycleWhereClause = this.cycleWhereClause(governanceCycle);
     const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
@@ -532,7 +538,7 @@ export class DoltHandler {
     let where = `WHERE ${proposalsTable}`;
     if (hashOrId.length === 32) {
       where = `${where}.uuid = '${hashOrId}'`;
-    } else if (hashOrId.includes(this.propertyKeys.proposalIdPrefix)) {
+    } else if (hashOrId.includes(this.proposalIdPrefix)) {
       const id = this.proposalIdNumber(hashOrId);
       if (!id) return Promise.reject('bad proposalId');
       where = `${where}.proposalId = ${id}`;

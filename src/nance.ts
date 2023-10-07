@@ -12,8 +12,8 @@ import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { dotPin } from './storage/storageHandler';
 import { DoltHandler } from './dolt/doltHandler';
 import { DoltSQL } from './dolt/doltSQL';
-import { GovernanceCycle } from './dolt/schema';
 import { dbOptions } from './dolt/dbConfig';
+import { STATUS } from './constants';
 
 export class Nance {
   dialogHandler;
@@ -26,7 +26,7 @@ export class Nance {
   ) {
     this.dialogHandler = new DiscordHandler(config);
     this.votingHandler = new SnapshotHandler(keys.PRIVATE_KEY, this.config);
-    this.dProposalHandler = new DoltHandler(new DoltSQL(dbOptions(config.name)), this.config.propertyKeys);
+    this.dProposalHandler = new DoltHandler(new DoltSQL(dbOptions(config.name)), this.config.proposalIdPrefix);
     this.dProposalHandler.localDolt.showActiveBranch().then((res) => {
       logger.info(`dolt branch: ${res}`);
     });
@@ -67,9 +67,9 @@ export class Nance {
     return false;
   }
 
-  async reminder(event: string, date: Date, type: string, url = '') {
+  async reminder(event: string, date: Date, type: string) {
     logger.info(`${this.config.name}: reminder() begin...`);
-    this.dialogHandler.sendReminder(event, date, type, url).then(() => {
+    this.dialogHandler.sendReminder(event, date, type).then(() => {
       logger.info(`${this.config.name}: reminder() complete`);
     }).catch((e) => {
       logger.error(`${this.config.name}: reminder() error!`);
@@ -95,7 +95,7 @@ export class Nance {
     );
     console.log(discussionProposals);
     Promise.all(discussionProposals.map(async (proposal: Proposal) => {
-      proposal.status = this.config.propertyKeys.statusTemperatureCheck;
+      proposal.status = STATUS.TEMPERATURE_CHECK;
       await this.dProposalHandler.updateStatusTemperatureCheckAndProposalId(proposal);
     })).then(() => {
       this.dialogHandler.sendTemperatureCheckRollup(discussionProposals, endDate);
@@ -118,7 +118,7 @@ export class Nance {
         pollResults.voteYesUsers.length,
         pollResults.voteNoUsers.length
       );
-      proposal.status = (pass) ? this.config.propertyKeys.statusVoting : this.config.propertyKeys.statusCancelled;
+      proposal.status = (pass) ? STATUS.APPROVED : STATUS.CANCELLED;
       if (this.config.discord.poll.showResults) {
         this.dialogHandler.sendPollResults(pollResults, pass, threadId);
       }
@@ -174,7 +174,6 @@ export class Nance {
         return getIdFromURL(proposal.voteURL) === vote.voteProposalId;
       });
       if (!proposalMatch) { return; }
-      const proposalHash = proposalMatch.hash;
       if (vote.scoresState === 'final') {
         proposalMatch.internalVoteResults = vote;
         proposalMatch.internalVoteResults.percentages = this.getVotePercentages(vote);

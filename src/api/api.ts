@@ -30,7 +30,7 @@ const doltSys = new DoltSysHandler(pools.nance_sys);
 async function handlerReq(query: string, auth: string | undefined) {
   try {
     const spaceInfo = await getSpaceInfo(query);
-    const dolt = new DoltHandler(pools[query], spaceInfo.config.propertyKeys);
+    const dolt = new DoltHandler(pools[query], spaceInfo.config.proposalIdPrefix);
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
     return {
@@ -53,6 +53,7 @@ async function handlerReq(query: string, auth: string | undefined) {
 // ================================ //
 router.get('/:space', async (req, res) => {
   const { space } = req.params;
+  if (!space) return res.send();
   try {
     const { config, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners } = await handlerReq(space, req.headers.authorization);
     return res.send({
@@ -100,7 +101,7 @@ router.get('/:space/proposals', async (req, res) => {
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
     const { dolt, config, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-    const proposalIdPrefix = config.propertyKeys.proposalIdPrefix.includes('-') ? config.propertyKeys.proposalIdPrefix : `${config.propertyKeys.proposalIdPrefix}-`;
+    const proposalIdPrefix = config.proposalIdPrefix.includes('-') ? config.proposalIdPrefix : `${config.proposalIdPrefix}-`;
     const data: ProposalsPacket = {
       proposalInfo: {
         snapshotSpace: config.snapshot.space,

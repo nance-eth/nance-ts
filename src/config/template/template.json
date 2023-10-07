@@ -1,5 +1,6 @@
 {
   "name": null,
+  "proposalIdPrefix": null,
   "juicebox": {
     "network": "mainnet",
     "projectId": null,
@@ -29,42 +30,8 @@
     "reminder": {
       "channelIds": null,
       "imagesCID": "https://bafybeig7vxzaytiiskcvgpdjp5jr5ifrp5r2bio5ei3c6bx7wsltotvdfe.ipfs.nftstorage.link",
-      "imageNames": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"],
-      "links": {
-        "process": null,
-        "temperature check": null,
-        "vote": "https://www.jbdao.org",
-        "execution": "https://www.jbdao.org",
-        "delay": "https://www.jbdao.org/edit"
-      }
+      "imageNames": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"]
     }
-  },
-  "propertyKeys": {
-    "proposalId": "Proposal ID",
-    "status": "Status",
-    "statusTemperatureCheck": "Temperature Check",
-    "statusVoting": "Voting",
-    "statusApproved": "Approved",
-    "statusCancelled": "Cancelled",
-    "proposalIdPrefix": null,
-    "discussionThread": "Discussion Thread",
-    "ipfs": "IPFS",
-    "vote": "Snapshot",
-    "type": "Category",
-    "typeRecurringPayout": "Recurring Payment",
-    "typePayout": "Payout",
-    "governanceCycle": "Governance Cycle",
-    "governanceCyclePrefix": "GC#",
-    "payoutAmountUSD": "USD Payout Amount",
-    "payoutAddress": "Payout Address",
-    "payoutCount": "Number of Payouts",
-    "payName": "Pay Name",
-    "reservePercentage": "Percentage",
-    "treasuryVersion": "JB DAO Treasury",
-    "payoutProposalLink": "Proposal",
-    "payoutType": "Type of payout",
-    "payoutName": "ENS",
-    "publicURLPrefix": null
   },
   "dolt": {
     "enabled": true,

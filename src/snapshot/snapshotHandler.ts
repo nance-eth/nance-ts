@@ -42,7 +42,6 @@ const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
     authorAddress: sProposal.author,
     proposalId,
     createdTime: new Date(Number(sProposal.start) * 1000),
-    url: '',
     discussionThreadURL: sProposal.discussion || '',
     ipfsURL: sProposal.ipfsCID || '',
     voteURL: sProposal.id,
@@ -82,7 +81,7 @@ export class SnapshotHandler {
     const snapProposal = {
       space: this.config.snapshot.space,
       type: options.type,
-      title: `${this.config.propertyKeys.proposalIdPrefix}${proposal.proposalId} - ${proposal.title}`,
+      title: `${this.config.proposalIdPrefix}${proposal.proposalId} - ${proposal.title}`,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       body: proposal.body!,
       discussion: proposal.discussionThreadURL,
