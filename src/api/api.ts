@@ -143,7 +143,6 @@ router.post('/:space/proposals', async (req, res) => {
     const { config, dolt, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
-    logger.debug(`[UPLOAD] space: ${space}, address: ${address} good`);
     if (!proposal.governanceCycle) {
       proposal.governanceCycle = currentGovernanceCycle + 1;
     }
@@ -155,7 +154,14 @@ router.post('/:space/proposals', async (req, res) => {
       });
     } else {
       if (config.submitAsApproved) { proposal.status = STATUS.APPROVED; }
+      console.log('======================================================');
+      console.log('==================== NEW PROPOSAL ====================');
+      console.log('======================================================');
+      console.log(`space ${space}, author ${address}`);
       console.log(proposal);
+      console.log('======================================================');
+      console.log('======================================================');
+      console.log('======================================================');
       dolt.addProposalToDb(proposal).then(async (hash: string) => {
         proposal.hash = hash;
         dolt.actionDirector(proposal);
@@ -250,8 +256,14 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     proposal.coauthors.push(address);
   }
   proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === STATUS.DISCUSSION) ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
-  logger.info(`EDIT issued by ${address} for uuid: ${proposal.hash}`);
+  console.log('======================================================');
+  console.log('=================== EDIT PROPOSAL ====================');
+  console.log('======================================================');
+  console.log(`space ${space}, author ${address}`);
   console.log(proposal);
+  console.log('======================================================');
+  console.log('======================================================');
+  console.log('======================================================');
   const editFunction = (p: Proposal) => {
     if (isPrivate && (proposal.status === STATUS.DISCUSSION || proposal.status === STATUS.DRAFT)) return dolt.addProposalToDb(p);
     if (isPrivate) return dolt.editPrivateProposal(p);
