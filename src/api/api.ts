@@ -155,6 +155,7 @@ router.post('/:space/proposals', async (req, res) => {
       });
     } else {
       if (config.submitAsApproved) { proposal.status = STATUS.APPROVED; }
+      console.log(proposal);
       dolt.addProposalToDb(proposal).then(async (hash: string) => {
         proposal.hash = hash;
         dolt.actionDirector(proposal);
@@ -250,6 +251,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   }
   proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === STATUS.DISCUSSION) ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
   logger.info(`EDIT issued by ${address} for uuid: ${proposal.hash}`);
+  console.log(proposal);
   const editFunction = (p: Proposal) => {
     if (isPrivate && (proposal.status === STATUS.DISCUSSION || proposal.status === STATUS.DRAFT)) return dolt.addProposalToDb(p);
     if (isPrivate) return dolt.editPrivateProposal(p);

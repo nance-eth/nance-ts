@@ -103,6 +103,7 @@ export class DoltHandler {
   // eslint-disable-next-line class-methods-use-this
   toSQLProposal(proposal: Partial<Proposal>): Partial<SQLProposal> {
     const sqlProposal = {
+      uuid: proposal.hash,
       title: proposal.title || undefined,
       body: proposal.body || undefined,
       proposalStatus: proposal.status,
@@ -260,10 +261,11 @@ export class DoltHandler {
     Object.keys(cleanedProposal).forEach((key) => {
       updates.push(`${key} = ?`);
     });
-    await this.localDolt.db.query(oneLine`
-      UPDATE ${proposalsTable} SET
-      ${updates.join(',')} WHERE uuid = ?`,
-    [...Object.values(cleanedProposal), cleanedProposal.uuid]);
+    const query = `UPDATE ${proposalsTable} SET ${updates.join(',')} WHERE uuid = ?`;
+    // console.log(query);
+    const vars = [...Object.values(cleanedProposal), cleanedProposal.uuid];
+    // console.log(vars);
+    await this.localDolt.db.query(query, vars);
     return proposal.hash || Promise.reject('Proposal hash not found');
   }
 
