@@ -166,7 +166,7 @@ export class DiscordHandler {
     });
   }
 
-  async sendDailyReminder(day: number, governanceCycle: number, type: string, endDate: Date, noImage = false) {
+  async sendDailyReminder(day: number, governanceCycle: number, type: string, endDate: Date, juiceboxTimeDelay?: number) {
     const endSeconds = endDate.getTime() / 1000;
     const link = `${DEFAULT_DASHBOARD}/s/${this.config.name}`;
     const reminderType = this.config.discord.reminder.type;
@@ -183,7 +183,7 @@ export class DiscordHandler {
     } else if (reminderType === 'basic') {
       ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
     } else if (reminderType === 'juicebox') {
-      ({ message, attachments } = discordTemplates.dailyJuiceboxBasedReminder(governanceCycle, day, endSeconds, link));
+      ({ message, attachments } = discordTemplates.dailyJuiceboxBasedReminder(governanceCycle, day, endSeconds, juiceboxTimeDelay || (3 * 24 * 3600), link));
     } else { // default to basic
       ({ message, attachments } = discordTemplates.dailyBasicReminder(day, governanceCycle, type, endSeconds, link));
     }
@@ -192,7 +192,7 @@ export class DiscordHandler {
       // delete old messages
       const messages = await channel.messages.fetch({ limit: 20 });
       const deletePromises = messages.filter((m) => {
-        return m.author === this.discord.user && m.embeds[0].title === 'Governance Status';
+        return m.author === this.discord.user && m.embeds[0]?.title === 'Governance Status';
       }).map((me) => { return me.delete(); });
       await Promise.all(deletePromises);
       try {

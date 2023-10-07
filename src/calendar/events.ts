@@ -39,13 +39,12 @@ export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], 
   return nextEventsCleaned;
 };
 
-export const getCurrentEvent = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date) => {
-  if (!cycleStageLengths) return undefined;
+export const getCurrentEvent = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date) : DateEvent => {
   const nextEvents = getNextEvents(events, cycleStageLengths, inputDate);
   const currentEvent = nextEvents.find((event) => {
     return inputDate >= event.start && inputDate < event.end;
   });
-  return currentEvent;
+  return currentEvent as DateEvent;
 };
 
 export const getCycleStartDays = (cycleStageLengths: number[]) => {

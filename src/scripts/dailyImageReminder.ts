@@ -1,4 +1,4 @@
-import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { getSpaceInfo } from '../api/helpers/getSpace';
 import { discordLogin } from '../api/helpers/discord';
 
 async function main() {

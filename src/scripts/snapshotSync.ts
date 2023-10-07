@@ -1,4 +1,4 @@
-import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { getSpaceInfo } from '../api/helpers/getSpace';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { SnapshotHandler } from '../snapshot/snapshotHandler';

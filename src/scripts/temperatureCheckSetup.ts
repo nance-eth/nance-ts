@@ -1,7 +1,7 @@
 import { Nance } from '../nance';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
-import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { getSpaceInfo } from '../api/helpers/getSpace';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 

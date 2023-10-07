@@ -10,7 +10,7 @@ import { dbOptions } from '../dolt/dbConfig';
 import { DoltSQL } from '../dolt/doltSQL';
 import { addressFromJWT } from './helpers/auth';
 import { FormTime, GovernanceCycleForm, NanceConfig } from '../types';
-import { getAllSpaceInfo } from './helpers/getSpaceInfo';
+import { getAllSpaceInfo, getSpaceConfig } from './helpers/getSpace';
 
 const router = express.Router();
 
@@ -39,7 +39,7 @@ router.get('/', (_, res) => {
 
 router.get('/config/:space', async (req, res) => {
   const { space } = req.params;
-  dolt.getSpaceConfig(space).then((doltConfig) => {
+  getSpaceConfig(space).then((doltConfig) => {
     if (doltConfig) { res.json({ success: true, data: doltConfig }); return; }
     res.json({ success: false, error: `config ${space} not found!` });
   }).catch((e) => {
@@ -78,7 +78,7 @@ router.post('/config', async (req, res) => {
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: no SIWE address found' }); return; }
 
   // check if space exists and configurer is spaceOwner
-  const spaceConfig = await dolt.getSpaceConfig(space);
+  const spaceConfig = await getSpaceConfig(space);
   if (spaceConfig && !spaceConfig.spaceOwners.includes(address)) {
     res.json({ success: false, error: '[NANCE ERROR] configurer not spaceOwner!' });
     return;

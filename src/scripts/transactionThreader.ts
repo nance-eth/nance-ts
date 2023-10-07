@@ -3,7 +3,7 @@ import { Nance } from '../nance';
 import { NanceTreasury } from '../treasury';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
-import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { getSpaceInfo } from '../api/helpers/getSpace';
 import { DiscordHandler } from '../discord/discordHandler';
 
 async function main() {

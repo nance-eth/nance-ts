@@ -10,6 +10,8 @@
     "start:api": "export CONSOLE_LOG=on && node ./dist/api/index.js",
     "dev:api": "export CONSOLE_LOG=on && export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
     "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 && cp -r ./src/config/ ./dist/config/ && cp -r ./src/transactions/abi ./dist/transactions/abi",
+    "build:scheduler": "tsc src/scheduler/daily.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021",
+    "start:scheduler": "export CONSOLE_LOG=on && node ./dist/scheduler/daily.js",
     "dolt-client": "source .env && mysql -h$DOLT_HOST -u$DOLT_USER -p$DOLT_PASSWORD"
   },
   "dependencies": {
@@ -34,6 +36,7 @@
     "lodash": "^4.17.21",
     "mysql2": "^2.3.3",
     "next-auth": "^4.22.1",
+    "node-schedule": "^2.1.1",
     "typescript": "^5.2.2",
     "uuid": "^9.0.0",
     "winston": "^3.7.2"

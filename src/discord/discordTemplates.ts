@@ -151,12 +151,14 @@ export const dailyImageReminder = async (day: number, imagesCID: string, governa
   };
 };
 
-export const dailyJuiceboxBasedReminder = (governanceCycle: number, day: number, endSeconds?: number, contentLink?: string) => {
-  const message = new EmbedBuilder().setTitle('Governance Status').setDescription(
-    stripIndents`
+export const dailyJuiceboxBasedReminder = (governanceCycle: number, day: number, endSeconds: number, delaySeconds: number, contentLink?: string) => {
+  const message = new EmbedBuilder().setTitle('Governance Status').setDescription(stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n
-    A reconfiguration must be submitted by <t:${endSeconds}:f> (<t:${endSeconds}:R>)\n
-    submit a proposal [here](${contentLink})\n`
+    Submit a proposal [here](${contentLink})
+  `).addFields(
+    { name: 'Cycle Ends At', value: `<t:${endSeconds}:f> (<t:${endSeconds}:R>)` },
+    { name: 'Delay Period', value: `${delaySeconds / (24 * 3600)} days` },
+    { name: 'Reconfiguration Must Be Submitted By', value: `<t:${endSeconds - delaySeconds}:f> (<t:${endSeconds - delaySeconds}:R>)` },
   );
   return { message, attachments: [] };
 };

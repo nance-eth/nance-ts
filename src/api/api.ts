@@ -20,7 +20,7 @@ import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { EVENTS, STATUS } from '../constants';
-import { getSpaceInfo } from './helpers/getSpaceInfo';
+import { getSpaceInfo } from './helpers/getSpace';
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';

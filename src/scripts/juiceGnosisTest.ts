@@ -1,7 +1,7 @@
 import { Nance } from '../nance';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { NanceTreasury } from '../treasury';
-import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { getSpaceInfo } from '../api/helpers/getSpace';
 import { myProvider } from '../utils';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';

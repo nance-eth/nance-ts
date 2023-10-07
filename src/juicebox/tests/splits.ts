@@ -1,15 +1,16 @@
 import { DoltHandler } from '../../dolt/doltHandler';
 import { NanceTreasury } from '../../treasury';
-import { getConfig } from '../../configLoader';
 import { ONE_BILLION } from '../juiceboxMath';
 import { myProvider } from '../../utils';
+import { getSpaceInfo } from '../../api/helpers/getSpace';
+import { pools } from '../../dolt/pools';
 
 async function main() {
-  const config = await getConfig();
-  const dolt = new DoltHandler({ database: config.dolt.repo, host: process.env.DOLT_HOST, port: Number(process.env.DOLT_PORT), user: process.env.DOLT_USER, password: process.env.DOLT_PASSWORD }, config.propertyKeys);
+  const { config, currentCycle } = await getSpaceInfo(process.env.CONFIG || '');
+  const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
   console.log(await dolt.localDolt.showActiveBranch());
-  const treasury = new NanceTreasury(config, dolt, myProvider('mainnet'));
-  const output = await treasury.payoutTableToGroupedSplitsStruct('V3');
+  const treasury = new NanceTreasury(config, dolt, myProvider('mainnet'), currentCycle);
+  const output = await treasury.payoutTableToGroupedSplitsStruct();
   console.log(output.groupedSplits[0]);
   // console.log(output.groupedSplits[1]);
   const outputSum = output.groupedSplits[0].splits.map((split) => {

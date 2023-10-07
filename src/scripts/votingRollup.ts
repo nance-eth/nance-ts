@@ -1,6 +1,6 @@
 import { Nance } from '../nance';
 import { sleep } from '../utils';
-import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { getSpaceInfo } from '../api/helpers/getSpace';
 
 async function getConfigs() {
   const spaceInfo = await getSpaceInfo(process.env.CONFIG || '');

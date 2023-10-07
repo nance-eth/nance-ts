@@ -8,6 +8,7 @@ import { juiceboxTime } from './juicebox';
 import { DateEvent } from '../../types';
 import { EVENTS } from '../../constants';
 import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../../calendar/events';
+import { SpaceConfig } from '../../dolt/schema';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
@@ -19,14 +20,16 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
     let currentEvent: DateEvent;
     let cycleCurrentDay: number;
     let { currentGovernanceCycle } = entry;
-    const currentEventFromCalendar = getCurrentEvent(entry.calendar, entry.cycleStageLengths, new Date());
-    // if no current cycle information, fetch from juicebox
-    if (!currentEventFromCalendar) {
+    if (!entry.calendar) {
       juiceboxTimeOutput = await juiceboxTime(entry.config.juicebox.projectId);
       ({ cycleCurrentDay, currentGovernanceCycle } = juiceboxTimeOutput);
-      currentEvent = { title: EVENTS.NULL, start: new Date(juiceboxTimeOutput.startTimestamp), end: new Date(juiceboxTimeOutput.endTimestamp) };
+      currentEvent = {
+        title: EVENTS.NULL,
+        start: new Date(juiceboxTimeOutput.start),
+        end: new Date(juiceboxTimeOutput.end),
+      };
     } else {
-      currentEvent = currentEventFromCalendar;
+      currentEvent = getCurrentEvent(entry.calendar, entry.cycleStageLengths, new Date());
       cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, entry.cycleStageLengths, new Date());
     }
     const dolthubLink = await dolt.getHead().then((head) => {
@@ -59,6 +62,27 @@ export const getAllSpaceInfo = async (where?: string): Promise<SpaceInfo[]> => {
     return await doltSys.getAllSpaceNames(where).then(async (data) => {
       return Promise.all(data.map(async (entry) => {
         return getSpaceInfo(entry.space);
+      }));
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+export const getSpaceConfig = async (space: string): Promise<SpaceConfig> => {
+  try {
+    const entry = await doltSys.getSpaceConfig(space);
+    return entry;
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+export const getAllSpaceConfig = async (where?: string): Promise<SpaceConfig[]> => {
+  try {
+    return await doltSys.getAllSpaceNames(where).then(async (data) => {
+      return Promise.all(data.map(async (entry) => {
+        return getSpaceConfig(entry.space);
       }));
     });
   } catch (e) {

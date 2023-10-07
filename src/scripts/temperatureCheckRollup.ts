@@ -1,7 +1,7 @@
 import { sleep } from '../utils';
 import { Nance } from '../nance';
 import logger from '../logging';
-import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { getSpaceInfo } from '../api/helpers/getSpace';
 
 async function main() {
   const { config, currentEvent } = await getSpaceInfo(process.env.CONFIG || 'nance');

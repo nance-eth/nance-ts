@@ -1,4 +1,4 @@
-import { getSpaceInfo } from '../api/helpers/getSpaceInfo';
+import { getSpaceInfo } from '../api/helpers/getSpace';
 import { DiscordHandler } from '../discord/discordHandler';
 import { sleep } from '../utils';
 
