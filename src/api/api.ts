@@ -252,6 +252,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
   proposal.authorAddress = proposalByUuid.authorAddress;
   proposal.coauthors = proposalByUuid.coauthors ?? [];
+  proposal.governanceCycle = proposalByUuid.governanceCycle;
   if (address && !proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
     proposal.coauthors.push(address);
   }
