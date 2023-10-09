@@ -64,13 +64,13 @@ export type GovernanceCycle = {
 };
 
 export type DialogHandlerMessageIds = {
-  dailyReminder?: string;
   temperatureCheckRollup: string;
-  votingRollup: string;
-  votingResultsRollup: string;
+  voteRollup: string;
+  voteQuorumAlert: string;
+  voteEndAlert: string;
+  voteResultsRollup: string;
   temperatureCheckStartAlert: string;
   temperatureCheckEndAlert: string;
-  votingEndAlert: string;
 };
 
 export type SpaceConfig = {

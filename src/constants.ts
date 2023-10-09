@@ -24,6 +24,26 @@ export const STATUS = {
   }
 };
 
+export const TASKS = {
+  sendDailyAlert: 'sendDailyAlert',
+  sendDailyJBAlert: 'sendDailyJBAlert',
+  temperatureCheckStartAlert: 'temperatureCheckStartAlert',
+  deleteTemperatureCheckStartAlert: 'deleteTemperatureCheckStartAlert',
+  temperatureCheckRollup: 'temperatureCheckRollup',
+  temperatureCheckEndAlert: 'temperatureCheckEndAlert',
+  deleteTemperatureEndAlert: 'deleteTemperatureEndAlert',
+  temperatureCheckClose: 'temperatureCheckClose',
+  voteSetup: 'voteSetup',
+  voteRollup: 'voteRollup',
+  voteQuorumAlert: 'voteQuorumAlert',
+  voteEndAlert: 'voteEndAlert',
+  deleteVoteEndAlert: 'deleteVoteEndAlert',
+  voteClose: 'voteClose',
+  voteResultsRollup: 'voteResultsRollup',
+  incrementGovernanceCycle: 'incrementGovernanceCycle',
+  sendBookkeeping: 'sendBookkeeping',
+};
+
 export const ONE_HOUR_SECONDS = 3600;
 export const FIVE_MINUTES_SECONDS = 300;
 export const ONE_DAY_MILLISECONDS = 24 * 60 * 60 * 1000;

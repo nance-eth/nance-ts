@@ -322,13 +322,12 @@ export class DoltHandler {
     return res.affectedRows;
   }
 
-  async updateStatus(hash: string, status: string) {
-    const now = new Date().toISOString();
-    const query = oneLine`
+  async updateStatuses(proposals: Proposal[], status: string) {
+    const uuidStringList = proposals.map((p) => { return `'${p.hash}'`; }).join(',');
+    const query = `
       UPDATE ${proposalsTable} SET
-      proposalStatus = '${status}',
-      lastEditedTime = '${now}'
-      WHERE uuid = '${hash}'
+      proposalStatus = '${status}'
+      WHERE uuid IN (${uuidStringList})
     `;
     return this.queryDb(query);
   }
@@ -347,6 +346,16 @@ export class DoltHandler {
       proposalStatus = '${proposal.status}',
       proposalId = ${proposal.proposalId}
       WHERE uuid = '${proposal.hash}'
+    `;
+    return this.queryDb(query);
+  }
+
+  async updateStatusTemperatureCheck(proposals: Proposal[]) {
+    const uuidStringList = proposals.map((p) => { return `'${p.hash}'`; }).join(',');
+    const query = `
+      UPDATE ${proposalsTable} SET
+      proposalStatus = '${STATUS.TEMPERATURE_CHECK}'
+      WHERE uuid IN (${uuidStringList})
     `;
     return this.queryDb(query);
   }
@@ -437,11 +446,11 @@ export class DoltHandler {
     `);
   }
 
-  async getVoteProposals(uploaded = false) {
+  async getVoteProposals({ uploadedToSnapshot = false } : { uploadedToSnapshot?: boolean } = {}) {
     return this.queryProposals(`
       SELECT *, HEX(body) as body, HEX(title) as title FROM ${proposalsTable} WHERE
       proposalStatus = 'Voting'
-      AND snapshotId IS ${uploaded ? 'NOT ' : ''}NULL
+      AND snapshotId IS ${uploadedToSnapshot ? 'NOT ' : ''}NULL
       ORDER BY proposalId ASC
     `);
   }

@@ -10,9 +10,10 @@ const system = 'config';
 const contracts = 'contracts';
 
 const defaultDialogHandlerMessageIds: DialogHandlerMessageIds = {
-  votingRollup: '',
-  votingEndAlert: '',
-  votingResultsRollup: '',
+  voteRollup: '',
+  voteEndAlert: '',
+  voteQuorumAlert: '',
+  voteResultsRollup: '',
   temperatureCheckRollup: '',
   temperatureCheckEndAlert: '',
   temperatureCheckStartAlert: ''

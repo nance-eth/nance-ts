@@ -164,7 +164,7 @@ export class Nance {
 
   async votingClose(): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingClose() begin...`);
-    const voteProposals = await this.dProposalHandler.getVoteProposals(true);
+    const voteProposals = await this.dProposalHandler.getVoteProposals({ uploadedToSnapshot: true });
     const voteProposalIdStrings = voteProposals.map((proposal) => {
       return `"${getIdFromURL(proposal.voteURL)}"`;
     });
