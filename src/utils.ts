@@ -115,17 +115,17 @@ export function limitLength(text: string, length = 100) {
   return text;
 }
 
-export function numToPrettyString(num: number | undefined) {
+export function numToPrettyString(num: number | undefined, fixed = 1) {
   if (num === undefined) {
     return '';
   } if (num === 0) {
     return 0;
   } if (num > 1E9) {
-    return `${(num / 1E9).toFixed(1)}B`;
+    return `${(num / 1E9).toFixed(fixed)}B`;
   } if (num > 1E6) {
-    return `${(num / 1E6).toFixed(1)}M`;
+    return `${(num / 1E6).toFixed(fixed)}M`;
   } if (num > 1E3) {
-    return `${(num / 1E3).toFixed(1)}k`;
+    return `${(num / 1E3).toFixed(fixed)}k`;
   }
   return num.toFixed(1);
 }
@@ -183,4 +183,8 @@ export function fetchTemplateCalendar() {
 export function isHexString(text: string) {
   const hexRegex = /^[0-9a-fA-F]+$/;
   return hexRegex.test(text);
+}
+
+export function maybePlural(text: string, count: number) {
+  return count === 1 ? text : `${text}s`;
 }

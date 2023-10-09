@@ -13,7 +13,7 @@ import {
   AttachmentBuilder,
 } from 'discord.js';
 import logger from '../logging';
-import { limitLength, getLastSlash, DEFAULT_DASHBOARD } from '../utils';
+import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp } from '../utils';
 import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
@@ -25,6 +25,7 @@ const SILENT_FLAG = 1 << 12;
 export class DiscordHandler {
   private discord;
   private roleTag;
+  private spaceURL: string;
 
   constructor(
     private config: NanceConfig
@@ -46,6 +47,7 @@ export class DiscordHandler {
       logger.error(e);
     });
     this.roleTag = `<@&${this.config.discord.roles.governance}>`;
+    this.spaceURL = `${DEFAULT_DASHBOARD}/s/${this.config.name}`;
   }
 
   ready() {
@@ -106,7 +108,7 @@ export class DiscordHandler {
 
   async sendVoteRollup(proposals: Proposal[], endDate: Date) {
     const message = discordTemplates.voteRollUpMessage(
-      `${DEFAULT_DASHBOARD}/s/${this.config.name}`,
+      this.spaceURL,
       this.config.proposalIdPrefix,
       proposals,
       this.config.name,
@@ -118,19 +120,19 @@ export class DiscordHandler {
     });
   }
 
-  // async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
-  //   const message = discordTemplates.proposalsUnderQuorumMessage(proposals, this.config.name, this.config.propertyKeys.proposalIdPrefix, endDate);
-  //   return this.getAlertChannel().send(
-  //     { content: `:hotsprings: ${this.roleTag} there are proposals under quorum! vote now! :hotsprings:`,
-  //       embeds: [message]
-  //     }).then((messageObj) => {
-  //     return messageObj.id;
-  //   });
-  // }
+  async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
+    const message = discordTemplates.proposalsUnderQuorumMessage(this.spaceURL, this.config.proposalIdPrefix, proposals, this.config.snapshot.minTokenPassingAmount, this.config.name);
+    return this.getAlertChannel().send(
+      { content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
+        embeds: [message]
+      }).then((messageObj) => {
+      return messageObj.id;
+    });
+  }
 
   async sendVoteResultsRollup(proposals: Proposal[]) {
     const message = discordTemplates.voteResultsRollUpMessage(
-      DEFAULT_DASHBOARD,
+      this.spaceURL,
       this.config.name,
       this.config.proposalIdPrefix,
       proposals
@@ -143,7 +145,7 @@ export class DiscordHandler {
   async editVoteResultsRollup(messageId: string, proposals: Proposal[]) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
     const message = discordTemplates.voteResultsRollUpMessage(
-      DEFAULT_DASHBOARD,
+      this.spaceURL,
       this.config.name,
       this.config.proposalIdPrefix,
       proposals
@@ -168,7 +170,7 @@ export class DiscordHandler {
 
   async sendDailyReminder(day: number, governanceCycle: number, type: string, endDate: Date, juiceboxTimeDelay?: number) {
     const endSeconds = endDate.getTime() / 1000;
-    const link = `${DEFAULT_DASHBOARD}/s/${this.config.name}`;
+    const link = this.spaceURL;
     const reminderType = this.config.discord.reminder.type;
     let message: EmbedBuilder;
     let attachments: AttachmentBuilder[];

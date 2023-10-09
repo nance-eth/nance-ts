@@ -3,7 +3,7 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { keys } from '../keys';
 import { dotPin } from '../storage/storageHandler';
-import { DEFAULT_DASHBOARD, addSecondsToDate } from '../utils';
+import { DEFAULT_DASHBOARD, addSecondsToDate, maybePlural } from '../utils';
 import { Action, CustomTransaction, NanceConfig, Payout } from '../types';
 import { getENS } from '../api/helpers/ens';
 
@@ -21,7 +21,7 @@ const actionsToMarkdown = async (actions: Action[]) => {
       const toWithLink = (payload.project)
         ? `[Juicebox Project ${payload.project}](https://juicebox.money/v2/p/${payload.project})`
         : `[${ens}](https://etherscan.io/address/${payload.address})`;
-      return `${index}. [Juicebox Payout] ${toWithLink} $${payload.amountUSD.toLocaleString()} for ${payload.count} cycle${(payload.count > 1) ? 's' : ''}`;
+      return `${index}. [Juicebox Payout] ${toWithLink} $${payload.amountUSD.toLocaleString()} for ${payload.count} ${maybePlural('cycle', payload.count)}`;
     }
     return '';
   }).join('\n');

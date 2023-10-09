@@ -5,7 +5,7 @@ import {
   AttachmentBuilder, EmbedBuilder, ThreadChannel, EmbedField
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
-import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength, numToPrettyString } from '../utils';
+import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength, maybePlural, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 
@@ -36,7 +36,7 @@ export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposal
         name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
         value: stripIndents`
         [proposal](${getProposalURL(space, proposal)}) | [discussion](${proposal.discussionThreadURL})
-        ------------------------------`,
+        ---------------------------------------------`,
       };
     })
   );
@@ -52,7 +52,22 @@ export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, pro
           name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
           [discussion](${proposal.discussionThreadURL}) | [vote](${getProposalURL(space, proposal)})
-          ------------------------------`,
+          ---------------------------------------------`,
+        };
+      })
+    );
+};
+
+export const proposalsUnderQuorumMessage = (voteURL: string, proposalIdPrefix: string, proposals: Proposal[], quorum: number, space: string) => {
+  return new EmbedBuilder().setColor('#d48c11').setTitle('Proposals under quorum').setURL(voteURL).setDescription(
+    `There are ${String(proposals.length)} ${maybePlural('proposal', proposals.length)} under the set quorum of **${numToPrettyString(quorum, 0)}**`)
+    .addFields(
+      proposals.map((proposal: Proposal) => {
+        return {
+          name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
+          value: stripIndents`
+          current ${numToPrettyString(proposal.internalVoteResults?.scoresTotal)} | under quroum by **${numToPrettyString(quorum - (proposal.internalVoteResults?.scoresTotal || 0), 0)}**
+          ---------------------------------------------`,
         };
       })
     );
@@ -73,7 +88,7 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
             name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
             value: stripIndents`
             [${proposal.internalVoteResults?.outcomeEmoji} ${proposal.internalVoteResults?.outcomePercentage}% | ${proposal.internalVoteResults?.totalVotes} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposalURL})
-            ------------------------------`,
+            ---------------------------------------------`,
           };
         }
         return {
