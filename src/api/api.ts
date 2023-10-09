@@ -53,7 +53,8 @@ async function handlerReq(query: string, auth: string | undefined) {
 // ================================ //
 router.get('/:space', async (req, res) => {
   const { space } = req.params;
-  if (!space) return res.send();
+  const spaces = Object.keys(pools);
+  if (!spaces.includes(space)) { return res.send({ success: false, error: `[NANCE ERROR]: space ${space} not found` }); }
   try {
     const { config, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners } = await handlerReq(space, req.headers.authorization);
     return res.send({
