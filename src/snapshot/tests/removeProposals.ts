@@ -5,7 +5,7 @@ import { request as gqlRequest, gql } from 'graphql-request';
 import { keys } from '../../keys';
 import { unixTimeStampNow, myProvider } from '../../utils';
 
-const SPACE = 'jbdao.eth';
+const SPACE = 'jigglyjams.eth';
 
 async function deleteProposals() {
   const provider = myProvider();
@@ -19,7 +19,6 @@ async function deleteProposals() {
       proposals(where: {
         space: "${SPACE}"
         state: "active"
-        id_in: ["0xcf4f236860321a31aca1399b28249278cfa3a5129a7e98f21df4bcca04ed600d", "0xd9477cabc2879a2465b49796d0c6cc3dccd4bbadb70c9da818850c9d29287af7"]
       }) {
         id
       }

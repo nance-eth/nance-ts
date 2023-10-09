@@ -15,18 +15,11 @@ export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], 
     const originalEnd = new Date(event.end);
     const start = new Date(originalStart.getTime() + repeats * interval);
     const end = new Date(originalEnd.getTime() + repeats * interval);
-    const nextStart = new Date(start.getTime() + interval);
-    const nextEnd = new Date(end.getTime() + interval);
     nextEvents.push(
       {
         title: event.title,
         start,
         end,
-      },
-      {
-        title: event.title,
-        start: nextStart,
-        end: nextEnd,
       }
     );
   });

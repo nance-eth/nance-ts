@@ -19,6 +19,7 @@ import { Proposal, PollResults, NanceConfig } from '../types';
 import * as discordTemplates from './discordTemplates';
 import { SQLPayout } from '../dolt/schema';
 import { getENS } from '../api/helpers/ens';
+import { EMOJI } from '../constants';
 
 const SILENT_FLAG = 1 << 12;
 
@@ -94,8 +95,8 @@ export class DiscordHandler {
   async setupPoll(messageId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
     await Promise.all([
-      messageObj.react(this.config.discord.poll.voteYesEmoji),
-      messageObj.react(this.config.discord.poll.voteNoEmoji)
+      messageObj.react(EMOJI.YES),
+      messageObj.react(EMOJI.NO),
     ]);
   }
 
@@ -243,11 +244,11 @@ export class DiscordHandler {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
     const yesVoteUserList = await this.getUserReactions(
       messageObj,
-      this.config.discord.poll.voteYesEmoji
+      EMOJI.YES
     );
     const noVoteUserList = await this.getUserReactions(
       messageObj,
-      this.config.discord.poll.voteNoEmoji
+      EMOJI.NO
     );
     return {
       voteYesUsers: yesVoteUserList.verified,
@@ -261,8 +262,8 @@ export class DiscordHandler {
       pollResults,
       outcome,
       {
-        voteYesEmoji: this.config.discord.poll.voteYesEmoji,
-        voteNoEmoji: this.config.discord.poll.voteNoEmoji
+        voteYesEmoji: EMOJI.YES,
+        voteNoEmoji: EMOJI.NO
       }
     );
     const sendChannel = this.getChannelById(threadId);
@@ -271,8 +272,8 @@ export class DiscordHandler {
 
   async sendPollResultsEmoji(pass: boolean, threadId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(threadId);
-    if (pass) messageObj.react(this.config.discord.poll.voteGoVoteEmoji);
-    else messageObj.react(this.config.discord.poll.voteCancelledEmoji);
+    if (pass) messageObj.react(EMOJI.VOTE);
+    else messageObj.react(EMOJI.CANCELLED);
   }
 
   async setStatus() {

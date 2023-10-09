@@ -1,27 +1,30 @@
 import { NanceConfig } from '../types';
 import { discordLogin } from '../api/helpers/discord';
 import { doltSys } from '../dolt/doltSys';
-import { EVENTS } from '../constants';
-import { DialogHandlerMessageIds } from '../dolt/schema';
+import logger from '../logging';
 
 export const sendStartOrEndAlert = async (
   config: NanceConfig,
   startOrEndDate: Date,
-  event: keyof typeof EVENTS,
-  dialogHandlerMessageType: keyof DialogHandlerMessageIds,
+  event: string,
+  dialogHandlerMessageType: string,
   startOrEnd: 'start' | 'end'
 ) => {
-  const dialogHandler = await discordLogin(config);
-  const startOrEndReminderMessageId = await dialogHandler.sendReminder(
-    event,
-    startOrEndDate,
-    startOrEnd
-  );
-  await doltSys.updateDialogHandlerMessageId(
-    config.name,
-    dialogHandlerMessageType,
-    startOrEndReminderMessageId
-  );
-  dialogHandler.logout();
-  return true;
+  try {
+    const dialogHandler = await discordLogin(config);
+    const startOrEndReminderMessageId = await dialogHandler.sendReminder(
+      event,
+      startOrEndDate,
+      startOrEnd
+    );
+    await doltSys.updateDialogHandlerMessageId(
+      config.name,
+      dialogHandlerMessageType,
+      startOrEndReminderMessageId
+    );
+    dialogHandler.logout();
+  } catch (e) {
+    logger.error(`error sending ${startOrEnd} alert for ${config.name}`);
+    logger.error(e);
+  }
 };

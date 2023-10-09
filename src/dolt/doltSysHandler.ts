@@ -103,19 +103,18 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async updateCycle(space: string, currentGovernanceCycle: number, time: Date) {
-    return this.localDolt.queryResults(oneLine`
+  async incrementGovernanceCycle(space: string) {
+    const query = oneLine`
       UPDATE ${system}
-      SET
-        currentGovernanceCycle = ?,
-        cycleDayLastUpdated = ?
+      SET currentGovernanceCycle = currentGovernanceCycle + 1
       WHERE space = ?;
-    `, [currentGovernanceCycle, time.toISOString(), space]).then((res) => {
+    `;
+    return this.localDolt.queryResults(query, [space]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async updateDialogHandlerMessageId(space: string, messageName: keyof DialogHandlerMessageIds, messageId: string) {
+  async updateDialogHandlerMessageId(space: string, messageName: string, messageId: string) {
     return this.localDolt.queryResults(oneLine`
     UPDATE ${system}
     SET dialogHandlerMessageIds = JSON_SET(dialogHandlerMessageIds, '$.${messageName}', ?)

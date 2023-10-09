@@ -12,8 +12,8 @@ async function main() {
   // const dateToTest = new Date('2023-11-01T00:00:00.000Z');
   const dateToTest = new Date();
 
-  // const nextEvents = getNextEvents(spaceInfo.calendar as unknown as DateEvent[], spaceInfo.cycleStageLengths, dateToTest);
-  // console.log('nextEvents', nextEvents);
+  const nextEvents = getNextEvents(spaceConfig.calendar as unknown as DateEvent[], spaceConfig.cycleStageLengths, dateToTest);
+  console.log('nextEvents', nextEvents);
 
   const currentEvent = getCurrentEvent(spaceConfig.calendar as unknown as DateEvent[], spaceConfig.cycleStageLengths, dateToTest);
   console.log('currentEvent', currentEvent);

@@ -5,8 +5,6 @@ import {
 } from 'winston';
 import 'dotenv/config';
 
-if (process.env.CONSOLE_LOG !== 'on') console.log = function none() {};
-
 const logFormat = format.combine(
   format.colorize({ message: true }),
   format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),

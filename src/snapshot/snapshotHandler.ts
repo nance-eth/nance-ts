@@ -74,7 +74,7 @@ export class SnapshotHandler {
     this.snapshot = new snapshot.Client712(this.hub);
   }
 
-  async createProposal(proposal: Proposal, startDate: Date, endDate: Date, options: SnapshotVoteOptions): Promise<string> {
+  async createProposal(proposal: Proposal, startDate: Date, endDate: Date, options: SnapshotVoteOptions, jitter: number): Promise<string> {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();
@@ -88,7 +88,7 @@ export class SnapshotHandler {
       choices: options.choices,
       start: startTimeStamp,
       end: endTimeStamp,
-      snapshot: latestBlock,
+      snapshot: latestBlock - jitter,
       plugins: JSON.stringify({}),
     };
     const voteHash = await this.snapshot.proposal(this.wallet, this.wallet.address, snapProposal).then((response: any) => {

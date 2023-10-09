@@ -123,11 +123,6 @@ export interface NanceConfig {
       transactions: string;
     }
     poll: {
-      voteYesEmoji: string;
-      voteNoEmoji: string;
-      voteGoVoteEmoji: string;
-      votePassEmoji: string;
-      voteCancelledEmoji: string;
       minYesVotes: number;
       yesNoRatio: number;
       showResults: boolean;

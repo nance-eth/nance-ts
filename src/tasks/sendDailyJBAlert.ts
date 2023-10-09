@@ -25,8 +25,8 @@ export async function sendDailyJBAlert(space: string) {
       logger.info(`no dailyJBAlert sent for ${space}, not included in alert days: ${juiceboxTimeBasedDaysRemaining}`);
     }
   } catch (e) {
-    console.error(`error sending dailyJucieboxBasedAlert for ${space}`);
-    console.error(e);
+    logger.error(`error sending dailyJucieboxBasedAlert for ${space}`);
+    logger.error(e);
   }
   logger.info('===================================================================');
 }

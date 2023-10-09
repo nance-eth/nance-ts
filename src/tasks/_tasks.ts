@@ -6,6 +6,10 @@ import { temperatureCheckRollup } from './temperatureCheckRollup';
 import { temperatureCheckClose } from './temperatureCheckClose';
 import { voteRollup } from './voteRollup';
 import { voteSetup } from './voteSetup';
+import { voteQuorumAlert } from './voteQuorumAlert';
+import { voteClose } from './voteClose';
+import { voteResultsRollup } from './voteResultsRollup';
+import { incrementGovernanceCycle } from './incrementGovernanceCycle';
 
 export {
   sendDailyJBAlert,
@@ -15,5 +19,9 @@ export {
   temperatureCheckRollup,
   temperatureCheckClose,
   voteSetup,
-  voteRollup
+  voteRollup,
+  voteQuorumAlert,
+  voteClose,
+  voteResultsRollup,
+  incrementGovernanceCycle
 };

@@ -13,7 +13,7 @@ import { dotPin } from './storage/storageHandler';
 import { DoltHandler } from './dolt/doltHandler';
 import { DoltSQL } from './dolt/doltSQL';
 import { dbOptions } from './dolt/dbConfig';
-import { STATUS } from './constants';
+import { EMOJI, STATUS } from './constants';
 
 export class Nance {
   dialogHandler;
@@ -136,6 +136,7 @@ export class Nance {
   async votingSetup(endDate: Date, proposals?: Proposal[] | undefined): Promise<Proposal[] | void> {
     logger.info(`${this.config.name}: votingSetup() begin...`);
     const voteProposals = proposals || await this.dProposalHandler.getVoteProposals();
+    const blockJitter = Math.floor(Math.random() * 100);
     await Promise.all(voteProposals.map(async (proposal: Proposal) => {
       const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${proposal.body}`;
       const ipfsCID = await dotPin(proposalWithHeading);
@@ -144,7 +145,8 @@ export class Nance {
         proposal,
         addSecondsToDate(new Date(), -10),
         endDate,
-        (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : { type: 'basic', choices: this.config.snapshot.choices }
+        (proposal.voteSetup) ? { type: proposal.voteSetup.type, choices: proposal.voteSetup.choices } : { type: 'basic', choices: this.config.snapshot.choices },
+        blockJitter
       );
       try { await this.dProposalHandler.updateVotingSetup(proposal); } catch (e) { logger.error(`dDB: ${e}`); }
       logger.debug(`${this.config.name}: ${proposal.title}: ${proposal.voteURL}`);
@@ -179,10 +181,10 @@ export class Nance {
         proposalMatch.internalVoteResults.percentages = this.getVotePercentages(vote);
         if (this.votePassCheck(proposalMatch.internalVoteResults)) {
           proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[0]]);
-          proposalMatch.internalVoteResults.outcomeEmoji = this.config.discord.poll.votePassEmoji;
+          proposalMatch.internalVoteResults.outcomeEmoji = EMOJI.APPROVED;
         } else {
           proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[1]]);
-          proposalMatch.internalVoteResults.outcomeEmoji = this.config.discord.poll.voteCancelledEmoji;
+          proposalMatch.internalVoteResults.outcomeEmoji = EMOJI.CANCELLED;
         }
         try { await this.dProposalHandler.updateVotingClose(proposalMatch); } catch (e) { logger.error(`dDB: ${e}`); }
       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }

@@ -31,7 +31,7 @@ export const TASKS = {
   deleteTemperatureCheckStartAlert: 'deleteTemperatureCheckStartAlert',
   temperatureCheckRollup: 'temperatureCheckRollup',
   temperatureCheckEndAlert: 'temperatureCheckEndAlert',
-  deleteTemperatureEndAlert: 'deleteTemperatureEndAlert',
+  deleteTemperatureCheckEndAlert: 'deleteTemperatureCheckEndAlert',
   temperatureCheckClose: 'temperatureCheckClose',
   voteSetup: 'voteSetup',
   voteRollup: 'voteRollup',
@@ -42,6 +42,14 @@ export const TASKS = {
   voteResultsRollup: 'voteResultsRollup',
   incrementGovernanceCycle: 'incrementGovernanceCycle',
   sendBookkeeping: 'sendBookkeeping',
+};
+
+export const EMOJI = {
+  YES: '👍',
+  NO: '👎',
+  VOTE: '🗳️',
+  APPROVED: '✅',
+  CANCELLED: '❌',
 };
 
 export const ONE_HOUR_SECONDS = 3600;

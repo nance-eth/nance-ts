@@ -5,11 +5,11 @@ import { DialogHandlerMessageIds } from '../dolt/schema';
 
 export const deleteStartOrEndAlert = async (
   config: NanceConfig,
-  dialogHandlerMessageType: keyof DialogHandlerMessageIds,
+  dialogHandlerMessageType: string,
 ) => {
   const messageId = await doltSys.getDialogHandlerMessageIds(config.name);
   const dialogHandler = await discordLogin(config);
-  await dialogHandler.deleteMessage(messageId[dialogHandlerMessageType]);
+  await dialogHandler.deleteMessage(messageId[dialogHandlerMessageType as keyof DialogHandlerMessageIds]);
   await doltSys.updateDialogHandlerMessageId(config.name, dialogHandlerMessageType, '');
   dialogHandler.logout();
 };

@@ -2,6 +2,7 @@ import schedule from 'node-schedule';
 import { getSpaceConfig } from '../api/helpers/getSpace';
 import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../calendar/events';
 import { discordLogin } from '../api/helpers/discord';
+import { TASKS } from '../constants';
 import logger from '../logging';
 
 export async function sendDailyAlert(space: string) {
@@ -19,7 +20,7 @@ export async function sendDailyAlert(space: string) {
     const dialogHandler = await discordLogin(config);
     await dialogHandler.sendDailyReminder(currentGovernanceCycleDay, currentGovernanceCycle, currentEvent.title, currentEvent.end);
     logger.info(`dailyAlert sent for ${space}`);
-    logger.info(`next innvocation at ${schedule.scheduledJobs[`${space}:dailyAlert`].nextInvocation().toISOString()}`);
+    logger.info(`next innvocation at ${schedule.scheduledJobs[`${space}:${TASKS.sendDailyAlert}`].nextInvocation().toISOString()}`);
   } catch (e) {
     logger.error(`error sending dailyAlert for ${space}`);
     logger.error(e);
