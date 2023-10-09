@@ -13,7 +13,7 @@ const actionsHeading = '## Proposed Actions\n\n';
 export const formatCustomTransaction = (action: CustomTransaction) => {
   const functionNameOnly = action.functionName.split('function ')[1];
   const regex = /(\w+)\s+(\w+)(?=[,)])/g;
-  const inputsWithType = [...functionNameOnly.matchAll(regex)].map((match) => { return [match[1], match[2]]; });
+  const inputsWithType = Array.from(functionNameOnly.matchAll(regex), (match) => { return [match[1], match[2]]; });
   const prettyOutput = inputsWithType.map((input, index) => {
     return `${input[1]}(${input[0]}): ${action.args[index]}`;
   });
