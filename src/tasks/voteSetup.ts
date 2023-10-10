@@ -58,16 +58,17 @@ export const voteSetup = async (config: NanceConfig, endDate: Date, proposals?: 
         logger.error(e);
         return undefined;
       });
-      const start = addSecondsToDate(new Date(), -10);
-      // if a space has a period set, a proposal must be submitted with that period
-      const end = (snapshotVoteSettings?.period)
-        ? addSecondsToDate(start, snapshotVoteSettings.period)
-        : endDate;
 
       // used to pick a more random previous block to take snapshot of token balances per DrGorilla.eth's recommendation
       const blockJitter = Math.floor(Math.random() * 100);
 
       await Promise.all(voteProposals.map(async (proposal) => {
+        const startJitter = Math.floor(Math.random() * 100); // it seems that sometimes proposals uploaded at same time are rejected by Snapshot API
+        const start = addSecondsToDate(new Date(), startJitter);
+        // if a space has a period set, a proposal must be submitted with that period
+        const end = (snapshotVoteSettings?.period)
+          ? addSecondsToDate(start, snapshotVoteSettings.period)
+          : endDate;
         // append actions to bottom of proposal
         let bodyWithActions;
         if (proposal.actions && proposal.actions.length > 0) {
@@ -77,7 +78,6 @@ export const voteSetup = async (config: NanceConfig, endDate: Date, proposals?: 
         }
         const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${bodyWithActions || proposal.body}`;
         const ipfsURL = await dotPin(proposalWithHeading);
-        console.log(`proposal ${proposal.proposalId} pinned to ${ipfsURL}`);
         const type = (proposal.voteSetup) ? proposal.voteSetup.type : (snapshotVoteSettings?.type || 'basic');
         const body = bodyWithActions || proposal.body;
         const voteURL = await snapshot.createProposal(

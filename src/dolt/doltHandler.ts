@@ -40,8 +40,10 @@ export class DoltHandler {
   }
 
   async queryProposals(query: string, variables?: string[]): Promise<Proposal[]> {
+    console.log(query);
     return this.localDolt.queryRows(query, variables).then((res) => {
       return res.map((r) => {
+        console.log(r);
         return this.toProposal(r as SQLExtended);
       });
     }).catch((e) => {
@@ -421,7 +423,7 @@ export class DoltHandler {
   async getToDiscuss() {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
-      proposalStatus = 'Discussion'
+      proposalStatus = '${STATUS.DISCUSSION}'
       AND discussionURL IS NULL
       ORDER BY proposalId ASC
     `);
@@ -430,7 +432,7 @@ export class DoltHandler {
   async getDiscussionProposals() {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
-      proposalStatus = 'Discussion'
+      proposalStatus = '${STATUS.DISCUSSION}'
       AND proposalId IS NOT NULL
       AND discussionURL IS NOT NULL
       AND title IS NOT NULL
@@ -441,15 +443,15 @@ export class DoltHandler {
   async getTemperatureCheckProposals() {
     return this.queryProposals(oneLine`
       SELECT * FROM ${proposalsTable} WHERE
-      proposalStatus = 'Temperature Check'
+      proposalStatus = '${STATUS.TEMPERATURE_CHECK}'
       ORDER BY proposalId ASC
     `);
   }
 
   async getVoteProposals({ uploadedToSnapshot = false } : { uploadedToSnapshot?: boolean } = {}) {
     return this.queryProposals(`
-      SELECT *, HEX(body) as body, HEX(title) as title FROM ${proposalsTable} WHERE
-      proposalStatus = 'Voting'
+      ${SELECT_ACTIONS} from ${proposalsTable} WHERE
+      proposalStatus = '${STATUS.VOTING}'
       AND snapshotId IS ${uploadedToSnapshot ? 'NOT ' : ''}NULL
       ORDER BY proposalId ASC
     `);
@@ -594,7 +596,7 @@ export class DoltHandler {
       SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
       LEFT JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
       WHERE treasuryVersion = ${treasuryVersion} AND
-      payStatus = 'active' AND
+      payStatus = '${STATUS.ACTION.ACTIVE}' AND
       governanceCycleStart <= ${currentGovernanceCycle} AND
       governanceCycleStart + numberOfPayouts >= ${currentGovernanceCycle}
       ORDER BY proposalId ASC
@@ -608,7 +610,7 @@ export class DoltHandler {
       SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
       INNER JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
       WHERE treasuryVersion = ${treasuryVersion} AND
-      payStatus != 'cancelled' AND
+      payStatus != '${STATUS.ACTION.CANCELLED}' AND
       governanceCycleStart <= ${governanceCycle} AND
       governanceCycleStart + numberOfPayouts >= ${governanceCycle + 1}
       ORDER BY proposalId ASC
