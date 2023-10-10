@@ -103,29 +103,24 @@ router.get('/:space/proposals', async (req, res) => {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
     const { dolt, config, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     const proposalIdPrefix = config.proposalIdPrefix.includes('-') ? config.proposalIdPrefix : `${config.proposalIdPrefix}-`;
-    const data: ProposalsPacket = {
-      proposalInfo: {
-        snapshotSpace: config.snapshot.space,
-        proposalIdPrefix,
-        minTokenPassingAmount: config.snapshot.minTokenPassingAmount
-      },
-      proposals: []
-    };
 
     // calculate offset for SQL pagination
     const _limit = limit ? Number(limit) : 0;
     const _page = page ? Number(page) : 0;
     const _offset = _page ? (_page - 1) * _limit : 0;
 
-    // Defauls to query current cycle
-    if (!keyword && !cycle) {
-      const cycleSearch = cycle || currentGovernanceCycle.toString();
-      data.proposals = await dolt.getProposalsByGovernanceCycle(cycleSearch, _limit, _offset);
-    }
-    if (!keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycle(cycle, _limit, _offset); }
-    if (keyword && !cycle) { data.proposals = await dolt.getProposalsByKeyword(keyword, _limit, _offset); }
-    if (keyword && cycle) { data.proposals = await dolt.getProposalsByGovernanceCycleAndKeyword(cycle, keyword, _limit, _offset); }
-    if (author) { data.proposals = await dolt.getProposalsByAuthorAddress(author); }
+    const cycleSearch = cycle || currentGovernanceCycle.toString();
+    const { proposals, hasMore } = await dolt.getProposals({ governanceCycle: cycleSearch, keyword, author, limit: _limit, offset: _offset });
+
+    const data: ProposalsPacket = {
+      proposalInfo: {
+        snapshotSpace: config.snapshot.space,
+        proposalIdPrefix,
+        minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
+      },
+      proposals,
+      hasMore,
+    };
 
     if (cycle || currentEvent.title !== EVENTS.TEMPERATURE_CHECK || currentEvent.title !== EVENTS.DELAY) {
       res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');

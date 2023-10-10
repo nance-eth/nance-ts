@@ -464,54 +464,42 @@ export class DoltHandler {
     });
   }
 
-  async getProposalsByGovernanceCycle(governanceCycle: string, limit?: number, offset?: number) {
-    const cycleWhereClause = this.cycleWhereClause(governanceCycle);
-    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
+  async getProposals({ governanceCycle, keyword, author, limit, offset } :
+  { governanceCycle?: string; keyword?: string; author?: string, limit?: number; offset?: number; }) {
+    const whereClauses = [];
+    let selectRelevance = '';
 
-    return this.queryProposals(`
-      ${SELECT_ACTIONS} FROM ${proposalsTable}
-      WHERE ${cycleWhereClause}
-      ORDER BY proposalId ASC
+    // Handle governanceCycle
+    if (governanceCycle) {
+      whereClauses.push(this.cycleWhereClause(governanceCycle));
+    }
+
+    // Handle keyword
+    if (keyword) {
+      const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
+      whereClauses.push(`(${orConditions})`);
+      selectRelevance = `, (${relevanceCalculation}) AS relevance`;
+    }
+
+    if (author) { whereClauses.push(`authorAddress = '${author}'`); }
+
+    const whereStatement = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const orderByStatement = keyword ? 'ORDER BY relevance DESC' : 'ORDER BY proposalId ASC';
+    const pagination = (limit || offset) ? `LIMIT ${limit ? limit + 1 : limit} OFFSET ${offset}` : '';
+
+    const query = oneLine`
+      ${SELECT_ACTIONS} ${selectRelevance}
+      FROM ${proposalsTable}
+      ${whereStatement}
+      ${orderByStatement}
       ${pagination}
-    `);
-  }
+    `;
 
-  async getVotedProposalsByGovernanceCycle(governanceCycle: string) {
-    return this.queryProposals(`
-      ${SELECT_ACTIONS} FROM ${proposalsTable}
-      WHERE governanceCycle = ${governanceCycle}
-      AND snapshotId IS NOT NULL
-      ORDER BY proposalId ASC
-      `);
-  }
+    const proposals = await this.queryProposals(query);
+    const hasMore = (limit) ? proposals.length > limit : false;
+    if (hasMore) proposals.pop();
 
-  async getProposalsByGovernanceCycleAndKeyword(governanceCycle: string, keyword: string, limit?: number, offset?: number) {
-    const cycleWhereClause = this.cycleWhereClause(governanceCycle);
-    const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
-    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
-
-    return this.queryProposals(`
-    ${SELECT_ACTIONS}, (${relevanceCalculation}) AS relevance from ${proposalsTable}
-      WHERE ${cycleWhereClause}
-      AND (
-        ${orConditions}
-      )
-      ORDER BY relevance DESC
-      ${pagination}
-    `);
-  }
-
-  async getProposalsByKeyword(keyword: string, limit?: number, offset?: number) {
-    const { relevanceCalculation, orConditions } = this.relevanceMatch(keyword);
-    const pagination = (limit || offset) ? `LIMIT ${limit} OFFSET ${offset}` : '';
-
-    return this.queryProposals(`
-    ${SELECT_ACTIONS}, (${relevanceCalculation}) AS relevance from ${proposalsTable}
-      WHERE
-      ${orConditions}
-      ORDER BY relevance DESC
-      ${pagination}
-    `);
+    return { proposals, hasMore };
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -532,15 +520,6 @@ export class DoltHandler {
       .join(' OR ');
 
     return { relevanceCalculation, orConditions };
-  }
-
-  async getContentMarkdown(hash: string) {
-    const proposal = await this.queryDb(`
-      ${SELECT_ACTIONS} FROM ${proposalsTable}
-      WHERE uuid = '${hash}'
-    `) as SQLExtended[];
-    if (proposal.length === 0) return [];
-    return this.toProposal(proposal[0]);
   }
 
   async getProposalByAnyId(hashOrId: string): Promise<Proposal> {

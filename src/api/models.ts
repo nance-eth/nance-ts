@@ -28,7 +28,7 @@ type ProposalInfo = {
   minTokenPassingAmount: number;
 };
 
-export type ProposalsPacket = { proposalInfo: ProposalInfo, proposals: Proposal[] };
+export type ProposalsPacket = { proposalInfo: ProposalInfo; proposals: Proposal[]; hasMore: boolean; };
 
 export type ProposalsQueryResponse = APIResponse<ProposalsPacket>;
 
