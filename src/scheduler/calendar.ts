@@ -24,7 +24,6 @@ export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEve
       });
       // Send Temperature Check end alert
       const sendTemperatureCheckEndDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
-      console.log('sendTemperatureCheckEndDate', sendTemperatureCheckEndDate);
       schedule.scheduleJob(`${space}:${TASKS.temperatureCheckEndAlert}`, sendTemperatureCheckEndDate, () => {
         tasks.sendStartOrEndAlert(config, event.end, EVENTS.TEMPERATURE_CHECK, TASKS.temperatureCheckEndAlert, 'end');
       });
@@ -46,7 +45,7 @@ export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEve
         tasks.voteSetup(config, event.end);
       });
       // Send Vote rollup
-      schedule.scheduleJob(`${space}:${TASKS.voteRollup}`, event.end, () => {
+      schedule.scheduleJob(`${space}:${TASKS.voteRollup}`, event.start, () => {
         tasks.voteRollup(config, event.end);
       });
       // Send Vote quorum alert
