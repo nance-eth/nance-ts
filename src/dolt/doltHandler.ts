@@ -40,10 +40,8 @@ export class DoltHandler {
   }
 
   async queryProposals(query: string, variables?: string[]): Promise<Proposal[]> {
-    console.log(query);
     return this.localDolt.queryRows(query, variables).then((res) => {
       return res.map((r) => {
-        console.log(r);
         return this.toProposal(r as SQLExtended);
       });
     }).catch((e) => {
@@ -264,9 +262,7 @@ export class DoltHandler {
       updates.push(`${key} = ?`);
     });
     const query = `UPDATE ${proposalsTable} SET ${updates.join(',')} WHERE uuid = ?`;
-    // console.log(query);
     const vars = [...Object.values(cleanedProposal), cleanedProposal.uuid];
-    // console.log(vars);
     await this.localDolt.db.query(query, vars);
     return proposal.hash || Promise.reject('Proposal hash not found');
   }
