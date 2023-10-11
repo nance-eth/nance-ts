@@ -91,7 +91,8 @@ export class DoltHandler {
       cleanProposal.voteResults = {
         choices: proposal.choices,
         scores: proposal.snapshotVotes,
-        votes: proposal.voteAddressCount
+        votes: proposal.voteAddressCount,
+        scores_total: proposal.snapshotVotes.reduce((a, b) => { return a + b; }, 0)
       };
     }
     if (proposal.temperatureCheckVotes) {
@@ -378,8 +379,8 @@ export class DoltHandler {
   }
 
   async updateVotingClose(proposal: Proposal) {
-    const voteChoices = (proposal.internalVoteResults) ? JSON.stringify(Object.keys(proposal.internalVoteResults.scores)) : null;
-    const voteResults = (proposal.internalVoteResults) ? JSON.stringify(Object.values(proposal.internalVoteResults.scores)) : null;
+    const voteChoices = JSON.stringify(proposal.voteResults?.choices);
+    const snapshotVotes = JSON.stringify(proposal.voteResults?.scores);
     await this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
       choices = ?,
@@ -387,7 +388,7 @@ export class DoltHandler {
       voteAddressCount = ?,
       proposalStatus = ?
       WHERE uuid = ?
-    `, [voteChoices, voteResults, proposal.internalVoteResults?.totalVotes, proposal.status, proposal.hash]);
+    `, [voteChoices, snapshotVotes, proposal.voteResults?.votes, proposal.status, proposal.hash]);
     this.actionDirector(proposal);
   }
 

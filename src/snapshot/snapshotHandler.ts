@@ -1,32 +1,9 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
-import { Proposal, InternalVoteResults, SnapshotVoteOptions, NanceConfig } from '../types';
+import { Proposal, SnapshotVoteOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '../types';
 import { dateToUnixTimeStamp, myProvider, uuidGen } from '../utils';
 import { STATUS } from '../constants';
-
-export type SnapshotProposal = {
-  id: string;
-  type: string;
-  start: string;
-  choices: string[];
-  votes: number;
-  scores: number[];
-  scores_total: number;
-  title?: string;
-  body?: string;
-  author?: string;
-  discussion?: string;
-  ipfsCID?: string;
-  state?: string;
-};
-
-type SnapshotVoteSettings = {
-  quorum: number;
-  period: number;
-  type: string;
-  delay: number;
-};
 
 const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
   let status = STATUS.VOTING;
@@ -43,7 +20,7 @@ const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
     proposalId,
     createdTime: new Date(Number(sProposal.start) * 1000),
     discussionThreadURL: sProposal.discussion || '',
-    ipfsURL: sProposal.ipfsCID || '',
+    ipfsURL: sProposal.ipfs || '',
     voteURL: sProposal.id,
     voteSetup: {
       type: sProposal.type,
@@ -53,6 +30,7 @@ const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
       votes: sProposal.votes,
       scores: sProposal.scores,
       choices: sProposal.choices,
+      scores_total: sProposal.scores_total,
     }
   };
 };
@@ -100,7 +78,7 @@ export class SnapshotHandler {
     return voteURL;
   }
 
-  async getProposalVotes(proposalIds: string[]): Promise<InternalVoteResults[]> {
+  async getProposalVotes(proposalIds: string[]): Promise<SnapshotVoteResultsId[]> {
     const query = gql`
     {
       proposals (
@@ -111,29 +89,14 @@ export class SnapshotHandler {
       ) {
         id
         choices
-        type
-        state
         scores_state
         votes
         scores
         scores_total
       }
     }`;
-    const gqlResults = await gqlRequest(`${this.hub}/graphql`, query);
-    const results = gqlResults.proposals.map((proposal: any) => {
-      return {
-        voteProposalId: proposal.id,
-        totalVotes: proposal.votes,
-        scoresState: proposal.scores_state,
-        scoresTotal: proposal.scores_total,
-        scores: proposal.choices.reduce((output: any, choice: string, index: number) => {
-          return {
-            ...output, [choice]: proposal.scores[index]
-          };
-        }, {})
-      };
-    });
-    return results;
+    const results = await gqlRequest(`${this.hub}/graphql`, query) as { proposals: SnapshotVoteResultsId[] };
+    return results.proposals;
   }
   async getAllProposalsByScore(forSync = false): Promise<Proposal[]> {
     const query = gql`

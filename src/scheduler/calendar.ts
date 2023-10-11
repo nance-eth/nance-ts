@@ -59,7 +59,7 @@ export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEve
         tasks.sendStartOrEndAlert(config, event.end, EVENTS.SNAPSHOT_VOTE, TASKS.voteEndAlert, 'end');
       });
       // Delete Vote end alert
-      schedule.scheduleJob(`${space}:${TASKS.voteEndAlert}`, event.end, () => {
+      schedule.scheduleJob(`${space}:${TASKS.deleteVoteEndAlert}`, event.end, () => {
         tasks.deleteStartOrEndAlert(config, TASKS.voteEndAlert);
       });
       // Vote close

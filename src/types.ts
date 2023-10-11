@@ -15,7 +15,6 @@ export interface Proposal {
   ipfsURL: string;
   voteURL: string;
   voteSetup?: SnapshotVoteOptions;
-  internalVoteResults?: InternalVoteResults;
   voteResults?: VoteResults;
   version?: string;
   authorAddress?: string;
@@ -64,23 +63,34 @@ export type CustomTransaction = {
   tenderlyId: string;
 };
 
-export type InternalVoteResults = {
-  voteProposalId: string;
-  totalVotes: number;
-  scoresState: string;
-  scores: Record<string, number>;
-  scoresTotal: number;
-  percentages: Record<string, number>;
-  outcomePercentage: string;
-  outcomeEmoji: string;
-  quorumMet: boolean;
+export type SnapshotProposal = {
+  id: string;
+  type: string;
+  start: string;
+  end: string;
+  choices: string[];
+  state: string;
+  votes: number;
+  scores: number[];
+  scores_total: number;
+  scores_state: string;
+  title?: string;
+  body?: string;
+  author?: string;
+  discussion?: string;
+  ipfs?: string;
 };
 
-export type VoteResults = {
-  choices: string[];
-  scores: number[];
-  votes: number;
+export type SnapshotVoteResultsId = Pick<SnapshotProposal, 'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'>;
+
+export type SnapshotVoteSettings = {
+  quorum: number;
+  period: number;
+  type: string;
+  delay: number;
 };
+
+export type VoteResults = Pick<SnapshotProposal, 'choices' | 'scores' | 'votes' | 'scores_total'> & { quoromMet?: boolean };
 
 export type BasicTransaction = {
   address: string;

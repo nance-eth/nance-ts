@@ -8,6 +8,7 @@ import { stripIndents } from 'common-tags';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength, maybePlural, numToPrettyString } from '../utils';
 import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
+import { EMOJI, STATUS } from '../constants';
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
   return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.hash}`;
@@ -36,7 +37,7 @@ export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposal
         name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
         value: stripIndents`
         [proposal](${getProposalURL(space, proposal)}) | [discussion](${proposal.discussionThreadURL})
-        ---------------------------------------------`,
+        -----------------------------------------`,
       };
     })
   );
@@ -52,7 +53,7 @@ export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, pro
           name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
           [discussion](${proposal.discussionThreadURL}) | [vote](${getProposalURL(space, proposal)})
-          ---------------------------------------------`,
+          -----------------------------------------`,
         };
       })
     );
@@ -63,11 +64,16 @@ export const proposalsUnderQuorumMessage = (voteURL: string, proposalIdPrefix: s
     `There are ${String(proposals.length)} ${maybePlural('proposal', proposals.length)} under the set quorum of **${numToPrettyString(quorum, 0)}**`)
     .addFields(
       proposals.map((proposal: Proposal) => {
+        const { scores_total } = proposal.voteResults || {};
+        const [yesWord, noWord] = (proposal.voteResults?.choices) || ['For', 'Against'];
+        const [yesVal, noVal] = (proposal.voteResults?.scores) || [0, 0];
+        const proposalURL = getProposalURL(space, proposal);
         return {
           name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
-          current ${numToPrettyString(proposal.internalVoteResults?.scoresTotal)} | under quroum by **${numToPrettyString(quorum - (proposal.internalVoteResults?.scoresTotal || 0), 0)}**
-          ---------------------------------------------`,
+          [${numToPrettyString(scores_total)} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposalURL})
+          under quroum by **${numToPrettyString(quorum - (scores_total || 0), 0)}**
+          -----------------------------------------`,
         };
       })
     );
@@ -79,21 +85,23 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
   ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
     .addFields(
       proposals.map((proposal: Proposal) => {
-        if (proposal.internalVoteResults?.scores) {
-          const [[yesWord, yesVal], [noWord, noVal]] = Object.entries(
-            proposal.internalVoteResults?.scores ?? {}
-          );
+        if (proposal.voteResults) {
+          const [yesWord, noWord] = (proposal.voteResults.choices);
+          const [yesVal, noVal] = (proposal.voteResults.scores);
+          const emoji = (proposal.status === STATUS.APPROVED) ? EMOJI.APPROVED : EMOJI.CANCELLED;
+          const scores_total = numToPrettyString(proposal.voteResults.scores_total, 0);
           const proposalURL = getProposalURL(space, proposal);
+          const quorumMet = (proposal.voteResults.quoromMet) ? '' : ' (quorum not met)';
           return {
             name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
             value: stripIndents`
-            [${proposal.internalVoteResults?.outcomeEmoji} ${proposal.internalVoteResults?.outcomePercentage}% | ${proposal.internalVoteResults?.totalVotes} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposalURL})
-            ---------------------------------------------`,
+            [${emoji} ${scores_total} votes${quorumMet} | ${numToPrettyString(yesVal, 0)} ${yesWord} | ${numToPrettyString(noVal, 0)} ${noWord}](${proposalURL})
+            -----------------------------------------`,
           };
         }
         return {
           name: `*${proposal.proposalId}*: ${proposal.title}`,
-          value: 'ERROR: issue fetching vote results'
+          value: `[view results](${getProposalURL(space, proposal)})`,
         };
       })
     );
