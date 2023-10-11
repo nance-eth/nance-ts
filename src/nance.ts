@@ -7,7 +7,7 @@ import {
   addSecondsToDate,
 } from './utils';
 import logger from './logging';
-import { NanceConfig, Proposal, InternalVoteResults } from './types';
+import { NanceConfig, Proposal } from './types';
 import { SnapshotHandler } from './snapshot/snapshotHandler';
 import { dotPin } from './storage/storageHandler';
 import { DoltHandler } from './dolt/doltHandler';
@@ -46,26 +46,26 @@ export class Nance {
     return false;
   }
 
-  getVotePercentages(voteResults: InternalVoteResults) {
-    const yes = voteResults.scores[this.config.snapshot.choices[0]];
-    const no = voteResults.scores[this.config.snapshot.choices[1]];
-    const percentageYes = yes / (yes + no);
-    const percentageNo = no / (yes + no);
-    return {
-      [this.config.snapshot.choices[0]]: (Number.isNaN(percentageYes) ? 0 : percentageYes),
-      [this.config.snapshot.choices[1]]: (Number.isNaN(percentageNo) ? 0 : percentageNo),
-    };
-  }
+  // getVotePercentages(voteResults: InternalVoteResults) {
+  //   const yes = voteResults.scores[this.config.snapshot.choices[0]];
+  //   const no = voteResults.scores[this.config.snapshot.choices[1]];
+  //   const percentageYes = yes / (yes + no);
+  //   const percentageNo = no / (yes + no);
+  //   return {
+  //     [this.config.snapshot.choices[0]]: (Number.isNaN(percentageYes) ? 0 : percentageYes),
+  //     [this.config.snapshot.choices[1]]: (Number.isNaN(percentageNo) ? 0 : percentageNo),
+  //   };
+  // }
 
-  votePassCheck(voteResults: InternalVoteResults) {
-    const yes = voteResults.scores[this.config.snapshot.choices[0]];
-    if (yes >= this.config.snapshot.minTokenPassingAmount
-      && voteResults.percentages[this.config.snapshot.choices[0]]
-        >= this.config.snapshot.passingRatio) {
-      return true;
-    }
-    return false;
-  }
+  // votePassCheck(voteResults: InternalVoteResults) {
+  //   const yes = voteResults.scores[this.config.snapshot.choices[0]];
+  //   if (yes >= this.config.snapshot.minTokenPassingAmount
+  //     && voteResults.percentages[this.config.snapshot.choices[0]]
+  //       >= this.config.snapshot.passingRatio) {
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
   async reminder(event: string, date: Date, type: string) {
     logger.info(`${this.config.name}: reminder() begin...`);
@@ -164,38 +164,38 @@ export class Nance {
     });
   }
 
-  async votingClose(): Promise<Proposal[] | void> {
-    logger.info(`${this.config.name}: votingClose() begin...`);
-    const voteProposals = await this.dProposalHandler.getVoteProposals({ uploadedToSnapshot: true });
-    const voteProposalIdStrings = voteProposals.map((proposal) => {
-      return `"${getIdFromURL(proposal.voteURL)}"`;
-    });
-    const voteResults = await this.votingHandler.getProposalVotes(voteProposalIdStrings);
-    return Promise.all(voteResults.map(async (vote) => {
-      const proposalMatch = voteProposals.find((proposal) => {
-        return getIdFromURL(proposal.voteURL) === vote.voteProposalId;
-      });
-      if (!proposalMatch) { return; }
-      if (vote.scoresState === 'final') {
-        proposalMatch.internalVoteResults = vote;
-        proposalMatch.internalVoteResults.percentages = this.getVotePercentages(vote);
-        if (this.votePassCheck(proposalMatch.internalVoteResults)) {
-          proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[0]]);
-          proposalMatch.internalVoteResults.outcomeEmoji = EMOJI.APPROVED;
-        } else {
-          proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[1]]);
-          proposalMatch.internalVoteResults.outcomeEmoji = EMOJI.CANCELLED;
-        }
-        try { await this.dProposalHandler.updateVotingClose(proposalMatch); } catch (e) { logger.error(`dDB: ${e}`); }
-      } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
-    })).then(() => {
-      this.dialogHandler.sendVoteResultsRollup(voteProposals);
-      logger.info(`${this.config.name}: votingClose() complete`);
-      logger.info('===================================================================');
-      return voteProposals;
-    }).catch((e) => {
-      logger.error(`${this.config.name}: votingClose() error:`);
-      logger.error(e);
-    });
-  }
+//   async votingClose(): Promise<Proposal[] | void> {
+//     logger.info(`${this.config.name}: votingClose() begin...`);
+//     const voteProposals = await this.dProposalHandler.getVoteProposals({ uploadedToSnapshot: true });
+//     const voteProposalIdStrings = voteProposals.map((proposal) => {
+//       return `"${getIdFromURL(proposal.voteURL)}"`;
+//     });
+//     const voteResults = await this.votingHandler.getProposalVotes(voteProposalIdStrings);
+//     return Promise.all(voteResults.map(async (vote) => {
+//       const proposalMatch = voteProposals.find((proposal) => {
+//         return getIdFromURL(proposal.voteURL) === vote.voteProposalId;
+//       });
+//       if (!proposalMatch) { return; }
+//       if (vote.scoresState === 'final') {
+//         proposalMatch.internalVoteResults = vote;
+//         proposalMatch.internalVoteResults.percentages = this.getVotePercentages(vote);
+//         if (this.votePassCheck(proposalMatch.internalVoteResults)) {
+//           proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[0]]);
+//           proposalMatch.internalVoteResults.outcomeEmoji = EMOJI.APPROVED;
+//         } else {
+//           proposalMatch.internalVoteResults.outcomePercentage = floatToPercentage(proposalMatch.internalVoteResults.percentages[this.config.snapshot.choices[1]]);
+//           proposalMatch.internalVoteResults.outcomeEmoji = EMOJI.CANCELLED;
+//         }
+//         try { await this.dProposalHandler.updateVotingClose(proposalMatch); } catch (e) { logger.error(`dDB: ${e}`); }
+//       } else { logger.info(`${this.config.name}: votingClose() results not final yet!`); }
+//     })).then(() => {
+//       this.dialogHandler.sendVoteResultsRollup(voteProposals);
+//       logger.info(`${this.config.name}: votingClose() complete`);
+//       logger.info('===================================================================');
+//       return voteProposals;
+//     }).catch((e) => {
+//       logger.error(`${this.config.name}: votingClose() error:`);
+//       logger.error(e);
+//     });
+//   }
 }
