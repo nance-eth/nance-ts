@@ -1,7 +1,6 @@
 /* eslint-disable max-lines */
 import express from 'express';
 import { Contract } from 'ethers';
-import { Nance } from '../nance';
 import { NanceTreasury } from '../treasury';
 import logger from '../logging';
 import { ProposalUploadRequest, FetchReconfigureRequest, EditPayoutsRequest, ProposalsPacket } from './models';
@@ -407,27 +406,12 @@ router.get('/:space/reconfigure', async (req, res) => {
 // ======== admin-ish functions ======== //
 // ===================================== //
 
-// edit discord titles
-router.get('/:space/editTitles/:status', async (req, res) => {
-  const { space, status } = req.params;
-  const { message } = req.query;
-  const { config } = await handlerReq(space, req.headers.authorization);
-  const nance = new Nance(config);
-  // eslint-disable-next-line no-await-in-loop
-  while (!nance.dialogHandler.ready()) { await sleep(50); }
-  nance.editTitles(status, message as string).then((data) => {
-    res.json({ success: true, data });
-  }).catch((e) => {
-    res.json({ success: false, error: e });
-  });
-});
-
 // check for changes to db, push to dolt if true
 router.get('/:space/dolthub', async (req, res) => {
   const { space } = req.params;
   const { table } = req.query as { table: string | undefined };
   const { dolt, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-  const message = `GC${currentGovernanceCycle}-${currentEvent}`;
+  const message = `GC${currentGovernanceCycle}-${currentEvent.title}`;
   dolt.checkAndPush(table, message).then((data: string) => {
     return res.json({ success: true, data });
   }).catch((e: string) => {

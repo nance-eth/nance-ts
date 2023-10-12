@@ -22,6 +22,15 @@ export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], 
         end,
       }
     );
+    // if (nextEvents.length < 4) { // if there are less than 4 events, add the next cycle's events
+    //   nextEvents.push(
+    //     {
+    //       title: event.title,
+    //       start: new Date(start.getTime() + interval),
+    //       end: new Date(end.getTime() + interval),
+    //     }
+    //   );
+    // }
   });
   // sort by start date and remove events that have ended
   const nextEventsCleaned = nextEvents.sort((a, b) => {
@@ -53,7 +62,7 @@ export const getCurrentGovernanceCycleDay = (currentEvent: DateEvent, cycleStage
   if (!currentEvent) return 0;
   const cycleStartDays = getCycleStartDays(cycleStageLengths);
   const eventIndex = Object.values(EVENTS).indexOf(currentEvent.title);
-  const dayDelta = new Date(input).getUTCDate() - new Date(currentEvent.start).getUTCDate();
+  const dayDelta = Math.floor((input.getTime() - currentEvent.start.getTime()) / ONE_DAY_MILLISECONDS);
   const currentGovernanceCycleDay = cycleStartDays[eventIndex] + dayDelta;
   return currentGovernanceCycleDay;
 };
