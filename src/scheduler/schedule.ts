@@ -31,8 +31,8 @@ async function main() {
     const cronNotation = `${minutes} ${hours} * * *`;
     const jobType = (calendar) ? TASKS.sendDailyAlert : TASKS.sendDailyJBAlert;
     const jobFunc = (calendar) ? tasks.sendDailyAlert : tasks.sendDailyJBAlert;
-    schedule.scheduleJob(`${space}:${jobType}`, cronNotation, () => {
-      jobFunc(space);
+    schedule.scheduleJob(`${space}:${jobType}`, cronNotation, async () => {
+      await jobFunc(space);
     });
     // schedule all calendar based events
     if (calendar) {
