@@ -5,6 +5,9 @@ import { EVENTS, ONE_HOUR_SECONDS, TASKS } from '../constants';
 import * as tasks from '../tasks/_tasks';
 import { addSecondsToDate } from '../utils';
 
+// node-schedule uses local time by default
+process.env.TZ = 'UTC';
+
 export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEvent[]) => {
   const space = config.name;
   events.forEach(async (event) => {

@@ -6,6 +6,9 @@ import { addSecondsToDate, sleep } from '../../utils';
 import { getSpaceConfig } from '../../api/helpers/getSpace';
 import { listScheduledJobs } from '../list';
 
+// node-schedule uses local time by default
+process.env.TZ = 'UTC';
+
 async function main() {
   await sleep(1000);
   const { config: configWaterbox } = await getSpaceConfig('waterbox');

@@ -5,6 +5,9 @@ import { discordLogin } from '../api/helpers/discord';
 import { TASKS } from '../constants';
 import logger from '../logging';
 
+// node-schedule uses local time by default
+process.env.TZ = 'UTC';
+
 export async function sendDailyAlert(space: string) {
   logger.info('===================================================================');
   logger.info(`================= sending dailyAlert for ${space} =================`);

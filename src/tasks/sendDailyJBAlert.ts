@@ -4,6 +4,9 @@ import { discordLogin } from '../api/helpers/discord';
 import { juiceboxTime } from '../api/helpers/juicebox';
 import logger from '../logging';
 
+// node-schedule uses local time by default
+process.env.TZ = 'UTC';
+
 const juiceboxTimeBasedDaysRemaining = [20, 15, 10, 5, 4, 3, 2, 1];
 
 export async function sendDailyJBAlert(space: string) {

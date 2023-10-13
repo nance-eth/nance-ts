@@ -1,6 +1,9 @@
 import schedule from 'node-schedule';
 import logger from '../logging';
 
+// node-schedule uses local time by default
+process.env.TZ = 'UTC';
+
 export const listScheduledJobs = () => {
   const jobs = schedule.scheduledJobs;
   logger.info('===================================================================');
