@@ -2,25 +2,12 @@ import schedule from 'node-schedule';
 import { getAllSpaceConfig } from '../api/helpers/getSpace';
 import * as tasks from '../tasks/_tasks';
 import { TASKS } from '../constants';
-import logger from '../logging';
 import { getNextEvents } from '../calendar/events';
 import { scheduleCalendarTasks } from './calendar';
+import { listScheduledJobs } from './list';
 
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';
-
-export const listScheduledJobs = () => {
-  const jobs = schedule.scheduledJobs;
-  logger.info('===================================================================');
-  logger.info(`============ current time is ${new Date().toISOString()} =============`);
-  logger.info('===================================================================');
-  logger.info('=========================== SCHEDULE ==============================');
-  Object.keys(jobs).forEach((job, index) => {
-    const time = jobs[job].nextInvocation()?.toISOString();
-    logger.info(`${job.padEnd(50)} || ${time}`);
-  });
-  logger.info('===================================================================');
-};
 
 async function main() {
   const autoSpaces = await getAllSpaceConfig('autoEnable=1');

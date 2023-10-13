@@ -5,7 +5,7 @@ import { STATUS } from '../constants';
 import logger from '../logging';
 import { getProposalsWithVotes, votePassCheck } from './helpers/voting';
 
-export const voteClose = async (config: NanceConfig, _proposals?: Proposal[]) => {
+export const voteClose = async (config: NanceConfig, _proposals?: Proposal[], dryrun = false) => {
   try {
     const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
     const proposals = _proposals || await getProposalsWithVotes(config);
@@ -15,7 +15,7 @@ export const voteClose = async (config: NanceConfig, _proposals?: Proposal[]) =>
       const pass = (votePassCheck(config, proposal.voteResults));
       const outcomeStatus = pass ? STATUS.APPROVED : STATUS.CANCELLED;
       const updatedProposal = { ...proposal, status: outcomeStatus };
-      await dolt.updateVotingClose(updatedProposal);
+      if (!dryrun) await dolt.updateVotingClose(updatedProposal);
       return updatedProposal;
     })).catch((e) => { return Promise.reject(e); });
     return updatedProposals;
