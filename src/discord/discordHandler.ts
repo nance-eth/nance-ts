@@ -296,7 +296,7 @@ export class DiscordHandler {
     if (status === 'temperatureCheck') { message = discordTemplates.temperatureCheckRollUpMessage(this.config.proposalIdPrefix, proposals, this.config.name, new Date()); }
     if (status === 'vote') {
       message = discordTemplates.voteRollUpMessage(
-        `${this.config.snapshot.base}`,
+        `${DEFAULT_DASHBOARD}`,
         this.config.proposalIdPrefix,
         proposals,
         this.config.snapshot.space,
@@ -310,7 +310,7 @@ export class DiscordHandler {
   }
 
   async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
-    const response = discordTemplates.payoutsTable(payouts, governanceCycle, this.config.snapshot.base, this.config.proposalIdPrefix);
+    const response = discordTemplates.payoutsTable(payouts, governanceCycle, DEFAULT_DASHBOARD, this.config.proposalIdPrefix);
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 

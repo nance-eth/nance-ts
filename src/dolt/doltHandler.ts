@@ -6,7 +6,7 @@ import { omitBy, isNil } from 'lodash';
 import { Proposal, Transfer, Payout, CustomTransaction, Reserve } from '../types';
 import { SQLProposal, SQLPayout, SQLReserve, SQLExtended, SQLTransfer, SQLCustomTransaction } from './schema';
 import { DoltSQL } from './doltSQL';
-import { IPFS_GATEWAY, getLastSlash, uuidGen, isHexString } from '../utils';
+import { IPFS_GATEWAY, uuidGen, isHexString } from '../utils';
 import { SELECT_ACTIONS } from './queries';
 import { STATUS } from '../constants';
 
@@ -375,7 +375,7 @@ export class DoltHandler {
     const results = this.localDolt.db.query(`
       UPDATE ${proposalsTable} SET
       title = ?, proposalStatus = ?, snapshotId = ?, ipfsCID = ? WHERE uuid = ?`,
-    [proposal.title, proposal.status, getLastSlash(proposal.voteURL), proposal.ipfsURL, proposal.hash]);
+    [proposal.title, proposal.status, proposal.voteURL, proposal.ipfsURL, proposal.hash]);
     return results;
   }
 

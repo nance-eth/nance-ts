@@ -18,14 +18,8 @@
       "transactions": null
     },
     "poll": {
-      "voteYesEmoji": "👍",
-      "voteNoEmoji": "👎",
-      "voteGoVoteEmoji": "🗳",
-      "votePassEmoji": "✅",
-      "voteCancelledEmoji": "❌",
       "minYesVotes": 10,
-      "yesNoRatio": 0.3,
-      "showResults": true
+      "yesNoRatio": 0.3
     },
     "reminder": {
       "channelIds": null,
@@ -39,7 +33,6 @@
     "repo": null
   },
   "snapshot": {
-    "base": "https://jbdao.org",
     "space": null,
     "choices": ["For", "Against", "Abstain"],
     "minTokenPassingAmount": 1,

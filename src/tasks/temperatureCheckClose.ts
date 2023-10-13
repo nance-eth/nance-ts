@@ -30,10 +30,8 @@ export const temperatureCheckClose = async (config: NanceConfig) => {
         pollResults.voteNoUsers.length
       );
       const status = (pass) ? STATUS.VOTING : STATUS.CANCELLED;
-      if (config.discord.poll.showResults) {
-        dialogHandler.sendPollResults(pollResults, pass, threadId);
-      }
-      dialogHandler.sendPollResultsEmoji(pass, threadId);
+      await dialogHandler.sendPollResults(pollResults, pass, threadId);
+      await dialogHandler.sendPollResultsEmoji(pass, threadId);
       const updatedProposal = { ...proposal, status, temperatureCheckVotes };
       await dolt.updateTemperatureCheckClose(updatedProposal);
     })).catch((e) => {

@@ -135,7 +135,6 @@ export interface NanceConfig {
     poll: {
       minYesVotes: number;
       yesNoRatio: number;
-      showResults: boolean;
       verifyRole: string;
     };
     reminder: {
@@ -148,7 +147,6 @@ export interface NanceConfig {
   proposalIdPrefix: string;
   dolt: DoltConfig,
   snapshot: {
-    base: string;
     space: string;
     choices: string[];
     minTokenPassingAmount: number;
