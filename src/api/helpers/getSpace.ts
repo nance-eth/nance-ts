@@ -24,7 +24,7 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
       juiceboxTimeOutput = await juiceboxTime(entry.config.juicebox.projectId);
       ({ cycleCurrentDay, currentGovernanceCycle } = juiceboxTimeOutput);
       currentEvent = {
-        title: EVENTS.NULL,
+        title: 'NULL',
         start: new Date(juiceboxTimeOutput.start),
         end: new Date(juiceboxTimeOutput.end),
       };

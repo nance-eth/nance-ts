@@ -9,30 +9,13 @@ import { pools } from '../dolt/pools';
 import { dbOptions } from '../dolt/dbConfig';
 import { DoltSQL } from '../dolt/doltSQL';
 import { addressFromJWT } from './helpers/auth';
-import { FormTime, GovernanceCycleForm, NanceConfig } from '../types';
+import { NanceConfig } from '../types';
 import { getAllSpaceInfo, getSpaceConfig } from './helpers/getSpace';
-import { createCalendar } from '../calendar/create';
+import { createCalendarAndCycleInfo } from '../calendar/create';
 
 const router = express.Router();
 
 const dolt = new DoltSysHandler(pools.nance_sys);
-
-const formToSQLTime = (timeIn?: FormTime) => {
-  if (!timeIn) { return '00:00:00'; }
-  const hour = -1 * (timeIn.hour + (timeIn.timezoneOffset / 60) + (timeIn.ampm === 'PM' ? 12 : 0) - 24);
-  const hourString = hour.toString().padStart(2, '0');
-  return `${hourString}:${timeIn.minute}:00`;
-};
-
-const formToCycleStageLengths = (form?: GovernanceCycleForm) => {
-  if (!form) { return [3, 4, 4, 3]; }
-  return [
-    Number(form.temperatureCheckLength),
-    Number(form.voteLength),
-    Number(form.executionLength),
-    Number(form.delayLength),
-  ];
-};
 
 router.get('/', (_, res) => {
   res.send('nance-ish control panel');
@@ -68,9 +51,7 @@ router.get('/all', async (_, res) => {
 
 router.post('/config', async (req, res) => {
   const { config, governanceCycleForm, owners, dryrun } = req.body as ConfigSpaceRequest;
-  const cycleTriggerTime = formToSQLTime(governanceCycleForm?.time);
-  const cycleStageLengths = formToCycleStageLengths(governanceCycleForm);
-  const calendar = createCalendar(cycleStageLengths, cycleTriggerTime);
+  const { calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm);
   const space = config.name.replaceAll(' ', '_');
   // get address from jwt (SIWE)
   const jwt = req.headers.authorization?.split('Bearer ')[1];
@@ -107,7 +88,7 @@ router.post('/config', async (req, res) => {
   const packedConfig = JSON.stringify({ address, config: configIn });
   const cid = await dotPin(packedConfig);
   const ownersIn = [...(owners ?? []), address];
-  dolt.setSpaceConfig(space, cid, ownersIn, configIn, cycleTriggerTime, cycleStageLengths).then(() => {
+  dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths).then(() => {
     res.json({ success: true, data: { space, spaceOwners: ownersIn } });
   }).catch((e) => {
     console.error(e);

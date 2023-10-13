@@ -3,7 +3,6 @@ export const EVENTS = {
   SNAPSHOT_VOTE: 'Snapshot Vote',
   EXECUTION: 'Execution',
   DELAY: 'Delay',
-  NULL: 'NULL',
 };
 
 export const STATUS = {

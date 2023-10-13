@@ -2,7 +2,7 @@ import { oneLine } from 'common-tags';
 import { DoltSQL, cleanResultsHeader } from './doltSQL';
 import { dbOptions } from './dbConfig';
 import { sqlSchemaToString } from '../utils';
-import { NanceConfig } from '../types';
+import { DateEvent, NanceConfig } from '../types';
 import { DialogHandlerMessageIds, SpaceConfig } from './schema';
 
 const systemDb = 'nance_sys';
@@ -66,24 +66,26 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, cycleTriggerTime: string, cycleStageLengths: number[]) {
+  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, calendar: DateEvent[], cycleTriggerTime: string, cycleStageLengths: number[]) {
     return this.localDolt.queryResults(oneLine`
       INSERT INTO ${system} (
         space,
         cid,
         spaceOwners,
         config,
+        calendar,
         cycleTriggerTime,
         cycleStageLengths,
         dialogHandlerMessageIds,
         currentGovernanceCycle,
         lastUpdated
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         cid = VALUES(cid),
         spaceOwners = VALUES(spaceOwners),
         config = VALUES(config),
+        calendar = VALUES(calendar),
         cycleTriggerTime = VALUES(cycleTriggerTime),
         cycleStageLengths = VALUES(cycleStageLengths),
         lastUpdated = NOW()
@@ -92,6 +94,7 @@ export class DoltSysHandler {
       cid,
       JSON.stringify(spaceOwners),
       JSON.stringify(config),
+      JSON.stringify(calendar),
       cycleTriggerTime,
       JSON.stringify(cycleStageLengths),
       JSON.stringify(defaultDialogHandlerMessageIds),
