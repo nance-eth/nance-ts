@@ -1,4 +1,4 @@
-import { DateEvent, NanceConfig, Proposal, Signature } from '../types';
+import { DateEvent, GovernanceCycleForm, NanceConfig, Proposal, Signature } from '../types';
 import { SQLPayout, DialogHandlerMessageIds } from '../dolt/schema';
 
 interface APIResponse<T> {
@@ -50,22 +50,8 @@ export interface SpaceProposalRequest extends BaseRequest {
 
 export type SpaceInfoRequest = BaseRequest;
 
-export interface ProposalMarkdownRequest extends BaseRequest {
-  hash: string;
-}
-
 export interface ProposalUploadRequest extends BaseRequest {
   proposal: Proposal;
-}
-
-export interface ProposalDeleteRequest extends BaseRequest {
-  uuid: string;
-  signature: Signature
-}
-
-export interface IncrementGovernanceCycleRequest extends BaseRequest {
-  governanceCycle: string;
-  signature: Signature
 }
 
 export interface FetchReconfigureRequest extends BaseRequest {
@@ -75,23 +61,15 @@ export interface FetchReconfigureRequest extends BaseRequest {
   network: string;
 }
 
-export interface SubmitTransactionRequest extends BaseRequest {
-  version: string;
-  datetime: string;
-  signature: Signature
-}
-
 export interface ConfigSpaceRequest extends BaseRequest {
-  signature: Signature;
   config: NanceConfig;
   owners: string[];
-  cycleCurrentDay: number;
   cycleTriggerTime: string;
   cycleStageLengths: number[];
+  governanceCycleForm: GovernanceCycleForm
   dryrun?: boolean;
 }
 
 export interface EditPayoutsRequest extends BaseRequest {
-  signature: Signature;
   payouts: SQLPayout[];
 }

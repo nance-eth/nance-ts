@@ -66,7 +66,7 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, cycleCurrentDay: number, cycleTriggerTime: string, cycleStageLengths: number[], cycleDayLastUpdated: string) {
+  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, cycleTriggerTime: string, cycleStageLengths: number[]) {
     return this.localDolt.queryResults(oneLine`
       INSERT INTO ${system} (
         space,
@@ -76,11 +76,10 @@ export class DoltSysHandler {
         cycleTriggerTime,
         cycleStageLengths,
         dialogHandlerMessageIds,
-        cycleDayLastUpdated,
         currentGovernanceCycle,
         lastUpdated
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         cid = VALUES(cid),
         spaceOwners = VALUES(spaceOwners),
@@ -96,7 +95,6 @@ export class DoltSysHandler {
       cycleTriggerTime,
       JSON.stringify(cycleStageLengths),
       JSON.stringify(defaultDialogHandlerMessageIds),
-      cycleDayLastUpdated,
       defaultGovernanceCycle
     ]).then((res) => {
       return res.affectedRows;

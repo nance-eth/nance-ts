@@ -9,7 +9,7 @@ export const EVENTS = {
 export const STATUS = {
   DRAFT: 'Draft',
   DISCUSSION: 'Discussion',
-  TEMPERATURE_CHECK: 'Temperature Check',
+  TEMPERATURE_CHECK: EVENTS.TEMPERATURE_CHECK,
   VOTING: 'Voting',
   APPROVED: 'Approved',
   CANCELLED: 'Cancelled',

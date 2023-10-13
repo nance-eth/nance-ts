@@ -23,8 +23,8 @@
     },
     "reminder": {
       "channelIds": null,
-      "imagesCID": "https://bafybeig7vxzaytiiskcvgpdjp5jr5ifrp5r2bio5ei3c6bx7wsltotvdfe.ipfs.nftstorage.link",
-      "imageNames": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"]
+      "imagesCID": null,
+      "imageNames": null
     }
   },
   "dolt": {

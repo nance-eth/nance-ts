@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS config (
   config JSON,
   calendar JSON,
   lastUpdated DATETIME,
-  cycleLastUpdated DATETIME,
   cycleTriggerTime TIME,
   cycleStageLengths JSON DEFAULT '[]',
   dialogHandlerMessageIds JSON DEFAULT '{}',

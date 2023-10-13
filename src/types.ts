@@ -153,7 +153,6 @@ export interface NanceConfig {
     passingRatio: number;
   };
   submitAsApproved?: boolean;
-  governanceCycleForm?: GovernanceCycleForm; // used for create space then removed
 }
 
 export type DoltConfig = {
