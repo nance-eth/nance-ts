@@ -9,7 +9,7 @@ import logger from '../logging';
 export const voteQuorumAlert = async (config: NanceConfig, endDate: Date, _proposals?: Proposal[]) => {
   try {
     const proposals = _proposals || await getProposalsWithVotes(config);
-    const proposalsUnderQuorum = proposals.filter((proposal) => { return !proposal.voteResults?.quoromMet; });
+    const proposalsUnderQuorum = proposals.filter((proposal) => { return !proposal.voteResults?.quorumMet; });
     if (proposalsUnderQuorum.length === 0) return;
     const dialogHandler = await discordLogin(config);
     const voteQuorumAlertMessageId = await dialogHandler.sendQuorumRollup(proposalsUnderQuorum, endDate);

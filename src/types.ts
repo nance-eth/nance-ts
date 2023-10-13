@@ -90,7 +90,7 @@ export type SnapshotVoteSettings = {
   delay: number;
 };
 
-export type VoteResults = Pick<SnapshotProposal, 'choices' | 'scores' | 'votes' | 'scores_total'> & { quoromMet?: boolean };
+export type VoteResults = Pick<SnapshotProposal, 'choices' | 'scores' | 'votes' | 'scores_total'> & { quorumMet: boolean };
 
 export type BasicTransaction = {
   address: string;

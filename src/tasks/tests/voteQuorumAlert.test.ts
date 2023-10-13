@@ -15,7 +15,7 @@ async function main() {
     scores: [1000000000, 1],
     scores_total: 1000000001,
     votes: 2,
-    quoromMet: true,
+    quorumMet: true,
   };
   await voteQuorumAlert(configWaterbox, new Date(), proposals);
 }

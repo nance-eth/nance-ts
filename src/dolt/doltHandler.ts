@@ -92,7 +92,8 @@ export class DoltHandler {
         choices: proposal.choices,
         scores: proposal.snapshotVotes,
         votes: proposal.voteAddressCount,
-        scores_total: proposal.snapshotVotes.reduce((a, b) => { return a + b; }, 0)
+        scores_total: proposal.snapshotVotes.reduce((a, b) => { return a + b; }, 0),
+        quorumMet: false, // we dont have this data in the db
       };
     }
     if (proposal.temperatureCheckVotes) {

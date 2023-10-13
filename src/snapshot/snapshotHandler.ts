@@ -5,7 +5,7 @@ import { Proposal, SnapshotVoteOptions, NanceConfig, SnapshotProposal, SnapshotV
 import { dateToUnixTimeStamp, myProvider, uuidGen } from '../utils';
 import { STATUS } from '../constants';
 
-const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
+const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: number): Proposal => {
   let status = STATUS.VOTING;
   if (sProposal.state === 'closed') {
     status = sProposal.scores[0] > sProposal.scores[1] ? STATUS.APPROVED : STATUS.CANCELLED;
@@ -31,6 +31,7 @@ const snapshotProposalToProposal = (sProposal: SnapshotProposal): Proposal => {
       scores: sProposal.scores,
       choices: sProposal.choices,
       scores_total: sProposal.scores_total,
+      quorumMet: sProposal.scores_total >= quorum,
     }
   };
 };
@@ -122,7 +123,7 @@ export class SnapshotHandler {
     let results = gqlResults.proposals.sort((a: SnapshotProposal, b: SnapshotProposal) => {
       return b.scores_total - a.scores_total;
     });
-    results = (forSync) ? results.map((result: SnapshotProposal) => { return snapshotProposalToProposal(result); }) : results;
+    results = (forSync) ? results.map((result: SnapshotProposal) => { return snapshotProposalToProposal(result, this.config.snapshot.minTokenPassingAmount); }) : results;
     return results;
   }
 

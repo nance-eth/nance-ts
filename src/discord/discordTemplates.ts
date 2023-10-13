@@ -72,7 +72,7 @@ export const proposalsUnderQuorumMessage = (voteURL: string, proposalIdPrefix: s
           name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
           [${numToPrettyString(scores_total)} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposalURL})
-          under quroum by **${numToPrettyString(quorum - (scores_total || 0), 0)}**
+          under quorum by **${numToPrettyString(quorum - (scores_total || 0), 0)}**
           -----------------------------------------`,
         };
       })
@@ -91,7 +91,7 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
           const emoji = (proposal.status === STATUS.APPROVED) ? EMOJI.APPROVED : EMOJI.CANCELLED;
           const scores_total = numToPrettyString(proposal.voteResults.scores_total, 0);
           const proposalURL = getProposalURL(space, proposal);
-          const quorumMet = (proposal.voteResults.quoromMet) ? '' : ' (quorum not met)';
+          const quorumMet = (proposal.voteResults.quorumMet) ? '' : ' (quorum not met)';
           return {
             name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
             value: stripIndents`

@@ -21,9 +21,8 @@ export const votePassCheck = (config: NanceConfig, voteResults: VoteResults) => 
   );
 };
 
-export const quoromMet = (proposal: Proposal, quorom: number): boolean => {
-  if (!proposal.voteResults) return false;
-  return proposal.voteResults.scores_total >= quorom;
+export const quorumMet = (scoresTotal: number, quorum: number): boolean => {
+  return scoresTotal >= quorum;
 };
 
 export const getProposalsWithVotes = async (config: NanceConfig): Promise<Proposal[]> => {
@@ -39,9 +38,9 @@ export const getProposalsWithVotes = async (config: NanceConfig): Promise<Propos
       ...proposal,
       voteResults: {
         ...voteResult,
-        quromMet: quoromMet(proposal, config.snapshot.minTokenPassingAmount),
+        quorumMet: quorumMet(voteResult.scores_total, config.snapshot.minTokenPassingAmount),
       },
-    };
+    } as Proposal;
   });
   return proposalsWithVotes;
 };
