@@ -11,6 +11,7 @@ import { voteClose } from './voteClose';
 import { voteResultsRollup } from './voteResultsRollup';
 import { incrementGovernanceCycle } from './incrementGovernanceCycle';
 import { shouldSendAlert } from './shouldSendAlert';
+import { sendBookkeeping } from './sendBookkeeping';
 
 export {
   sendDailyJBAlert,
@@ -25,5 +26,6 @@ export {
   voteClose,
   voteResultsRollup,
   incrementGovernanceCycle,
-  shouldSendAlert
+  shouldSendAlert,
+  sendBookkeeping,
 };

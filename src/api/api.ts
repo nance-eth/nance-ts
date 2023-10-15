@@ -485,28 +485,6 @@ router.put('/:space/payouts', async (req, res) => {
   } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to edit payouts' }); }
 });
 
-router.get('/:space/payouts/stale', async (req, res) => {
-  const { space } = req.params;
-  const { dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-  dolt.setStalePayouts(currentGovernanceCycle).then((updated: number) => {
-    res.json({ success: true, data: { numUpdated: updated } });
-  });
-});
-
-router.get('/:space/payouts/rollup', async (req, res) => {
-  const { space } = req.params;
-  const { config, dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-  const dialogHandler = new DiscordHandler(config);
-  const payouts = await dolt.getPayoutsDb(currentGovernanceCycle);
-  // eslint-disable-next-line no-await-in-loop
-  while (!dialogHandler.ready()) { await sleep(50); }
-  dialogHandler.sendPayoutsTable(payouts, currentGovernanceCycle.toString()).then(() => {
-    res.json({ success: true });
-  }).catch((e: any) => {
-    res.json({ success: false, error: e });
-  });
-});
-
 // ===================================== //
 // ======== transfer functions ========= //
 // ===================================== //

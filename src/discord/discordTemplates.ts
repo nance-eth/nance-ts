@@ -194,14 +194,30 @@ export const dailyBasicReminder = (governanceCycle: number, day: number, type: s
   return { message, attachments: [] };
 };
 
-export const payoutsTable = (payouts: SQLPayout[], governanceCycle: string, proposalLinkPrefix: string, proposalIdPrefix: string) => {
-  const message = new EmbedBuilder().setTitle(`Payouts for GC#${governanceCycle}`).setDescription('[submit new proposal](https://jbdao.org/edit)');
+export const payoutsTable = (payouts: SQLPayout[], governanceCycle: number, space: string, proposalIdPrefix: string) => {
+  const message = new EmbedBuilder();
   const toAlert: string[] = [];
+  const payoutsText: string[] = [];
+  const getPayoutHeadline = (payout: SQLPayout) => {
+    if (payout.payProjectHandle) { return { text: `@${payout.payProjectHandle}`, link: `https://juicebox.money/@${payout.payProjectHandle}` }; }
+    if (payout.payProject) { return { text: `@${payout.payProject}`, link: `https://juicebox.money/v2/p/${payout.payProject}` }; }
+    if (payout.payENS) { return { text: `${payout.payENS}`, link: `https://etherscan.com/address/${payout.payAddress}` }; }
+    return { text: `${payout.payAddress?.slice(0, 5)}...${payout.payAddress?.slice(38)}`, link: `https://etherscan.com/address/${payout.payAddress}` };
+  };
+  const totalDistribution = payouts.reduce((acc, payout) => { return acc + payout.amount; }, 0);
   payouts.forEach((payout) => {
-    const payoutNum = Number(governanceCycle) - payout.governanceCycleStart + 1;
+    const payoutNum = governanceCycle - payout.governanceCycleStart + 1;
     if (payoutNum === payout.numberOfPayouts && payout.numberOfPayouts !== 1) { toAlert.push(`<@${payout.authorDiscordId ?? ''}>`); }
-    message.addFields({ name: payout.payName ?? '', value: `| - - - $${payout.amount.toLocaleString()}  - - - | - - -  ${payoutNum}/${payout.numberOfPayouts} - - - | - - - [${proposalIdPrefix}${payout.proposalId}](${proposalLinkPrefix}/p/${payout.proposalId}) - - - |\n=============================================` });
+    const payoutHeadline = getPayoutHeadline(payout);
+    const payoutHeadlineFull = `[${payoutHeadline.text}](${payoutHeadline.link})`;
+    const proposalURL = getProposalURL(space, { proposalId: payout.proposalId, hash: payout.uuidOfProposal } as Proposal);
+    payoutsText.push(`_${payoutNum}/${payout.numberOfPayouts}_ ${payoutHeadlineFull} **$${payout.amount.toLocaleString()}** [[${proposalIdPrefix}${payout.proposalId}]](${proposalURL})\n`);
   });
+  message.setDescription(
+    stripIndents`
+    ## __Payouts for GC${governanceCycle}__
+    _Total Distribution:_\n***$${totalDistribution.toLocaleString()}***\n
+    ${payoutsText.join('\n')}`);
   return { message, toAlert: toAlert.join(' ') };
 };
 

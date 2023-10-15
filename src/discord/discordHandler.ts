@@ -309,8 +309,8 @@ export class DiscordHandler {
     messageObj.edit({ embeds: [editedMessage] });
   }
 
-  async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: string) {
-    const response = discordTemplates.payoutsTable(payouts, governanceCycle, DEFAULT_DASHBOARD, this.config.proposalIdPrefix);
+  async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: number) {
+    const response = discordTemplates.payoutsTable(payouts, governanceCycle, this.config.name, this.config.proposalIdPrefix);
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 

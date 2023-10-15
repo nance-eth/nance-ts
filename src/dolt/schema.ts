@@ -33,8 +33,10 @@ export type SQLPayout = {
   amount: number;
   currency: string;
   payName?: string;
-  payAddress?: string,
+  payAddress?: string;
+  payENS?: string;
   payProject?: number;
+  payProjectHandle?: string;
   payStatus?: string;
   payAllocator?: string;
   authorDiscordId?: string;
