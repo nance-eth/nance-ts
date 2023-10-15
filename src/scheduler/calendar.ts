@@ -78,13 +78,14 @@ export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEve
         }
       });
     }
-    if (event.title === EVENTS.DELAY) {
+    if (event.title === EVENTS.EXECUTION) {
       // Bookkeeping
       const bookkeepingDate = addSecondsToDate(event.start, 5 * 60);
       schedule.scheduleJob(`${space}:${TASKS.sendBookkeeping}`, bookkeepingDate, () => {
         tasks.sendBookkeeping(config);
       });
-
+    }
+    if (event.title === EVENTS.DELAY) {
       // Increment Governance Cycle 5 seconds before Delay ends
       const incrementGovernanceCycleDate = addSecondsToDate(event.end, -5);
       schedule.scheduleJob(`${space}:${TASKS.incrementGovernanceCycle}`, incrementGovernanceCycleDate, () => {
