@@ -3,13 +3,12 @@ import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
 import { dotPin } from '../storage/storageHandler';
 import { ConfigSpaceRequest } from './models';
-import { mergeTemplateConfig, mergeConfig, omitKey, dateAtTime } from '../utils';
+import { mergeTemplateConfig, mergeConfig } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
 import { dbOptions } from '../dolt/dbConfig';
 import { DoltSQL } from '../dolt/doltSQL';
 import { addressFromJWT } from './helpers/auth';
-import { NanceConfig } from '../types';
 import { getAllSpaceInfo, getSpaceConfig } from './helpers/getSpace';
 import { createCalendarAndCycleInfo } from '../calendar/create';
 
@@ -52,7 +51,7 @@ router.get('/all', async (_, res) => {
 router.post('/config', async (req, res) => {
   const { config, governanceCycleForm, owners, dryrun } = req.body as ConfigSpaceRequest;
   const { calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm);
-  const space = config.name.replaceAll(' ', '_');
+  const space = config.name.replaceAll(' ', '_').toLowerCase();
   // get address from jwt (SIWE)
   const jwt = req.headers.authorization?.split('Bearer ')[1];
   const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
@@ -83,17 +82,22 @@ router.post('/config', async (req, res) => {
   }
 
   // config the space
-  const cleanedConfig = omitKey(config, 'governanceCycleForm') as NanceConfig;
-  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, cleanedConfig) : mergeTemplateConfig(cleanedConfig);
+  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, config) : mergeTemplateConfig(config);
   const packedConfig = JSON.stringify({ address, config: configIn });
   const cid = await dotPin(packedConfig);
   const ownersIn = [...(owners ?? []), address];
-  dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths).then(() => {
-    res.json({ success: true, data: { space, spaceOwners: ownersIn } });
-  }).catch((e) => {
-    console.error(e);
-    res.json({ success: false, error: e });
-  });
+  if (!dryrun) {
+    dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths).then(() => {
+      res.json({ success: true, data: { space, spaceOwners: ownersIn } });
+    }).catch((e) => {
+      console.error(e);
+      res.json({ success: false, error: e });
+    });
+  } else {
+    console.log('dryrun');
+    console.log(space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths);
+    res.json({ success: true, data: { dryrun, space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths } });
+  }
 });
 
 export default router;

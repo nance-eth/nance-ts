@@ -4,10 +4,15 @@ import { addDaysToDate, dateAtTime, formatUTCTime } from '../utils';
 import { EVENTS } from '../constants';
 
 const formToSQLTime = (timeIn?: FormTime) => {
-  if (!timeIn) { return '00:00:00'; }
-  const hour = -1 * (timeIn.hour + (timeIn.timezoneOffset / 60) + (timeIn.ampm === 'PM' ? 12 : 0) - 24);
+  if (!timeIn) { return { cycleTriggerTime: '00:00:00', hadToRollOver: false }; }
+  let hadToRollOver = false;
+  let hour = -1 * (timeIn.hour + (timeIn.timezoneOffset / 60) + (timeIn.ampm === 'PM' ? 12 : 0) - 24);
+  if (hour < 0) {
+    hour *= -1;
+    hadToRollOver = true;
+  }
   const hourString = hour.toString().padStart(2, '0');
-  return `${hourString}:${timeIn.minute}:00`;
+  return { cycleTriggerTime: `${hourString}:${timeIn.minute}:00`, hadToRollOver };
 };
 
 const formToCycleStageLengths = (form?: GovernanceCycleForm) => {
@@ -21,15 +26,14 @@ const formToCycleStageLengths = (form?: GovernanceCycleForm) => {
 };
 
 export const createCalendarAndCycleInfo = (governanceCycleForm: GovernanceCycleForm) => {
-  const cycleTriggerTime = formToSQLTime(governanceCycleForm?.time);
+  const { cycleTriggerTime, hadToRollOver } = formToSQLTime(governanceCycleForm?.time);
   const cycleStageLengths = formToCycleStageLengths(governanceCycleForm);
   const dateEntry = formatUTCTime(new Date(governanceCycleForm.startDate));
-  const startDate = dateAtTime(dateEntry, cycleTriggerTime);
+  const startDate = (hadToRollOver) ? addDaysToDate(dateAtTime(dateEntry, cycleTriggerTime), 1) : dateAtTime(dateEntry, cycleTriggerTime);
   let end = addDaysToDate(startDate, cycleStageLengths[0]);
   let start = startDate;
   const calendar = Object.values(EVENTS).map((event, index) => {
     end = index === 0 ? end : addDaysToDate(end, cycleStageLengths[index]);
-    // console.log('end', end);
     const ret = {
       title: event,
       start,
