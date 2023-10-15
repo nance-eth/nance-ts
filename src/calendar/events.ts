@@ -23,16 +23,6 @@ export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], 
       }
     );
   });
-  // always add one more temperature check
-  const start = new Date(events[0].start.getTime() + (repeats + 1) * interval);
-  const end = new Date(events[0].end.getTime() + (repeats + 1) * interval);
-  nextEvents.push(
-    {
-      title: events[0].title,
-      start,
-      end,
-    }
-  );
   // sort by start date and remove events that have ended
   const nextEventsCleaned = nextEvents.sort((a, b) => {
     return a.start.getTime() - b.start.getTime();
