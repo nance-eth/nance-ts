@@ -20,6 +20,7 @@ export const temperatureCheckClose = async (config: NanceConfig) => {
     const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
     const dialogHandler = await discordLogin(config);
     const temperatureCheckProposals = await dolt.getTemperatureCheckProposals();
+    if (temperatureCheckProposals.length === 0) return;
     await Promise.all(temperatureCheckProposals.map(async (proposal) => {
       const threadId = getLastSlash(proposal.discussionThreadURL);
       const pollResults = await dialogHandler.getPollVoters(threadId);

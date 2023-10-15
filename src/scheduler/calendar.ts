@@ -27,7 +27,9 @@ export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEve
       });
       // Send Temperature Check end alert
       const sendTemperatureCheckEndDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
-      schedule.scheduleJob(`${space}:${TASKS.temperatureCheckEndAlert}`, sendTemperatureCheckEndDate, () => {
+      schedule.scheduleJob(`${space}:${TASKS.temperatureCheckEndAlert}`, sendTemperatureCheckEndDate, async () => {
+        const shouldSendAlert = await tasks.shouldSendAlert(config);
+        if (!shouldSendAlert) return;
         tasks.sendStartOrEndAlert(config, event.end, EVENTS.TEMPERATURE_CHECK, TASKS.temperatureCheckEndAlert, 'end');
       });
       // Delete Temperature Check end alert
@@ -58,7 +60,9 @@ export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEve
       });
       // Send Vote end alert
       const sendVoteEndDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
-      schedule.scheduleJob(`${space}:${TASKS.voteEndAlert}`, sendVoteEndDate, () => {
+      schedule.scheduleJob(`${space}:${TASKS.voteEndAlert}`, sendVoteEndDate, async () => {
+        const shouldSendAlert = await tasks.shouldSendAlert(config);
+        if (!shouldSendAlert) return;
         tasks.sendStartOrEndAlert(config, event.end, EVENTS.SNAPSHOT_VOTE, TASKS.voteEndAlert, 'end');
       });
       // Delete Vote end alert

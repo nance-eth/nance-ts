@@ -6,6 +6,7 @@ import { DialogHandlerMessageIds } from '../dolt/schema';
 
 export const voteResultsRollup = async (config: NanceConfig, proposals: Proposal[]) => {
   try {
+    if (proposals.length === 0) return;
     const discord = await discordLogin(config);
     const voteResultsRollUpMessageId = await discord.sendVoteResultsRollup(proposals);
     await doltSys.updateDialogHandlerMessageId(config.name, TASKS.voteResultsRollup as keyof DialogHandlerMessageIds, voteResultsRollUpMessageId);

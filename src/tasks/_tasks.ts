@@ -10,6 +10,7 @@ import { voteQuorumAlert } from './voteQuorumAlert';
 import { voteClose } from './voteClose';
 import { voteResultsRollup } from './voteResultsRollup';
 import { incrementGovernanceCycle } from './incrementGovernanceCycle';
+import { shouldSendAlert } from './shouldSendAlert';
 
 export {
   sendDailyJBAlert,
@@ -23,5 +24,6 @@ export {
   voteQuorumAlert,
   voteClose,
   voteResultsRollup,
-  incrementGovernanceCycle
+  incrementGovernanceCycle,
+  shouldSendAlert
 };

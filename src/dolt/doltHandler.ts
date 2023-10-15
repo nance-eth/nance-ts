@@ -466,10 +466,15 @@ export class DoltHandler {
     });
   }
 
-  async getProposals({ governanceCycle, keyword, author, limit, offset } :
-  { governanceCycle?: string; keyword?: string; author?: string, limit?: number; offset?: number; }) {
+  async getProposals({ governanceCycle, keyword, author, limit, offset, where } :
+  { governanceCycle?: string; keyword?: string; author?: string, limit?: number; offset?: number; where?: string; }) {
     const whereClauses = [];
     let selectRelevance = '';
+
+    // Handle where
+    if (where) {
+      whereClauses.push(where);
+    }
 
     // Handle governanceCycle
     if (governanceCycle) {
@@ -544,12 +549,6 @@ export class DoltHandler {
       if (res.length === 0) return Promise.reject('proposalId not found');
       return res[0];
     }).catch((e) => { return Promise.reject(e); });
-  }
-
-  async getProposalsByAuthorAddress(authorAddress: string) {
-    return this.queryProposals(oneLine`
-      SELECT *, HEX(body) as body, HEX(title) as title FROM ${proposalsTable} WHERE
-      authorAddress = ?`, [authorAddress]);
   }
 
   async getPrivateProposalsByAuthorAddress(authorAddress: string) {

@@ -12,6 +12,7 @@ export const temperatureCheckRollup = async (config: NanceConfig, endDate: Date)
     const dialogHandler = await discordLogin(config);
     const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
     const proposals = await dolt.getDiscussionProposals();
+    if (proposals.length === 0) return;
     const temperatureCheckRollupMessageId = await dialogHandler.sendTemperatureCheckRollup(
       proposals,
       endDate,

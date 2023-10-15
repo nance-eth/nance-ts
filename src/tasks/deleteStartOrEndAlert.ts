@@ -7,9 +7,15 @@ export const deleteStartOrEndAlert = async (
   config: NanceConfig,
   dialogHandlerMessageType: string,
 ) => {
-  const messageId = await doltSys.getDialogHandlerMessageIds(config.name);
-  const dialogHandler = await discordLogin(config);
-  await dialogHandler.deleteMessage(messageId[dialogHandlerMessageType as keyof DialogHandlerMessageIds]);
-  await doltSys.updateDialogHandlerMessageId(config.name, dialogHandlerMessageType, '');
-  dialogHandler.logout();
+  try {
+    const messageId = await doltSys.getDialogHandlerMessageIds(config.name);
+    if (messageId[dialogHandlerMessageType as keyof DialogHandlerMessageIds] === '') return;
+    const dialogHandler = await discordLogin(config);
+    await dialogHandler.deleteMessage(messageId[dialogHandlerMessageType as keyof DialogHandlerMessageIds]);
+    await doltSys.updateDialogHandlerMessageId(config.name, dialogHandlerMessageType, '');
+    dialogHandler.logout();
+  } catch (e) {
+    console.error(`error deleting ${dialogHandlerMessageType} for ${config.name}`);
+    console.error(e);
+  }
 };
