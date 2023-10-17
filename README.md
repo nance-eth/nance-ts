@@ -7,7 +7,7 @@ Nance allows your community members to:
 1. create proposals
 2. discuss them in your Discord
 3. keep community members up-to-date on proposal edits
-4. take an emoji vote in your Discord
+4. perform a react based poll in Discord
 5. publish to your [Snapshot](https://snapshot.org/#/)
 6. submit transactions to your [Safe Wallet](https://safe.global) (include [Juicebox](https://juicebox.money) project reconfigurations)
 7. search through past proposals
@@ -18,7 +18,7 @@ When you use Nance all of your data is published and open on [DoltHub](https://d
 We even keep our system database up-to-date on [DoltHub here](https://www.dolthub.com/repositories/nance/nance_sys) so you can use our config data if you'd like
 
 _Note:
-This repo contains both [nance-api](/src/api) and [nance-auto](/src/index) (cronjobs based actions for your organization). We are slowly migrating all tasks into nance-api but for now there are still a few things that only run as cronjobs in nance-auto (requires a server or to be run locally)_
+This repo contains both [nance-api](/src/api) and [nance-scheduler](/src/scheduler) (a [node-schedule](https://www.npmjs.com/package/node-schedule) based job runner). For production we run both of these services on [Railway](https://railway.app)._
 
 ## Self hosting API
 
@@ -33,27 +33,20 @@ We run the nance-api on [Railway](https://railway.app?referralCode=UAqXpP), you 
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/DqkfRY?referralCode=UAqXpP)
 
-### Other useful information
+### API Usage
 `npm run dev:api` --> launches local instance of API on port 3003
 
-`npm run build:api` --> compiles to javascript and copies required assets into `./dist`
+`npm run build:api` --> compiles api to javascript and copies required assets into `./dist`
 
 `npm run start:api` --> runs compiled version of API
 
-## Self hosting cronjobs
+## Task Scheduler Usage
+`npm run build:scheduler` --> compiles scheduler to javascript
 
-In order to run the nance-auto cornjobs you will need to have a small server (we use a $18/month Droplet from  [Digital Ocean](https://m.do.co/c/cfc0fc4755c6))
+`npm run start:scheduler` --> runs compiled version of scheduler
 
-Edit [process.json] with `CONFIG` set to your organizations name
-
-```
-git clone git@github.com:nance-eth/nance-ts.git
-cd nance-ts
-npm install
-pm2 process.json
-```
-
-This will load the calendar ics file for the organization from the Dolt database and setup all the tasks for that organizations governance process.
+This will load a JSON formatted calendar for each organization from our [nance_sys DoltDB](https://www.dolthub.com/repositories/nance/nance_sys)
+and schedule appropriate tasks.
 
 ## Database setup
 

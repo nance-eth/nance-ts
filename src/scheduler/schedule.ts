@@ -5,6 +5,7 @@ import { TASKS } from '../constants';
 import { getNextEvents } from '../calendar/events';
 import { scheduleCalendarTasks } from './calendar';
 import { listScheduledJobs } from './list';
+import { scheduleCleanup, scheduleReschedule } from './maintenance';
 
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';
@@ -28,6 +29,8 @@ async function main() {
       scheduleCalendarTasks(config, events);
     }
   });
+  scheduleCleanup();
+  scheduleReschedule();
   listScheduledJobs();
 }
 
