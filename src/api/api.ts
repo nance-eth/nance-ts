@@ -57,7 +57,7 @@ router.get('/:space', async (req, res) => {
   try {
     const { config, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners } = await handlerReq(space, req.headers.authorization);
     return res.send({
-      sucess: true,
+      success: true,
       data: {
         name: space,
         currentCycle: currentGovernanceCycle,
@@ -137,7 +137,7 @@ router.post('/:space/proposals', async (req, res) => {
   try {
     const { config, dolt, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
-    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
+    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
     if (!proposal.governanceCycle) {
       proposal.governanceCycle = currentGovernanceCycle + 1;
     }
@@ -219,7 +219,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   const { proposal } = req.body as ProposalUploadRequest;
   const { dolt, config, address, spaceOwners } = await handlerReq(space, req.headers.authorization);
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
   let proposalByUuid: Proposal;
   let isPrivate = false;
   try {
@@ -312,7 +312,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 router.delete('/:space/proposal/:hash', async (req, res) => {
   const { space, hash } = req.params;
   const { dolt, config, spaceOwners, address } = await handlerReq(space, req.headers.authorization);
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal delete' }); return; }
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal delete' }); return; }
   let proposalByUuid: Proposal;
   let isPrivate = false;
   try {
@@ -475,7 +475,7 @@ router.put('/:space/payouts', async (req, res) => {
   const { space } = req.params;
   const { config, dolt, address, spaceOwners } = await handlerReq(space, req.headers.authorization);
   const { payouts } = req.body as EditPayoutsRequest;
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
   const safeAddress = config.juicebox.gnosisSafeAddress;
   if (await isMultisig(safeAddress, address) || isNanceAddress(address) || isNanceSpaceOwner(spaceOwners, address)) {
     logger.info(`EDIT PAYOUTS by ${address}`);

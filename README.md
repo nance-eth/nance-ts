@@ -1,7 +1,7 @@
 # Nance
 > enabling communal decision making
 > 
-Nance is a governance platform for decentralized, token based communites. With the [nance-interface](https://github.com/nance-eth/nance-interface)
+Nance is a governance platform for decentralized, token based communities. With the [nance-interface](https://github.com/nance-eth/nance-interface)
 
 Nance allows your community members to:
 1. create proposals

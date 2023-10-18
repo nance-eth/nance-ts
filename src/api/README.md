@@ -12,7 +12,7 @@ https://nance-ts-staging.up.railway.app/juicebox
 success return
 ```
 {
-  "sucess": true,
+  "success": true,
   "data": {
     "name": "juicebox",
     "currentCycle": "33"
@@ -34,7 +34,7 @@ https://nance-ts-staging.up.railway.app/juicebox/query
 success return
 ```
 {
-  "sucess": true,
+  "success": true,
   "data": {
     [
       {
@@ -68,7 +68,7 @@ https://nance-ts-staging.up.railway.app/juicebox/markdown?hash=6bb92c83571245949
 success return
 ```
 {
-  "sucess": true,
+  "success": true,
   "data": {
     "hash": "...",
     "title": "...",
@@ -97,7 +97,7 @@ https://nance-ts-staging.up.railway.app/juicebox/upload, proposal: Proposal
 success return
 ```
 {
-  "sucess": true,
+  "success": true,
   "data": {
     "hash": "..."
   }
