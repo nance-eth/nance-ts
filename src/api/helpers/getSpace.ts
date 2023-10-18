@@ -6,7 +6,6 @@ import { mySQLTimeToUTC } from '../../utils';
 import { headToUrl } from '../../dolt/doltAPI';
 import { juiceboxTime } from './juicebox';
 import { DateEvent } from '../../types';
-import { EVENTS } from '../../constants';
 import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../../calendar/events';
 import { SpaceConfig } from '../../dolt/schema';
 
@@ -21,7 +20,7 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
     let cycleCurrentDay: number;
     let { currentGovernanceCycle } = entry;
     if (!entry.calendar) {
-      juiceboxTimeOutput = await juiceboxTime(entry.config.juicebox.projectId);
+      juiceboxTimeOutput = await juiceboxTime(entry.config.juicebox.projectId, entry.config.juicebox.network);
       ({ cycleCurrentDay, currentGovernanceCycle } = juiceboxTimeOutput);
       currentEvent = {
         title: 'NULL',
