@@ -3,7 +3,7 @@ import express from 'express';
 import { Contract } from 'ethers';
 import { NanceTreasury } from '../treasury';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest, EditPayoutsRequest, ProposalsPacket } from './models';
+import { ProposalUploadRequest, FetchReconfigureRequest, EditPayoutsRequest, ProposalsPacket, SpaceInfoResponse, APIErrorResponse, SpaceInfo } from './models';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
 import { getLastSlash, myProvider, sleep } from '../utils';
@@ -56,17 +56,23 @@ router.get('/:space', async (req, res) => {
   if (!spaces.includes(space)) { return res.send({ success: false, error: `[NANCE ERROR]: space ${space} not found` }); }
   try {
     const { config, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners } = await handlerReq(space, req.headers.authorization);
-    return res.send({
-      sucess: true,
-      data: {
-        name: space,
-        currentCycle: currentGovernanceCycle,
-        currentEvent,
-        spaceOwners,
-        snapshotSpace: config.snapshot.space,
-        juiceboxProjectId: config.juicebox.projectId,
-        dolthubLink,
-      }
+    const spaceInfo: SpaceInfo = {
+      name: space,
+      currentCycle: currentGovernanceCycle,
+      currentEvent,
+      spaceOwners,
+      snapshotSpace: config.snapshot.space,
+      juiceboxProjectId: config.juicebox.projectId,
+      transactorAddress: {
+        type: config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
+        network: config.juicebox.network,
+        address: config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress,
+      },
+      dolthubLink,
+    };
+    return res.json({
+      success: true,
+      data: spaceInfo
     });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });

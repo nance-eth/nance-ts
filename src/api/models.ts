@@ -3,7 +3,7 @@ import { SQLPayout, DialogHandlerMessageIds } from '../dolt/schema';
 
 interface APIResponse<T> {
   success: boolean;
-  error: string;
+  error?: string;
   data: T;
 }
 
@@ -11,15 +11,22 @@ export type SpaceInfo = {
   name: string;
   currentCycle: number;
   currentEvent: DateEvent;
+  spaceOwners: string[];
   snapshotSpace: string;
   juiceboxProjectId: string;
+  transactorAddress?: {
+    type: 'safe' | 'governor';
+    network: string;
+    address: string;
+  }
   dolthubLink: string;
+};
+
+export type SpaceInfoExtended = SpaceInfo & {
   currentDay: number;
-  cycleDayLastUpdated: Date;
   cycleTriggerTime: string;
   dialog: DialogHandlerMessageIds;
   config: NanceConfig;
-  spaceOwners: string[];
 };
 
 type ProposalInfo = {

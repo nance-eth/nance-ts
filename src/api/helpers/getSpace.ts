@@ -1,7 +1,7 @@
 import { DoltSysHandler } from '../../dolt/doltSysHandler';
 import { DoltHandler } from '../../dolt/doltHandler';
 import { pools } from '../../dolt/pools';
-import { SpaceInfo } from '../models';
+import { SpaceInfo, SpaceInfoExtended } from '../models';
 import { mySQLTimeToUTC } from '../../utils';
 import { headToUrl } from '../../dolt/doltAPI';
 import { juiceboxTime } from './juicebox';
@@ -11,7 +11,7 @@ import { SpaceConfig } from '../../dolt/schema';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
-export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
+export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> => {
   try {
     const entry = await doltSys.getSpaceConfig(space);
     const dolt = new DoltHandler(pools[space], entry.config.proposalIdPrefix);
@@ -43,7 +43,6 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
       currentEvent,
       currentDay: cycleCurrentDay,
       cycleTriggerTime: entry.cycleTriggerTime,
-      cycleDayLastUpdated: mySQLTimeToUTC(entry.cycleDayLastUpdated),
       dialog: { ...entry.dialogHandlerMessageIds },
       config: entry.config,
       spaceOwners: entry.spaceOwners,
@@ -56,7 +55,7 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfo> => {
   }
 };
 
-export const getAllSpaceInfo = async (where?: string): Promise<SpaceInfo[]> => {
+export const getAllSpaceInfo = async (where?: string): Promise<SpaceInfoExtended[]> => {
   try {
     return await doltSys.getAllSpaceNames(where).then(async (data) => {
       return Promise.all(data.map(async (entry) => {
