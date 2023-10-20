@@ -4,6 +4,7 @@ import schedule from 'node-schedule';
 import logger from '../logging';
 import { getAllSpaceConfig } from '../api/helpers/getSpace';
 import { scheduleAllCalendarTasks } from './calendar';
+import { listScheduledJobs } from './list';
 
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';
@@ -36,5 +37,6 @@ export const scheduleReschedule = () => {
     logger.info('=========================== 🔄 RESCHEDULE 🔄 =======================');
     rescheduleJobs();
     logger.info('===================================================================');
+    listScheduledJobs();
   });
 };

@@ -20,6 +20,11 @@ export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], 
         title: event.title,
         start,
         end,
+      },
+      {
+        title: event.title,
+        start: new Date(start.getTime() + interval),
+        end: new Date(end.getTime() + interval),
       }
     );
   });
