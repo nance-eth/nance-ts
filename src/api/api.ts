@@ -63,13 +63,15 @@ router.get('/:space', async (req, res) => {
       spaceOwners,
       snapshotSpace: config.snapshot.space,
       juiceboxProjectId: config.juicebox.projectId,
-      transactorAddress: {
+      dolthubLink,
+    };
+    if (config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress) {
+      spaceInfo.transactorAddress = {
         type: config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
         network: config.juicebox.network,
         address: config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress,
-      },
-      dolthubLink,
-    };
+      };
+    }
     return res.json({
       success: true,
       data: spaceInfo
