@@ -2,7 +2,7 @@ import express from 'express';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
 import { dotPin } from '../storage/storageHandler';
-import { ConfigSpaceRequest } from './models';
+import { ConfigSpaceRequest, SpaceInfo } from './models';
 import { mergeTemplateConfig, mergeConfig } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
@@ -33,14 +33,23 @@ router.get('/config/:space', async (req, res) => {
 router.get('/all', async (_, res) => {
   getAllSpaceInfo().then(async (data) => {
     const infos = await Promise.all(data.map(async (space) => {
-      return {
+      const spaceInfo: SpaceInfo = {
         name: space.name,
         currentCycle: space.currentCycle,
         currentEvent: space.currentEvent,
+        spaceOwners: space.spaceOwners,
         snapshotSpace: space.config.snapshot.space,
         juiceboxProjectId: space.config.juicebox.projectId,
         dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, space.dolthubLink),
       };
+      if (space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress) {
+        spaceInfo.transactorAddress = {
+          type: space.config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
+          network: space.config.juicebox.network,
+          address: space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress,
+        };
+      }
+      return spaceInfo;
     }));
     res.json({ success: true, data: infos });
   }).catch((e) => {
