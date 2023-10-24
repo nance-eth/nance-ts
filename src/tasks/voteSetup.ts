@@ -49,7 +49,7 @@ export const voteSetup = async (config: NanceConfig, endDate: Date, proposals?: 
   try {
     const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
     const voteProposals = proposals || await dolt.getVoteProposals();
-    if (voteProposals.length === 0) return;
+    if (voteProposals.length === 0) return [];
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, config);
     const snapshotVoteSettings = await snapshot.getVotingSettings().then((settings) => {
       return settings;
@@ -62,7 +62,7 @@ export const voteSetup = async (config: NanceConfig, endDate: Date, proposals?: 
     // used to pick a more random previous block to take snapshot of token balances per DrGorilla.eth's recommendation
     const blockJitter = Math.floor(Math.random() * 100);
 
-    await Promise.all(voteProposals.map(async (proposal) => {
+    const updatedProposals = await Promise.all(voteProposals.map(async (proposal) => {
       const startJitter = Math.floor(Math.random() * 100); // it seems that sometimes proposals uploaded at same time are rejected by Snapshot API
       const start = addSecondsToDate(new Date(), startJitter);
       // if a space has a period set, a proposal must be submitted with that period
@@ -87,12 +87,16 @@ export const voteSetup = async (config: NanceConfig, endDate: Date, proposals?: 
         { type, choices: proposal.voteSetup?.choices || config.snapshot.choices },
         blockJitter
       );
-      await dolt.updateVotingSetup({ ...proposal, ipfsURL, voteURL });
+      const updatedProposal: Proposal = { ...proposal, ipfsURL, voteURL };
+      await dolt.updateVotingSetup(updatedProposal);
+      return updatedProposal;
     })).catch((e) => {
       return Promise.reject(e);
     });
+    return updatedProposals;
   } catch (e) {
     logger.error(`error setting up vote for ${config.name}`);
     logger.error(e);
+    return Promise.reject(e);
   }
 };

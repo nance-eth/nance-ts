@@ -1,4 +1,4 @@
-import { NanceConfig } from '../types';
+import { NanceConfig, Proposal } from '../types';
 import { discordLogin } from '../api/helpers/discord';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
@@ -7,11 +7,14 @@ import { TASKS } from '../constants';
 import { DialogHandlerMessageIds } from '../dolt/schema';
 import logger from '../logging';
 
-export const voteRollup = async (config: NanceConfig, endDate: Date) => {
+export const voteRollup = async (config: NanceConfig, endDate: Date, _proposals?: Proposal[]) => {
   try {
+    let proposals = _proposals;
+    if (!proposals) {
+      const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+      proposals = await dolt.getVoteProposals({ uploadedToSnapshot: true });
+    }
     const dialogHandler = await discordLogin(config);
-    const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
-    const proposals = await dolt.getVoteProposals({ uploadedToSnapshot: true });
     if (proposals.length === 0) return;
     const votingRollup = await dialogHandler.sendVoteRollup(
       proposals,

@@ -60,11 +60,12 @@ export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEve
       scheduleJob(`${space}:${TASKS.voteSetup}`, voteSetupDate, () => {
         // TODO
         // see how Snapshot uploads fail and do a retry
-        tasks.voteSetup(config, event.end);
-      });
-      // Send Vote rollup
-      scheduleJob(`${space}:${TASKS.voteRollup}`, event.start, () => {
-        tasks.voteRollup(config, event.end);
+        tasks.voteSetup(config, event.end).then((proposals) => {
+          // Send Vote rollup
+          if (proposals) {
+            tasks.voteRollup(config, event.end, proposals);
+          }
+        });
       });
       // Send Vote quorum alert
       const sendVoteQuorumAlertDate = addSecondsToDate(event.end, -4 * ONE_HOUR_SECONDS);
