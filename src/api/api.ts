@@ -129,9 +129,6 @@ router.get('/:space/proposals', async (req, res) => {
       hasMore,
     };
 
-    if (cycle || currentEvent.title !== EVENTS.TEMPERATURE_CHECK || currentEvent.title !== EVENTS.DELAY) {
-      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
-    }
     return res.send({ success: true, data });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });
@@ -145,7 +142,7 @@ router.post('/:space/proposals', async (req, res) => {
   try {
     const { config, dolt, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
-    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
+    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
     if (!proposal.governanceCycle) {
       proposal.governanceCycle = currentGovernanceCycle + 1;
     }
@@ -202,9 +199,6 @@ router.get('/:space/proposal/:pid', async (req, res) => {
   let proposal: Proposal;
   try {
     proposal = await dolt.getProposalByAnyId(pid);
-    if (proposal.status !== STATUS.TEMPERATURE_CHECK || proposal.status !== STATUS.DISCUSSION) {
-      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=172800');
-    }
     res.send({ success: true, data: proposal });
     return;
   } catch (e) {
