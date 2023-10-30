@@ -76,6 +76,7 @@ export class DoltHandler {
       ipfsURL: proposal.ipfsCID ? `${IPFS_GATEWAY}/ipfs/${proposal.ipfsCID}` : '',
       voteURL,
       date: proposal.createdTime.toISOString(),
+      lastEditedTime: proposal.lastEditedTime?.toISOString(),
       governanceCycle: proposal.governanceCycle,
       authorAddress: proposal.authorAddress,
       coauthors: proposal.coauthors,
