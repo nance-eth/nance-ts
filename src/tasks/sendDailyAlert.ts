@@ -22,11 +22,11 @@ export async function sendDailyAlert(space: string) {
     logger.info(`currentEvent: ${JSON.stringify(currentEvent)}`);
     const dialogHandler = await discordLogin(config);
     await dialogHandler.sendDailyReminder(currentGovernanceCycleDay, currentGovernanceCycle, currentEvent.title, currentEvent.end);
-    logger.info(`dailyAlert sent for ${space}`);
-    logger.info(`next innvocation at ${schedule.scheduledJobs[`${space}:${TASKS.sendDailyAlert}`].nextInvocation().toISOString()}`);
+    return true;
   } catch (e) {
     logger.error(`error sending dailyAlert for ${space}`);
     logger.error(e);
+    return Promise.reject(e);
   }
   logger.info('===================================================================');
 }
