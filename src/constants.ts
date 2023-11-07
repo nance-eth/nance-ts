@@ -35,6 +35,7 @@ export const TASKS = {
   voteSetup: 'voteSetup',
   voteRollup: 'voteRollup',
   voteQuorumAlert: 'voteQuorumAlert',
+  voteOneDayEndAlert: 'voteOneDayEndAlert',
   voteEndAlert: 'voteEndAlert',
   deleteVoteEndAlert: 'deleteVoteEndAlert',
   voteClose: 'voteClose',

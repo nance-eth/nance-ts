@@ -165,6 +165,7 @@ export class DiscordHandler {
         date,
       );
     return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
+      messageObj.crosspost();
       return messageObj.id;
     });
   }

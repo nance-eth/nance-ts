@@ -3,7 +3,7 @@ import retry from 'promise-retry';
 import { DateEvent, NanceConfig } from '../types';
 import { EVENTS, ONE_HOUR_SECONDS, TASKS } from '../constants';
 import * as tasks from '../tasks/_tasks';
-import { addSecondsToDate } from '../utils';
+import { addDaysToDate, addSecondsToDate } from '../utils';
 import { SpaceConfig } from '../dolt/schema';
 import { getNextEvents } from '../calendar/events';
 
@@ -66,6 +66,13 @@ export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEve
             tasks.voteRollup(config, event.end, proposals);
           }
         });
+      });
+      // Send 24hr vote ending alert
+      const sendVoteOneDayEndDate = addDaysToDate(event.end, -1);
+      scheduleJob(`${space}:${TASKS.voteOneDayEndAlert}`, sendVoteOneDayEndDate, async () => {
+        const shouldSendAlert = await tasks.shouldSendAlert(config);
+        if (!shouldSendAlert) return;
+        tasks.sendStartOrEndAlert(config, event.end, EVENTS.SNAPSHOT_VOTE, TASKS.voteOneDayEndAlert, 'end');
       });
       // Send Vote quorum alert
       const sendVoteQuorumAlertDate = addSecondsToDate(event.end, -4 * ONE_HOUR_SECONDS);
