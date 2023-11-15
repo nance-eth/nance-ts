@@ -9,6 +9,9 @@ import { temperatureCheckClose } from '../tasks/temperatureCheckClose';
 import { voteSetup } from '../tasks/voteSetup';
 import { voteRollup } from '../tasks/voteRollup';
 import { incrementGovernanceCycle } from '../tasks/incrementGovernanceCycle';
+import { addSecondsToDate } from '../utils';
+import { voteClose } from '../tasks/voteClose';
+import { voteResultsRollup } from '../tasks/voteResultsRollup';
 
 const router = express.Router();
 
@@ -51,15 +54,17 @@ router.get('/:space/incrementGovernanceCycle', async (req, res) => {
 });
 
 router.get('/:space/temperatureCheckStart', async (req, res) => {
+  const { endDate } = req.query;
   const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
-  temperatureCheckRollup(spaceConfig.config, new Date()).then(() => {
+  const temperatureCheckEndDate = endDate ? new Date(endDate as string) : new Date(addSecondsToDate(new Date(), 3600));
+  temperatureCheckRollup(spaceConfig.config, temperatureCheckEndDate).then(() => {
     res.json({ success: true });
   }).catch((e) => {
     res.json({ success: false, error: e });
   });
 });
 
-router.get('/:space/temperatureCheckEnd', async (req, res) => {
+router.get('/:space/temperatureCheckClose', async (req, res) => {
   const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
   temperatureCheckClose(spaceConfig.config).then(() => {
     res.json({ success: true });
@@ -70,9 +75,22 @@ router.get('/:space/temperatureCheckEnd', async (req, res) => {
 
 router.get('/:space/voteSetup', async (req, res) => {
   try {
+    const { endDate } = req.query;
     const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
-    const proposals = await voteSetup(spaceConfig.config, new Date());
-    await voteRollup(spaceConfig.config, new Date(), proposals);
+    const voteEndDate = endDate ? new Date(endDate as string) : new Date(addSecondsToDate(new Date(), 3600));
+    const proposals = await voteSetup(spaceConfig.config, voteEndDate);
+    await voteRollup(spaceConfig.config, voteEndDate, proposals);
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false, error: e });
+  }
+});
+
+router.get('/:space/voteClose', async (req, res) => {
+  try {
+    const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
+    const proposals = await voteClose(spaceConfig.config);
+    await voteResultsRollup(spaceConfig.config, proposals);
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, error: e });
