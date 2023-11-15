@@ -127,6 +127,7 @@ export class DiscordHandler {
       { content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
         embeds: [message]
       }).then((messageObj) => {
+      messageObj.crosspost();
       return messageObj.id;
     });
   }
