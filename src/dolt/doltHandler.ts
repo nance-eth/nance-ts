@@ -144,7 +144,7 @@ export class DoltHandler {
     proposal.actions?.forEach((action) => {
       if (action.type === 'Payout') {
         this.addPayoutToDb(action.payload as Payout, proposal.hash, cycle, action?.name || proposal.title, action.uuid, actionStatus);
-      } else if (action.type === 'Transfer') {
+      } else if (action.type.includes('Transfer')) {
         this.addTransferToDb(action.payload as Transfer, proposal.hash, cycle, action?.name || proposal.title, action.uuid, undefined, actionStatus);
       } else if (action.type === 'Reserve') {
         this.addReserveToDb(action.payload as Reserve, proposal.hash, cycle, action.uuid, actionStatus);
@@ -215,7 +215,7 @@ export class DoltHandler {
       transferGovernanceCycle = VALUES(transferGovernanceCycle), transferCount = VALUES(transferCount), transferName = VALUES(transferName),
       transferAddress = VALUES(transferAddress), transferTokenName = VALUES(transferTokenName), transferTokenAddress = VALUES(transferTokenAddress),
       transferAmount = VALUES(transferAmount), transferStatus = VALUES(transferStatus)`,
-    [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount, status]);
+    [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount || 1, status]);
   }
 
   async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, uuid?: string, status?: string, transactionCount = 1) {

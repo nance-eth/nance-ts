@@ -158,7 +158,7 @@ router.post('/:space/proposals', async (req, res) => {
       console.log('==================== NEW PROPOSAL ====================');
       console.log('======================================================');
       console.log(`space ${space}, author ${address}`);
-      console.log(proposal);
+      console.dir(proposal, { depth: null });
       console.log('======================================================');
       console.log('======================================================');
       console.log('======================================================');
