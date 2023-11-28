@@ -10,10 +10,11 @@ const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: number)
   if (sProposal.state === 'closed') {
     status = sProposal.scores[0] > sProposal.scores[1] ? STATUS.APPROVED : STATUS.CANCELLED;
   }
-  const proposalId = Number(sProposal.title?.match(/.*-(\d+)/)?.[1]) || null;
+  const proposalId = Number(sProposal.title?.match(/\b(\d+)\b/)?.[1]) || null;
+  const title = sProposal?.title?.split(': ')[1] || '';
   return {
     hash: uuidGen(),
-    title: sProposal.title || 'Title Unknown',
+    title,
     body: sProposal.body || 'Body Unknown',
     status,
     authorAddress: sProposal.author,
@@ -98,14 +99,16 @@ export class SnapshotHandler {
     const results = await gqlRequest(`${this.hub}/graphql`, query) as { proposals: SnapshotVoteResultsId[] };
     return results.proposals;
   }
-  async getAllProposalsByScore(forSync = false): Promise<Proposal[]> {
+
+  async getAllProposalsByScore(gt?: number): Promise<Proposal[]> {
     const query = gql`
     {
       proposals (
         where: {
-          space: "${this.config.snapshot.space}"
+          space: "${this.config.snapshot.space}",
+          ${gt ? `end_gt: ${gt},` : null}
         }
-        first: 5
+        first: 1000
       ) {
         id
         votes
@@ -115,14 +118,18 @@ export class SnapshotHandler {
         choices
         scores
         scores_total
-        ${(forSync) ? 'title\nbody\nauthor\ndiscussion\nipfs' : ''}
+        title
+        body
+        author
+        discussion
+        ipfs
       }
     }`;
     const gqlResults = await gqlRequest(`${this.hub}/graphql`, query);
     let results = gqlResults.proposals.sort((a: SnapshotProposal, b: SnapshotProposal) => {
       return b.scores_total - a.scores_total;
     });
-    results = (forSync) ? results.map((result: SnapshotProposal) => { return snapshotProposalToProposal(result, this.config.snapshot.minTokenPassingAmount); }) : results;
+    results = results.map((result: SnapshotProposal) => { return snapshotProposalToProposal(result, this.config.snapshot.minTokenPassingAmount); });
     return results;
   }
 
