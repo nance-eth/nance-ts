@@ -492,7 +492,7 @@ export class DoltHandler {
     if (author) { whereClauses.push(`authorAddress = '${author}'`); }
 
     const whereStatement = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
-    const orderByStatement = keyword ? 'ORDER BY relevance DESC' : 'ORDER BY proposalId ASC';
+    const orderByStatement = keyword ? 'ORDER BY relevance DESC' : 'ORDER BY createdTime DESC';
     const pagination = (limit || offset) ? `LIMIT ${limit ? limit + 1 : limit} OFFSET ${offset}` : '';
 
     const query = oneLine`
