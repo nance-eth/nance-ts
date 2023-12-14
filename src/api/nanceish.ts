@@ -41,6 +41,7 @@ router.get('/all', async (_, res) => {
         snapshotSpace: space.config.snapshot.space,
         juiceboxProjectId: space.config.juicebox.projectId,
         dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, space.dolthubLink),
+        nextProposalId: space.nextProposalId,
       };
       if (space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress) {
         spaceInfo.transactorAddress = {

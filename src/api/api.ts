@@ -18,7 +18,7 @@ import { TenderlyHandler } from '../tenderly/tenderlyHandler';
 import { addressFromJWT } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
-import { EVENTS, STATUS } from '../constants';
+import { STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpace';
 
 const router = express.Router();
@@ -40,6 +40,7 @@ async function handlerReq(query: string, auth: string | undefined) {
       currentEvent: spaceInfo.currentEvent,
       dolt,
       dolthubLink: spaceInfo.dolthubLink,
+      nextProposalId: spaceInfo.nextProposalId
     };
   } catch (e) {
     logger.error(e);
@@ -55,7 +56,7 @@ router.get('/:space', async (req, res) => {
   const spaces = Object.keys(pools);
   if (!spaces.includes(space)) { return res.send({ success: false, error: `[NANCE ERROR]: space ${space} not found` }); }
   try {
-    const { config, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners } = await handlerReq(space, req.headers.authorization);
+    const { config, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId } = await handlerReq(space, req.headers.authorization);
     const spaceInfo: SpaceInfo = {
       name: space,
       currentCycle: currentGovernanceCycle,
@@ -64,6 +65,7 @@ router.get('/:space', async (req, res) => {
       snapshotSpace: config.snapshot.space,
       juiceboxProjectId: config.juicebox.projectId,
       dolthubLink,
+      nextProposalId,
     };
     if (config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress) {
       spaceInfo.transactorAddress = {
@@ -108,7 +110,7 @@ router.get('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
-    const { dolt, config, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     const proposalIdPrefix = config.proposalIdPrefix.includes('-') ? config.proposalIdPrefix : `${config.proposalIdPrefix}-`;
 
     // calculate offset for SQL pagination

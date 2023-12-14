@@ -37,6 +37,7 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> =>
       console.log('error getting dolthub link', e);
       return '';
     });
+    const nextProposalId = await dolt.getNextProposalId();
     return {
       name: space,
       currentCycle: currentGovernanceCycle,
@@ -49,6 +50,7 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> =>
       dolthubLink,
       snapshotSpace: entry.config.snapshot.space,
       juiceboxProjectId: entry.config.juicebox.projectId,
+      nextProposalId,
     };
   } catch (e) {
     return Promise.reject(e);
