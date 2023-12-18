@@ -410,19 +410,6 @@ router.get('/:space/reconfigure', async (req, res) => {
 // ======== admin-ish functions ======== //
 // ===================================== //
 
-// check for changes to db, push to dolt if true
-router.get('/:space/dolthub', async (req, res) => {
-  const { space } = req.params;
-  const { table } = req.query as { table: string | undefined };
-  const { dolt, currentEvent, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-  const message = `GC${currentGovernanceCycle}-${currentEvent.title}`;
-  dolt.checkAndPush(table, message).then((data: string) => {
-    return res.json({ success: true, data });
-  }).catch((e: string) => {
-    return res.json({ success: false, error: e });
-  });
-});
-
 // create discussion and poll (used if it failed to automatically create)
 router.get('/:space/discussion/:uuid', async (req, res) => {
   const { space, uuid } = req.params;

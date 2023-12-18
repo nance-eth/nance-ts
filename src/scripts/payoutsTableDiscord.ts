@@ -10,7 +10,7 @@ async function main() {
   const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
   const payouts = await dolt.getPayoutsDb(currentCycle);
   const discord = await discordLogin(config);
-  await discord.sendPayoutsTable(payouts, currentCycle.toString());
+  await discord.sendPayoutsTable(payouts, currentCycle);
 }
 
 main();

@@ -1,9 +1,10 @@
 import express from 'express';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
+import { DoltHandler } from '../dolt/doltHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
 import { dotPin } from '../storage/storageHandler';
 import { ConfigSpaceRequest, SpaceInfo } from './models';
-import { mergeTemplateConfig, mergeConfig } from '../utils';
+import { mergeTemplateConfig, mergeConfig, sleep } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
 import { dbOptions } from '../dolt/dbConfig';
@@ -14,7 +15,7 @@ import { createCalendarAndCycleInfo } from '../calendar/create';
 
 const router = express.Router();
 
-const dolt = new DoltSysHandler(pools.nance_sys);
+const doltSys = new DoltSysHandler(pools.nance_sys);
 
 router.get('/', (_, res) => {
   res.send('nance-ish control panel');
@@ -78,11 +79,13 @@ router.post('/config', async (req, res) => {
   logger.info(`[CREATE SPACE]: ${JSON.stringify(config)}`);
   if (!spaceConfig) {
     if (!dryrun) {
-      dolt.createSpaceDB(space).then(async () => {
-        try { await dolt.createSchema(space); } catch (e) { logger.error(e); }
+      doltSys.createSpaceDB(space).then(async () => {
+        pools[space] = new DoltSQL(dbOptions(space));
+        const dolt = new DoltHandler(pools[space], '');
+        try { await doltSys.createSchema(space); } catch (e) { logger.error(e); }
         try { await createDolthubDB(space); } catch (e) { logger.error(e); }
         try { await dolt.localDolt.addRemote(`https://doltremoteapi.dolthub.com/nance/${space}`); } catch (e) { logger.error(e); }
-        pools[space] = new DoltSQL(dbOptions(space));
+        try { await dolt.insertAutoCommitAndPushEvent(); } catch (e) { logger.error(e); }
         try { await dolt.localDolt.push(true); } catch (e) { logger.error(e); }
       }).catch((e) => {
         logger.error('[CREATE SPACE]:');
@@ -97,7 +100,7 @@ router.post('/config', async (req, res) => {
   const cid = await dotPin(packedConfig);
   const ownersIn = [...(owners ?? []), address];
   if (!dryrun) {
-    dolt.setSpaceConfig(space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths).then(() => {
+    doltSys.setSpaceConfig(space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths).then(() => {
       res.json({ success: true, data: { space, spaceOwners: ownersIn } });
     }).catch((e) => {
       console.error(e);

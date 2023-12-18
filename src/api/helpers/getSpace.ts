@@ -1,8 +1,7 @@
 import { DoltSysHandler } from '../../dolt/doltSysHandler';
 import { DoltHandler } from '../../dolt/doltHandler';
 import { pools } from '../../dolt/pools';
-import { SpaceInfo, SpaceInfoExtended } from '../models';
-import { mySQLTimeToUTC } from '../../utils';
+import { SpaceInfoExtended } from '../models';
 import { headToUrl } from '../../dolt/doltAPI';
 import { juiceboxTime } from './juicebox';
 import { DateEvent } from '../../types';

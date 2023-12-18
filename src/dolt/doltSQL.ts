@@ -25,10 +25,8 @@ export class DoltSQL {
   }
 
   async addRemote(remote: string, remoteName = 'origin'): Promise<boolean> {
-    return this.db.query(`CALL DOLT_REMOTE('remove', ?, ?)`, [remoteName, remote]).then(async () => { // remove first to avoid duplicate key error
-      return this.db.query(`CALL DOLT_REMOTE('add', ?, ?)`, [remoteName, remote]).then((res) => {
-        return resStatus(res) === 0;
-      });
+    return this.db.query(`CALL DOLT_REMOTE('add', ?, ?)`, [remoteName, remote]).then((res) => {
+      return resStatus(res) === 0;
     });
   }
 

@@ -630,24 +630,30 @@ export class DoltHandler {
 
   // ===================================== //
   // ========== dolt routines ============ //
-  // ===================================== //
-
-  async checkAndPush(table?: string, message = ''): Promise<string> {
-    // call push in case we committed but push failed before
-    await this.localDolt.push();
-    if (await this.localDolt.changes(table)) {
-      return this.localDolt.commit(message).then(async (res) => {
-        if (res) {
-          return this.localDolt.push().then(() => {
-            return res; // commit hash
-          });
-        }
-        return Promise.reject('dolthub push error');
-      }).catch((e) => {
-        return Promise.reject(e);
-      });
-    }
-    return Promise.reject('no changes');
+  // // ===================================== //
+  async insertAutoCommitAndPushEvent() {
+    await this.localDolt.query('DROP PROCEDURE IF EXISTS AutoCommitAndPush');
+    await this.localDolt.query(oneLine`
+      CREATE PROCEDURE AutoCommitAndPush()
+        BEGIN
+          DECLARE hasChanges BOOLEAN DEFAULT FALSE;
+          SELECT IF(COUNT(*) > 0, TRUE, FALSE) INTO hasChanges
+          FROM dolt_status
+          WHERE status = 'modified' OR status = 'new table';
+          IF hasChanges THEN
+              CALL DOLT_ADD('-A');
+              CALL DOLT_COMMIT('-m', 'Automated commit message');
+              CALL DOLT_PUSH('origin', 'main');
+          END IF;
+      END;
+    `);
+    await this.localDolt.query(oneLine`
+      CREATE EVENT IF NOT EXISTS AutoCommitAndPushEvent
+        ON SCHEDULE EVERY 10 MINUTE
+        STARTS CURRENT_TIMESTAMP
+        DO
+          CALL AutoCommitAndPush();
+    `);
   }
 
   async getHead(): Promise<string> {
