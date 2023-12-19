@@ -77,6 +77,7 @@ export type DialogHandlerMessageIds = {
 
 export type SpaceConfig = {
   space: string,
+  displayName: string,
   spaceOwners: string[],
   cid: string;
   config: NanceConfig;

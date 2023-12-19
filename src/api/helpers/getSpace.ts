@@ -39,6 +39,7 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> =>
     const nextProposalId = await dolt.getNextProposalId();
     return {
       name: space,
+      displayName: entry.displayName || space,
       currentCycle: currentGovernanceCycle,
       currentEvent,
       currentDay: cycleCurrentDay,

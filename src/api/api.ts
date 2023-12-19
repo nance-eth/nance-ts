@@ -33,6 +33,7 @@ async function handlerReq(query: string, auth: string | undefined) {
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
     return {
+      displayName: spaceInfo.displayName,
       spaceOwners: spaceInfo.spaceOwners,
       address,
       config: spaceInfo.config,
@@ -56,9 +57,10 @@ router.get('/:space', async (req, res) => {
   const spaces = Object.keys(pools);
   if (!spaces.includes(space)) { return res.send({ success: false, error: `[NANCE ERROR]: space ${space} not found` }); }
   try {
-    const { config, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId } = await handlerReq(space, req.headers.authorization);
+    const { config, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId } = await handlerReq(space, req.headers.authorization);
     const spaceInfo: SpaceInfo = {
       name: space,
+      displayName,
       currentCycle: currentGovernanceCycle,
       currentEvent,
       spaceOwners,

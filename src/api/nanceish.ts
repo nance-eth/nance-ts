@@ -36,6 +36,7 @@ router.get('/all', async (_, res) => {
     const infos = await Promise.all(data.map(async (space) => {
       const spaceInfo: SpaceInfo = {
         name: space.name,
+        displayName: space.displayName || space.name,
         currentCycle: space.currentCycle,
         currentEvent: space.currentEvent,
         spaceOwners: space.spaceOwners,
