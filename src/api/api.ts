@@ -26,8 +26,9 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
-async function handlerReq(query: string, auth: string | undefined) {
+async function handlerReq(_query: string, auth: string | undefined) {
   try {
+    const query = _query.toLowerCase();
     const spaceInfo = await getSpaceInfo(query);
     const dolt = new DoltHandler(pools[query], spaceInfo.config.proposalIdPrefix);
     const jwt = auth?.split('Bearer ')[1];
