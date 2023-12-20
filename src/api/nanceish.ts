@@ -61,9 +61,10 @@ router.get('/all', async (_, res) => {
 });
 
 router.post('/config', async (req, res) => {
-  const { config, governanceCycleForm, owners, dryrun } = req.body as ConfigSpaceRequest;
+  const { config, governanceCycleForm, owners, network, dryrun } = req.body as ConfigSpaceRequest;
   const { calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm);
   const space = config.name.replaceAll(' ', '_').toLowerCase();
+  const displayName = config.name;
   // get address from jwt (SIWE)
   const jwt = req.headers.authorization?.split('Bearer ')[1];
   const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
@@ -76,7 +77,35 @@ router.post('/config', async (req, res) => {
     return;
   }
 
-  // create space if it doesn't exist
+  // config the space in nance_sys database
+  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, config) : mergeTemplateConfig(config);
+  const packedConfig = JSON.stringify({ address, config: configIn });
+  const cid = await dotPin(packedConfig);
+  const ownersIn = [...(owners ?? []), address];
+  if (!dryrun) {
+    doltSys.setSpaceConfig(
+      space,
+      displayName,
+      cid,
+      ownersIn,
+      configIn,
+      calendar,
+      cycleTriggerTime,
+      cycleStageLengths,
+      network || 'mainnet'
+    ).then(() => {
+      res.json({ success: true, data: { space, spaceOwners: ownersIn } });
+    }).catch((e) => {
+      console.error(e);
+      res.json({ success: false, error: e });
+    });
+  } else {
+    console.log('dryrun');
+    console.log(space, displayName, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths);
+    res.json({ success: true, data: { dryrun, space, displayName, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths } });
+  }
+
+  // create space database if it doesn't exist
   logger.info(`[CREATE SPACE]: ${JSON.stringify(config)}`);
   if (!spaceConfig) {
     if (!dryrun) {
@@ -93,24 +122,6 @@ router.post('/config', async (req, res) => {
         logger.error(e);
       });
     }
-  }
-
-  // config the space
-  const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, config) : mergeTemplateConfig(config);
-  const packedConfig = JSON.stringify({ address, config: configIn });
-  const cid = await dotPin(packedConfig);
-  const ownersIn = [...(owners ?? []), address];
-  if (!dryrun) {
-    doltSys.setSpaceConfig(space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths).then(() => {
-      res.json({ success: true, data: { space, spaceOwners: ownersIn } });
-    }).catch((e) => {
-      console.error(e);
-      res.json({ success: false, error: e });
-    });
-  } else {
-    console.log('dryrun');
-    console.log(space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths);
-    res.json({ success: true, data: { dryrun, space, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths } });
   }
 });
 

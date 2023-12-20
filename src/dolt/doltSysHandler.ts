@@ -66,10 +66,21 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async setSpaceConfig(space: string, cid: string, spaceOwners: string[], config: NanceConfig, calendar: DateEvent[], cycleTriggerTime: string, cycleStageLengths: number[]) {
+  async setSpaceConfig(
+    space: string,
+    displayName: string,
+    cid: string,
+    spaceOwners: string[],
+    config: NanceConfig,
+    calendar: DateEvent[],
+    cycleTriggerTime: string,
+    cycleStageLengths: number[],
+    network: string
+  ) {
     return this.localDolt.queryResults(oneLine`
       INSERT INTO ${system} (
         space,
+        displayName,
         cid,
         spaceOwners,
         config,
@@ -78,19 +89,23 @@ export class DoltSysHandler {
         cycleStageLengths,
         dialogHandlerMessageIds,
         currentGovernanceCycle,
+        network,
         lastUpdated
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         cid = VALUES(cid),
+        displayName = VALUES(displayName),
         spaceOwners = VALUES(spaceOwners),
         config = VALUES(config),
         calendar = VALUES(calendar),
         cycleTriggerTime = VALUES(cycleTriggerTime),
         cycleStageLengths = VALUES(cycleStageLengths),
+        network = VALUES(network),
         lastUpdated = NOW()
     `, [
       space,
+      displayName,
       cid,
       JSON.stringify(spaceOwners),
       JSON.stringify(config),
@@ -98,7 +113,8 @@ export class DoltSysHandler {
       cycleTriggerTime,
       JSON.stringify(cycleStageLengths),
       JSON.stringify(defaultDialogHandlerMessageIds),
-      defaultGovernanceCycle
+      defaultGovernanceCycle,
+      network
     ]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });
@@ -137,7 +153,7 @@ export class DoltSysHandler {
   async getSpaceConfig(space: string): Promise<SpaceConfig> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
-      WHERE space = ? LIMIT 1
+      WHERE space = LOWER(?) LIMIT 1
     `, [space]).then((res) => {
       return res[0] as unknown as SpaceConfig;
     }).catch((e) => { return Promise.reject(e); });

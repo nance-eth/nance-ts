@@ -54,12 +54,13 @@ async function handlerReq(query: string, auth: string | undefined) {
 // ================================ //
 router.get('/:space', async (req, res) => {
   const { space } = req.params;
+  const spaceLower = space.toLowerCase();
   const spaces = Object.keys(pools);
-  if (!spaces.includes(space)) { return res.send({ success: false, error: `[NANCE ERROR]: space ${space} not found` }); }
+  if (!spaces.includes(spaceLower)) { return res.send({ success: false, error: `[NANCE ERROR]: space ${space} not found` }); }
   try {
-    const { config, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId } = await handlerReq(space, req.headers.authorization);
+    const { config, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId } = await handlerReq(spaceLower, req.headers.authorization);
     const spaceInfo: SpaceInfo = {
-      name: space,
+      name: spaceLower,
       displayName,
       currentCycle: currentGovernanceCycle,
       currentEvent,
