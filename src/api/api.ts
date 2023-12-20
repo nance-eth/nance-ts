@@ -201,11 +201,12 @@ router.post('/:space/proposals', async (req, res) => {
 // get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #
 router.get('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
-  const { dolt, address } = await handlerReq(space, req.headers.authorization);
+  const { dolt, address, config } = await handlerReq(space, req.headers.authorization);
   let proposal: Proposal;
   try {
     proposal = await dolt.getProposalByAnyId(pid);
-    res.send({ success: true, data: proposal });
+    const proposalId = proposal.proposalId ? `${config.proposalIdPrefix}${proposal.proposalId}` : undefined;
+    res.send({ success: true, data: { ...proposal, proposalId } });
     return;
   } catch (e) {
     if (address) {
