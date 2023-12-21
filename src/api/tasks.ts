@@ -46,7 +46,7 @@ router.get('/:space/dailyAlert', async (req, res) => {
 
 router.get('/:space/incrementGovernanceCycle', async (req, res) => {
   const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
-  incrementGovernanceCycle(spaceConfig.config.name).then(() => {
+  incrementGovernanceCycle(spaceConfig.space).then(() => {
     res.json({ success: true });
   }).catch((e) => {
     res.json({ success: false, error: e });

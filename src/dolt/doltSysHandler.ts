@@ -57,15 +57,6 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async getSpaceCID(space: string): Promise<string> {
-    return this.localDolt.queryRows(oneLine`
-      SELECT cid FROM ${system}
-      WHERE space = ? LIMIT 1
-    `, [space]).then((res) => {
-      return res[0].cid;
-    }).catch((e) => { return Promise.reject(e); });
-  }
-
   async setSpaceConfig(
     space: string,
     displayName: string,
@@ -126,7 +117,7 @@ export class DoltSysHandler {
       SET currentGovernanceCycle = currentGovernanceCycle + 1
       WHERE space = ?;
     `;
-    return this.localDolt.queryResults(query, [space]).then((res) => {
+    return this.localDolt.queryResults(query, [space.toLowerCase()]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });
   }
@@ -145,7 +136,7 @@ export class DoltSysHandler {
     return this.localDolt.queryRows(oneLine`
     SELECT dialogHandlerMessageIds FROM ${system}
     WHERE space = ? LIMIT 1
-    `, [space]).then((res) => {
+    `, [space.toLowerCase()]).then((res) => {
       return res[0].dialogHandlerMessageIds;
     }).catch((e) => { return Promise.reject(e); });
   }
@@ -154,7 +145,7 @@ export class DoltSysHandler {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
       WHERE space = LOWER(?) LIMIT 1
-    `, [space]).then((res) => {
+    `, [space.toLowerCase()]).then((res) => {
       return res[0] as unknown as SpaceConfig;
     }).catch((e) => { return Promise.reject(e); });
   }

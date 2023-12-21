@@ -22,7 +22,7 @@ const scheduleJob = (jobName: string, date: Date, func: () => void) => {
 };
 
 export const scheduleCalendarTasks = async (config: NanceConfig, events: DateEvent[]) => {
-  const space = config.name;
+  const space = config.name.toLowerCase();
   events.forEach(async (event) => {
     if (event.title === EVENTS.TEMPERATURE_CHECK) {
       // Temperature Check start alert
