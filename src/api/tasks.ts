@@ -12,6 +12,8 @@ import { incrementGovernanceCycle } from '../tasks/incrementGovernanceCycle';
 import { addSecondsToDate } from '../utils';
 import { voteClose } from '../tasks/voteClose';
 import { voteResultsRollup } from '../tasks/voteResultsRollup';
+import { getNextEventByName } from './helpers/getNextEventByName';
+import { EVENTS } from '../constants';
 
 const router = express.Router();
 
@@ -56,7 +58,9 @@ router.get('/:space/incrementGovernanceCycle', async (req, res) => {
 router.get('/:space/temperatureCheckStart', async (req, res) => {
   const { endDate } = req.query;
   const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
-  const temperatureCheckEndDate = endDate ? new Date(endDate as string) : new Date(addSecondsToDate(new Date(), 3600));
+  const temperatureCheckEndDate = endDate ? new Date(endDate as string)
+    : getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.end
+    || new Date(addSecondsToDate(new Date(), 3600));
   temperatureCheckRollup(spaceConfig.config, temperatureCheckEndDate).then(() => {
     res.json({ success: true });
   }).catch((e) => {
@@ -77,7 +81,9 @@ router.get('/:space/voteSetup', async (req, res) => {
   try {
     const { endDate } = req.query;
     const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
-    const voteEndDate = endDate ? new Date(endDate as string) : new Date(addSecondsToDate(new Date(), 3600));
+    const voteEndDate = endDate ? new Date(endDate as string)
+      : getNextEventByName(EVENTS.SNAPSHOT_VOTE, spaceConfig)?.end
+      || new Date(addSecondsToDate(new Date(), 3600));
     const proposals = await voteSetup(spaceConfig.config, voteEndDate);
     await voteRollup(spaceConfig.config, voteEndDate, proposals);
     res.json({ success: true });
