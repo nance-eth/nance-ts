@@ -4,6 +4,7 @@ import { doltSys } from '../dolt/doltSys';
 import logger from '../logging';
 
 export const sendStartOrEndAlert = async (
+  space: string,
   config: NanceConfig,
   startOrEndDate: Date,
   event: string,
@@ -18,13 +19,13 @@ export const sendStartOrEndAlert = async (
       startOrEnd
     );
     await doltSys.updateDialogHandlerMessageId(
-      config.name,
+      space,
       dialogHandlerMessageType,
       startOrEndReminderMessageId
     );
     dialogHandler.logout();
   } catch (e) {
-    logger.error(`error sending ${startOrEnd} alert for ${config.name}`);
+    logger.error(`error sending ${startOrEnd} alert for ${space}`);
     logger.error(e);
   }
 };

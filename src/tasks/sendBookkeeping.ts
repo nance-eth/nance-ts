@@ -22,17 +22,17 @@ const formatPayouts = async (payouts: SQLPayout[]): Promise<SQLPayout[]> => {
   }));
 };
 
-export const sendBookkeeping = async (config: NanceConfig, testConfig?: NanceConfig) => {
+export const sendBookkeeping = async (space: string, config: NanceConfig, testConfig?: NanceConfig) => {
   try {
-    const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
-    const { currentGovernanceCycle } = await getSpaceConfig(config.name);
+    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
+    const { currentGovernanceCycle } = await getSpaceConfig(space);
     await dolt.setStalePayouts(currentGovernanceCycle);
     const payouts = await dolt.getPayoutsDb(currentGovernanceCycle);
     if (payouts.length === 0) return;
     const dialogHandler = await discordLogin(testConfig || config);
     await dialogHandler.sendPayoutsTable(await formatPayouts(payouts), currentGovernanceCycle);
   } catch (e) {
-    logger.error(`Error sending bookkeeping for ${config.name}`);
+    logger.error(`Error sending bookkeeping for ${space}`);
     logger.error(e);
   }
 };

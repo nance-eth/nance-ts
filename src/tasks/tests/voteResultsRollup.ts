@@ -8,7 +8,7 @@ async function main() {
   const { config: configJuicebox } = await getSpaceConfig('juicebox');
   // const currentEvent = getCurrentEvent(getNextEvents, spaceConfig.cycleStageLengths);
   const proposals = await getProposalsWithVotes(configJuicebox);
-  await voteResultsRollup(configWaterbox, proposals);
+  await voteResultsRollup('waterbox', configWaterbox, proposals);
 }
 
 main();

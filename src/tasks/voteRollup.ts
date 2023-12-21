@@ -7,11 +7,11 @@ import { TASKS } from '../constants';
 import { DialogHandlerMessageIds } from '../dolt/schema';
 import logger from '../logging';
 
-export const voteRollup = async (config: NanceConfig, endDate: Date, _proposals?: Proposal[]) => {
+export const voteRollup = async (space: string, config: NanceConfig, endDate: Date, _proposals?: Proposal[]) => {
   try {
     let proposals = _proposals;
     if (!proposals) {
-      const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+      const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
       proposals = await dolt.getVoteProposals({ uploadedToSnapshot: true });
     }
     const dialogHandler = await discordLogin(config);
@@ -20,10 +20,10 @@ export const voteRollup = async (config: NanceConfig, endDate: Date, _proposals?
       proposals,
       endDate,
     );
-    await doltSys.updateDialogHandlerMessageId(config.name, TASKS.voteRollup as keyof DialogHandlerMessageIds, votingRollup);
+    await doltSys.updateDialogHandlerMessageId(space, TASKS.voteRollup as keyof DialogHandlerMessageIds, votingRollup);
     dialogHandler.logout();
   } catch (e) {
-    logger.error(`error rolling up vote for ${config.name}`);
+    logger.error(`error rolling up vote for ${space}`);
     logger.error(e);
   }
 };

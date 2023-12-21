@@ -26,7 +26,7 @@ async function main() {
     if (calendar) {
       const now = new Date();
       const events = getNextEvents(calendar, cycleStageLengths, now);
-      scheduleCalendarTasks(config, events);
+      scheduleCalendarTasks(space, config, events);
     }
   });
   scheduleCleanup();

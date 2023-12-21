@@ -29,6 +29,7 @@ router.use('/:space', async (req, res, next) => {
       res.json({ success: false, error: `address ${address} is not a spaceOwner of ${space}` });
       return;
     }
+    res.locals.space = space;
     res.locals.spaceConfig = spaceConfig;
     next();
   } catch (e) {
@@ -47,7 +48,7 @@ router.get('/:space/dailyAlert', async (req, res) => {
 });
 
 router.get('/:space/incrementGovernanceCycle', async (req, res) => {
-  const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
+  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
   incrementGovernanceCycle(spaceConfig.space).then(() => {
     res.json({ success: true });
   }).catch((e) => {
@@ -57,11 +58,11 @@ router.get('/:space/incrementGovernanceCycle', async (req, res) => {
 
 router.get('/:space/temperatureCheckStart', async (req, res) => {
   const { endDate } = req.query;
-  const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
+  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
   const temperatureCheckEndDate = endDate ? new Date(endDate as string)
     : getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.end
     || new Date(addSecondsToDate(new Date(), 3600));
-  temperatureCheckRollup(spaceConfig.config, temperatureCheckEndDate).then(() => {
+  temperatureCheckRollup(space, spaceConfig.config, temperatureCheckEndDate).then(() => {
     res.json({ success: true });
   }).catch((e) => {
     res.json({ success: false, error: e });
@@ -69,8 +70,8 @@ router.get('/:space/temperatureCheckStart', async (req, res) => {
 });
 
 router.get('/:space/temperatureCheckClose', async (req, res) => {
-  const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
-  temperatureCheckClose(spaceConfig.config).then(() => {
+  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
+  temperatureCheckClose(space, spaceConfig.config).then(() => {
     res.json({ success: true });
   }).catch((e) => {
     res.json({ success: false, error: e });
@@ -80,12 +81,12 @@ router.get('/:space/temperatureCheckClose', async (req, res) => {
 router.get('/:space/voteSetup', async (req, res) => {
   try {
     const { endDate } = req.query;
-    const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
+    const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
     const voteEndDate = endDate ? new Date(endDate as string)
       : getNextEventByName(EVENTS.SNAPSHOT_VOTE, spaceConfig)?.end
       || new Date(addSecondsToDate(new Date(), 3600));
-    const proposals = await voteSetup(spaceConfig.config, voteEndDate);
-    await voteRollup(spaceConfig.config, voteEndDate, proposals);
+    const proposals = await voteSetup(space, spaceConfig.config, voteEndDate);
+    await voteRollup(space, spaceConfig.config, voteEndDate, proposals);
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, error: e });
@@ -94,9 +95,9 @@ router.get('/:space/voteSetup', async (req, res) => {
 
 router.get('/:space/voteClose', async (req, res) => {
   try {
-    const { spaceConfig } = res.locals as { spaceConfig: SpaceConfig };
-    const proposals = await voteClose(spaceConfig.config);
-    await voteResultsRollup(spaceConfig.config, proposals);
+    const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
+    const proposals = await voteClose(space, spaceConfig.config);
+    await voteResultsRollup(space, spaceConfig.config, proposals);
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, error: e });

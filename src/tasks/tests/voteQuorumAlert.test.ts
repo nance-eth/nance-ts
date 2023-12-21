@@ -21,7 +21,7 @@ async function main() {
       quorumMet: true,
     };
   }
-  await voteQuorumAlert(configWaterbox, new Date(), proposals);
+  await voteQuorumAlert('waterbox', configWaterbox, new Date(), proposals);
 }
 
 main();

@@ -7,10 +7,10 @@ import { DialogHandlerMessageIds } from '../dolt/schema';
 import { STATUS, TASKS } from '../constants';
 import logger from '../logging';
 
-export const temperatureCheckRollup = async (config: NanceConfig, endDate: Date) => {
+export const temperatureCheckRollup = async (space: string, config: NanceConfig, endDate: Date) => {
   try {
     const dialogHandler = await discordLogin(config);
-    const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
     const proposals = await dolt.getDiscussionProposals();
     if (proposals.length === 0) return;
     const temperatureCheckRollupMessageId = await dialogHandler.sendTemperatureCheckRollup(
@@ -19,13 +19,13 @@ export const temperatureCheckRollup = async (config: NanceConfig, endDate: Date)
     );
     await dolt.updateStatuses(proposals, STATUS.TEMPERATURE_CHECK);
     await doltSys.updateDialogHandlerMessageId(
-      config.name,
+      space,
       TASKS.temperatureCheckRollup as keyof DialogHandlerMessageIds,
       temperatureCheckRollupMessageId
     );
     dialogHandler.logout();
   } catch (e) {
-    logger.error(`error rolling up temperatureCheck for ${config.name}`);
+    logger.error(`error rolling up temperatureCheck for ${space}`);
     logger.error(e);
   }
 };

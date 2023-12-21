@@ -15,9 +15,9 @@ const pollPassCheck = (config: NanceConfig, yesCount: number, noCount: number) =
   return false;
 };
 
-export const temperatureCheckClose = async (config: NanceConfig) => {
+export const temperatureCheckClose = async (space: string, config: NanceConfig) => {
   try {
-    const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
     const dialogHandler = await discordLogin(config);
     const temperatureCheckProposals = await dolt.getTemperatureCheckProposals();
     if (temperatureCheckProposals.length === 0) return;
@@ -39,7 +39,7 @@ export const temperatureCheckClose = async (config: NanceConfig) => {
       return Promise.reject(e);
     });
   } catch (e) {
-    logger.error(`error closing temperatureCheck for ${config.name}`);
+    logger.error(`error closing temperatureCheck for ${space}`);
     logger.error(e);
   }
 };

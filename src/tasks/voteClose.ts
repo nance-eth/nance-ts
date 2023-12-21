@@ -5,9 +5,9 @@ import { STATUS } from '../constants';
 import logger from '../logging';
 import { getProposalsWithVotes, votePassCheck } from './helpers/voting';
 
-export const voteClose = async (config: NanceConfig, _proposals?: Proposal[], dryrun = false) => {
+export const voteClose = async (space: string, config: NanceConfig, _proposals?: Proposal[], dryrun = false) => {
   try {
-    const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
     const proposals = _proposals || await getProposalsWithVotes(config);
     if (proposals.length === 0) return [];
     const updatedProposals = await Promise.all(proposals.map(async (proposal) => {
@@ -20,7 +20,7 @@ export const voteClose = async (config: NanceConfig, _proposals?: Proposal[], dr
     })).catch((e) => { return Promise.reject(e); });
     return updatedProposals;
   } catch (e) {
-    logger.error(`error closing vote for ${config.name}`);
+    logger.error(`error closing vote for ${space}`);
     logger.error(e);
     return Promise.reject(e);
   }

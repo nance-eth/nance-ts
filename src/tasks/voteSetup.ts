@@ -45,16 +45,16 @@ export const actionsToMarkdown = async (actions: Action[]) => {
   return results.join('\n');
 };
 
-export const voteSetup = async (config: NanceConfig, endDate: Date, proposals?: Proposal[]) => {
+export const voteSetup = async (space: string, config: NanceConfig, endDate: Date, proposals?: Proposal[]) => {
   try {
-    const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
     const voteProposals = proposals || await dolt.getVoteProposals();
     if (voteProposals.length === 0) return [];
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, config);
     const snapshotVoteSettings = await snapshot.getVotingSettings().then((settings) => {
       return settings;
     }).catch((e) => {
-      logger.error(`error getting snapshot vote settings for ${config.name}`);
+      logger.error(`error getting snapshot vote settings for ${space}`);
       logger.error(e);
       return undefined;
     });
@@ -73,7 +73,7 @@ export const voteSetup = async (config: NanceConfig, endDate: Date, proposals?: 
       let bodyWithActions;
       if (proposal.actions && proposal.actions.length > 0) {
         const actionsMarkdown = await actionsToMarkdown(proposal.actions);
-        const actionsFooter = getActionsFooter(config.name);
+        const actionsFooter = getActionsFooter(space);
         bodyWithActions = `${proposal.body}\n\n${actionsHeading}\n${actionsMarkdown}\n\n${actionsFooter}`;
       }
       const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${bodyWithActions || proposal.body}`;
@@ -95,7 +95,7 @@ export const voteSetup = async (config: NanceConfig, endDate: Date, proposals?: 
     });
     return updatedProposals;
   } catch (e) {
-    logger.error(`error setting up vote for ${config.name}`);
+    logger.error(`error setting up vote for ${space}`);
     logger.error(e);
     return Promise.reject(e);
   }

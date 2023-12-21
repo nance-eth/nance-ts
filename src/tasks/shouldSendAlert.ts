@@ -5,8 +5,8 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { NanceConfig } from '../types';
 import { pools } from '../dolt/pools';
 
-export const shouldSendAlert = async (config: NanceConfig) => {
-  const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+export const shouldSendAlert = async (space: string, config: NanceConfig) => {
+  const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
   const temperatureCheckOrVotingProposals = await dolt.getProposals({
     where: `proposalStatus = "${STATUS.TEMPERATURE_CHECK}" OR proposalStatus = "${STATUS.VOTING}"`,
   });
