@@ -61,7 +61,7 @@ router.get('/all', async (_, res) => {
 });
 
 router.post('/config', async (req, res) => {
-  const { config, governanceCycleForm, owners, network, dryrun } = req.body as ConfigSpaceRequest;
+  const { config, governanceCycleForm, owners, dryrun } = req.body as ConfigSpaceRequest;
   const { calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm);
   const space = config.name.replaceAll(' ', '_').toLowerCase();
   const displayName = config.name;
@@ -92,7 +92,6 @@ router.post('/config', async (req, res) => {
       calendar,
       cycleTriggerTime,
       cycleStageLengths,
-      network || 'mainnet'
     ).then(() => {
       res.json({ success: true, data: { space, spaceOwners: ownersIn } });
     }).catch((e) => {

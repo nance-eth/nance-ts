@@ -66,7 +66,6 @@ export class DoltSysHandler {
     calendar: DateEvent[],
     cycleTriggerTime: string,
     cycleStageLengths: number[],
-    network: string
   ) {
     return this.localDolt.queryResults(oneLine`
       INSERT INTO ${system} (
@@ -80,10 +79,9 @@ export class DoltSysHandler {
         cycleStageLengths,
         dialogHandlerMessageIds,
         currentGovernanceCycle,
-        network,
         lastUpdated
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         cid = VALUES(cid),
         displayName = VALUES(displayName),
@@ -92,7 +90,6 @@ export class DoltSysHandler {
         calendar = VALUES(calendar),
         cycleTriggerTime = VALUES(cycleTriggerTime),
         cycleStageLengths = VALUES(cycleStageLengths),
-        network = VALUES(network),
         lastUpdated = NOW()
     `, [
       space,
@@ -105,7 +102,6 @@ export class DoltSysHandler {
       JSON.stringify(cycleStageLengths),
       JSON.stringify(defaultDialogHandlerMessageIds),
       defaultGovernanceCycle,
-      network
     ]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });
