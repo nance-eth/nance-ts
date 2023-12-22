@@ -47,7 +47,8 @@ export class SnapshotHandler {
     private privateKey: string,
     private config: NanceConfig
   ) {
-    this.provider = myProvider('mainnet');
+    const { network } = config.juicebox;
+    this.provider = myProvider(network);
     this.wallet = (privateKey === '') ? ethers.Wallet.createRandom() : new ethers.Wallet(privateKey, this.provider);
 
     this.hub = 'https://hub.snapshot.org';
@@ -58,6 +59,7 @@ export class SnapshotHandler {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();
+    console.log('latest block', latestBlock);
     const snapProposal = {
       space: this.config.snapshot.space,
       type: options.type,

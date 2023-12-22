@@ -56,10 +56,10 @@ export const EMOJI = {
 // ex: https://github.com/wevm/viem/blob/234f8c209fed23a2caa41fbc049909f24a14850f/src/chains/definitions/optimism.ts#L7
 // TODO: use id instead of name
 export const NETWORKS = {
-  MAINNET: 'Ethereum',
-  GOERLI: 'Goerli',
-  OPTIMISM: 'OP Mainnet',
-  GNOSIS: 'Gnosis',
+  MAINNET: 'ethereum',
+  GOERLI: 'goerli',
+  OPTIMISM: 'op mainnet',
+  GNOSIS: 'gnosis',
 };
 
 export const ONE_HOUR_SECONDS = 3600;

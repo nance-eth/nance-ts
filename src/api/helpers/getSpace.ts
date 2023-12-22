@@ -19,6 +19,7 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> =>
     let cycleCurrentDay: number;
     let { currentGovernanceCycle } = entry;
     if (!entry.calendar) {
+      console.log('no calendar found, using juicebox', entry.config.name, entry.config.juicebox.projectId, entry.config.juicebox.network);
       juiceboxTimeOutput = await juiceboxTime(entry.config.juicebox.projectId, entry.config.juicebox.network);
       ({ cycleCurrentDay, currentGovernanceCycle } = juiceboxTimeOutput);
       currentEvent = {

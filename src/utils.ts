@@ -7,9 +7,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { NanceConfig, Network } from './types';
 import { keys } from './keys';
+import { NETWORKS } from './constants';
+
+const networkToRPC = {
+  mainnet: `https://mainnet.infura.io/v3/${keys.INFURA_KEY}`,
+  [NETWORKS.GOERLI]: `https://goerli.infura.io/v3/${keys.INFURA_KEY}`,
+  [NETWORKS.GNOSIS]: 'https://rpc.ankr.com/gnosis',
+  [NETWORKS.OPTIMISM]: `https://optimism-mainnet.infura.io/v3/${keys.INFURA_KEY}`,
+};
 
 export const myProvider = (network = 'mainnet' as Network) => {
-  const RPC_HOST = `https://${network}.infura.io/v3/${keys.INFURA_KEY}`;
+  const RPC_HOST = networkToRPC[network];
   return new JsonRpcProvider(RPC_HOST);
 };
 
