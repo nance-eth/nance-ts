@@ -179,11 +179,11 @@ export class DoltHandler {
     proposal.proposalId = (proposal.status === 'Discussion') ? await this.getNextProposalId() : proposal.proposalId || null;
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
-      (uuid, createdTime, lastEditedTime, title, body, authorAddress,
+      (uuid, createdTime, lastEditedTime, title, body, authorAddress, authorDiscordId,
         governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices,
         snapshotVotes, snapshotId, voteAddressCount)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [proposal.hash, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress,
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [proposal.hash, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.authorDiscordId,
       proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices),
       JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes
     ]);

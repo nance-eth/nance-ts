@@ -15,9 +15,13 @@ export const getProposalURL = (space: string, proposal: Proposal) => {
 };
 
 export const startDiscussionMessage = (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
-  return new EmbedBuilder().setTitle(`📃 ${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`).setURL(getProposalURL(space, proposal)).addFields([
+  const m = new EmbedBuilder().setTitle(`📃 ${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`).setURL(getProposalURL(space, proposal)).addFields([
     { name: 'author', value: `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})`, inline: true },
   ]);
+  if (proposal.authorDiscordId) {
+    m.addFields({ name: 'discord user', value: `<@${proposal.authorDiscordId}>`, inline: true });
+  }
+  return m;
 };
 
 export const archiveDiscussionMessage = (proposal: Proposal) => {
