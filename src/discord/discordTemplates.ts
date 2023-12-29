@@ -286,8 +286,8 @@ export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPay
   return message;
 };
 
-export const proposalDiff = (space: string, diffText: string, hash: string) => {
-  const message = `Proposal edited\n\`\`\`diff\n${limitLength(diffText, 1900)}\`\`\`\nhttps://jbdao.org/s/${space}/${hash}`;
+export const proposalDiff = (space: string, proposal: Proposal, diffText: string) => {
+  const message = `Proposal edited\n\`\`\`diff\n${limitLength(diffText, 1900)}\`\`\`\n${getProposalURL(space, proposal)}`;
   return message;
 };
 

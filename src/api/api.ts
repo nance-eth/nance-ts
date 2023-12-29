@@ -308,7 +308,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     if (proposalByUuid.discussionThreadURL && diff) {
       proposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
       await discord.editDiscussionTitle(proposal);
-      await discord.sendProposalDiff(getLastSlash(proposalByUuid.discussionThreadURL), diff, pid);
+      await discord.sendProposalDiff(proposal, diff);
     }
     discord.logout();
     res.json({ success: true, data: { hash } });

@@ -345,8 +345,9 @@ export class DiscordHandler {
     await this.getChannelById(threadId).send({ embeds: [message3, message1, message2] });
   }
 
-  async sendProposalDiff(threadId: string, diffText: string, hash: string) {
-    const message = discordTemplates.proposalDiff(this.config.name, diffText, hash);
+  async sendProposalDiff(proposal: Proposal, diffText: string) {
+    const threadId = getLastSlash(proposal.discussionThreadURL);
+    const message = discordTemplates.proposalDiff(this.config.name, proposal, diffText);
     await this.getChannelById(threadId).send(message);
   }
 
