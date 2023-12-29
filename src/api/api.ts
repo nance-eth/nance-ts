@@ -206,13 +206,13 @@ router.get('/:space/proposal/:pid', async (req, res) => {
   try {
     proposal = await dolt.getProposalByAnyId(pid);
     const proposalId = proposal.proposalId ? `${config.proposalIdPrefix}${proposal.proposalId}` : undefined;
-    res.send({ success: true, data: { ...proposal, proposalId } });
+    res.send({ success: true, data: { ...proposal, proposalId, minTokenPassingAmount: config.snapshot.minTokenPassingAmount } });
     return;
   } catch (e) {
     if (address) {
       try {
         proposal = await dolt.getPrivateProposal(pid, address);
-        res.send({ success: true, data: proposal });
+        res.send({ success: true, data: { ...proposal, minTokenPassingAmount: config.snapshot.minTokenPassingAmount } });
         return;
       } catch {
         res.send({ success: false, error: e });

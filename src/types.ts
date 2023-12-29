@@ -6,7 +6,7 @@ export interface Proposal {
   title: string;
   body?: string;
   governanceCycle?: number;
-  date?: string,
+  date?: string;
   status: string;
   proposalId: number | null;
   author?: string;
@@ -23,6 +23,7 @@ export interface Proposal {
   createdTime?: Date;
   lastEditedTime?: string;
   actions?: Action[];
+  minTokenPassingAmount?: number;
 }
 
 export type Action = {
@@ -81,7 +82,10 @@ export type SnapshotProposal = {
   ipfs?: string;
 };
 
-export type SnapshotVoteResultsId = Pick<SnapshotProposal, 'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'>;
+export type SnapshotVoteResultsId = Pick<
+  SnapshotProposal,
+  'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'
+>;
 
 export type SnapshotVoteSettings = {
   quorum: number;
@@ -90,7 +94,10 @@ export type SnapshotVoteSettings = {
   delay: number;
 };
 
-export type VoteResults = Pick<SnapshotProposal, 'choices' | 'scores' | 'votes' | 'scores_total'> & { quorumMet: boolean };
+export type VoteResults = Pick<
+  SnapshotProposal,
+  'choices' | 'scores' | 'votes' | 'scores_total'
+> & { quorumMet: boolean };
 
 export type BasicTransaction = {
   address: string;
@@ -131,7 +138,7 @@ export interface NanceConfig {
       proposals: string;
       bookkeeping: string;
       transactions: string;
-    }
+    };
     poll: {
       minYesVotes: number;
       yesNoRatio: number;
@@ -145,7 +152,7 @@ export interface NanceConfig {
     };
   };
   proposalIdPrefix: string;
-  dolt: DoltConfig,
+  dolt: DoltConfig;
   snapshot: {
     space: string;
     choices: string[];
@@ -179,8 +186,8 @@ export interface PollEmojis {
 }
 
 export type SnapshotVoteOptions = {
-  type: string,
-  choices: string[]
+  type: string;
+  choices: string[];
 };
 
 export interface Signature {
