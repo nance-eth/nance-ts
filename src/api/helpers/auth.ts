@@ -1,6 +1,7 @@
 import { decode } from 'next-auth/jwt';
 import { unixTimeStampNow } from '../../utils';
 import { keys } from '../../keys';
+import { getAddressRoles } from '../../guildxyz/guildxyz';
 
 interface DecodedJWT {
   sub: string;
@@ -20,3 +21,9 @@ export async function addressFromJWT(jwt: string): Promise<string> {
     return Promise.reject(e);
   });
 }
+
+export const addressHasGuildRole = async (address: string, guildId: number, roleId: number[]) => {
+  const access = await getAddressRoles(address, guildId);
+  const rolesAccess = access.map((a) => a.access);
+  return rolesAccess.includes(true);
+};

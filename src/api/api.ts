@@ -15,7 +15,7 @@ import { diffBody } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
-import { addressFromJWT } from './helpers/auth';
+import { addressFromJWT, addressHasGuildRole } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { STATUS } from '../constants';
@@ -149,6 +149,18 @@ router.post('/:space/proposals', async (req, res) => {
     const { config, dolt, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
+
+    // check Guildxyz access
+    if (config.guildxyz) {
+      const access = await addressHasGuildRole(address, config.guildxyz.id, config.guildxyz.roles);
+      console.log(`[PERMISSIONS] ${address} has access: ${access}`);
+      if (!access) {
+        res.json({
+          success: false,
+          error: `[PERMISSIONS] User doesn't have role ${config.guildxyz.roles} for ${config.guildxyz.id}` });
+        return;
+      }
+    }
     if (!proposal.governanceCycle) {
       proposal.governanceCycle = currentGovernanceCycle + 1;
     }

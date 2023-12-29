@@ -83,8 +83,8 @@ export type SnapshotProposal = {
 };
 
 export type SnapshotVoteResultsId = Pick<
-  SnapshotProposal,
-  'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'
+SnapshotProposal,
+'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'
 >;
 
 export type SnapshotVoteSettings = {
@@ -95,8 +95,8 @@ export type SnapshotVoteSettings = {
 };
 
 export type VoteResults = Pick<
-  SnapshotProposal,
-  'choices' | 'scores' | 'votes' | 'scores_total'
+SnapshotProposal,
+'choices' | 'scores' | 'votes' | 'scores_total'
 > & { quorumMet: boolean };
 
 export type BasicTransaction = {
@@ -151,6 +151,7 @@ export interface NanceConfig {
       imageNames: string[];
     };
   };
+  guildxyz?: GuildxyzConfig;
   proposalIdPrefix: string;
   dolt: DoltConfig;
   snapshot: {
@@ -166,6 +167,11 @@ export type DoltConfig = {
   enabled: boolean;
   owner: string;
   repo: string;
+};
+
+type GuildxyzConfig = {
+  id: number;
+  roles: number[];
 };
 
 export interface DateEvent {
