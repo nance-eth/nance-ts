@@ -53,6 +53,13 @@ export type Transfer = {
   decimals: number;
 };
 
+export type CustomTransactionArg = {
+  id: string;
+  value: string;
+  type: string;
+  name: string;
+};
+
 export type CustomTransaction = {
   contract: string;
   value: string;
@@ -60,7 +67,7 @@ export type CustomTransaction = {
   // can pass as ABI
   // can have unnamed parameters
   functionName: string;
-  args: any[];
+  args: CustomTransactionArg[];
   tenderlyId: string;
 };
 
@@ -83,8 +90,8 @@ export type SnapshotProposal = {
 };
 
 export type SnapshotVoteResultsId = Pick<
-SnapshotProposal,
-'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'
+  SnapshotProposal,
+  'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'
 >;
 
 export type SnapshotVoteSettings = {
@@ -95,8 +102,8 @@ export type SnapshotVoteSettings = {
 };
 
 export type VoteResults = Pick<
-SnapshotProposal,
-'choices' | 'scores' | 'votes' | 'scores_total'
+  SnapshotProposal,
+  'choices' | 'scores' | 'votes' | 'scores_total'
 > & { quorumMet: boolean };
 
 export type BasicTransaction = {
