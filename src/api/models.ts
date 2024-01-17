@@ -73,7 +73,7 @@ export interface FetchReconfigureRequest extends BaseRequest {
 export interface ConfigSpaceRequest extends BaseRequest {
   config: NanceConfig;
   network: string;
-  owners: string[];
+  spaceOwners: { address: string }[];
   cycleTriggerTime: string;
   cycleStageLengths: number[];
   governanceCycleForm: GovernanceCycleForm

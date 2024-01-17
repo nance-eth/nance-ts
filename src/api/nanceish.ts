@@ -61,17 +61,21 @@ router.get('/all', async (_, res) => {
 });
 
 router.post('/config', async (req, res) => {
-  const { config, governanceCycleForm, owners, dryrun } = req.body as ConfigSpaceRequest;
-  const { calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm);
+  const { config, governanceCycleForm, spaceOwners, dryrun } = req.body as ConfigSpaceRequest;
   const space = config.name.replaceAll(' ', '_').toLowerCase();
+  const spaceConfig = await getSpaceConfig(space);
+  let calendar = spaceConfig?.calendar;
+  let cycleTriggerTime = spaceConfig?.cycleTriggerTime;
+  let cycleStageLengths = spaceConfig?.cycleStageLengths;
+  if (governanceCycleForm) ({ calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm));
   const displayName = config.name;
+
   // get address from jwt (SIWE)
   const jwt = req.headers.authorization?.split('Bearer ')[1];
   const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: no SIWE address found' }); return; }
 
   // check if space exists and configurer is spaceOwner
-  const spaceConfig = await getSpaceConfig(space);
   if (spaceConfig && !spaceConfig.spaceOwners.includes(address)) {
     res.json({ success: false, error: '[NANCE ERROR] configurer not spaceOwner!' });
     return;
@@ -81,27 +85,27 @@ router.post('/config', async (req, res) => {
   const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, config) : mergeTemplateConfig(config);
   const packedConfig = JSON.stringify({ address, config: configIn });
   const cid = await dotPin(packedConfig);
-  const ownersIn = [...(owners ?? []), address];
+  const spaceOwnersIn = spaceOwners.map((owner) => { return owner.address; });
   if (!dryrun) {
     doltSys.setSpaceConfig(
       space,
       displayName,
       cid,
-      ownersIn,
+      spaceOwnersIn,
       configIn,
       calendar,
       cycleTriggerTime,
       cycleStageLengths,
     ).then(() => {
-      res.json({ success: true, data: { space, spaceOwners: ownersIn } });
+      res.json({ success: true, data: { space, spaceOwners: spaceOwnersIn } });
     }).catch((e) => {
       console.error(e);
       res.json({ success: false, error: e });
     });
   } else {
     console.log('dryrun');
-    console.log(space, displayName, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths);
-    res.json({ success: true, data: { dryrun, space, displayName, cid, ownersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths } });
+    console.log(space, displayName, cid, spaceOwnersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths);
+    res.json({ success: true, data: { dryrun, space, displayName, cid, spaceOwnersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths } });
   }
 
   // create space database if it doesn't exist
