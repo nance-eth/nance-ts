@@ -1,4 +1,4 @@
-import { DateEvent, GovernanceCycleForm, NanceConfig, Proposal } from '../types';
+import { DateEvent, GovernanceCycleForm, GuildxyzConfig, NanceConfig, Proposal } from '../types';
 import { SQLPayout, DialogHandlerMessageIds } from '../dolt/schema';
 
 interface APIResponse<T> {
@@ -22,6 +22,7 @@ export type SpaceInfo = {
   }
   dolthubLink: string;
   nextProposalId: number;
+  guildxyz?: GuildxyzConfig;
 };
 
 export type SpaceInfoExtended = SpaceInfo & {

@@ -78,6 +78,9 @@ router.get('/:space', async (req, res) => {
         address: config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress,
       };
     }
+    if (config.guildxyz) {
+      spaceInfo.guildxyz = config.guildxyz;
+    }
     return res.json({
       success: true,
       data: spaceInfo

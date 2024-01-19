@@ -176,7 +176,7 @@ export type DoltConfig = {
   repo: string;
 };
 
-type GuildxyzConfig = {
+export type GuildxyzConfig = {
   id: number;
   roles: number[];
 };
