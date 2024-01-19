@@ -31,9 +31,10 @@ export const getProposalsWithVotes = async (config: NanceConfig): Promise<Propos
   const snapshot = new SnapshotHandler('', config); // dont need private key for this call
   const proposalSnapshotIdStrings = proposals.map((proposal) => { return `"${proposal.voteURL}"`; });
   const voteResults = await snapshot.getProposalVotes(proposalSnapshotIdStrings);
-  if (voteResults.filter((result) => { return result.scores_state === 'pending'; }).length > 0) {
-    return Promise.reject(Error('proposals are still pending votes'));
-  }
+  // ignore pending vote results, sometimes snapshot takes a while to update
+  // if (voteResults.filter((result) => { return result.scores_state === 'pending'; }).length > 0) {
+  //   return Promise.reject(Error('proposals are still pending votes'));
+  // }
   const proposalsWithVotes = proposals.map((proposal) => {
     const voteResult = voteResults.find((result) => { return result.id === proposal.voteURL; });
     if (!voteResult) return proposal;

@@ -153,8 +153,8 @@ router.post('/:space/proposals', async (req, res) => {
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
 
-    // check Guildxyz access
-    if (config.guildxyz) {
+    // check Guildxyz access, allow draft uploads regardless of Guildxyz access
+    if (config.guildxyz && proposal.status === STATUS.DISCUSSION) {
       const access = await addressHasGuildRole(address, config.guildxyz.id, config.guildxyz.roles);
       console.log(`[PERMISSIONS] ${address} has access: ${access}`);
       if (!access) {
