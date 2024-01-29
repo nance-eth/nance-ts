@@ -221,7 +221,7 @@ export class DoltHandler {
   async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, uuid?: string, status?: string, transactionCount = 1) {
     const address = customTransaction.contract;
     const { value, functionName, args } = customTransaction;
-    const argsArray = JSON.stringify(args);
+    const argsArray = JSON.stringify(args).replace(/\n/g, '\\n');
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transactionsTable}
       (uuidOfTransaction, uuidOfProposal, transactionGovernanceCycle, transactionCount, transactionName,
