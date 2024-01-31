@@ -5,6 +5,7 @@ import logger from '../logging';
 import { getAllSpaceConfig } from '../api/helpers/getSpace';
 import { scheduleAllCalendarTasks } from './calendar';
 import { listScheduledJobs } from './list';
+import { doltSys } from '../dolt/doltSys';
 
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';
@@ -38,5 +39,13 @@ export const scheduleReschedule = () => {
     rescheduleJobs();
     logger.info('===================================================================');
     listScheduledJobs();
+  });
+};
+
+export const scheduleDoltTransactionCommit = () => {
+  schedule.scheduleJob('📝 doltTransactionCommit 📝', '15 0 * * *', () => { // run at 12:15am every day
+    logger.info('=========================== 📝 COMMIT 📝 ===========================');
+    doltSys.setTransactionCommit();
+    logger.info('===================================================================');
   });
 };

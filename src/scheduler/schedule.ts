@@ -5,7 +5,7 @@ import { TASKS } from '../constants';
 import { getNextEvents } from '../calendar/events';
 import { scheduleCalendarTasks } from './calendar';
 import { listScheduledJobs } from './list';
-import { scheduleCleanup, scheduleReschedule } from './maintenance';
+import { scheduleCleanup, scheduleDoltTransactionCommit, scheduleReschedule } from './maintenance';
 
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';
@@ -31,6 +31,9 @@ async function main() {
   });
   scheduleCleanup();
   scheduleReschedule();
+  // HACK: schedule once a day since dolt doesnt preserve this setting across restarts
+  // https://github.com/dolthub/dolt/issues/7187
+  scheduleDoltTransactionCommit();
   listScheduledJobs();
 }
 

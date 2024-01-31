@@ -49,6 +49,16 @@ export class DoltSysHandler {
     }));
   }
 
+  async setTransactionCommit() {
+    Promise.all([
+      await this.localDolt.query('SET @@GLOBAL.dolt_transaction_commit=1'),
+      await this.localDolt.query('SET @@GLOBAL.dolt_replicate_all_heads=1'),
+      await this.localDolt.query(oneLine`SET @@GLOBAL.dolt_replicate_to_remote='origin'`)
+    ]).catch((e) => {
+      console.log('error setting transaction commit', e);
+    });
+  }
+
   async showDatabases() {
     return this.localDolt.query('SHOW DATABASES').then((res) => {
       return (res as unknown as { Database: string }[]).map((db) => {
