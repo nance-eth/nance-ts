@@ -16,7 +16,6 @@ export interface Proposal {
   voteURL: string;
   voteSetup?: SnapshotVoteOptions;
   voteResults?: VoteResults;
-  version?: string;
   authorAddress?: string;
   authorDiscordId?: string;
   temperatureCheckVotes?: number[];
@@ -43,7 +42,7 @@ export type Payout = {
   uuid?: string;
 };
 
-export type Reserve = { splits: JBSplitStruct[] };
+export type Reserve = { splits: any[] };
 
 export type Transfer = {
   contract: string;
@@ -90,8 +89,8 @@ export type SnapshotProposal = {
 };
 
 export type SnapshotVoteResultsId = Pick<
-  SnapshotProposal,
-  'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'
+SnapshotProposal,
+'id' | 'choices' | 'scores' | 'votes' | 'scores_state' | 'scores_total'
 >;
 
 export type SnapshotVoteSettings = {
@@ -102,8 +101,8 @@ export type SnapshotVoteSettings = {
 };
 
 export type VoteResults = Pick<
-  SnapshotProposal,
-  'choices' | 'scores' | 'votes' | 'scores_total'
+SnapshotProposal,
+'choices' | 'scores' | 'votes' | 'scores_total'
 > & { quorumMet: boolean };
 
 export type BasicTransaction = {

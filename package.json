@@ -38,6 +38,7 @@
     "next-auth": "^4.22.1",
     "node-schedule": "^2.1.1",
     "promise-retry": "^2.0.1",
+    "tspec": "^0.1.112",
     "typescript": "^5.2.2",
     "uuid": "^9.0.0",
     "winston": "^3.7.2"

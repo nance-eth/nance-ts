@@ -42,13 +42,17 @@ export type ProposalsPacket = { proposalInfo: ProposalInfo; proposals: Proposal[
 
 export type ProposalsQueryResponse = APIResponse<ProposalsPacket>;
 
-export type ProposalMarkdownResponse = APIResponse<Proposal>;
+export type ProposalQueryResponse = APIResponse<Proposal>;
 
 export type PayoutsQueryResponse = APIResponse<SQLPayout[]>;
 
 export type SpaceInfoResponse = APIResponse<SpaceInfo>;
 
 export type APIErrorResponse = APIResponse<undefined>;
+
+export type ProposalUploadResponse = APIResponse<{ hash: string }>;
+
+export type ProposalDeleteResponse = APIResponse<{ affectedRows: number }>;
 
 interface BaseRequest {
   space: string;

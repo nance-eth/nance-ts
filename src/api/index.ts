@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import { TspecDocsMiddleware } from 'tspec';
 import api from './api';
 import ish from './nanceish';
 import tasks from './tasks';
@@ -22,8 +23,14 @@ app.get('/', (req, res) => {
   return res.send(`nance-api commit: ${process.env.RAILWAY_GIT_COMMIT_SHA?.substring(0, 7) ?? 'LOCAL'}`);
 });
 
+const initDocs = async () => {
+  app.use('/api/docs', await TspecDocsMiddleware());
+};
+
 const PORT = process.env.PORT || 3003;
 
 app.listen(PORT, () => {
   console.log(`Started on: http://localhost:${PORT}`);
 });
+
+initDocs();
