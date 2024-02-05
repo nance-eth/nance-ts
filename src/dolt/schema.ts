@@ -97,7 +97,7 @@ export type SQLTransfer = {
   transferCount: number;
   transferName: string;
   transferAddress: string;
-  transferTokenName: string;
+  transferChainId: number;
   transferTokenAddress: string;
   transferAmount: string;
   transferDecimals: number;
@@ -111,6 +111,7 @@ export type SQLCustomTransaction = {
   transactionCount: number;
   transactionName: string;
   transactionAddress: string;
+  transactionChainId: number;
   transactionValue: string;
   transactionFunctionName: string;
   transactionFunctionArgs: any[];

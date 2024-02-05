@@ -207,15 +207,15 @@ export class DoltHandler {
   }
 
   async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, uuid?: string, transferCount = 1, status?: string) {
-    const { to, contract, amount, tokenName } = transfer;
+    const { to, contract, amount, chainId } = transfer;
     await this.localDolt.db.query(oneLine`
       INSERT IGNORE INTO ${transfersTable}
-      (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferTokenName, transferTokenAddress, transferAmount, transferStatus)
+      (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferChainId, transferTokenAddress, transferAmount, transferStatus)
       VALUES(?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
       transferGovernanceCycle = VALUES(transferGovernanceCycle), transferCount = VALUES(transferCount), transferName = VALUES(transferName),
-      transferAddress = VALUES(transferAddress), transferTokenName = VALUES(transferTokenName), transferTokenAddress = VALUES(transferTokenAddress),
+      transferAddress = VALUES(transferAddress), transferChainId = VALUES(transferChainId), transferTokenAddress = VALUES(transferTokenAddress),
       transferAmount = VALUES(transferAmount), transferStatus = VALUES(transferStatus)`,
-    [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, tokenName, contract, amount || 1, status]);
+    [uuid || uuidGen(), uuidOfProposal, transferGovernanceCycle, transferCount, transferName, to, chainId, contract, amount || 1, status]);
   }
 
   async addCustomTransaction(customTransaction: CustomTransaction, uuidOfProposal: string, transactionGovernanceCycle: number, transactionName: string, uuid?: string, status?: string, transactionCount = 1) {

@@ -29,7 +29,7 @@ SELECT proposals.*, HEX(proposals.body) as body, HEX(proposals.title) as title,
           'uuid', transfers.uuidOfTransfer,
           'payload', JSON_OBJECT(
             'contract', transfers.transferTokenAddress,
-            'tokenName', transfers.transferTokenName,
+            'chainId', transfers.transferChainId,
             'to', transfers.transferAddress,
             'amount', transfers.transferAmount,
             'decimals', transfers.transferDecimals
@@ -47,6 +47,7 @@ SELECT proposals.*, HEX(proposals.body) as body, HEX(proposals.title) as title,
           'uuid', customTransactions.uuidOfTransaction,
           'payload', JSON_OBJECT(
             'contract', customTransactions.transactionAddress,
+            'chainId', customTransactions.transactionChainId,
             'value', customTransactions.transactionValue,
             'functionName', customTransactions.transactionFunctionName,
             'args', customTransactions.transactionFunctionArgs,

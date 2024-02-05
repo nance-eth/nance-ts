@@ -14,10 +14,14 @@ interface APIErrorBase {
   error: string;
 }
 
-export type spaceSpec = Tspec.DefineApiSpec<{
+export const params: Tspec.GenerateParams = {
   openapi: {
-    title: 'Nance API';
+    title: 'Nance API',
+    version: '1.0.0',
   }
+};
+
+export type spaceSpec = Tspec.DefineApiSpec<{
   paths: {
     '/{space}': {
       get: {
