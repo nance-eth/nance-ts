@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import { TspecDocsMiddleware } from 'tspec';
+import { params } from './tspec';
 import api from './api';
 import ish from './nanceish';
 import tasks from './tasks';
@@ -24,7 +25,7 @@ app.get('/', (req, res) => {
 });
 
 const initDocs = async () => {
-  app.use('/api/docs', await TspecDocsMiddleware());
+  app.use('/api/docs', await TspecDocsMiddleware(params));
 };
 
 const PORT = process.env.PORT || 3003;
