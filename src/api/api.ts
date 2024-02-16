@@ -20,6 +20,7 @@ import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpace';
+import { getProposalFromSnapshot } from "../snapshot/snapshotProposals";
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -34,6 +35,7 @@ async function handlerReq(_query: string, auth: string | undefined) {
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
     return {
+      name: query,
       displayName: spaceInfo.displayName,
       spaceOwners: spaceInfo.spaceOwners,
       address,
@@ -55,13 +57,10 @@ async function handlerReq(_query: string, auth: string | undefined) {
 // ================================ //
 router.get('/:space', async (req, res) => {
   const { space } = req.params;
-  const spaceLower = space.toLowerCase();
-  const spaces = Object.keys(pools);
-  if (!spaces.includes(spaceLower)) { return res.send({ success: false, error: `[NANCE ERROR]: space ${space} not found` }); }
   try {
-    const { config, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId } = await handlerReq(spaceLower, req.headers.authorization);
+    const { config, name, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId } = await handlerReq(space, req.headers.authorization);
     const spaceInfo: SpaceInfo = {
-      name: spaceLower,
+      name,
       displayName,
       currentCycle: currentGovernanceCycle,
       currentEvent,
@@ -99,14 +98,13 @@ router.get('/:space/privateProposals', async (req, res) => {
   const { space } = req.params;
   try {
     const { dolt, address } = await handlerReq(space, req.headers.authorization);
-    const data: Proposal[] = [];
 
     // check for any private proposals
     if (address) {
-      const privates = await dolt.getPrivateProposalsByAuthorAddress(address);
-      data.push(...privates);
+      const privates = await dolt?.getPrivateProposalsByAuthorAddress(address);
+      return res.send({ success: true, data: privates });
     }
-    return res.send({ success: true, data });
+    return res.send({ success: true, data: [] });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });
   }
@@ -130,9 +128,9 @@ router.get('/:space/proposals', async (req, res) => {
 
     const data: ProposalsPacket = {
       proposalInfo: {
-        snapshotSpace: config.snapshot.space,
+        snapshotSpace: config?.snapshot.space || space,
         proposalIdPrefix,
-        minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
+        minTokenPassingAmount: config?.snapshot.minTokenPassingAmount || 0,
       },
       proposals,
       hasMore,
@@ -216,26 +214,25 @@ router.post('/:space/proposals', async (req, res) => {
 // get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #
 router.get('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
-  const { dolt, address, config } = await handlerReq(space, req.headers.authorization);
-  let proposal: Proposal;
+  let proposal: Proposal | undefined;
   try {
+    const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
     proposal = await dolt.getProposalByAnyId(pid);
+    // proposal not found, try privateProposal
+    if (!proposal && address) proposal = await dolt.getPrivateProposal(pid, address);
     const proposalId = proposal.proposalId ? `${config.proposalIdPrefix}${proposal.proposalId}` : undefined;
     res.send({ success: true, data: { ...proposal, proposalId, minTokenPassingAmount: config.snapshot.minTokenPassingAmount } });
-    return;
   } catch (e) {
-    if (address) {
-      try {
-        proposal = await dolt.getPrivateProposal(pid, address);
-        res.send({ success: true, data: { ...proposal, minTokenPassingAmount: config.snapshot.minTokenPassingAmount } });
-        return;
-      } catch {
-        res.send({ success: false, error: e });
-        return;
-      }
+    // handlerReq() will return Promise.reject if space not found
+    // then try to grab proposal from snapshot
+    console.log("proposal not found in dolt, trying snapshot");
+    proposal = await getProposalFromSnapshot(pid);
+    if (!proposal) {
+      res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
+      return;
     }
+    res.send({ success: true, data: proposal });
   }
-  res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
 });
 
 // edit single proposal

@@ -547,7 +547,6 @@ export class DoltHandler {
       ${SELECT_ACTIONS} FROM ${proposalsTable}
       ${where} LIMIT 1
     `).then((res) => {
-      if (res.length === 0) return Promise.reject('proposalId not found');
       return res[0];
     }).catch((e) => { return Promise.reject(e); });
   }

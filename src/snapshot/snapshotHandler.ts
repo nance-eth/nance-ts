@@ -2,40 +2,8 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
 import { Proposal, SnapshotVoteOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '../types';
-import { dateToUnixTimeStamp, myProvider, uuidGen } from '../utils';
-import { STATUS } from '../constants';
-
-const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: number): Proposal => {
-  let status = STATUS.VOTING;
-  if (sProposal.state === 'closed') {
-    status = sProposal.scores[0] > sProposal.scores[1] ? STATUS.APPROVED : STATUS.CANCELLED;
-  }
-  const proposalId = Number(sProposal.title?.match(/\b(\d+)\b/)?.[1]) || null;
-  const title = sProposal?.title?.split(': ')[1] || '';
-  return {
-    hash: uuidGen(),
-    title,
-    body: sProposal.body || 'Body Unknown',
-    status,
-    authorAddress: sProposal.author,
-    proposalId,
-    createdTime: new Date(Number(sProposal.start) * 1000),
-    discussionThreadURL: sProposal.discussion || '',
-    ipfsURL: sProposal.ipfs || '',
-    voteURL: sProposal.id,
-    voteSetup: {
-      type: sProposal.type,
-      choices: sProposal.choices,
-    },
-    voteResults: {
-      votes: sProposal.votes,
-      scores: sProposal.scores,
-      choices: sProposal.choices,
-      scores_total: sProposal.scores_total,
-      quorumMet: sProposal.scores_total >= quorum,
-    }
-  };
-};
+import { dateToUnixTimeStamp, myProvider } from '../utils';
+import { snapshotProposalToProposal } from './snapshotProposals';
 
 export class SnapshotHandler {
   private wallet;

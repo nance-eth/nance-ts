@@ -165,6 +165,16 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
+  async getSpaceByDiscordGuildId(discordGuildId: string): Promise<SpaceConfig> {
+    return this.localDolt.queryRows(oneLine`
+      SELECT * FROM ${system}
+      WHERE JSON_EXTRACT(config, '$.discord.guildId') = ?
+      LIMIT 1
+    `, [discordGuildId]).then((res) => {
+      return res[0] as unknown as SpaceConfig;
+    }).catch((e) => { return Promise.reject(e); });
+  }
+
   async writeContractData(symbol: string, type: string, address: string, abi: any[]) {
     return this.localDolt.queryResults(oneLine`
       INSERT INTO ${contracts} (symbol, contractType, contractAddress, contractAbi)

@@ -1,3 +1,4 @@
+/* eslint-disable prefer-promise-reject-errors */
 import { DoltSysHandler } from '../../dolt/doltSysHandler';
 import { DoltHandler } from '../../dolt/doltHandler';
 import { pools } from '../../dolt/pools';
@@ -11,6 +12,8 @@ import { SpaceConfig } from '../../dolt/schema';
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
 export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> => {
+  const spaces = Object.keys(pools);
+  if (!spaces.includes(space)) return Promise.reject(`space ${space} not found`);
   try {
     const entry = await doltSys.getSpaceConfig(space);
     const dolt = new DoltHandler(pools[space], entry.config.proposalIdPrefix);
@@ -59,11 +62,10 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> =>
 
 export const getAllSpaceInfo = async (where?: string): Promise<SpaceInfoExtended[]> => {
   try {
-    return await doltSys.getAllSpaceNames(where).then(async (data) => {
-      return Promise.all(data.map(async (entry) => {
-        return getSpaceInfo(entry.space);
-      }));
-    });
+    const spaces = await doltSys.getAllSpaceNames(where);
+    const spaceInfos = await Promise.all(spaces.map((entry) => getSpaceInfo(entry.space)));
+    const filteredSpaceInfoArray = spaceInfos.filter((entry) => entry !== undefined) as SpaceInfoExtended[];
+    return filteredSpaceInfoArray;
   } catch (e) {
     return Promise.reject(e);
   }
@@ -85,6 +87,15 @@ export const getAllSpaceConfig = async (where?: string): Promise<SpaceConfig[]> 
         return getSpaceConfig(entry.space);
       }));
     });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+export const getSpaceByDiscordGuildId = async (discordGuildId: string): Promise<SpaceInfoExtended> => {
+  try {
+    const entry = await doltSys.getSpaceByDiscordGuildId(discordGuildId);
+    return await getSpaceInfo(entry.space);
   } catch (e) {
     return Promise.reject(e);
   }
