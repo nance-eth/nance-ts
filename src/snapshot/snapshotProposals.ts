@@ -10,7 +10,6 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
   if (sProposal.state === 'closed') {
     status = sProposal.scores[0] > sProposal.scores[1] ? STATUS.APPROVED : STATUS.CANCELLED;
   }
-  const proposalId = Number(sProposal.title?.match(/\b(\d+)\b/)?.[1]) || null;
   const title = sProposal?.title?.split(': ')[1] || sProposal.title || 'Title Unknown';
   return {
     hash: 'snapshot',
@@ -18,11 +17,12 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
     body: sProposal.body || 'Body Unknown',
     status,
     authorAddress: sProposal.author,
-    proposalId,
+    proposalId: null,
     createdTime: new Date(Number(sProposal.start) * 1000),
     discussionThreadURL: sProposal.discussion || '',
     ipfsURL: sProposal.ipfs || '',
     voteURL: sProposal.id,
+    snapshotSpace: sProposal.space?.id || '',
     voteSetup: {
       type: sProposal.type,
       choices: sProposal.choices,
@@ -56,6 +56,7 @@ export const getProposalFromSnapshot = async (proposalId: string): Promise<Propo
       author
       discussion
       ipfs
+      space { id }
     }
   }`;
   const gqlResults = await gqlRequest(`${hub}/graphql`, query);

@@ -23,6 +23,8 @@ export interface Proposal {
   lastEditedTime?: string;
   actions?: Action[];
   minTokenPassingAmount?: number;
+  snapshotSpace?: string;
+  nextProposalId?: number;
 }
 
 export type Action = {
@@ -87,6 +89,7 @@ export type SnapshotProposal = {
   author?: string;
   discussion?: string;
   ipfs?: string;
+  space?: { id: string };
 };
 
 export type SnapshotVoteResultsId = Pick<

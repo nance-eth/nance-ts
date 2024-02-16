@@ -216,12 +216,21 @@ router.get('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   let proposal: Proposal | undefined;
   try {
-    const { dolt, config, address } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, address, nextProposalId } = await handlerReq(space, req.headers.authorization);
     proposal = await dolt.getProposalByAnyId(pid);
     // proposal not found, try privateProposal
     if (!proposal && address) proposal = await dolt.getPrivateProposal(pid, address);
     const proposalId = proposal.proposalId ? `${config.proposalIdPrefix}${proposal.proposalId}` : undefined;
-    res.send({ success: true, data: { ...proposal, proposalId, minTokenPassingAmount: config.snapshot.minTokenPassingAmount } });
+    res.send({
+      success: true,
+      data: {
+        ...proposal,
+        proposalId,
+        minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
+        snapshotSpace: config.snapshot.space,
+        nextProposalId
+      }
+    });
   } catch (e) {
     // handlerReq() will return Promise.reject if space not found
     // then try to grab proposal from snapshot
