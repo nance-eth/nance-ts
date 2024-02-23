@@ -248,7 +248,7 @@ router.get('/:space/proposal/:pid', async (req, res) => {
 router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   const { proposal } = req.body as ProposalUploadRequest;
-  const { dolt, config, address, spaceOwners } = await handlerReq(space, req.headers.authorization);
+  const { dolt, config, address, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   let proposalByUuid: Proposal;
   let isPrivate = false;
@@ -290,6 +290,12 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   console.log('======================================================');
   console.log('======================================================');
   console.log('======================================================');
+
+  // update governance cycle to current if proposal is a draft
+  if (proposal.status === STATUS.DRAFT) {
+    proposal.governanceCycle = currentGovernanceCycle;
+  }
+
   const editFunction = (p: Proposal) => {
     if (isPrivate && (proposal.status === STATUS.DISCUSSION || proposal.status === STATUS.DRAFT)) return dolt.addProposalToDb(p);
     if (isPrivate) return dolt.editPrivateProposal(p);
