@@ -293,7 +293,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
   // update governance cycle to current if proposal is a draft
   if (proposal.status === STATUS.DRAFT) {
-    proposal.governanceCycle = currentGovernanceCycle;
+    proposal.governanceCycle = currentGovernanceCycle + 1;
   }
 
   const editFunction = (p: Proposal) => {
