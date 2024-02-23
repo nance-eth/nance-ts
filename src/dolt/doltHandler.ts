@@ -415,6 +415,22 @@ export class DoltHandler {
     return results;
   }
 
+  async updateProposalSummary(uuid: string, summary: string) {
+    return this.queryDb(`
+      UPDATE ${proposalsTable} SET
+      proposalSummary = '${summary}'
+      WHERE uuid = '${uuid}'
+    `);
+  }
+
+  async updateThreadSummary(uuid: string, summary: string) {
+    return this.queryDb(`
+      UPDATE ${proposalsTable} SET
+      threadSummary = '${summary}'
+      WHERE uuid = '${uuid}'
+    `);
+  }
+
   // ===================================== //
   // ========== get functions ============ //
   // ===================================== //

@@ -386,6 +386,30 @@ router.delete('/:space/proposal/:hash', async (req, res) => {
   }
 });
 
+// post proposal summary
+router.post('/:space/summary/:type/:pid', async (req, res) => {
+  const { space, pid, type } = req.params;
+  const { summary } = req.body as { summary: string };
+  if (!summary) { res.json({ success: false, error: '[NANCE ERROR]: missing summary' }); return; }
+
+  const { dolt } = await handlerReq(space, req.headers.authorization);
+  const updateFunc = () => {
+    if (type === 'proposal') {
+      return dolt.updateProposalSummary(pid, summary);
+    }
+    if (type === 'thread') {
+      return dolt.updateThreadSummary(pid, summary);
+    }
+    return Promise.reject(new Error('invalid type'));
+  };
+  updateFunc().then((affectedRows) => {
+    return res.json({ success: true, data: { affectedRows } });
+  }
+  ).catch((e: any) => {
+    return res.json({ success: false, error: e });
+  });
+});
+
 // ==================================== //
 // ======== multisig functions ======== //
 // ==================================== //
