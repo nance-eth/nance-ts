@@ -80,14 +80,23 @@ export class DoltHandler {
       governanceCycle: proposal.governanceCycle,
       authorAddress: proposal.authorAddress,
       coauthors: proposal.coauthors,
-      actions: actions()
+      actions: actions(),
     };
+    // thread summaries
+    if (proposal.proposalSummary) {
+      cleanProposal.proposalSummary = proposal.proposalSummary;
+    }
+    if (proposal.threadSummary) {
+      cleanProposal.threadSummary = proposal.threadSummary;
+    }
+    // vote type
     if (proposal.voteType !== 'basic') {
       cleanProposal.voteSetup = {
         type: proposal.voteType,
         choices: proposal.choices
       };
     }
+    // snapshot votes
     if (proposal.snapshotVotes) {
       cleanProposal.voteResults = {
         choices: proposal.choices,
@@ -97,6 +106,7 @@ export class DoltHandler {
         quorumMet: false, // we dont have this data in the db
       };
     }
+    // temperature check votes
     if (proposal.temperatureCheckVotes) {
       cleanProposal.temperatureCheckVotes = proposal.temperatureCheckVotes;
     }
@@ -415,20 +425,12 @@ export class DoltHandler {
     return results;
   }
 
-  async updateProposalSummary(uuid: string, summary: string) {
-    return this.queryDb(`
+  async updateSummary(uuid: string, summary: string, type: "proposal" | "thread") {
+    return this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
-      proposalSummary = '${summary}'
-      WHERE uuid = '${uuid}'
-    `);
-  }
-
-  async updateThreadSummary(uuid: string, summary: string) {
-    return this.queryDb(`
-      UPDATE ${proposalsTable} SET
-      threadSummary = '${summary}'
-      WHERE uuid = '${uuid}'
-    `);
+      ${type}Summary = ?
+      WHERE uuid = ?
+    `, [summary, uuid]);
   }
 
   // ===================================== //

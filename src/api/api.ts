@@ -21,6 +21,7 @@ import { pools } from '../dolt/pools';
 import { STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpace';
 import { getProposalFromSnapshot } from "../snapshot/snapshotProposals";
+import { getSummary } from "../nancearizer";
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -386,28 +387,16 @@ router.delete('/:space/proposal/:hash', async (req, res) => {
   }
 });
 
-// post proposal summary
-router.post('/:space/summary/:type/:pid', async (req, res) => {
+// fetch summary and save to db
+router.get('/:space/summary/:type/:pid', async (req, res) => {
   const { space, pid, type } = req.params;
-  const { summary } = req.body as { summary: string };
-  if (!summary) { res.json({ success: false, error: '[NANCE ERROR]: missing summary' }); return; }
-
   const { dolt } = await handlerReq(space, req.headers.authorization);
-  const updateFunc = () => {
-    if (type === 'proposal') {
-      return dolt.updateProposalSummary(pid, summary);
-    }
-    if (type === 'thread') {
-      return dolt.updateThreadSummary(pid, summary);
-    }
-    return Promise.reject(new Error('invalid type'));
-  };
-  updateFunc().then((affectedRows) => {
-    return res.json({ success: true, data: { affectedRows } });
-  }
-  ).catch((e: any) => {
-    return res.json({ success: false, error: e });
-  });
+  if (type !== "proposal" && type !== "thread") { res.json({ success: false, error: "invalid summary type" }); return; }
+
+  const summary = await getSummary(space, pid, type);
+  const proposal = await dolt.getProposalByAnyId(pid);
+  await dolt.updateSummary(proposal.hash, summary, type);
+  res.json({ success: true, data: summary });
 });
 
 // ==================================== //

@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS proposals (
   governanceCycle INT,
   discussionURL VARCHAR(500),
   ipfsCID VARCHAR(60),
+  proposalSummary TEXT,
+  threadSummary TEXT
   PRIMARY KEY (uuid)
 );
 

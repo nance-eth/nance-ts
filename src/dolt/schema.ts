@@ -21,6 +21,8 @@ export type SQLProposal = {
   discussionURL?: string;
   ipfsCID?: string;
   actions: Action[];
+  proposalSummary?: string;
+  threadSummary?: string;
 };
 
 export type SQLPayout = {
