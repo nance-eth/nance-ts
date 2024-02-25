@@ -241,6 +241,8 @@ router.get('/:space/proposal/:pid', async (req, res) => {
       res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
       return;
     }
+    const summary = await getSummary(space, pid, "proposal");
+    proposal.proposalSummary = summary;
     res.send({ success: true, data: proposal });
   }
 });
