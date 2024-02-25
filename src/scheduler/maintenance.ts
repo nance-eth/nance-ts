@@ -42,10 +42,10 @@ export const scheduleReschedule = () => {
   });
 };
 
-// export const scheduleDoltTransactionCommit = () => {
-//   schedule.scheduleJob('📝 doltTransactionCommit 📝', '15 0 * * *', () => { // run at 12:15am every day
-//     logger.info('=========================== 📝 COMMIT 📝 ===========================');
-//     doltSys.setTransactionCommit();
-//     logger.info('===================================================================');
-//   });
-// };
+export const scheduleDoltTransactionCommit = () => {
+  schedule.scheduleJob('📝 doltTransactionCommit 📝', '15 0 * * *', () => { // run at 12:15am every day
+    logger.info('=========================== 📝 COMMIT 📝 ===========================');
+    doltSys.setTransactionCommit();
+    logger.info('===================================================================');
+  });
+};

@@ -33,7 +33,7 @@ async function main() {
   scheduleReschedule();
   // HACK: schedule once a day since dolt doesnt preserve this setting across restarts
   // https://github.com/dolthub/dolt/issues/7187
-  scheduleDoltTransactionCommit();
+  // scheduleDoltTransactionCommit();
   listScheduledJobs();
 }
 
