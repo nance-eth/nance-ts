@@ -10,7 +10,7 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
   if (sProposal.state === 'closed') {
     status = sProposal.scores[0] > sProposal.scores[1] ? STATUS.APPROVED : STATUS.CANCELLED;
   }
-  const title = sProposal?.title?.split(': ')[1] || sProposal.title || 'Title Unknown';
+  const title = sProposal.title || 'Title Unknown';
   return {
     hash: 'snapshot',
     title,

@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import { Proposal, SnapshotVoteOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '../types';
 import { dateToUnixTimeStamp, myProvider } from '../utils';
 import { snapshotProposalToProposal } from './snapshotProposals';
+import { keys } from '../keys';
 
 export class SnapshotHandler {
   private wallet;
@@ -95,7 +96,7 @@ export class SnapshotHandler {
         ipfs
       }
     }`;
-    const gqlResults = await gqlRequest(`${this.hub}/graphql`, query);
+    const gqlResults = await gqlRequest(`${this.hub}/graphql`, query, undefined, { "x-api-key": keys.SNAPSHOT_API_KEY });
     let results = gqlResults.proposals.sort((a: SnapshotProposal, b: SnapshotProposal) => {
       return b.scores_total - a.scores_total;
     });

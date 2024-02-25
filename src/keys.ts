@@ -32,6 +32,7 @@ export const keys = {
   TENDERLY_KEY: process.env.TENDERLY_KEY!,
   ETHERSCAN_KEY: process.env.ETHERSCAN_KEY!,
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET!,
+  SNAPSHOT_API_KEY: process.env.SNAPSHOT_API_KEY!,
 };
 
 export const nanceAddress = process.env.PUBLIC_ADDRESS!;
