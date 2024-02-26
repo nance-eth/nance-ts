@@ -21,7 +21,7 @@ import { pools } from '../dolt/pools';
 import { STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpace';
 import { getProposalFromSnapshot } from "../snapshot/snapshotProposals";
-import { getSummary } from "../nancearizer";
+import { getSummary, postSummary } from "../nancearizer";
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -241,7 +241,7 @@ router.get('/:space/proposal/:pid', async (req, res) => {
       res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
       return;
     }
-    const summary = await getSummary(space, pid, "proposal");
+    const summary = await postSummary(proposal, "proposal");
     proposal.proposalSummary = summary;
     res.send({ success: true, data: proposal });
   }
