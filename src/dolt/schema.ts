@@ -84,12 +84,14 @@ export type SpaceConfig = {
   cid: string;
   config: NanceConfig;
   calendar: DateEvent[];
+  lastUpdated: Date;
   cycleTriggerTime: string;
   cycleStageLengths: number[];
   dialogHandlerMessageIds: DialogHandlerMessageIds;
-  lastUpdated: Date;
-  cycleDayLastUpdated: Date;
   currentGovernanceCycle: number;
+  autoEnable: boolean;
+  // template: JSON;
+  proposalCount: number;
 };
 
 export type SQLTransfer = {

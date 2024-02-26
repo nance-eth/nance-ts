@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS config (
   cycleTriggerTime TIME,
   cycleStageLengths JSON DEFAULT '[]',
   dialogHandlerMessageIds JSON DEFAULT '{}',
+  currentGovernanceCycle INT,
   autoEnable BOOLEAN,
+  -- template JSON,
+  proposalCount INT,
   PRIMARY KEY(space)
 );

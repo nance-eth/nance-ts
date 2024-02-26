@@ -1,9 +1,7 @@
 /* eslint-disable prefer-promise-reject-errors */
 import { DoltSysHandler } from '../../dolt/doltSysHandler';
-import { DoltHandler } from '../../dolt/doltHandler';
 import { pools } from '../../dolt/pools';
 import { SpaceInfoExtended } from '../models';
-import { headToUrl } from '../../dolt/doltAPI';
 import { juiceboxTime } from './juicebox';
 import { DateEvent } from '../../types';
 import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../../calendar/events';
@@ -11,18 +9,17 @@ import { SpaceConfig } from '../../dolt/schema';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
-export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> => {
+export const getSpaceInfo = async (spaceConfig: SpaceConfig): Promise<SpaceInfoExtended> => {
   const spaces = Object.keys(pools);
-  if (!spaces.includes(space)) return Promise.reject(`space ${space} not found`);
+  if (!spaces.includes(spaceConfig.space)) return Promise.reject(`space ${spaceConfig.space} not found`);
+
   try {
-    const entry = await doltSys.getSpaceConfig(space);
-    const dolt = new DoltHandler(pools[space], entry.config.proposalIdPrefix);
     let juiceboxTimeOutput;
     let currentEvent: DateEvent;
     let cycleCurrentDay: number;
-    let { currentGovernanceCycle } = entry;
-    if (!entry.calendar) {
-      juiceboxTimeOutput = await juiceboxTime(entry.config.juicebox.projectId, entry.config.juicebox.network);
+    let { currentGovernanceCycle } = spaceConfig;
+    if (!spaceConfig.calendar) {
+      juiceboxTimeOutput = await juiceboxTime(spaceConfig.config.juicebox.projectId, spaceConfig.config.juicebox.network);
       ({ cycleCurrentDay, currentGovernanceCycle } = juiceboxTimeOutput);
       currentEvent = {
         title: 'NULL',
@@ -30,30 +27,24 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> =>
         end: new Date(juiceboxTimeOutput.end),
       };
     } else {
-      currentEvent = getCurrentEvent(entry.calendar, entry.cycleStageLengths, new Date());
-      cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, entry.cycleStageLengths, new Date());
+      currentEvent = getCurrentEvent(spaceConfig.calendar, spaceConfig.cycleStageLengths, new Date());
+      cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, spaceConfig.cycleStageLengths, new Date());
     }
-    const dolthubLink = await dolt.getHead().then((head) => {
-      return headToUrl(entry.config.dolt.owner, entry.config.dolt.repo, head);
-    }).catch((e) => {
-      console.log('error getting dolthub link', e);
-      return '';
-    });
-    const nextProposalId = await dolt.getNextProposalId();
+    const dolthubLink = '';
     return {
-      name: space,
-      displayName: entry.displayName || space,
+      name: spaceConfig.space,
+      displayName: spaceConfig.displayName || spaceConfig.space,
       currentCycle: currentGovernanceCycle,
       currentEvent,
       currentDay: cycleCurrentDay,
-      cycleTriggerTime: entry.cycleTriggerTime,
-      dialog: { ...entry.dialogHandlerMessageIds },
-      config: entry.config,
-      spaceOwners: entry.spaceOwners,
+      cycleTriggerTime: spaceConfig.cycleTriggerTime,
+      dialog: { ...spaceConfig.dialogHandlerMessageIds },
+      config: spaceConfig.config,
+      spaceOwners: spaceConfig.spaceOwners,
       dolthubLink,
-      snapshotSpace: entry.config.snapshot.space,
-      juiceboxProjectId: entry.config.juicebox.projectId,
-      nextProposalId,
+      snapshotSpace: spaceConfig.config.snapshot.space,
+      juiceboxProjectId: spaceConfig.config.juicebox.projectId,
+      nextProposalId: spaceConfig.proposalCount + 1,
     };
   } catch (e) {
     return Promise.reject(e);
@@ -62,8 +53,10 @@ export const getSpaceInfo = async (space: string): Promise<SpaceInfoExtended> =>
 
 export const getAllSpaceInfo = async (where?: string): Promise<SpaceInfoExtended[]> => {
   try {
-    const spaces = await doltSys.getAllSpaceNames(where);
-    const spaceInfos = await Promise.all(spaces.map((entry) => getSpaceInfo(entry.space)));
+    const spaceConfigs = await doltSys.getAllSpaceConfig(where);
+    const spaceInfos = await Promise.all(spaceConfigs.map(async (entry) => {
+      return getSpaceInfo(entry);
+    }));
     const filteredSpaceInfoArray = spaceInfos.filter((entry) => entry !== undefined) as SpaceInfoExtended[];
     return filteredSpaceInfoArray;
   } catch (e) {
@@ -82,11 +75,7 @@ export const getSpaceConfig = async (space: string): Promise<SpaceConfig> => {
 
 export const getAllSpaceConfig = async (where?: string): Promise<SpaceConfig[]> => {
   try {
-    return await doltSys.getAllSpaceNames(where).then(async (data) => {
-      return Promise.all(data.map(async (entry) => {
-        return getSpaceConfig(entry.space);
-      }));
-    });
+    return await doltSys.getAllSpaceConfig(where);
   } catch (e) {
     return Promise.reject(e);
   }
@@ -95,7 +84,7 @@ export const getAllSpaceConfig = async (where?: string): Promise<SpaceConfig[]> 
 export const getSpaceByDiscordGuildId = async (discordGuildId: string): Promise<SpaceInfoExtended> => {
   try {
     const entry = await doltSys.getSpaceByDiscordGuildId(discordGuildId);
-    return await getSpaceInfo(entry.space);
+    return await getSpaceInfo(entry);
   } catch (e) {
     return Promise.reject(e);
   }

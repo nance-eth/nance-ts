@@ -31,7 +31,11 @@ const doltSys = new DoltSysHandler(pools.nance_sys);
 async function handlerReq(_query: string, auth: string | undefined) {
   try {
     const query = _query.toLowerCase();
-    const spaceInfo = await getSpaceInfo(query);
+    if (!Object.keys(pools).includes(query)) {
+      return await Promise.reject(new Error(`space ${query} not found`));
+    }
+    const spaceConfig = await doltSys.getSpaceConfig(query);
+    const spaceInfo = await getSpaceInfo(spaceConfig);
     const dolt = new DoltHandler(pools[query], spaceInfo.config.proposalIdPrefix);
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;

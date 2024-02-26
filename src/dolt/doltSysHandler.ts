@@ -156,6 +156,15 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
+  async getAllSpaceConfig(where?: string): Promise<SpaceConfig[]> {
+    return this.localDolt.queryRows(oneLine`
+      SELECT * FROM ${system}
+      ${(where) ? `WHERE ${where}` : ''}
+    `).then((res) => {
+      return res as unknown as SpaceConfig[];
+    }).catch((e) => { return Promise.reject(e); });
+  }
+
   async getAllSpaceNames(where?: string): Promise<SpaceConfig[]> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
