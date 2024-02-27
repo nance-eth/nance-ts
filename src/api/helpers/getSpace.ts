@@ -6,8 +6,8 @@ import { juiceboxTime } from './juicebox';
 import { DateEvent } from '../../types';
 import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../../calendar/events';
 import { SpaceConfig } from '../../dolt/schema';
-import { addSecondsToDate, dateAtTime } from "../../utils";
-import { ONE_DAY_SECONDS } from "../../constants";
+import { EVENTS } from "../../constants";
+import { getNextEventByName } from "./getNextEventByName";
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
@@ -33,10 +33,7 @@ export const getSpaceInfo = async (spaceConfig: SpaceConfig): Promise<SpaceInfoE
     } else {
       currentEvent = getCurrentEvent(spaceConfig.calendar, spaceConfig.cycleStageLengths, new Date());
       cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, spaceConfig.cycleStageLengths, new Date());
-      cycleStartDate = addSecondsToDate(
-        dateAtTime(new Date(), spaceConfig.cycleTriggerTime),
-        -(cycleCurrentDay - 1) * (ONE_DAY_SECONDS)
-      );
+      cycleStartDate = getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.start || new Date();
     }
     const dolthubLink = '';
     return {
