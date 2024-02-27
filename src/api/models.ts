@@ -11,6 +11,7 @@ export type SpaceInfo = {
   name: string;
   displayName: string;
   currentCycle: number;
+  cycleStartDate: Date;
   currentEvent: DateEvent;
   spaceOwners: string[];
   snapshotSpace: string;

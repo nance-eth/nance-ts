@@ -38,6 +38,7 @@ router.get('/all', async (_, res) => {
         name: space.name,
         displayName: space.displayName || space.name,
         currentCycle: space.currentCycle,
+        cycleStartDate: space.cycleStartDate,
         currentEvent: space.currentEvent,
         spaceOwners: space.spaceOwners,
         snapshotSpace: space.config.snapshot.space,

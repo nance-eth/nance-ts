@@ -64,4 +64,5 @@ export const NETWORKS = {
 
 export const ONE_HOUR_SECONDS = 3600;
 export const FIVE_MINUTES_SECONDS = 300;
-export const ONE_DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
+export const ONE_DAY_SECONDS = 24 * 60 * 60;
+export const ONE_DAY_MILLISECONDS = ONE_DAY_SECONDS * 1000;

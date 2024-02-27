@@ -46,6 +46,7 @@ async function handlerReq(_query: string, auth: string | undefined) {
       address,
       config: spaceInfo.config,
       currentGovernanceCycle: spaceInfo.currentCycle,
+      cycleStartDate: spaceInfo.cycleStartDate,
       currentEvent: spaceInfo.currentEvent,
       dolt,
       dolthubLink: spaceInfo.dolthubLink,
@@ -63,7 +64,7 @@ async function handlerReq(_query: string, auth: string | undefined) {
 router.get('/:space', async (req, res) => {
   const { space } = req.params;
   try {
-    const { config, name, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId } = await handlerReq(space, req.headers.authorization);
+    const { config, name, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId, cycleStartDate } = await handlerReq(space, req.headers.authorization);
     const spaceInfo: SpaceInfo = {
       name,
       displayName,
@@ -74,6 +75,7 @@ router.get('/:space', async (req, res) => {
       juiceboxProjectId: config.juicebox.projectId,
       dolthubLink,
       nextProposalId,
+      cycleStartDate,
     };
     if (config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress) {
       spaceInfo.transactorAddress = {
