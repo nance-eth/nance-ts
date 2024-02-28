@@ -25,6 +25,18 @@ export type SQLProposal = {
   threadSummary?: string;
 };
 
+export type SQLSnapshotProposal = {
+  snapshotSpace: string;
+  snapshotId: string;
+  title: string;
+  body: string;
+  authorAddress: string;
+  discussionURL: string;
+  startTimestamp: number;
+  endTimestamp: number;
+  proposalSummary: string;
+};
+
 export type SQLPayout = {
   uuidOfPayout: string;
   uuidOfProposal: string;

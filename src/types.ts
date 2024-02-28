@@ -92,6 +92,7 @@ export type SnapshotProposal = {
   discussion?: string;
   ipfs?: string;
   space?: { id: string };
+  quorum?: number;
 };
 
 export type SnapshotVoteResultsId = Pick<

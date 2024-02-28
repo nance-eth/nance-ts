@@ -21,6 +21,7 @@ export async function fetchPools() {
       console.log(`Error creating pool for ${space.space}`);
     }
   });
+  pools.common = new DoltSQL(dbOptions('common'));
   return pools;
 }
 

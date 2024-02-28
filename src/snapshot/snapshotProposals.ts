@@ -1,7 +1,8 @@
 import { request as gqlRequest, gql } from 'graphql-request';
 import { Proposal, SnapshotProposal } from "../types";
 import { STATUS } from '../constants';
-import { uuidGen } from "../utils";
+import { getCacheSnapshotProposal, setCacheSnapshotProposal } from "../dolt/doltCommon";
+import { postSummary } from "../nancearizer";
 
 const hub = 'https://hub.snapshot.org';
 
@@ -37,16 +38,23 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
   };
 };
 
-export const getProposalFromSnapshot = async (proposalId: string): Promise<Proposal | undefined> => {
-  const query = gql`
+export const fetchSnapshotProposal = async (snapshotId: string): Promise<Proposal | undefined> => {
+  try {
+    // check common db from cached version
+    const cache = await getCacheSnapshotProposal(snapshotId);
+    if (cache) return cache;
+
+    // if not in cache, query snapshot
+    const query = gql`
   {
     proposal (
-      id: "${proposalId}"
+      id: "${snapshotId}"
     ) {
       id
       votes
       type
       start
+      end
       state
       choices
       scores
@@ -56,10 +64,21 @@ export const getProposalFromSnapshot = async (proposalId: string): Promise<Propo
       author
       discussion
       ipfs
+      quorum
       space { id }
     }
   }`;
-  const gqlResults = await gqlRequest(`${hub}/graphql`, query);
-  if (!gqlResults.proposal) return undefined;
-  return snapshotProposalToProposal(gqlResults.proposal, 0);
+    const gqlResults = await gqlRequest(`${hub}/graphql`, query) as { proposal: SnapshotProposal };
+    const sProposal = gqlResults.proposal;
+    if (!sProposal) return undefined;
+
+    // summarize and cache
+    const proposal = snapshotProposalToProposal(sProposal, sProposal?.quorum || 0);
+    const summary = await postSummary(proposal, 'proposal');
+    await setCacheSnapshotProposal(sProposal, summary);
+    return { ...proposal, proposalSummary: summary };
+  } catch (e) {
+    console.log('Error fetching snapshot proposal', e);
+    return undefined;
+  }
 };

@@ -20,7 +20,7 @@ import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpace';
-import { getProposalFromSnapshot } from "../snapshot/snapshotProposals";
+import { fetchSnapshotProposal } from "../snapshot/snapshotProposals";
 import { getSummary, postSummary } from "../nancearizer";
 
 const router = express.Router();
@@ -218,6 +218,16 @@ router.post('/:space/proposals', async (req, res) => {
 // ======== single proposal functions ======== //
 // =========================================== //
 
+// get Snapshot proposal
+router.get('/~/proposal/:pid', async (req, res) => {
+  try {
+    const proposal = await fetchSnapshotProposal(req.params.pid);
+    res.json({ success: true, data: proposal });
+  } catch (e) {
+    res.json({ success: false, error: e });
+  }
+});
+
 // get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #
 router.get('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
@@ -239,17 +249,7 @@ router.get('/:space/proposal/:pid', async (req, res) => {
       }
     });
   } catch (e) {
-    // handlerReq() will return Promise.reject if space not found
-    // then try to grab proposal from snapshot
-    console.log("proposal not found in dolt, trying snapshot");
-    proposal = await getProposalFromSnapshot(pid);
-    if (!proposal) {
-      res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
-      return;
-    }
-    const summary = await postSummary(proposal, "proposal");
-    proposal.proposalSummary = summary;
-    res.send({ success: true, data: proposal });
+    res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
   }
 });
 
