@@ -40,9 +40,10 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
 
 export const fetchSnapshotProposal = async (snapshotId: string): Promise<Proposal | undefined> => {
   try {
-    // check common db from cached version
+    // check common db for cached version
+    // only use cache if not in voting state otherwise our votes may be stale
     const cache = await getCacheSnapshotProposal(snapshotId);
-    if (cache) return cache;
+    if (cache && cache.status !== STATUS.VOTING) return cache;
 
     // if not in cache, query snapshot
     const query = gql`
@@ -72,9 +73,10 @@ export const fetchSnapshotProposal = async (snapshotId: string): Promise<Proposa
     const sProposal = gqlResults.proposal;
     if (!sProposal) return undefined;
 
-    // summarize and cache
     const proposal = snapshotProposalToProposal(sProposal, sProposal?.quorum || 0);
-    const summary = await postSummary(proposal, 'proposal');
+    // don't need to resummarize if cache proposal is in voting state
+    let summary;
+    if (!cache?.proposalSummary) summary = await postSummary(proposal, 'proposal');
     await setCacheSnapshotProposal(sProposal, summary);
     return { ...proposal, proposalSummary: summary };
   } catch (e) {

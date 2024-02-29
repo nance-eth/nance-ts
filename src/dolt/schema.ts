@@ -34,6 +34,11 @@ export type SQLSnapshotProposal = {
   discussionURL: string;
   startTimestamp: number;
   endTimestamp: number;
+  voteType: string;
+  votes: number;
+  choices: string[];
+  scores: number[];
+  scoresTotal: number;
   proposalSummary: string;
 };
 

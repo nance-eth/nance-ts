@@ -7,6 +7,12 @@ CREATE TABLE IF NOT EXISTS proposals (
   discussionURL VARCHAR(500),
   startTimestamp INT,
   endTimestamp INT,
+  voteType VARCHAR(20),
+  proposalStatus VARCHAR(30),
+  votes INT,
+  choices JSON,
+  scores JSON,
+  scoresTotal INT,
   proposalSummary TEXT,
   PRIMARY KEY (snapshotId)
 );

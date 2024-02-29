@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import { oneLine } from "common-tags";
 import { pools } from "./pools";
 import { Proposal, SnapshotProposal } from "../types";
@@ -18,6 +19,17 @@ const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): Pr
     ipfsURL: '',
     voteURL: cacheProposal.snapshotId,
     snapshotSpace: cacheProposal.snapshotSpace,
+    voteSetup: {
+      type: cacheProposal.voteType,
+      choices: cacheProposal.choices,
+    },
+    voteResults: {
+      votes: cacheProposal.votes,
+      scores: cacheProposal.scores,
+      choices: cacheProposal.choices,
+      scores_total: cacheProposal.scoresTotal,
+      quorumMet: false,
+    },
     proposalSummary: cacheProposal.proposalSummary,
   };
 };
@@ -44,6 +56,14 @@ export const setCacheSnapshotProposal = async (
   proposalSummary?: string
 ): Promise<boolean> => {
   const dolt = pools.common;
+  let status = STATUS.VOTING;
+  if (sProposal.state === 'closed') {
+    if (sProposal.scores[0] > sProposal.scores[1]) {
+      status = STATUS.APPROVED;
+    } else {
+      status = STATUS.CANCELLED;
+    }
+  }
   return dolt.db.query(oneLine`
     INSERT INTO proposals (
       snapshotSpace,
@@ -54,9 +74,20 @@ export const setCacheSnapshotProposal = async (
       discussionURL,
       startTimestamp,
       endTimestamp,
+      voteType,
+      proposalStatus,
+      votes,
+      choices,
+      scores,
+      scoresTotal,
       proposalSummary
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
+      proposalStatus = VALUES(proposalStatus),
+      votes = VALUES(votes),
+      choices = VALUES(choices),
+      scores = VALUES(scores),
+      scoresTotal = VALUES(scoresTotal),
       proposalSummary = VALUES(proposalSummary)
   `, [
     sProposal.space?.id,
@@ -67,6 +98,12 @@ export const setCacheSnapshotProposal = async (
     sProposal.discussion,
     sProposal.start,
     sProposal.end,
+    sProposal.type,
+    status,
+    sProposal.votes,
+    JSON.stringify(sProposal.choices),
+    JSON.stringify(sProposal.scores),
+    sProposal.scores_total,
     proposalSummary
   ]).then((res) => {
     if (cleanResultsHeader(res) === 1) return true;
