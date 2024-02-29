@@ -35,6 +35,8 @@ export type SQLSnapshotProposal = {
   startTimestamp: number;
   endTimestamp: number;
   voteType: string;
+  proposalStatus: string;
+  quorum: number;
   votes: number;
   choices: string[];
   scores: number[];

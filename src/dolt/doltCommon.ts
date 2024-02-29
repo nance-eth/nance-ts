@@ -11,7 +11,7 @@ const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): Pr
     hash: 'snapshot',
     title: cacheProposal.title,
     body: cacheProposal.body,
-    status: STATUS.VOTING,
+    status: cacheProposal.proposalStatus,
     authorAddress: cacheProposal.authorAddress,
     proposalId: null,
     createdTime: new Date(cacheProposal.startTimestamp * 1000),
@@ -76,12 +76,13 @@ export const setCacheSnapshotProposal = async (
       endTimestamp,
       voteType,
       proposalStatus,
+      quorum,
       votes,
       choices,
       scores,
       scoresTotal,
       proposalSummary
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
       proposalStatus = VALUES(proposalStatus),
       votes = VALUES(votes),
@@ -100,6 +101,7 @@ export const setCacheSnapshotProposal = async (
     sProposal.end,
     sProposal.type,
     status,
+    sProposal.quorum,
     sProposal.votes,
     JSON.stringify(sProposal.choices),
     JSON.stringify(sProposal.scores),

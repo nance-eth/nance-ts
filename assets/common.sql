@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   endTimestamp INT,
   voteType VARCHAR(20),
   proposalStatus VARCHAR(30),
+  quorum INT,
   votes INT,
   choices JSON,
   scores JSON,
