@@ -75,8 +75,8 @@ export const fetchSnapshotProposal = async (snapshotId: string): Promise<Proposa
 
     const proposal = snapshotProposalToProposal(sProposal, sProposal?.quorum || 0);
     // don't need to resummarize if cache proposal is in voting state
-    let summary;
-    if (!cache?.proposalSummary) summary = await postSummary(proposal, 'proposal');
+    let summary = cache?.proposalSummary;
+    if (!summary) summary = await postSummary(proposal, 'proposal');
     await setCacheSnapshotProposal(sProposal, summary);
     return { ...proposal, proposalSummary: summary };
   } catch (e) {
