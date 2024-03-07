@@ -14,6 +14,7 @@ app.use(cors({
   maxAge: 86400,
 }));
 
+app.set('trust proxy', 1);
 app.use(limiter);
 
 app.set('json spaces', 2);
