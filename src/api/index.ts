@@ -20,6 +20,14 @@ app.use('/tasks', tasks);
 
 app.use('/', api);
 
+app.use((req, res, next) => {
+  const clientIp = req.ip || req.ips[0];
+  console.log(`Client connected with IP address: ${clientIp}`);
+  // log route
+  console.log(`Route: ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 app.get('/', (req, res) => {
   return res.send(`nance-api commit: ${process.env.RAILWAY_GIT_COMMIT_SHA?.substring(0, 7) ?? 'LOCAL'}`);
 });
