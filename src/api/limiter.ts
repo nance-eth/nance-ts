@@ -1,5 +1,4 @@
 import rateLimit from "express-rate-limit";
-import { Request, Response, NextFunction } from "express";
 
 const bannedIps: string[] = [];
 
@@ -12,13 +11,15 @@ export const limiter = rateLimit({
   legacyHeaders: false,
   handler: (req, res) => {
     const ip = req.ip || req.ips[0];
+    console.log(`Client connected with IP address: ${req.ip || req.ips[0]}`);
+    console.log(`Request URL: ${req.url}`);
+    console.log('==============================================');
     if (bannedIps.includes(ip)) {
       res.status(403).send('you banned.');
       return;
     }
     console.error(`Rate limit exceeded. IP: ${ip}, URL: ${req.url}`);
     bannedIps.push(ip);
-    console.error(`Banned IPs: ${bannedIps}`);
     res.status(429).send('too many requests.');
   },
 });
