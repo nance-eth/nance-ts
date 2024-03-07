@@ -5,7 +5,7 @@ import { params } from './tspec';
 import api from './api';
 import ish from './nanceish';
 import tasks from './tasks';
-import { limiter } from "./limiter";
+import { limiter, logHeadersOnRateLimit } from "./limiter";
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -15,17 +15,14 @@ app.use(cors({
 }));
 
 app.set('trust proxy', 1);
+app.use(limiter);
+app.use(logHeadersOnRateLimit);
 app.use((req, res, next) => {
   console.log(`Client connected with IP address: ${req.ip || req.ips[0]}`);
-  console.log(`Request method: ${req.method}`);
   console.log(`Request URL: ${req.url}`);
-  console.log(`Request headers: ${JSON.stringify(req.headers)}`);
-  console.log(`Query parameters: ${JSON.stringify(req.query)}`);
-  console.log(`Request body: ${JSON.stringify(req.body)}`);
   console.log('==============================================');
   next();
 });
-app.use(limiter);
 
 app.set('json spaces', 2);
 

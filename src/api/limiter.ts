@@ -5,11 +5,13 @@ export const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 100,
   message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
+  keyGenerator: (req) => {
+    console.log('[RLRL] Request headers:', req.headers);
+    return req.headers['x-forwarded-for'] as string;
+  },
 });
 
-const logHeadersOnRateLimit = (req: any, res: any, next: any) => {
+export const logHeadersOnRateLimit = (req: any, res: any, next: any) => {
   if (res.statusCode === 429) {
     console.log('Rate limit exceeded. Headers:', req.headers);
   }
