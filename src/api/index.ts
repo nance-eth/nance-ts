@@ -1,10 +1,19 @@
 import cors from 'cors';
 import express from 'express';
 import { TspecDocsMiddleware } from 'tspec';
+import rateLimit from "express-rate-limit";
 import { params } from './tspec';
 import api from './api';
 import ish from './nanceish';
 import tasks from './tasks';
+
+const limiter = rateLimit({
+  windowMs: 11 * 60 * 1000,
+  max: 100,
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -12,19 +21,9 @@ app.use(express.urlencoded({ limit: '20mb', extended: false }));
 app.use(cors({
   maxAge: 86400,
 }));
+app.use(limiter);
 
 app.set('json spaces', 2);
-
-app.use((req, res, next) => {
-  console.log(`Client connected with IP address: ${req.ip || req.ips[0]}`);
-  console.log(`Request method: ${req.method}`);
-  console.log(`Request URL: ${req.url}`);
-  console.log(`Request headers: ${JSON.stringify(req.headers)}`);
-  console.log(`Query parameters: ${JSON.stringify(req.query)}`);
-  console.log(`Request body: ${JSON.stringify(req.body)}`);
-  console.log('==============================================');
-  next();
-});
 
 app.use('/ish', ish);
 
