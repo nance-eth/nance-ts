@@ -1,6 +1,21 @@
 import rateLimit from "express-rate-limit";
+import { Request, Response, NextFunction } from "express";
 
-export const bannedIps: string[] = [];
+const bannedIps: string[] = [];
+
+export const ipBan = (req: Request, res: Response, next: NextFunction) => {
+  const ip = req.ip || req.ips[0];
+  if (bannedIps.includes(ip)) {
+    console.error(`Banned IP address: ${ip}`);
+    console.error('Banned IPs:', bannedIps);
+    res.status(403).send('you banned.');
+    return;
+  }
+  console.log(`Client connected with IP address: ${req.ip || req.ips[0]}`);
+  console.log(`Request URL: ${req.url}`);
+  console.log('==============================================');
+  next();
+};
 
 export const limiter = rateLimit({
   // 20 seconds

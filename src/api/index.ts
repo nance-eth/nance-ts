@@ -5,7 +5,7 @@ import { params } from './tspec';
 import api from './api';
 import ish from './nanceish';
 import tasks from './tasks';
-import { limiter, bannedIps } from "./limiter";
+import { limiter, ipBan } from "./limiter";
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -15,19 +15,8 @@ app.use(cors({
 }));
 
 app.set('trust proxy', 1);
+app.use(ipBan);
 app.use(limiter);
-app.use((req, res, next) => {
-  const ip = req.ip || req.ips[0];
-  if (bannedIps.includes(ip)) {
-    console.error(`Banned IP address: ${ip}`);
-    res.status(403).send('you banned.');
-    return;
-  }
-  console.log(`Client connected with IP address: ${req.ip || req.ips[0]}`);
-  console.log(`Request URL: ${req.url}`);
-  console.log('==============================================');
-  next();
-});
 
 app.set('json spaces', 2);
 
