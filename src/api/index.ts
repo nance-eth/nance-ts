@@ -1,19 +1,11 @@
 import cors from 'cors';
 import express from 'express';
 import { TspecDocsMiddleware } from 'tspec';
-import rateLimit from "express-rate-limit";
 import { params } from './tspec';
 import api from './api';
 import ish from './nanceish';
 import tasks from './tasks';
-
-const limiter = rateLimit({
-  windowMs: 11 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+import { limiter } from "./limiter";
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -21,6 +13,7 @@ app.use(express.urlencoded({ limit: '20mb', extended: false }));
 app.use(cors({
   maxAge: 86400,
 }));
+
 app.use(limiter);
 
 app.set('json spaces', 2);
