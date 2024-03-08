@@ -13,6 +13,7 @@ export const limiter = rateLimit({
   handler: (req, res) => {
     const ip = req.ip || req.ips[0];
     console.error(`Rate limit exceeded. IP: ${ip}, URL: ${req.url}`);
+    console.error('Banned IPs:', bannedIps);
     bannedIps.push(ip);
     res.status(429).send('too many requests.');
   },
@@ -21,8 +22,7 @@ export const limiter = rateLimit({
 export const ipBan = (req: Request, res: Response, next: NextFunction) => {
   const ip = req.ip || req.ips[0];
   if (bannedIps.includes(ip)) {
-    console.error(`Banned IP address: ${ip}`);
-    console.error('Banned IPs:', bannedIps);
+    console.error(`JUST BANNED THIS IP: ${ip}`);
     res.status(403).send('you banned.');
     return;
   }
