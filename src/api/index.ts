@@ -5,7 +5,7 @@ import { params } from './tspec';
 import api from './api';
 import ish from './nanceish';
 import tasks from './tasks';
-import { limiter, ipBan } from "./limiter";
+import { limiter, ipFilter } from "./limiter";
 
 const app = express();
 app.use(express.json({ limit: '20mb' }));
@@ -15,7 +15,7 @@ app.use(cors({
 }));
 
 app.set('trust proxy', 1);
-app.use(ipBan);
+app.use(ipFilter);
 app.use(limiter);
 
 app.set('json spaces', 2);

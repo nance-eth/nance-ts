@@ -12,17 +12,16 @@ export const limiter = rateLimit({
   legacyHeaders: false,
   handler: (req, res) => {
     const ip = req.ip || req.ips[0];
-    console.error(`Rate limit exceeded. IP: ${ip}, URL: ${req.url}`);
-    console.error('Banned IPs:', bannedIps);
     bannedIps.push(ip);
+    console.error(`JUST BANNED THIS IP: ${ip}`);
+    console.error(`BANNED IPs: ${bannedIps}`);
     res.status(429).send('too many requests.');
   },
 });
 
-export const ipBan = (req: Request, res: Response, next: NextFunction) => {
+export const ipFilter = (req: Request, res: Response, next: NextFunction) => {
   const ip = req.ip || req.ips[0];
   if (bannedIps.includes(ip)) {
-    console.error(`JUST BANNED THIS IP: ${ip}`);
     res.status(403).send('you banned.');
     return;
   }
