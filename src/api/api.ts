@@ -230,7 +230,7 @@ router.get('/~/proposal/:pid', async (req, res) => {
 
 // get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #
 router.get('/:space/proposal/:pid', async (req, res) => {
-  if (req.url.toLowerCase().includes('%')) {
+  if (req.url.toLowerCase().includes('null')) { // fight attacks
     console.log('invalid request');
     res.status(404).send({ success: false, error: 'Invalid request' });
     return;
