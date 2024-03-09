@@ -8,6 +8,7 @@ import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../../calendar/ev
 import { SpaceConfig } from '../../dolt/schema';
 import { EVENTS } from "../../constants";
 import { getNextEventByName } from "./getNextEventByName";
+import { addDaysToDate } from "../../utils";
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
@@ -34,6 +35,10 @@ export const getSpaceInfo = async (spaceConfig: SpaceConfig): Promise<SpaceInfoE
       currentEvent = getCurrentEvent(spaceConfig.calendar, spaceConfig.cycleStageLengths, new Date());
       cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, spaceConfig.cycleStageLengths, new Date());
       cycleStartDate = getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.start || new Date();
+      // if this the cycle start date is in the past, then we are currently in TEMPERATURE_CHECK and need to add 14 days
+      if (cycleStartDate < new Date()) {
+        cycleStartDate = addDaysToDate(cycleStartDate, 14);
+      }
     }
     const dolthubLink = '';
     return {
