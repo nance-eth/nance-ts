@@ -39,7 +39,7 @@ export class DoltHandler {
     });
   }
 
-  async queryProposals(query: string, variables?: string[]): Promise<Proposal[]> {
+  async queryProposals(query: string, variables?: any[]): Promise<Proposal[]> {
     return this.localDolt.queryRows(query, variables).then((res) => {
       return res.map((r) => {
         return this.toProposal(r as SQLExtended);
@@ -219,8 +219,18 @@ export class DoltHandler {
   async addTransferToDb(transfer: Transfer, uuidOfProposal: string, transferGovernanceCycle: number, transferName: string, uuid?: string, transferCount = 1, status?: string) {
     const { to, contract, amount, chainId } = transfer;
     await this.localDolt.db.query(oneLine`
-      INSERT IGNORE INTO ${transfersTable}
-      (uuidOfTransfer, uuidOfProposal, transferGovernanceCycle, transferCount, transferName, transferAddress, transferChainId, transferTokenAddress, transferAmount, transferStatus)
+      INSERT IGNORE INTO ${transfersTable} (
+        uuidOfTransfer,
+        uuidOfProposal,
+        transferGovernanceCycle,
+        transferCount,
+        transferName,
+        transferAddress,
+        transferChainId,
+        transferTokenAddress,
+        transferAmount,
+        transferStatus
+      )
       VALUES(?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE
       transferGovernanceCycle = VALUES(transferGovernanceCycle), transferCount = VALUES(transferCount), transferName = VALUES(transferName),
       transferAddress = VALUES(transferAddress), transferChainId = VALUES(transferChainId), transferTokenAddress = VALUES(transferTokenAddress),
@@ -511,7 +521,7 @@ export class DoltHandler {
 
     const whereStatement = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
     const orderByStatement = keyword ? 'ORDER BY relevance DESC' : 'ORDER BY createdTime DESC';
-    const pagination = (limit || offset) ? `LIMIT ${limit ? limit + 1 : limit} OFFSET ${offset}` : '';
+    const pagination = (limit || offset) ? `LIMIT ${limit ? limit + 1 : limit} OFFSET ?` : '';
 
     const query = oneLine`
       ${SELECT_ACTIONS} ${selectRelevance}
@@ -520,8 +530,7 @@ export class DoltHandler {
       ${orderByStatement}
       ${pagination}
     `;
-
-    const proposals = await this.queryProposals(query);
+    const proposals = await this.queryProposals(query, [offset]);
     const hasMore = (limit) ? proposals.length > limit : false;
     if (hasMore) proposals.pop();
 
