@@ -15,7 +15,7 @@ app.use(cors({
 }));
 
 app.set('trust proxy', 1);
-app.use(ipFilter);
+// app.use(ipFilter);
 app.use(limiter);
 
 app.set('json spaces', 2);

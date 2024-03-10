@@ -18,6 +18,7 @@ export const limiter = rateLimit({
 export const ipFilter = (req: Request, res: Response, next: NextFunction) => {
   const ip = req.ip || req.ips[0];
   console.log(`Client connected with IP address: ${ip}`);
+  console.log(req.headers);
   console.log(`Request URL: ${req.url}`);
   console.log('==============================================');
   next();

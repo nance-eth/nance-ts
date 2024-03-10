@@ -5,8 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "export NODE_ENV='prod' && export CONFIG='juicebox' && ts-node src/index.ts",
-    "dev": "export LOG_LEVEL=silly && nodemon src/index.ts",
-    "test:gov": "export CONFIG='waterbox' && ts-node src/scripts/createCalendar.ts && ts-node src/index.ts",
+    "dev": "npm run dev:api",
     "start:api": "export CONSOLE_LOG=on && node ./dist/api/index.js",
     "dev:api": "export CONSOLE_LOG=on && export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
     "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 && cp -r ./src/config/ ./dist/config/ && cp -r ./src/transactions/abi ./dist/transactions/abi",
