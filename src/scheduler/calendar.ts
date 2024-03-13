@@ -2,7 +2,7 @@ import schedule from 'node-schedule';
 import retry from 'promise-retry';
 import { DateEvent, NanceConfig } from '../types';
 import { EVENTS, ONE_HOUR_SECONDS, TASKS } from '../constants';
-import * as tasks from '../tasks/_tasks';
+import * as tasks from '../tasks';
 import { addDaysToDate, addSecondsToDate } from '../utils';
 import { SpaceConfig } from '../dolt/schema';
 import { getNextEvents } from '../calendar/events';

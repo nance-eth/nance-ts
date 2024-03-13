@@ -2,7 +2,6 @@ import { oneLine } from 'common-tags';
 import { DoltSQL, cleanResultsHeader } from './doltSQL';
 import { dbOptions } from './dbConfig';
 import { sqlSchemaToString } from '../utils';
-import { DateEvent, NanceConfig } from '../types';
 import { DialogHandlerMessageIds, SpaceConfig } from './schema';
 
 const systemDb = 'nance_sys';

@@ -122,7 +122,6 @@ router.post('/config', async (req, res) => {
         try { await doltSys.createSchema(space); } catch (e) { logger.error(e); }
         try { await createDolthubDB(space); } catch (e) { logger.error(e); }
         try { await dolt.localDolt.addRemote(`https://doltremoteapi.dolthub.com/nance/${space}`); } catch (e) { logger.error(e); }
-        try { await dolt.insertAutoCommitAndPushEvent(); } catch (e) { logger.error(e); }
         try { await dolt.localDolt.push(true); } catch (e) { logger.error(e); }
       }).catch((e) => {
         logger.error('[CREATE SPACE]:');

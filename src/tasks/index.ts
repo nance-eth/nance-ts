@@ -12,6 +12,7 @@ import { voteResultsRollup } from './voteResultsRollup';
 import { incrementGovernanceCycle } from './incrementGovernanceCycle';
 import { shouldSendAlert } from './shouldSendAlert';
 import { sendBookkeeping } from './sendBookkeeping';
+import { commitAndPush } from './commitAndPush';
 
 export {
   sendDailyJBAlert,
@@ -28,4 +29,5 @@ export {
   incrementGovernanceCycle,
   shouldSendAlert,
   sendBookkeeping,
+  commitAndPush,
 };

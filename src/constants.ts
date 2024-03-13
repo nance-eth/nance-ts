@@ -42,6 +42,7 @@ export const TASKS = {
   voteResultsRollup: 'voteResultsRollup',
   incrementGovernanceCycle: 'incrementGovernanceCycle',
   sendBookkeeping: 'sendBookkeeping',
+  commitAndPush: 'commitAndPush',
 };
 
 export const EMOJI = {
