@@ -19,7 +19,7 @@ const defaultDialogHandlerMessageIds: DialogHandlerMessageIds = {
   temperatureCheckStartAlert: ''
 };
 
-const defaultGovernanceCycle = 1;
+const defaultGovernanceCycle = 0;
 
 export class DoltSysHandler {
   localDolt;
@@ -67,16 +67,7 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async setSpaceConfig(
-    space: string,
-    displayName: string,
-    cid: string,
-    spaceOwners: string[],
-    config: NanceConfig,
-    calendar: DateEvent[],
-    cycleTriggerTime: string,
-    cycleStageLengths: number[],
-  ) {
+  async setSpaceConfig(c: Partial<SpaceConfig>) {
     return this.localDolt.queryResults(oneLine`
       INSERT INTO ${system} (
         space,
@@ -89,9 +80,11 @@ export class DoltSysHandler {
         cycleStageLengths,
         dialogHandlerMessageIds,
         currentGovernanceCycle,
-        lastUpdated
+        autoEnable,
+        proposalCount
+        lastUpdated,
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         cid = VALUES(cid),
         displayName = VALUES(displayName),
@@ -102,16 +95,18 @@ export class DoltSysHandler {
         cycleStageLengths = VALUES(cycleStageLengths),
         lastUpdated = NOW()
     `, [
-      space,
-      displayName,
-      cid,
-      JSON.stringify(spaceOwners),
-      JSON.stringify(config),
-      JSON.stringify(calendar),
-      cycleTriggerTime,
-      JSON.stringify(cycleStageLengths),
+      c.space,
+      c.displayName,
+      c.cid,
+      JSON.stringify(c.spaceOwners),
+      JSON.stringify(c.config),
+      JSON.stringify(c.calendar),
+      c.cycleTriggerTime,
+      JSON.stringify(c.cycleStageLengths),
       JSON.stringify(defaultDialogHandlerMessageIds),
       defaultGovernanceCycle,
+      c.autoEnable,
+      c.proposalCount
     ]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });

@@ -108,8 +108,8 @@ export type SpaceConfig = {
   cycleStageLengths: number[];
   dialogHandlerMessageIds: DialogHandlerMessageIds;
   currentGovernanceCycle: number;
-  autoEnable: boolean;
-  // template: JSON;
+  autoEnable: 0 | 1;
+  template: JSON;
   proposalCount: number;
 };
 

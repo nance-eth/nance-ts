@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   discussionURL VARCHAR(500),
   ipfsCID VARCHAR(60),
   proposalSummary TEXT,
-  threadSummary TEXT
+  threadSummary TEXT,
   PRIMARY KEY (uuid)
 );
 

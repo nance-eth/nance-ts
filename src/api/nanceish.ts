@@ -84,20 +84,23 @@ router.post('/config', async (req, res) => {
 
   // config the space in nance_sys database
   const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, config) : mergeTemplateConfig(config);
+  configIn.proposalIdPrefix = config.proposalIdPrefix.includes('-') ? config.proposalIdPrefix : `${config.proposalIdPrefix}-`;
   const packedConfig = JSON.stringify({ address, config: configIn });
   const cid = await dotPin(packedConfig);
   const spaceOwnersIn = spaceOwners.map((owner) => { return owner.address; });
   if (!dryrun) {
-    doltSys.setSpaceConfig(
+    doltSys.setSpaceConfig({
       space,
       displayName,
       cid,
-      spaceOwnersIn,
-      configIn,
+      spaceOwners: spaceOwnersIn,
+      config: configIn,
       calendar,
       cycleTriggerTime,
       cycleStageLengths,
-    ).then(() => {
+      autoEnable: 1,
+      proposalCount: 0,
+    }).then(() => {
       res.json({ success: true, data: { space, spaceOwners: spaceOwnersIn } });
     }).catch((e) => {
       console.error(e);

@@ -123,7 +123,6 @@ router.get('/:space/proposals', async (req, res) => {
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
     const { dolt, config, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-    const proposalIdPrefix = config.proposalIdPrefix.includes('-') ? config.proposalIdPrefix : `${config.proposalIdPrefix}-`;
 
     // calculate offset for SQL pagination
     const _limit = limit ? Number(limit) : 0;
@@ -136,7 +135,7 @@ router.get('/:space/proposals', async (req, res) => {
     const data: ProposalsPacket = {
       proposalInfo: {
         snapshotSpace: config?.snapshot.space || space,
-        proposalIdPrefix,
+        proposalIdPrefix: config.proposalIdPrefix,
         minTokenPassingAmount: config?.snapshot.minTokenPassingAmount || 0,
       },
       proposals,
