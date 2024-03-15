@@ -11,6 +11,7 @@ import {
   EmbedBuilder,
   EmbedField,
   AttachmentBuilder,
+  escapeMarkdown,
 } from 'discord.js';
 import logger from '../logging';
 import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp } from '../utils';
@@ -215,6 +216,12 @@ export class DiscordHandler {
     return true;
   }
 
+  static memberTagOrName(user: User, guildId: string) {
+    const memberObj = user.client.guilds.cache.get(guildId)?.members.cache.get(user.id);
+    if (memberObj) return memberObj.toString();
+    return escapeMarkdown(user.displayName);
+  }
+
   private async getUserReactions(
     messageObj: Message,
     emoji: string
@@ -234,9 +241,9 @@ export class DiscordHandler {
             const member = messageObj?.guild?.members.cache.get(user.id);
             if (!member) return false;
             const hasRole = member.roles.cache.has(verifyRole);
-            if (!hasRole && !user.bot) unverified.push(user.username);
+            if (!hasRole && !user.bot) unverified.push(user.id);
             return !user.bot && hasRole;
-          }).map((user) => { return user.username; });
+          }).map((user) => { return DiscordHandler.memberTagOrName(user, this.config.discord.guildId); });
         });
     }
     return { verified: users, unverified };

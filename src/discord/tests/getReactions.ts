@@ -1,14 +1,18 @@
-import { doltConfig } from '../../configLoader';
-import { sleep } from '../../utils';
-import { DiscordHandler } from '../discordHandler';
+import { getSpaceConfig } from "../../api/helpers/getSpace";
+import { sleep } from "../../utils";
+import { DiscordHandler } from "../discordHandler";
 
 async function main() {
-  const { config } = await doltConfig(process.env.CONFIG || '');
-  const discord = new DiscordHandler(config);
+  const space = "juicebox";
+  const spaceConfig = await getSpaceConfig(space);
+  const testSpaceConfig = await getSpaceConfig("waterbox");
   await sleep(1000);
-  const reactions = await discord.getPollVoters('1128890689690804346');
-  console.log(reactions);
-  await discord.sendPollResults(reactions, true, '1128890689690804346');
+  const discord = new DiscordHandler(spaceConfig.config);
+  const testDiscord = new DiscordHandler(testSpaceConfig.config);
+  await sleep(1000);
+  const pollResults = await discord.getPollVoters("1212956872752111647");
+  console.log(pollResults);
+  await testDiscord.sendPollResults(pollResults, true, "1218238014396829816");
 }
 
 main();
