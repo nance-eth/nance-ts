@@ -11,7 +11,7 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { SQLPayout, SQLTransfer } from '../dolt/schema';
 import { Proposal, GovernorProposeTransaction, BasicTransaction } from '../types';
-import { diffBody } from './helpers/diff';
+import { diffLineCounts } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
@@ -21,7 +21,8 @@ import { pools } from '../dolt/pools';
 import { STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpace';
 import { fetchSnapshotProposal } from "../snapshot/snapshotProposals";
-import { getSummary } from "../nancearizer";
+import { getSummary, postSummary } from "../nancearizer";
+import { discordLogin } from "./helpers/discord";
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -206,6 +207,8 @@ router.post('/:space/proposals', async (req, res) => {
           }
         }
         res.json({ success: true, data: { hash } });
+        const summary = await postSummary(proposal, "proposal");
+        dolt.updateSummary(hash, summary, "proposal");
       }).catch((e: any) => {
         res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
       });
@@ -314,9 +317,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     if (isPrivate) return dolt.editPrivateProposal(p);
     return dolt.editProposal(p);
   };
-  const discord = new DiscordHandler(config);
-  // eslint-disable-next-line no-await-in-loop
-  while (!discord.ready()) { await sleep(50); }
+  const discord = await discordLogin(config);
   editFunction(proposal).then(async (hash: string) => {
     if (!isPrivate) dolt.actionDirector(proposal);
     if (isPrivate) dolt.deletePrivateProposal(hash);
@@ -344,7 +345,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     }
 
     // send diff to discord
-    const diff = diffBody(proposalByUuid.body || '', proposal.body || '');
+    const diff = diffLineCounts(proposalByUuid.body || '', proposal.body || '');
     if (proposalByUuid.discussionThreadURL && diff) {
       proposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
       await discord.editDiscussionTitle(proposal);
@@ -366,11 +367,14 @@ router.delete('/:space/proposal/:hash', async (req, res) => {
   let isPrivate = false;
   try {
     proposalByUuid = await dolt.getProposalByAnyId(hash);
-  } catch {
-    try {
+    if (!proposalByUuid) {
       proposalByUuid = await dolt.getPrivateProposal(hash, address);
       isPrivate = true;
-    } catch { res.send({ success: false, error: '[NANCE ERROR]: proposal not found' }); return; }
+    }
+    if (!proposalByUuid) { throw new Error('proposal not found'); }
+  } catch {
+    res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
+    return;
   }
   if (!canEditProposal(proposalByUuid.status)) {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });

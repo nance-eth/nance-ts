@@ -9,6 +9,7 @@ import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength,
 import { PollResults, PollEmojis, Proposal } from '../types';
 import { SQLPayout, SQLProposal } from '../dolt/schema';
 import { EMOJI, STATUS } from '../constants';
+import { DiffLines } from "../api/helpers/diff";
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
   return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.hash}`;
@@ -286,8 +287,9 @@ export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPay
   return message;
 };
 
-export const proposalDiff = (space: string, proposal: Proposal, diffText: string) => {
-  const message = `Proposal edited\n\`\`\`diff\n${limitLength(diffText, 1900)}\`\`\`\n${getProposalURL(space, proposal)}`;
+export const proposalDiff = (space: string, proposal: Proposal, diffLineCounts: DiffLines) => {
+  const { added, removed } = diffLineCounts;
+  const message = `🎶 edit: ${added} ${maybePlural('line', added)} added ${removed} ${maybePlural('line', removed)} removed <${getProposalURL(space, proposal)}>`;
   return message;
 };
 

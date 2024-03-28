@@ -1,7 +1,14 @@
-import * as Diff from 'diff';
+import { diffLines } from 'diff';
 
-export function diffBody(b1: string, b2: string) {
-  const diff = Diff.createPatch('', b1, b2, '', '');
-  const cleaned = diff.split('\n').slice(4).join('\n');
-  return cleaned;
+export type DiffLines = { added: number; removed: number };
+
+export function diffLineCounts(b1: string, b2: string): DiffLines {
+  const diff = diffLines(b1, b2);
+  let added = 0;
+  let removed = 0;
+  diff.forEach((d) => {
+    if (d.added) added += 1;
+    else if (d.removed) removed += 1;
+  });
+  return { added, removed };
 }

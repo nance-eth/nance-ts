@@ -21,6 +21,7 @@ import * as discordTemplates from './discordTemplates';
 import { SQLPayout } from '../dolt/schema';
 import { getENS } from '../api/helpers/ens';
 import { EMOJI } from '../constants';
+import { DiffLines } from "../api/helpers/diff";
 
 const SILENT_FLAG = 1 << 12;
 
@@ -352,9 +353,9 @@ export class DiscordHandler {
     await this.getChannelById(threadId).send({ embeds: [message3, message1, message2] });
   }
 
-  async sendProposalDiff(proposal: Proposal, diffText: string) {
+  async sendProposalDiff(proposal: Proposal, diffLineCounts: DiffLines) {
     const threadId = getLastSlash(proposal.discussionThreadURL);
-    const message = discordTemplates.proposalDiff(this.config.name, proposal, diffText);
+    const message = discordTemplates.proposalDiff(this.config.name, proposal, diffLineCounts);
     await this.getChannelById(threadId).send(message);
   }
 
