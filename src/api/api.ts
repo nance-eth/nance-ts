@@ -21,7 +21,7 @@ import { pools } from '../dolt/pools';
 import { STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpace';
 import { fetchSnapshotProposal } from "../snapshot/snapshotProposals";
-import { getSummary, postSummary } from "../nancearizer";
+import { getSummary } from "../nancearizer";
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';

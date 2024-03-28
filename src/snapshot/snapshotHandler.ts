@@ -2,7 +2,7 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
 import { Proposal, SnapshotVoteOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '../types';
-import { dateToUnixTimeStamp, myProvider } from '../utils';
+import { dateToUnixTimeStamp, limitLength, myProvider } from '../utils';
 import { snapshotProposalToProposal } from './snapshotProposals';
 import { keys } from '../keys';
 
@@ -28,13 +28,12 @@ export class SnapshotHandler {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();
-    console.log('latest block', latestBlock);
+    if (!proposal.body) return Promise.reject(Error('Proposal body is required'));
     const snapProposal = {
       space: this.config.snapshot.space,
       type: options.type,
-      title: `${this.config.proposalIdPrefix}${proposal.proposalId} - ${proposal.title}`,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      body: proposal.body!,
+      title: `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`,
+      body: limitLength(proposal.body, 10_000),
       discussion: proposal.discussionThreadURL,
       choices: options.choices,
       start: startTimeStamp,
