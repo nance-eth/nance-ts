@@ -1,7 +1,6 @@
-import { NanceConfig } from '@nance/nance-sdk';
+import { NanceConfig, DialogHandlerMessageIds } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { doltSys } from '../dolt/doltSys';
-import { DialogHandlerMessageIds } from '../dolt/schema';
 
 export const deleteStartOrEndAlert = async (
   space: string,
