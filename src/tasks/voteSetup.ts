@@ -1,10 +1,10 @@
+import { Action, CustomTransaction, NanceConfig, Payout, Proposal, Transfer } from '@nance/nance-sdk';
 import { SnapshotHandler } from '../snapshot/snapshotHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { keys } from '../keys';
 import { dotPin } from '../storage/storageHandler';
 import { DEFAULT_DASHBOARD, addSecondsToDate, maybePlural } from '../utils';
-import { Action, CustomTransaction, NanceConfig, Payout, Proposal, Transfer } from '../types';
 import { getENS } from '../api/helpers/ens';
 import logger from '../logging';
 

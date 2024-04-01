@@ -1,10 +1,9 @@
 import schedule from 'node-schedule';
 import retry from 'promise-retry';
-import { DateEvent, NanceConfig } from '../types';
+import { InternalDateEvent, NanceConfig, SpaceConfig } from '@nance/nance-sdk';
 import { EVENTS, ONE_HOUR_SECONDS, TASKS } from '../constants';
 import * as tasks from '../tasks';
 import { addDaysToDate, addSecondsToDate } from '../utils';
-import { SpaceConfig } from '../dolt/schema';
 import { getNextEvents } from '../calendar/events';
 
 // node-schedule uses local time by default
@@ -21,7 +20,7 @@ const scheduleJob = (jobName: string, date: Date, func: () => void) => {
   }
 };
 
-export const scheduleCalendarTasks = async (space: string, config: NanceConfig, events: DateEvent[]) => {
+export const scheduleCalendarTasks = async (space: string, config: NanceConfig, events: InternalDateEvent[]) => {
   events.forEach(async (event) => {
     if (event.title === EVENTS.TEMPERATURE_CHECK) {
       // Temperature Check start alert
@@ -119,7 +118,7 @@ export const scheduleAllCalendarTasks = async (spaceConfigs: SpaceConfig[]) => {
   spaceConfigs.forEach((spaceConfig) => {
     const { space, cycleStageLengths, calendar, config } = spaceConfig;
     // schedule all calendar based events
-    if (calendar) {
+    if (calendar && cycleStageLengths) {
       const now = new Date();
       const events = getNextEvents(calendar, cycleStageLengths, now);
       scheduleCalendarTasks(space, config, events);

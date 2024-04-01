@@ -1,6 +1,6 @@
+import { NanceConfig, Proposal } from '@nance/nance-sdk';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
-import { NanceConfig, Proposal } from '../types';
 import { STATUS } from '../constants';
 import logger from '../logging';
 import { getProposalsWithVotes, votePassCheck } from './helpers/voting';

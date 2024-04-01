@@ -1,9 +1,9 @@
 /* eslint-disable prefer-promise-reject-errors */
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { BasicTransaction, NanceConfig } from '@nance/nance-sdk';
 import { DoltHandler } from './dolt/doltHandler';
 import { JuiceboxHandlerV3 } from './juicebox/juiceboxHandlerV3';
 import { BallotKey } from './juicebox/typesV3';
-import { BasicTransaction, NanceConfig } from './types';
 
 export class NanceTreasury {
   juiceboxHandlerV3;

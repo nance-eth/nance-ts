@@ -1,6 +1,5 @@
 import axios from "axios";
-import { Proposal } from "../types";
-import { ProposalQueryResponse } from "../api/models";
+import { Proposal, ProposalQueryResponse } from "@nance/nance-sdk";
 
 const API = process.env.NANCEARIZER_API_URL || "http://localhost:8080";
 

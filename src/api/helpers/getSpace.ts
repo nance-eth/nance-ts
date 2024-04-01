@@ -1,11 +1,9 @@
 /* eslint-disable prefer-promise-reject-errors */
+import { SpaceInfoExtended, InternalDateEvent, SpaceConfig } from '@nance/nance-sdk';
 import { DoltSysHandler } from '../../dolt/doltSysHandler';
 import { pools } from '../../dolt/pools';
-import { SpaceInfoExtended } from '../models';
 import { juiceboxTime } from './juicebox';
-import { DateEvent } from '../../types';
 import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../../calendar/events';
-import { SpaceConfig } from '../../dolt/schema';
 import { EVENTS } from "../../constants";
 import { getNextEventByName } from "./getNextEventByName";
 import { addDaysToDate } from "../../utils";
@@ -18,44 +16,47 @@ export const getSpaceInfo = async (spaceConfig: SpaceConfig): Promise<SpaceInfoE
 
   try {
     let juiceboxTimeOutput;
-    let currentEvent: DateEvent;
+    let currentEvent: InternalDateEvent;
     let cycleCurrentDay: number;
-    let cycleStartDate: Date;
+    let cycleStartDate;
     let { currentGovernanceCycle } = spaceConfig;
-    if (!spaceConfig.calendar) {
-      juiceboxTimeOutput = await juiceboxTime(spaceConfig.config.juicebox.projectId, spaceConfig.config.juicebox.network);
+    const { config, cycleStageLengths, calendar, cycleTriggerTime } = spaceConfig;
+    if (!calendar || !cycleStageLengths || !cycleTriggerTime) {
+      juiceboxTimeOutput = await juiceboxTime(config.juicebox.projectId, config.juicebox.network);
       ({ cycleCurrentDay, currentGovernanceCycle } = juiceboxTimeOutput);
       currentEvent = {
-        title: 'NULL',
+        title: EVENTS.UNKNOWN,
         start: new Date(juiceboxTimeOutput.start),
         end: new Date(juiceboxTimeOutput.end),
       };
       cycleStartDate = currentEvent.start;
     } else {
-      currentEvent = getCurrentEvent(spaceConfig.calendar, spaceConfig.cycleStageLengths, new Date());
-      cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, spaceConfig.cycleStageLengths, new Date());
+      currentEvent = getCurrentEvent(calendar, cycleStageLengths, new Date());
+      cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, cycleStageLengths, new Date());
       cycleStartDate = getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.start || new Date();
       // if this the cycle start date is in the past, then we are currently in TEMPERATURE_CHECK and need to add 14 days
       if (cycleStartDate < new Date()) {
         cycleStartDate = addDaysToDate(cycleStartDate, 14);
       }
     }
-    const dolthubLink = '';
+    const stringCurrentEvent = {
+      title: currentEvent.title,
+      start: currentEvent.start.toISOString(),
+      end: currentEvent.end.toISOString(),
+    };
     return {
       name: spaceConfig.space,
       displayName: spaceConfig.displayName || spaceConfig.space,
       currentCycle: currentGovernanceCycle,
-      cycleStartDate,
-      currentEvent,
+      cycleStartDate: cycleStartDate.toISOString(),
+      currentEvent: stringCurrentEvent,
       currentDay: cycleCurrentDay,
-      cycleTriggerTime: spaceConfig.cycleTriggerTime,
+      cycleTriggerTime,
       dialog: { ...spaceConfig.dialogHandlerMessageIds },
       config: spaceConfig.config,
       spaceOwners: spaceConfig.spaceOwners,
-      dolthubLink,
       snapshotSpace: spaceConfig.config.snapshot.space,
       juiceboxProjectId: spaceConfig.config.juicebox.projectId,
-      nextProposalId: spaceConfig.proposalCount + 1,
     };
   } catch (e) {
     return Promise.reject(e);

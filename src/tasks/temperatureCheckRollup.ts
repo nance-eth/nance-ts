@@ -1,9 +1,8 @@
-import { NanceConfig } from '../types';
+import { NanceConfig, DialogHandlerMessageIds } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { doltSys } from '../dolt/doltSys';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
-import { DialogHandlerMessageIds } from '../dolt/schema';
 import { STATUS, TASKS } from '../constants';
 import logger from '../logging';
 

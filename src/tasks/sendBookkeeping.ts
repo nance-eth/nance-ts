@@ -1,10 +1,9 @@
+import { NanceConfig, SQLPayout } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { getSpaceConfig } from '../api/helpers/getSpace';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
-import { SQLPayout } from '../dolt/schema';
 import logger from '../logging';
-import { NanceConfig } from '../types';
 import { getProjectHandle } from '../juicebox/api';
 import { getENS } from '../api/helpers/ens';
 

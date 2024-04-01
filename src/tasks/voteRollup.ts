@@ -1,10 +1,9 @@
-import { NanceConfig, Proposal } from '../types';
+import { NanceConfig, Proposal, DialogHandlerMessageIds } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { doltSys } from '../dolt/doltSys';
 import { TASKS } from '../constants';
-import { DialogHandlerMessageIds } from '../dolt/schema';
 import logger from '../logging';
 
 export const voteRollup = async (space: string, config: NanceConfig, endDate: Date, _proposals?: Proposal[]) => {

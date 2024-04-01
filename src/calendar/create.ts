@@ -1,5 +1,5 @@
 // create JSON calendar from GovernanceForm
-import { GovernanceCycleForm, DateEvent, FormTime } from '../types';
+import { GovernanceCycleForm, DateEvent, FormTime } from '@nance/nance-sdk';
 import { addDaysToDate, dateAtTime, formatUTCTime } from '../utils';
 import { EVENTS } from '../constants';
 
@@ -36,8 +36,8 @@ export const createCalendarAndCycleInfo = (governanceCycleForm: GovernanceCycleF
     end = index === 0 ? end : addDaysToDate(end, cycleStageLengths[index]);
     const ret = {
       title: event,
-      start,
-      end,
+      start: start.toISOString(),
+      end: end.toISOString(),
     };
     start = end;
     return ret;

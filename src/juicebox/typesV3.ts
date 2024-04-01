@@ -10,7 +10,7 @@ import {
   JBFundAccessConstraintsStruct,
   JBSplitStructOutput,
 } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
-import { JBSplitStruct } from '../types';
+import { JBSplitStruct } from '@nance/nance-sdk';
 import { MAX_DISTRIBUTION_LIMIT } from './juiceboxMath';
 
 export declare type JBFundingCycleMetadataStruct = {
@@ -130,10 +130,10 @@ export const getJBSplit = (split: JBSplitStructOutput): JBSplitStruct => {
   return {
     preferClaimed: split.preferClaimed,
     preferAddToBalance: split.preferAddToBalance,
-    percent: split.percent.toNumber(),
-    projectId: split.projectId.toNumber(),
+    percent: split.percent.toString(),
+    projectId: split.projectId.toString(),
     beneficiary: split.beneficiary,
-    lockedUntil: split.lockedUntil.toNumber(),
+    lockedUntil: split.lockedUntil.toString(),
     allocator: split.allocator,
   };
 };

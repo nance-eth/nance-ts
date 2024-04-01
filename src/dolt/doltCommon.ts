@@ -1,33 +1,32 @@
 /* eslint-disable no-nested-ternary */
 import { oneLine } from "common-tags";
+import { Proposal, SnapshotProposal, SQLSnapshotProposal } from "@nance/nance-sdk";
 import { pools } from "./pools";
-import { Proposal, SnapshotProposal } from "../types";
-import { SQLSnapshotProposal } from "./schema";
 import { cleanResultsHeader, resStatus } from "./doltSQL";
 import { STATUS } from "../constants";
 
 const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): Proposal => {
   return {
-    hash: 'snapshot',
+    uuid: 'snapshot',
     title: cacheProposal.title,
     body: cacheProposal.body,
     status: cacheProposal.proposalStatus,
     authorAddress: cacheProposal.authorAddress,
     proposalId: null,
-    createdTime: new Date(cacheProposal.startTimestamp * 1000),
+    createdTime: new Date(cacheProposal.startTimestamp * 1000).toISOString(),
+    lastEditedTime: new Date(cacheProposal.startTimestamp * 1000).toISOString(),
     discussionThreadURL: cacheProposal.discussionURL,
-    ipfsURL: '',
     voteURL: cacheProposal.snapshotId,
-    snapshotSpace: cacheProposal.snapshotSpace,
     voteSetup: {
       type: cacheProposal.voteType,
       choices: cacheProposal.choices,
     },
+    actions: [],
     voteResults: {
       votes: cacheProposal.votes,
       scores: cacheProposal.scores,
       choices: cacheProposal.choices,
-      scores_total: cacheProposal.scoresTotal,
+      scoresTotal: cacheProposal.scoresTotal,
       quorumMet: false,
     },
     proposalSummary: cacheProposal.proposalSummary,

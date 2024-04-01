@@ -1,16 +1,26 @@
 /* eslint-disable max-lines */
 import express from 'express';
 import { Contract } from 'ethers';
+import {
+  Proposal,
+  GovernorProposeTransaction,
+  BasicTransaction,
+  ProposalUploadRequest,
+  SpaceInfo,
+  ProposalsPacket,
+  EditPayoutsRequest,
+  FetchReconfigureRequest,
+  SQLPayout,
+  SQLTransfer,
+  ProposalUpdateRequest
+} from '@nance/nance-sdk';
 import { NanceTreasury } from '../treasury';
 import logger from '../logging';
-import { ProposalUploadRequest, FetchReconfigureRequest, EditPayoutsRequest, ProposalsPacket, SpaceInfoResponse, APIErrorResponse, SpaceInfo } from './models';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getENS } from './helpers/ens';
 import { getLastSlash, myProvider, sleep } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
-import { SQLPayout, SQLTransfer } from '../dolt/schema';
-import { Proposal, GovernorProposeTransaction, BasicTransaction } from '../types';
 import { diffLineCounts } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
@@ -23,6 +33,7 @@ import { getSpaceInfo } from './helpers/getSpace';
 import { fetchSnapshotProposal } from "../snapshot/snapshotProposals";
 import { getSummary, postSummary } from "../nancearizer";
 import { discordLogin } from "./helpers/discord";
+import { headToUrl } from "../dolt/doltAPI";
 
 const router = express.Router();
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -50,8 +61,8 @@ async function handlerReq(_query: string, auth: string | undefined) {
       cycleStartDate: spaceInfo.cycleStartDate,
       currentEvent: spaceInfo.currentEvent,
       dolt,
-      dolthubLink: spaceInfo.dolthubLink,
-      nextProposalId: spaceInfo.nextProposalId
+      dolthubLink: headToUrl(spaceInfo.config.dolt.owner, spaceInfo.config.dolt.repo, await dolt.getHead()),
+      nextProposalId: await dolt.getNextProposalId(),
     };
   } catch (e) {
     logger.error(e);
@@ -152,7 +163,7 @@ router.get('/:space/proposals', async (req, res) => {
 // upload new proposal
 router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
-  const { proposal } = req.body as ProposalUploadRequest;
+  const { proposal } = req.body as ProposalUploadRequest & { proposal: Proposal }; // type hack
   try {
     const { config, dolt, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
@@ -175,8 +186,8 @@ router.post('/:space/proposals', async (req, res) => {
     if (!proposal.authorAddress) { proposal.authorAddress = address; }
     if (proposal.status === STATUS.ARCHIVED) { proposal.status = STATUS.DISCUSSION; } // proposal forked from an archive, set to discussion
     if (proposal.status === STATUS.PRIVATE) {
-      dolt.addPrivateProposalToDb(proposal).then(async (hash: string) => {
-        res.json({ success: true, data: { hash } });
+      dolt.addPrivateProposalToDb(proposal).then(async (uuid: string) => {
+        res.json({ success: true, data: { uuid } });
       });
     } else {
       if (config.submitAsApproved) { proposal.status = STATUS.APPROVED; }
@@ -188,8 +199,8 @@ router.post('/:space/proposals', async (req, res) => {
       console.log('======================================================');
       console.log('======================================================');
       console.log('======================================================');
-      dolt.addProposalToDb(proposal).then(async (hash: string) => {
-        proposal.hash = hash;
+      dolt.addProposalToDb(proposal).then(async (uuid: string) => {
+        proposal.uuid = uuid;
         dolt.actionDirector(proposal);
 
         // send discord message
@@ -206,9 +217,9 @@ router.post('/:space/proposals', async (req, res) => {
             logger.error(`[DISCORD] ${e}`);
           }
         }
-        res.json({ success: true, data: { hash } });
+        res.json({ success: true, data: { uuid } });
         const summary = await postSummary(proposal, "proposal");
-        dolt.updateSummary(hash, summary, "proposal");
+        dolt.updateSummary(uuid, summary, "proposal");
       }).catch((e: any) => {
         res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
       });
@@ -263,7 +274,7 @@ router.get('/:space/proposal/:pid', async (req, res) => {
 // edit single proposal
 router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
-  const { proposal } = req.body as ProposalUploadRequest;
+  const { proposal } = req.body as ProposalUpdateRequest;
   const { dolt, config, address, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   let proposalByUuid: Proposal;
@@ -291,13 +302,12 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     return;
   }
 
-  proposal.authorAddress = proposalByUuid.authorAddress;
-  proposal.coauthors = proposalByUuid.coauthors ?? [];
-  proposal.governanceCycle = proposalByUuid.governanceCycle;
+  // eslint-disable-next-line prefer-const
+  let { authorAddress, coauthors, governanceCycle } = proposalByUuid;
   if (address && !proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
-    proposal.coauthors.push(address);
+    coauthors?.push(address);
   }
-  proposal.proposalId = (!proposalByUuid.proposalId && proposal.status === STATUS.DISCUSSION) ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
+  const proposalId = (!proposalByUuid.proposalId && proposal.status === STATUS.DISCUSSION) ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
   console.log('======================================================');
   console.log('=================== EDIT PROPOSAL ====================');
   console.log('======================================================');
@@ -309,8 +319,17 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
   // update governance cycle to current if proposal is a draft
   if (proposal.status === STATUS.DRAFT) {
-    proposal.governanceCycle = currentGovernanceCycle + 1;
+    governanceCycle = currentGovernanceCycle + 1;
   }
+
+  const updateProposal: Proposal = {
+    ...proposalByUuid,
+    ...proposal,
+    proposalId,
+    authorAddress,
+    coauthors,
+    governanceCycle,
+  };
 
   const editFunction = (p: Proposal) => {
     if (isPrivate && (proposal.status === STATUS.DISCUSSION || proposal.status === STATUS.DRAFT)) return dolt.addProposalToDb(p);
@@ -318,9 +337,9 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     return dolt.editProposal(p);
   };
   const discord = await discordLogin(config);
-  editFunction(proposal).then(async (hash: string) => {
-    if (!isPrivate) dolt.actionDirector(proposal);
-    if (isPrivate) dolt.deletePrivateProposal(hash);
+  editFunction(updateProposal).then(async (uuid: string) => {
+    if (!isPrivate) dolt.actionDirector(updateProposal);
+    if (isPrivate) dolt.deletePrivateProposal(uuid);
     // if proposal moved form Draft to Discussion, send discord message
     const shouldCreateDiscussion = (
       (proposalByUuid.status === STATUS.DRAFT || proposalByUuid.status === STATUS.PRIVATE)
@@ -328,9 +347,9 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     );
     if (shouldCreateDiscussion) {
       try {
-        const discussionThreadURL = await discord.startDiscussion(proposal);
+        const discussionThreadURL = await discord.startDiscussion(updateProposal);
         await discord.setupPoll(getLastSlash(discussionThreadURL));
-        await dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+        await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
       } catch (e) {
         logger.error(`[DISCORD] ${e}`);
       }
@@ -347,28 +366,28 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     // send diff to discord
     const diff = diffLineCounts(proposalByUuid.body || '', proposal.body || '');
     if (proposalByUuid.discussionThreadURL && diff) {
-      proposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
-      await discord.editDiscussionTitle(proposal);
-      await discord.sendProposalDiff(proposal, diff);
+      updateProposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
+      await discord.editDiscussionTitle(updateProposal);
+      await discord.sendProposalDiff(updateProposal, diff);
     }
     discord.logout();
-    res.json({ success: true, data: { hash } });
+    res.json({ success: true, data: { uuid } });
   }).catch((e: any) => {
     res.json({ success: false, error: JSON.stringify(e) });
   });
 });
 
 // delete single proposal
-router.delete('/:space/proposal/:hash', async (req, res) => {
-  const { space, hash } = req.params;
+router.delete('/:space/proposal/:uuid', async (req, res) => {
+  const { space, uuid } = req.params;
   const { dolt, config, spaceOwners, address } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal delete' }); return; }
   let proposalByUuid: Proposal;
   let isPrivate = false;
   try {
-    proposalByUuid = await dolt.getProposalByAnyId(hash);
+    proposalByUuid = await dolt.getProposalByAnyId(uuid);
     if (!proposalByUuid) {
-      proposalByUuid = await dolt.getPrivateProposal(hash, address);
+      proposalByUuid = await dolt.getPrivateProposal(uuid, address);
       isPrivate = true;
     }
     if (!proposalByUuid) { throw new Error('proposal not found'); }
@@ -386,10 +405,10 @@ router.delete('/:space/proposal/:hash', async (req, res) => {
     || isNanceSpaceOwner(spaceOwners, address)
     || isNanceAddress(address)
   );
-  const deleteFunction = (uuid: string) => { return isPrivate ? dolt.deletePrivateProposal(uuid) : dolt.deleteProposal(uuid); };
+  const deleteFunction = (u: string) => { return isPrivate ? dolt.deletePrivateProposal(u) : dolt.deleteProposal(uuid); };
   if (permissions) {
     logger.info(`DELETE issued by ${address}`);
-    deleteFunction(hash).then(async (affectedRows: number) => {
+    deleteFunction(uuid).then(async (affectedRows: number) => {
       const discord = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!discord.ready()) { await sleep(50); }
@@ -411,7 +430,7 @@ router.get('/:space/summary/:type/:pid', async (req, res) => {
 
   const summary = await getSummary(space, pid, type);
   const proposal = await dolt.getProposalByAnyId(pid);
-  await dolt.updateSummary(proposal.hash, summary, type);
+  await dolt.updateSummary(proposal.uuid, summary, type);
   res.json({ success: true, data: summary });
 });
 

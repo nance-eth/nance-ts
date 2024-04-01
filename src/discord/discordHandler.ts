@@ -13,12 +13,11 @@ import {
   AttachmentBuilder,
   escapeMarkdown,
 } from 'discord.js';
+import { Proposal, PollResults, NanceConfig, SQLPayout } from '@nance/nance-sdk';
 import logger from '../logging';
 import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp } from '../utils';
-import { Proposal, PollResults, NanceConfig } from '../types';
 
 import * as discordTemplates from './discordTemplates';
-import { SQLPayout } from '../dolt/schema';
 import { getENS } from '../api/helpers/ens';
 import { EMOJI } from '../constants';
 import { DiffLines } from "../api/helpers/diff";

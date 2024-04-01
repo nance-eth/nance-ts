@@ -1,8 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import axios from 'axios';
-import { MetaTransaction } from 'ethers-multisend';
 import { ethers } from 'ethers';
-import { BasicTransaction } from '../types';
+import { BasicTransaction } from '@nance/nance-sdk';
 import { keys } from '../keys';
 
 // docs: https://docs-api.tenderly.co, https://docs.tenderly.co/simulations-and-forks/simulation-api

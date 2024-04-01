@@ -5,14 +5,13 @@ import {
   AttachmentBuilder, EmbedBuilder, ThreadChannel, EmbedField
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
+import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal } from '@nance/nance-sdk';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength, maybePlural, numToPrettyString } from '../utils';
-import { PollResults, PollEmojis, Proposal } from '../types';
-import { SQLPayout, SQLProposal } from '../dolt/schema';
 import { EMOJI, STATUS } from '../constants';
 import { DiffLines } from "../api/helpers/diff";
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
-  return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.hash}`;
+  return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.uuid}`;
 };
 
 export const startDiscussionMessage = (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
@@ -69,15 +68,15 @@ export const proposalsUnderQuorumMessage = (voteURL: string, proposalIdPrefix: s
     `There are ${String(proposals.length)} ${maybePlural('proposal', proposals.length)} under the set quorum of **${numToPrettyString(quorum, 0)}**`)
     .addFields(
       proposals.map((proposal: Proposal) => {
-        const { scores_total } = proposal.voteResults || {};
+        const { scoresTotal } = proposal.voteResults || {};
         const [yesWord, noWord] = (proposal.voteResults?.choices) || ['For', 'Against'];
         const [yesVal, noVal] = (proposal.voteResults?.scores) || [0, 0];
         const proposalURL = getProposalURL(space, proposal);
         return {
           name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
           value: stripIndents`
-          [${numToPrettyString(scores_total)} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposalURL})
-          under quorum by **${numToPrettyString(quorum - (scores_total || 0), 0)}**
+          [${numToPrettyString(scoresTotal)} votes | ${numToPrettyString(yesVal)} ${yesWord} | ${numToPrettyString(noVal)} ${noWord}](${proposalURL})
+          under quorum by **${numToPrettyString(quorum - (scoresTotal || 0), 0)}**
           -----------------------------------------`,
         };
       })
@@ -94,13 +93,13 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
           const [yesWord, noWord] = (proposal.voteResults.choices);
           const [yesVal, noVal] = (proposal.voteResults.scores);
           const emoji = (proposal.status === STATUS.APPROVED) ? EMOJI.APPROVED : EMOJI.CANCELLED;
-          const scores_total = numToPrettyString(proposal.voteResults.scores_total, 0);
+          const scoresTotal = numToPrettyString(proposal.voteResults.scoresTotal, 0);
           const proposalURL = getProposalURL(space, proposal);
           const quorumMet = (proposal.voteResults.quorumMet) ? '' : ' (quorum not met)';
           return {
             name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
             value: stripIndents`
-            [${emoji} ${scores_total} votes${quorumMet} | ${numToPrettyString(yesVal, 0)} ${yesWord} | ${numToPrettyString(noVal, 0)} ${noWord}](${proposalURL})
+            [${emoji} ${scoresTotal} votes${quorumMet} | ${numToPrettyString(yesVal, 0)} ${yesWord} | ${numToPrettyString(noVal, 0)} ${noWord}](${proposalURL})
             -----------------------------------------`,
           };
         }
@@ -215,7 +214,7 @@ export const payoutsTable = (payouts: SQLPayout[], governanceCycle: number, spac
     if (payoutNum === payout.numberOfPayouts && payout.numberOfPayouts !== 1) { toAlert.push(`<@${payout.authorDiscordId ?? ''}>`); }
     const payoutHeadline = getPayoutHeadline(payout);
     const payoutHeadlineFull = `[${payoutHeadline.text}](${payoutHeadline.link})`;
-    const proposalURL = getProposalURL(space, { proposalId: payout.proposalId, hash: payout.uuidOfProposal } as Proposal);
+    const proposalURL = getProposalURL(space, { proposalId: payout.proposalId, uuid: payout.uuidOfProposal } as Proposal);
     payoutsText.push(`_${payoutNum}/${payout.numberOfPayouts}_ ${payoutHeadlineFull} **$${payout.amount.toLocaleString()}** [[${proposalIdPrefix}${payout.proposalId}]](${proposalURL})\n`);
   });
   message.setDescription(

@@ -1,13 +1,13 @@
 import { Tspec } from 'tspec';
-import { Proposal } from '../types';
 import {
+  Proposal,
   SpaceInfoResponse,
   ProposalsQueryResponse,
   ProposalQueryResponse,
   ProposalUploadResponse,
   ProposalDeleteResponse,
   SpaceInfo,
-} from './models';
+} from '@nance/nance-sdk';
 
 interface APIErrorBase {
   success: false;

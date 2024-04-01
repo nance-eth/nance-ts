@@ -1,4 +1,4 @@
-import { NanceConfig, VoteResults, Proposal } from '../../types';
+import { NanceConfig, VoteResults, Proposal } from '@nance/nance-sdk';
 import { pools } from '../../dolt/pools';
 import { DoltHandler } from '../../dolt/doltHandler';
 import { SnapshotHandler } from '../../snapshot/snapshotHandler';
@@ -15,8 +15,9 @@ export const getVotePercentages = (config: NanceConfig, voteResults: VoteResults
 };
 
 export const votePassCheck = (config: NanceConfig, voteResults: VoteResults) => {
+  if (!voteResults.scoresTotal) return false;
   return (
-    voteResults.scores_total >= config.snapshot.minTokenPassingAmount
+    voteResults.scoresTotal >= config.snapshot.minTokenPassingAmount
     && getVotePercentages(config, voteResults)[config.snapshot.choices[0]] >= config.snapshot.passingRatio
   );
 };

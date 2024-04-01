@@ -1,8 +1,8 @@
 // to check if there are any proposals
 
+import { NanceConfig } from '@nance/nance-sdk';
 import { STATUS } from '../constants';
 import { DoltHandler } from '../dolt/doltHandler';
-import { NanceConfig } from '../types';
 import { pools } from '../dolt/pools';
 
 export const shouldSendAlert = async (space: string, config: NanceConfig) => {

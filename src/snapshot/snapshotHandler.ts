@@ -1,7 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
-import { Proposal, SnapshotVoteOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '../types';
+import { Proposal, SnapshotVoteOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '@nance/nance-sdk';
 import { dateToUnixTimeStamp, limitLength, myProvider } from '../utils';
 import { snapshotProposalToProposal } from './snapshotProposals';
 import { keys } from '../keys';

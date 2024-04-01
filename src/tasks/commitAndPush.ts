@@ -1,7 +1,7 @@
+import { NanceConfig } from "@nance/nance-sdk";
 import { getSpaceConfig, getSpaceInfo } from "../api/helpers/getSpace";
 import { DoltHandler } from "../dolt/doltHandler";
 import { pools } from '../dolt/pools';
-import { NanceConfig } from "../types";
 
 export const commitAndPush = async (space: string, config: NanceConfig) => {
   try {

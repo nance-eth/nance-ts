@@ -3,9 +3,8 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import { encodeMulti } from 'ethers-multisend';
 import fs from 'fs';
-import { BasicTransaction, PartialTransaction } from '../types';
+import { BasicTransaction, PartialTransaction, SQLCustomTransaction } from '@nance/nance-sdk';
 import { keys } from '../keys';
-import { SQLCustomTransaction } from '../dolt/schema';
 
 const supportedTokens = ['DAI', 'USDC', 'JBX', 'JBXv1', 'TicketBoothV1'];
 const multiSendContractAddress = '0x40A2aCCbd92BCA938b02010E17A5b8929b49130D';

@@ -5,7 +5,7 @@ import path from 'path';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { NanceConfig, Network } from './types';
+import { NanceConfig, Network } from '@nance/nance-sdk';
 import { keys } from './keys';
 import { NETWORKS } from './constants';
 

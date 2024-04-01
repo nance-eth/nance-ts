@@ -1,5 +1,5 @@
 import { JuiceboxHandlerV3 } from '../../juicebox/juiceboxHandlerV3';
-import { dateToUnixTimeStamp, myProvider, unixTimeStampNow } from '../../utils';
+import { myProvider, unixTimeStampNow } from '../../utils';
 
 export async function juiceboxTime(projectId: string, network = 'mainnet' as 'mainnet' | 'goerli') {
   const juicebox = new JuiceboxHandlerV3(projectId, myProvider(network), network);

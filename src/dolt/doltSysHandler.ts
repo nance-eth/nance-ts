@@ -1,8 +1,8 @@
 import { oneLine } from 'common-tags';
+import { DialogHandlerMessageIds, SpaceConfig } from '@nance/nance-sdk';
 import { DoltSQL, cleanResultsHeader } from './doltSQL';
 import { dbOptions } from './dbConfig';
 import { sqlSchemaToString } from '../utils';
-import { DialogHandlerMessageIds, SpaceConfig } from './schema';
 
 const systemDb = 'nance_sys';
 const system = 'config';
@@ -80,10 +80,9 @@ export class DoltSysHandler {
         dialogHandlerMessageIds,
         currentGovernanceCycle,
         autoEnable,
-        proposalCount
         lastUpdated,
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         cid = VALUES(cid),
         displayName = VALUES(displayName),
@@ -105,7 +104,6 @@ export class DoltSysHandler {
       JSON.stringify(defaultDialogHandlerMessageIds),
       defaultGovernanceCycle,
       c.autoEnable,
-      c.proposalCount
     ]).then((res) => {
       return res.affectedRows;
     }).catch((e) => { return Promise.reject(e); });

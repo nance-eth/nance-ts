@@ -1,4 +1,4 @@
-import { DateEvent } from '../types';
+import { InternalDateEvent, DateEvent } from '@nance/nance-sdk';
 import { EVENTS, ONE_DAY_MILLISECONDS } from '../constants';
 
 const cycleStageLengthsToInterval = (cycleStageLengths: number[]) => {
@@ -6,10 +6,10 @@ const cycleStageLengthsToInterval = (cycleStageLengths: number[]) => {
   return totalCycleDays * ONE_DAY_MILLISECONDS;
 };
 
-export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date): DateEvent[] => {
+export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date): InternalDateEvent[] => {
   const interval = cycleStageLengthsToInterval(cycleStageLengths);
   const repeats = Math.floor((inputDate.getTime() - new Date(events[0].start).getTime()) / interval);
-  const nextEvents: DateEvent[] = [];
+  const nextEvents: InternalDateEvent[] = [];
   events.forEach((event) => {
     const originalStart = new Date(event.start);
     const originalEnd = new Date(event.end);
@@ -37,12 +37,12 @@ export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], 
   return nextEventsCleaned;
 };
 
-export const getCurrentEvent = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date) : DateEvent => {
+export const getCurrentEvent = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date) : InternalDateEvent => {
   const nextEvents = getNextEvents(events, cycleStageLengths, inputDate);
   const currentEvent = nextEvents.find((event) => {
     return inputDate >= event.start && inputDate < event.end;
   });
-  return currentEvent as DateEvent;
+  return currentEvent as InternalDateEvent;
 };
 
 export const getCycleStartDays = (cycleStageLengths: number[]) => {
@@ -54,7 +54,7 @@ export const getCycleStartDays = (cycleStageLengths: number[]) => {
   });
 };
 
-export const getCurrentGovernanceCycleDay = (currentEvent: DateEvent, cycleStageLengths: number[], input: Date) => {
+export const getCurrentGovernanceCycleDay = (currentEvent: InternalDateEvent, cycleStageLengths: number[], input: Date) => {
   if (!currentEvent) return 0;
   const cycleStartDays = getCycleStartDays(cycleStageLengths);
   const eventIndex = Object.values(EVENTS).indexOf(currentEvent.title);

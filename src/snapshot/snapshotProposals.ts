@@ -1,5 +1,5 @@
 import { request as gqlRequest, gql } from 'graphql-request';
-import { Proposal, SnapshotProposal } from "../types";
+import { Proposal, SnapshotProposal } from "@nance/nance-sdk";
 import { STATUS } from '../constants';
 import { getCacheSnapshotProposal, setCacheSnapshotProposal } from "../dolt/doltCommon";
 import { postSummary } from "../nancearizer";
@@ -13,26 +13,27 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
   }
   const title = sProposal.title || 'Title Unknown';
   return {
-    hash: 'snapshot',
+    uuid: 'snapshot',
     title,
     body: sProposal.body || 'Body Unknown',
     status,
     authorAddress: sProposal.author,
     proposalId: null,
-    createdTime: new Date(Number(sProposal.start) * 1000),
+    createdTime: new Date(Number(sProposal.start) * 1000).toISOString(),
+    lastEditedTime: new Date(Number(sProposal.end) * 1000).toISOString(),
     discussionThreadURL: sProposal.discussion || '',
     ipfsURL: sProposal.ipfs || '',
     voteURL: sProposal.id,
-    snapshotSpace: sProposal.space?.id || '',
     voteSetup: {
       type: sProposal.type,
       choices: sProposal.choices,
     },
+    actions: [],
     voteResults: {
       votes: sProposal.votes,
       scores: sProposal.scores,
       choices: sProposal.choices,
-      scores_total: sProposal.scores_total,
+      scoresTotal: sProposal.scores_total,
       quorumMet: sProposal.scores_total >= quorum,
     }
   };

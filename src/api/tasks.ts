@@ -1,10 +1,10 @@
 import express from 'express';
+import { SpaceConfig } from '@nance/nance-sdk';
 import { getSpaceConfig } from './helpers/getSpace';
 import { addressFromJWT } from './helpers/auth';
 import { isNanceSpaceOwner } from './helpers/permissions';
 import { sendDailyAlert } from '../tasks/sendDailyAlert';
 import { temperatureCheckRollup } from '../tasks/temperatureCheckRollup';
-import { SpaceConfig } from '../dolt/schema';
 import { temperatureCheckClose } from '../tasks/temperatureCheckClose';
 import { voteSetup } from '../tasks/voteSetup';
 import { voteRollup } from '../tasks/voteRollup';

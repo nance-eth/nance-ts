@@ -17,6 +17,7 @@ import {
 } from '@jigglyjams/juice-sdk-v3';
 import { BigNumber } from '@ethersproject/bignumber';
 import { JBSplitStruct, JBGroupedSplitsStruct } from '@jigglyjams/juice-sdk-v3/dist/cjs/types/contracts/JBController';
+import { SQLPayout, SQLReserve } from '@nance/nance-sdk';
 import { ONE_BILLION } from './juiceboxMath';
 import {
   getJBFundingCycleDataStruct,
@@ -30,7 +31,6 @@ import {
   JBETHPaymentTerminal3_1_1,
   JBETHPaymentTerminal3_1_2,
 } from './typesV3';
-import { SQLPayout, SQLReserve } from '../dolt/schema';
 import { keys } from '../keys';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';

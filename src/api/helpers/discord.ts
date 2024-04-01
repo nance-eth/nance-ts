@@ -1,5 +1,5 @@
+import { NanceConfig } from '@nance/nance-sdk';
 import { DiscordHandler } from '../../discord/discordHandler';
-import { NanceConfig } from '../../types';
 import { sleep } from '../../utils';
 
 export const discordLogin = async (config: NanceConfig) => {

@@ -1,4 +1,4 @@
-import { NanceConfig } from '../types';
+import { NanceConfig } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { doltSys } from '../dolt/doltSys';
 import logger from '../logging';

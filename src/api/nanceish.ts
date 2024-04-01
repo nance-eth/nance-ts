@@ -1,9 +1,9 @@
 import express from 'express';
+import { ConfigSpaceRequest, SpaceInfo } from '@nance/nance-sdk';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
 import { dotPin } from '../storage/storageHandler';
-import { ConfigSpaceRequest, SpaceInfo } from './models';
 import { mergeTemplateConfig, mergeConfig, sleep } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
@@ -34,6 +34,7 @@ router.get('/config/:space', async (req, res) => {
 router.get('/all', async (_, res) => {
   getAllSpaceInfo().then(async (data) => {
     const infos = await Promise.all(data.map(async (space) => {
+      const dolt = new DoltHandler(pools[space.name], '');
       const spaceInfo: SpaceInfo = {
         name: space.name,
         displayName: space.displayName || space.name,
@@ -43,8 +44,8 @@ router.get('/all', async (_, res) => {
         spaceOwners: space.spaceOwners,
         snapshotSpace: space.config.snapshot.space,
         juiceboxProjectId: space.config.juicebox.projectId,
-        dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, space.dolthubLink),
-        nextProposalId: space.nextProposalId,
+        dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, await dolt.getHead()),
+        nextProposalId: await dolt.getNextProposalId(),
       };
       if (space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress) {
         spaceInfo.transactorAddress = {
@@ -99,7 +100,6 @@ router.post('/config', async (req, res) => {
       cycleTriggerTime,
       cycleStageLengths,
       autoEnable: 1,
-      proposalCount: 0,
     }).then(() => {
       res.json({ success: true, data: { space, spaceOwners: spaceOwnersIn } });
     }).catch((e) => {

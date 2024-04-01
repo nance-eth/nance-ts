@@ -1,7 +1,7 @@
+import { DialogHandlerMessageIds } from '@nance/nance-sdk';
 import { doltSys } from '../dolt/doltSys';
 import logger from '../logging';
 import { TASKS } from '../constants';
-import { DialogHandlerMessageIds } from '../dolt/schema';
 
 export const incrementGovernanceCycle = async (space: string) => {
   try {
