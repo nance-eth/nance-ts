@@ -338,7 +338,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   };
   const discord = await discordLogin(config);
   editFunction(updateProposal).then(async (uuid: string) => {
-    if (!isPrivate) dolt.actionDirector(updateProposal);
+    if (!isPrivate) dolt.actionDirector(updateProposal, proposalByUuid);
     if (isPrivate) dolt.deletePrivateProposal(uuid);
     // if proposal moved form Draft to Discussion, send discord message
     const shouldCreateDiscussion = (

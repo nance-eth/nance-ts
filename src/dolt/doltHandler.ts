@@ -156,7 +156,7 @@ export class DoltHandler {
     return (Number.isNaN(value)) ? null : value;
   };
 
-  async actionDirector(proposal: Proposal) {
+  async actionDirector(proposal: Proposal, oldProposal?: Proposal) {
     const cycle = proposal.governanceCycle || 1;
     let actionStatus = STATUS.ACTION.VOTING; // default to voting
     if (proposal.status === STATUS.APPROVED) { actionStatus = STATUS.ACTION.ACTIVE; }
@@ -172,6 +172,36 @@ export class DoltHandler {
         this.addCustomTransaction(action.payload as CustomTransaction, proposal.uuid, cycle, action?.name || proposal.title, action.uuid, actionStatus);
       }
     });
+    // check if the oldProposal has actions that are not present in new proposal
+    // if not present, delete the action from the database
+    if (oldProposal) {
+      oldProposal.actions?.forEach((oldAction) => {
+        if (!proposal.actions?.some((newAction) => { return newAction.uuid === oldAction.uuid; })) {
+          console.log('deleting action', oldAction.payload);
+          if (oldAction.type === 'Payout') {
+            this.queryDb(oneLine`
+              DELETE FROM ${payoutsTable} WHERE
+              uuidOfPayout = '${oldAction.uuid}'
+            `);
+          } else if (oldAction.type.includes('Transfer')) {
+            this.queryDb(oneLine`
+              DELETE FROM ${transfersTable} WHERE
+              uuidOfTransfer = '${oldAction.uuid}'
+            `);
+          } else if (oldAction.type === 'Reserve') {
+            this.queryDb(oneLine`
+              DELETE FROM ${reservesTable} WHERE
+              uuidOfReserve = '${oldAction.uuid}'
+            `);
+          } else if (oldAction.type === 'Custom Transaction') {
+            this.queryDb(oneLine`
+              DELETE FROM ${transactionsTable} WHERE
+              uuidOfTransaction = '${oldAction.uuid}'
+            `);
+          }
+        }
+      });
+    }
   }
 
   // ===================================== //
