@@ -12,7 +12,6 @@ const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): Pr
     body: cacheProposal.body,
     status: cacheProposal.proposalStatus,
     authorAddress: cacheProposal.authorAddress,
-    proposalId: null,
     createdTime: new Date(cacheProposal.startTimestamp * 1000).toISOString(),
     lastEditedTime: new Date(cacheProposal.startTimestamp * 1000).toISOString(),
     discussionThreadURL: cacheProposal.discussionURL,

@@ -18,7 +18,6 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
     body: sProposal.body || 'Body Unknown',
     status,
     authorAddress: sProposal.author,
-    proposalId: null,
     createdTime: new Date(Number(sProposal.start) * 1000).toISOString(),
     lastEditedTime: new Date(Number(sProposal.end) * 1000).toISOString(),
     discussionThreadURL: sProposal.discussion || '',

@@ -81,7 +81,7 @@ export class DoltHandler {
       title: isHexString(proposal.title) ? Buffer.from(proposal.title, 'hex').toString('utf8') : proposal.title,
       body: isHexString(proposal.body) ? Buffer.from(proposal.body, 'hex').toString('utf8') : proposal.body,
       status: proposal.proposalStatus || 'Private',
-      proposalId: proposal.proposalId || null,
+      proposalId: proposal.proposalId,
       discussionThreadURL: proposal.discussionURL ?? '',
       ipfsURL: proposal.ipfsCID ? `${IPFS_GATEWAY}/ipfs/${proposal.ipfsCID}` : undefined,
       voteURL: proposal.snapshotId ? proposal.snapshotId : undefined,
@@ -196,7 +196,7 @@ export class DoltHandler {
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
     proposal.status = proposal.status || 'Discussion';
     proposal.uuid = proposal.uuid || uuidGen();
-    proposal.proposalId = (proposal.status === 'Discussion') ? await this.getNextProposalId() : proposal.proposalId || null;
+    proposal.proposalId = (proposal.status === 'Discussion') ? await this.getNextProposalId() : proposal.proposalId;
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, authorDiscordId,
