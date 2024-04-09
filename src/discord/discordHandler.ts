@@ -216,8 +216,8 @@ export class DiscordHandler {
     return true;
   }
 
-  static memberTagOrName(user: User, guildId: string) {
-    const memberObj = user.client.guilds.cache.get(guildId)?.members.cache.get(user.id);
+  memberTagOrName(user: User) {
+    const memberObj = user.client.guilds.cache.get(this.config.discord.guildId)?.members.cache.get(user.id);
     if (memberObj) return memberObj.toString();
     return escapeMarkdown(user.displayName);
   }
@@ -241,9 +241,9 @@ export class DiscordHandler {
             const member = messageObj?.guild?.members.cache.get(user.id);
             if (!member) return false;
             const hasRole = member.roles.cache.has(verifyRole);
-            if (!hasRole && !user.bot) unverified.push(user.id);
+            if (!hasRole && !user.bot) unverified.push(this.memberTagOrName(user));
             return !user.bot && hasRole;
-          }).map((user) => { return DiscordHandler.memberTagOrName(user, this.config.discord.guildId); });
+          }).map((user) => { return this.memberTagOrName(user); });
         });
     }
     return { verified: users, unverified };

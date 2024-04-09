@@ -74,6 +74,7 @@ async function handlerReq(_query: string, auth: string | undefined) {
 // ======== info functions ======== //
 // ================================ //
 router.get('/:space', async (req, res) => {
+  console.time("space");
   const { space } = req.params;
   try {
     const { config, name, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId, cycleStartDate } = await handlerReq(space, req.headers.authorization);
@@ -105,6 +106,8 @@ router.get('/:space', async (req, res) => {
     });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
+  } finally {
+    console.timeEnd("space");
   }
 });
 
@@ -131,6 +134,7 @@ router.get('/:space/privateProposals', async (req, res) => {
 
 // query proposals
 router.get('/:space/proposals', async (req, res) => {
+  console.time("proposals");
   const { space } = req.params;
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
@@ -157,6 +161,8 @@ router.get('/:space/proposals', async (req, res) => {
     return res.send({ success: true, data });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE] ${e}` });
+  } finally {
+    console.timeEnd("proposals");
   }
 });
 
@@ -243,11 +249,7 @@ router.get('/~/proposal/:pid', async (req, res) => {
 
 // get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #
 router.get('/:space/proposal/:pid', async (req, res) => {
-  if (req.url.toLowerCase().includes('%20')) { // fight attacks
-    console.log('invalid request');
-    res.status(404).send({ success: false, error: 'Invalid request' });
-    return;
-  }
+  console.time("proposal");
   const { space, pid } = req.params;
   let proposal: Proposal | undefined;
   try {
@@ -268,6 +270,8 @@ router.get('/:space/proposal/:pid', async (req, res) => {
     });
   } catch (e) {
     res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
+  } finally {
+    console.timeEnd("proposal");
   }
 });
 
