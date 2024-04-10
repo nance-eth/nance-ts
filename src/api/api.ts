@@ -12,7 +12,8 @@ import {
   FetchReconfigureRequest,
   SQLPayout,
   SQLTransfer,
-  ProposalUpdateRequest
+  ProposalUpdateRequest,
+  SpaceConfig
 } from '@nance/nance-sdk';
 import { NanceTreasury } from '../treasury';
 import logger from '../logging';
@@ -40,17 +41,33 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
+const spaceCache = {} as { [key: string]: { spaceConfig: SpaceConfig, nextProposalId: number } };
+
 async function handlerReq(_query: string, auth: string | undefined) {
   try {
     const query = _query.toLowerCase();
     if (!Object.keys(pools).includes(query)) {
       return await Promise.reject(new Error(`space ${query} not found`));
     }
-    const spaceConfig = await doltSys.getSpaceConfig(query);
+
+    // cache spaceConfig to reduce SQL calls
+    let spaceConfig = spaceCache[query]?.spaceConfig;
+    if (!spaceConfig) {
+      spaceConfig = await doltSys.getSpaceConfig(query);
+      spaceCache[query] = { spaceConfig, nextProposalId: 0 };
+    }
     const spaceInfo = await getSpaceInfo(spaceConfig);
     const dolt = new DoltHandler(pools[query], spaceInfo.config.proposalIdPrefix);
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
+
+    // get nextProposalId
+    let nextProposalId = spaceCache[query]?.nextProposalId;
+    if (!nextProposalId) {
+      nextProposalId = await dolt.getNextProposalId();
+      spaceCache[query].nextProposalId = nextProposalId;
+    }
+
     return {
       name: query,
       displayName: spaceInfo.displayName,
@@ -61,8 +78,8 @@ async function handlerReq(_query: string, auth: string | undefined) {
       cycleStartDate: spaceInfo.cycleStartDate,
       currentEvent: spaceInfo.currentEvent,
       dolt,
-      dolthubLink: headToUrl(spaceInfo.config.dolt.owner, spaceInfo.config.dolt.repo, await dolt.getHead()),
-      nextProposalId: await dolt.getNextProposalId(),
+      dolthubLink: headToUrl(spaceInfo.config.dolt.owner, spaceInfo.config.dolt.repo), // just send back repo link to reduce SQL calls
+      nextProposalId,
     };
   } catch (e) {
     logger.error(e);
@@ -226,6 +243,8 @@ router.post('/:space/proposals', async (req, res) => {
         res.json({ success: true, data: { uuid } });
         const summary = await postSummary(proposal, "proposal");
         dolt.updateSummary(uuid, summary, "proposal");
+        // update nextProposalId
+        spaceCache[space].nextProposalId += 1;
       }).catch((e: any) => {
         res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
       });
