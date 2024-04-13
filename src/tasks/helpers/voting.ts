@@ -42,10 +42,14 @@ export const getProposalsWithVotes = async (config: NanceConfig): Promise<Propos
     return {
       ...proposal,
       voteResults: {
-        ...voteResult,
+        choices: voteResult.choices,
+        scores: voteResult.scores,
+        votes: voteResult.votes,
+        scoresState: voteResult.scores_state,
+        scoresTotal: voteResult.scores_total,
         quorumMet: quorumMet(voteResult.scores_total, config.snapshot.minTokenPassingAmount),
       },
-    } as Proposal;
+    };
   });
   return proposalsWithVotes;
 };
