@@ -26,6 +26,6 @@ const fetcher = async <T>(req: string): Promise<T> => {
 export const getAddressRoles = async (address: string, guildId: number | string) => {
   const req = `${API_V1}/${ACCESS}/${guildId}/${address}`;
   const res = await fetcher<GuildxyzAccess[]>(req);
-  // console.dir(res, { depth: null });
+  console.dir(res, { depth: null });
   return res;
 };

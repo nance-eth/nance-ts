@@ -1,5 +1,4 @@
 import { getSpaceConfig } from '../../api/helpers/getSpace';
-import { STATUS } from '../../constants';
 import { voteResultsRollup } from '../voteResultsRollup';
 import { getProposalsWithVotes } from '../helpers/voting';
 

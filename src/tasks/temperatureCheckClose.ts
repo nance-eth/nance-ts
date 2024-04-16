@@ -1,9 +1,8 @@
-import { NanceConfig } from '@nance/nance-sdk';
+import { NanceConfig, ProposalStatus } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { getLastSlash } from '../utils';
-import { STATUS } from '../constants';
 import logger from '../logging';
 
 const pollPassCheck = (config: NanceConfig, yesCount: number, noCount: number) => {
@@ -30,7 +29,7 @@ export const temperatureCheckClose = async (space: string, config: NanceConfig) 
         pollResults.voteYesUsers.length,
         pollResults.voteNoUsers.length
       );
-      const status = (pass) ? STATUS.VOTING : STATUS.CANCELLED;
+      const status = (pass) ? "Voting" : "Cancelled" as ProposalStatus;
       await dialogHandler.sendPollResults(pollResults, pass, threadId);
       await dialogHandler.sendPollResultsEmoji(pass, threadId);
       const updatedProposal = { ...proposal, status, temperatureCheckVotes };

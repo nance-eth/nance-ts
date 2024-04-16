@@ -1,22 +1,21 @@
 import { request as gqlRequest, gql } from 'graphql-request';
-import { Proposal, SnapshotProposal } from "@nance/nance-sdk";
-import { STATUS } from '../constants';
+import { Proposal, ProposalStatus, SnapshotProposal } from "@nance/nance-sdk";
 import { getCacheSnapshotProposal, setCacheSnapshotProposal } from "../dolt/doltCommon";
 import { postSummary } from "../nancearizer";
 
 const hub = 'https://hub.snapshot.org';
 
 export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: number): Proposal => {
-  let status = STATUS.VOTING;
+  let status = "Voting";
   if (sProposal.state === 'closed') {
-    status = sProposal.scores[0] > sProposal.scores[1] ? STATUS.APPROVED : STATUS.CANCELLED;
+    status = sProposal.scores[0] > sProposal.scores[1] ? "Approved" : "Cancelled";
   }
   const title = sProposal.title || 'Title Unknown';
   return {
     uuid: 'snapshot',
     title,
     body: sProposal.body || 'Body Unknown',
-    status,
+    status: status as ProposalStatus,
     authorAddress: sProposal.author,
     createdTime: new Date(Number(sProposal.start) * 1000).toISOString(),
     lastEditedTime: new Date(Number(sProposal.end) * 1000).toISOString(),
@@ -43,7 +42,7 @@ export const fetchSnapshotProposal = async (snapshotId: string): Promise<Proposa
     // check common db for cached version
     // only use cache if not in voting state otherwise our votes may be stale
     const cache = await getCacheSnapshotProposal(snapshotId);
-    if (cache && cache.status !== STATUS.VOTING) return cache;
+    if (cache && cache.status !== "Voting") return cache;
 
     // if not in cache, query snapshot
     const query = gql`

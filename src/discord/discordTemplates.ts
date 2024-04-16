@@ -7,7 +7,7 @@ import {
 import { stripIndents } from 'common-tags';
 import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal } from '@nance/nance-sdk';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength, maybePlural, numToPrettyString } from '../utils';
-import { EMOJI, STATUS } from '../constants';
+import { EMOJI } from '../constants';
 import { DiffLines } from "../api/helpers/diff";
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
@@ -92,7 +92,7 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
         if (proposal.voteResults) {
           const [yesWord, noWord] = (proposal.voteResults.choices);
           const [yesVal, noVal] = (proposal.voteResults.scores);
-          const emoji = (proposal.status === STATUS.APPROVED) ? EMOJI.APPROVED : EMOJI.CANCELLED;
+          const emoji = (proposal.status === "Approved") ? EMOJI.APPROVED : EMOJI.CANCELLED;
           const scoresTotal = numToPrettyString(proposal.voteResults.scoresTotal, 0);
           const proposalURL = getProposalURL(space, proposal);
           const quorumMet = (proposal.voteResults.quorumMet) ? '' : ' (quorum not met)';

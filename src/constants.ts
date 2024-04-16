@@ -7,14 +7,6 @@ export const EVENTS = {
 } as const;
 
 export const STATUS = {
-  DRAFT: 'Draft',
-  DISCUSSION: 'Discussion',
-  TEMPERATURE_CHECK: EVENTS.TEMPERATURE_CHECK,
-  VOTING: 'Voting',
-  APPROVED: 'Approved',
-  CANCELLED: 'Cancelled',
-  ARCHIVED: 'Archived',
-  PRIVATE: 'Private',
   ACTION: {
     ACTIVE: 'active',
     COMPLETE: 'complete',

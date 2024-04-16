@@ -15,6 +15,7 @@ import {
   SQLExtended,
   SQLTransfer,
   SQLCustomTransaction,
+  ProposalStatus,
 } from '@nance/nance-sdk';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, uuidGen, isHexString } from '../utils';
@@ -22,7 +23,6 @@ import { SELECT_ACTIONS } from './queries';
 import { STATUS } from '../constants';
 
 const proposalsTable = 'proposals';
-const privateProposalsTable = 'private_proposals';
 const payoutsTable = 'payouts';
 const reservesTable = 'reserves';
 const transfersTable = 'transfers';
@@ -71,16 +71,14 @@ export class DoltHandler {
   // eslint-disable-next-line class-methods-use-this
   toProposal(proposal: SQLExtended): Proposal {
     const actions = () => {
-      // clunky but ok for now
       if (typeof proposal.actions === 'string') return JSON.parse(proposal.actions as unknown as string).flat(); // from proposals table
-      if (typeof proposal.actions === 'object') return proposal.actions; // from private proposals table
       return undefined;
     };
     const cleanProposal: Proposal = {
       uuid: proposal.uuid,
       title: isHexString(proposal.title) ? Buffer.from(proposal.title, 'hex').toString('utf8') : proposal.title,
       body: isHexString(proposal.body) ? Buffer.from(proposal.body, 'hex').toString('utf8') : proposal.body,
-      status: proposal.proposalStatus || 'Private',
+      status: proposal.proposalStatus as ProposalStatus,
       proposalId: proposal.proposalId,
       discussionThreadURL: proposal.discussionURL ?? '',
       ipfsURL: proposal.ipfsCID ? `${IPFS_GATEWAY}/ipfs/${proposal.ipfsCID}` : undefined,
@@ -139,18 +137,6 @@ export class DoltHandler {
     return omitBy(sqlProposal, isNil);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  toPrivateSQLProposal(proposal: Partial<Proposal>): Partial<SQLProposal> {
-    const sqlProposal = {
-      uuid: proposal.uuid,
-      title: proposal.title || undefined,
-      body: proposal.body || undefined,
-      authorAddress: proposal.authorAddress || undefined,
-      coauthors: JSON.stringify(proposal.coauthors) || undefined,
-    };
-    return omitBy(sqlProposal, isNil);
-  }
-
   proposalIdNumber = (proposalId: string): number | null => {
     const value = Number(proposalId.split(this.proposalIdPrefix)[1]);
     return (Number.isNaN(value)) ? null : value;
@@ -159,8 +145,8 @@ export class DoltHandler {
   async actionDirector(proposal: Proposal, oldProposal?: Proposal) {
     const cycle = proposal.governanceCycle || 1;
     let actionStatus = STATUS.ACTION.VOTING; // default to voting
-    if (proposal.status === STATUS.APPROVED) { actionStatus = STATUS.ACTION.ACTIVE; }
-    if (proposal.status === STATUS.CANCELLED) { actionStatus = STATUS.ACTION.CANCELLED; }
+    if (proposal.status === "Approved") { actionStatus = STATUS.ACTION.ACTIVE; }
+    if (proposal.status === "Cancelled") { actionStatus = STATUS.ACTION.CANCELLED; }
     proposal.actions?.forEach((action) => {
       if (action.type === 'Payout') {
         this.addPayoutToDb(action.payload as Payout, proposal.uuid, cycle, action?.name || proposal.title, action.uuid, actionStatus);
@@ -207,18 +193,6 @@ export class DoltHandler {
   // ===================================== //
   // ========== add functions ============ //
   // ===================================== //
-
-  async addPrivateProposalToDb(proposal: Proposal) {
-    const now = new Date().toISOString();
-    proposal.uuid = proposal.uuid || uuidGen();
-    await this.localDolt.db.query(oneLine`
-      INSERT INTO ${privateProposalsTable}
-      (uuid, createdTime, lastEditedTime, title, body, authorAddress, coauthors, actions)
-      VALUES(?,?,?,?,?,?,?,?)`,
-    [proposal.uuid, now, now, proposal.title, proposal.body, proposal.authorAddress, JSON.stringify(proposal.coauthors), JSON.stringify(proposal.actions)],
-    );
-    return proposal.uuid;
-  }
 
   async addProposalToDb(proposal: Proposal) {
     const now = new Date().toISOString();
@@ -330,20 +304,6 @@ export class DoltHandler {
     return proposal.uuid || Promise.reject('Proposal uuid not found');
   }
 
-  async editPrivateProposal(proposal: Partial<Proposal>) {
-    const updates: string[] = [];
-    const cleanedProposal = this.toPrivateSQLProposal(proposal);
-    cleanedProposal.lastEditedTime = new Date();
-    Object.keys(cleanedProposal).forEach((key) => {
-      updates.push(`${key} = ?`);
-    });
-    await this.localDolt.db.query(oneLine`
-      UPDATE ${privateProposalsTable} SET
-      ${updates.join(',')} WHERE uuid = ?`,
-    [...Object.values(cleanedProposal), cleanedProposal.uuid]);
-    return proposal.uuid || Promise.reject('Proposal uuid not found');
-  }
-
   async bulkEditPayouts(payouts: SQLPayout[]) {
     await Promise.all(payouts.map(async (payout) => {
       const treasuryVersion = DEFAULT_TREASURY_VERSION;
@@ -378,12 +338,7 @@ export class DoltHandler {
     }
   }
 
-  async deletePrivateProposal(uuid: string) {
-    const res = await this.queryDbResults(oneLine`DELETE FROM ${privateProposalsTable} WHERE uuid = '${uuid}'`);
-    return res.affectedRows;
-  }
-
-  async updateStatuses(proposals: Proposal[], status: string) {
+  async updateStatuses(proposals: Proposal[], status: ProposalStatus) {
     const uuidStringList = proposals.map((p) => { return `'${p.uuid}'`; }).join(',');
     const query = `
       UPDATE ${proposalsTable} SET
@@ -415,7 +370,7 @@ export class DoltHandler {
     const uuidStringList = proposals.map((p) => { return `'${p.uuid}'`; }).join(',');
     const query = `
       UPDATE ${proposalsTable} SET
-      proposalStatus = '${STATUS.TEMPERATURE_CHECK}'
+      proposalStatus = 'Temperature Check'
       WHERE uuid IN (${uuidStringList})
     `;
     return this.queryDb(query);
@@ -455,7 +410,7 @@ export class DoltHandler {
   }
 
   async updatePayoutStatus(proposal: Proposal) {
-    const payStatus = (proposal.status === STATUS.APPROVED) ? STATUS.ACTION.ACTIVE : STATUS.ACTION.CANCELLED;
+    const payStatus = (proposal.status === "Approved") ? STATUS.ACTION.ACTIVE : STATUS.ACTION.CANCELLED;
     this.localDolt.db.query(`
       UPDATE ${payoutsTable} SET
       payStatus = ?
@@ -487,19 +442,10 @@ export class DoltHandler {
   // ========== get functions ============ //
   // ===================================== //
 
-  async getToDiscuss() {
-    return this.queryProposals(`
-      SELECT * FROM ${proposalsTable} WHERE
-      proposalStatus = '${STATUS.DISCUSSION}'
-      AND discussionURL IS NULL
-      ORDER BY proposalId ASC
-    `);
-  }
-
   async getDiscussionProposals() {
     return this.queryProposals(`
       SELECT * FROM ${proposalsTable} WHERE
-      proposalStatus = '${STATUS.DISCUSSION}'
+      proposalStatus = 'Discussion'
       AND proposalId IS NOT NULL
       AND discussionURL IS NOT NULL
       AND title IS NOT NULL
@@ -510,7 +456,7 @@ export class DoltHandler {
   async getTemperatureCheckProposals() {
     return this.queryProposals(oneLine`
       SELECT * FROM ${proposalsTable} WHERE
-      proposalStatus = '${STATUS.TEMPERATURE_CHECK}'
+      proposalStatus = 'Temperature Check'
       ORDER BY proposalId ASC
     `);
   }
@@ -518,7 +464,7 @@ export class DoltHandler {
   async getVoteProposals({ uploadedToSnapshot = false } : { uploadedToSnapshot?: boolean } = {}) {
     return this.queryProposals(`
       ${SELECT_ACTIONS} from ${proposalsTable} WHERE
-      proposalStatus = '${STATUS.VOTING}'
+      proposalStatus = 'Voting'
       AND snapshotId IS ${uploadedToSnapshot ? 'NOT ' : ''}NULL
       ORDER BY proposalId ASC
     `);
@@ -614,21 +560,6 @@ export class DoltHandler {
       ${SELECT_ACTIONS} FROM ${proposalsTable}
       ${where} LIMIT 1
     `).then((res) => {
-      return res[0];
-    }).catch((e) => { return Promise.reject(e); });
-  }
-
-  async getPrivateProposalsByAuthorAddress(authorAddress: string) {
-    return this.queryProposals(oneLine`
-    SELECT *, HEX(title) as title FROM ${privateProposalsTable} WHERE
-    authorAddress = ?`, [authorAddress]);
-  }
-
-  async getPrivateProposal(uuid: string, authorAddress: string) {
-    return this.queryProposals(oneLine`
-      SELECT *, HEX(body) as body, HEX(title) as title FROM ${privateProposalsTable} WHERE
-      uuid = ? AND authorAddress = ?`, [uuid, authorAddress]).then((res) => {
-      if (res.length === 0) return Promise.reject('proposalId not found');
       return res[0];
     }).catch((e) => { return Promise.reject(e); });
   }

@@ -3,7 +3,7 @@ import { discordLogin } from '../api/helpers/discord';
 import { doltSys } from '../dolt/doltSys';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
-import { STATUS, TASKS } from '../constants';
+import { TASKS } from '../constants';
 import logger from '../logging';
 
 export const temperatureCheckRollup = async (space: string, config: NanceConfig, endDate: Date) => {
@@ -16,7 +16,7 @@ export const temperatureCheckRollup = async (space: string, config: NanceConfig,
       proposals,
       endDate,
     );
-    await dolt.updateStatuses(proposals, STATUS.TEMPERATURE_CHECK);
+    await dolt.updateStatuses(proposals, "Temperature Check");
     await doltSys.updateDialogHandlerMessageId(
       space,
       TASKS.temperatureCheckRollup as keyof DialogHandlerMessageIds,

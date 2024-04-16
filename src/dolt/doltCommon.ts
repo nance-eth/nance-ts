@@ -1,16 +1,15 @@
 /* eslint-disable no-nested-ternary */
 import { oneLine } from "common-tags";
-import { Proposal, SnapshotProposal, SQLSnapshotProposal } from "@nance/nance-sdk";
+import { Proposal, ProposalStatus, SnapshotProposal, SQLSnapshotProposal } from "@nance/nance-sdk";
 import { pools } from "./pools";
-import { cleanResultsHeader, resStatus } from "./doltSQL";
-import { STATUS } from "../constants";
+import { cleanResultsHeader } from "./doltSQL";
 
 const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): Proposal => {
   return {
     uuid: 'snapshot',
     title: cacheProposal.title,
     body: cacheProposal.body,
-    status: cacheProposal.proposalStatus,
+    status: cacheProposal.proposalStatus as ProposalStatus,
     authorAddress: cacheProposal.authorAddress,
     createdTime: new Date(cacheProposal.startTimestamp * 1000).toISOString(),
     lastEditedTime: new Date(cacheProposal.startTimestamp * 1000).toISOString(),
@@ -54,12 +53,12 @@ export const setCacheSnapshotProposal = async (
   proposalSummary?: string
 ): Promise<boolean> => {
   const dolt = pools.common;
-  let status = STATUS.VOTING;
+  let status = "Voting";
   if (sProposal.state === 'closed') {
     if (sProposal.scores[0] > sProposal.scores[1]) {
-      status = STATUS.APPROVED;
+      status = "Approved";
     } else {
-      status = STATUS.CANCELLED;
+      status = "Cancelled";
     }
   }
   return dolt.db.query(oneLine`

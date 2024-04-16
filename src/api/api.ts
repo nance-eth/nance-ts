@@ -1,35 +1,28 @@
 /* eslint-disable max-lines */
 import express from 'express';
-import { Contract } from 'ethers';
 import {
   Proposal,
-  GovernorProposeTransaction,
-  BasicTransaction,
   ProposalUploadRequest,
   SpaceInfo,
   ProposalsPacket,
   EditPayoutsRequest,
-  FetchReconfigureRequest,
   SQLPayout,
   SQLTransfer,
   ProposalUpdateRequest,
   SpaceConfig
 } from '@nance/nance-sdk';
-import { NanceTreasury } from '../treasury';
 import logger from '../logging';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
-import { getENS } from './helpers/ens';
-import { getLastSlash, myProvider, sleep } from '../utils';
+import { getLastSlash, sleep, uuidGen } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { diffLineCounts } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
 import { TenderlyHandler } from '../tenderly/tenderlyHandler';
-import { addressFromJWT, addressHasGuildRole } from './helpers/auth';
+import { addressFromJWT, addressFromSignature, addressHasGuildRole } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
-import { STATUS } from '../constants';
 import { getSpaceInfo } from './helpers/getSpace';
 import { fetchSnapshotProposal } from "../snapshot/snapshotProposals";
 import { getSummary, postSummary } from "../nancearizer";
@@ -37,7 +30,6 @@ import { discordLogin } from "./helpers/discord";
 import { headToUrl } from "../dolt/doltAPI";
 
 const router = express.Router();
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
@@ -132,23 +124,6 @@ router.get('/:space', async (req, res) => {
 // ======== proposals functions ======== //
 // ===================================== //
 
-// query private proposals
-router.get('/:space/privateProposals', async (req, res) => {
-  const { space } = req.params;
-  try {
-    const { dolt, address } = await handlerReq(space, req.headers.authorization);
-
-    // check for any private proposals
-    if (address) {
-      const privates = await dolt?.getPrivateProposalsByAuthorAddress(address);
-      return res.send({ success: true, data: privates });
-    }
-    return res.send({ success: true, data: [] });
-  } catch (e) {
-    return res.send({ success: false, error: `[NANCE] ${e}` });
-  }
-});
-
 // query proposals
 router.get('/:space/proposals', async (req, res) => {
   console.time("proposals");
@@ -186,15 +161,29 @@ router.get('/:space/proposals', async (req, res) => {
 // upload new proposal
 router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
-  const { proposal } = req.body as ProposalUploadRequest & { proposal: Proposal }; // type hack
+  const { proposal, uploaderAddress, uploaderSignature } = req.body as ProposalUploadRequest;
+  console.log("uploaderAddress", uploaderAddress);
+  console.log("uploaderSignature", uploaderSignature);
   try {
     const { config, dolt, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
-    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
-
+    if (uploaderAddress && uploaderSignature) {
+      console.log("checking signature");
+      const decodedAddress = await addressFromSignature(proposal, uploaderSignature);
+      if (uploaderAddress !== decodedAddress) {
+        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        return;
+      }
+    }
+    if (!address && !uploaderSignature) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
     // check Guildxyz access, allow draft uploads regardless of Guildxyz access
-    if (config.guildxyz && proposal.status === STATUS.DISCUSSION) {
-      const access = await addressHasGuildRole(address, config.guildxyz.id, config.guildxyz.roles);
+    if (config.guildxyz && proposal.status === "Discussion") {
+      const checkAddress = address || uploaderAddress;
+      if (!checkAddress) {
+        res.json({ success: false, error: '[PERMISSIONS] User not authorized to upload proposal' });
+        return;
+      }
+      const access = await addressHasGuildRole(checkAddress, config.guildxyz.id, config.guildxyz.roles);
       console.log(`[PERMISSIONS] ${address} has access: ${access}`);
       if (!access) {
         res.json({
@@ -203,52 +192,54 @@ router.post('/:space/proposals', async (req, res) => {
         return;
       }
     }
-    if (!proposal.governanceCycle) {
-      proposal.governanceCycle = currentGovernanceCycle + 1;
+    const newProposal: Proposal = {
+      ...proposal,
+      uuid: proposal.uuid || uuidGen(),
+      createdTime: new Date().toISOString(),
+      lastEditedTime: new Date().toISOString(),
+      authorAddress: uploaderAddress,
+      discussionThreadURL: ""
+    };
+    if (!newProposal.governanceCycle) {
+      newProposal.governanceCycle = currentGovernanceCycle + 1;
     }
-    if (!proposal.authorAddress) { proposal.authorAddress = address; }
-    if (proposal.status === STATUS.ARCHIVED) { proposal.status = STATUS.DISCUSSION; } // proposal forked from an archive, set to discussion
-    if (proposal.status === STATUS.PRIVATE) {
-      dolt.addPrivateProposalToDb(proposal).then(async (uuid: string) => {
-        res.json({ success: true, data: { uuid } });
-      });
-    } else {
-      if (config.submitAsApproved) { proposal.status = STATUS.APPROVED; }
-      console.log('======================================================');
-      console.log('==================== NEW PROPOSAL ====================');
-      console.log('======================================================');
-      console.log(`space ${space}, author ${address}`);
-      console.dir(proposal, { depth: null });
-      console.log('======================================================');
-      console.log('======================================================');
-      console.log('======================================================');
-      dolt.addProposalToDb(proposal).then(async (uuid: string) => {
-        proposal.uuid = uuid;
-        dolt.actionDirector(proposal);
+    if (!newProposal.authorAddress) { newProposal.authorAddress = address || uploaderAddress; }
+    if (newProposal.status === "Archived") { newProposal.status = "Discussion"; } // proposal forked from an archive, set to discussion
+    if (config.submitAsApproved) { newProposal.status = "Approved"; }
+    console.log('======================================================');
+    console.log('==================== NEW PROPOSAL ====================');
+    console.log('======================================================');
+    console.log(`space ${space}, author ${address}`);
+    console.dir(newProposal, { depth: null });
+    console.log('======================================================');
+    console.log('======================================================');
+    console.log('======================================================');
+    dolt.addProposalToDb(newProposal).then(async (uuid: string) => {
+      proposal.uuid = uuid;
+      dolt.actionDirector(newProposal);
 
-        // send discord message
-        const discordEnabled = config.discord.channelIds.proposals !== null;
-        if ((proposal.status === STATUS.DISCUSSION || proposal.status === STATUS.APPROVED) && discordEnabled) {
-          const dialogHandler = new DiscordHandler(config);
-          // eslint-disable-next-line no-await-in-loop
-          while (!dialogHandler.ready()) { await sleep(50); }
-          try {
-            const discussionThreadURL = await dialogHandler.startDiscussion(proposal);
-            dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
-            dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
-          } catch (e) {
-            logger.error(`[DISCORD] ${e}`);
-          }
+      // send discord message
+      const discordEnabled = config.discord.channelIds.proposals !== null;
+      if ((proposal.status === "Discussion" || proposal.status === "Approved") && discordEnabled) {
+        const dialogHandler = new DiscordHandler(config);
+        // eslint-disable-next-line no-await-in-loop
+        while (!dialogHandler.ready()) { await sleep(50); }
+        try {
+          const discussionThreadURL = await dialogHandler.startDiscussion(newProposal);
+          dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+          dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
+        } catch (e) {
+          logger.error(`[DISCORD] ${e}`);
         }
-        res.json({ success: true, data: { uuid } });
-        const summary = await postSummary(proposal, "proposal");
-        dolt.updateSummary(uuid, summary, "proposal");
-        // update nextProposalId
-        spaceCache[space].nextProposalId += 1;
-      }).catch((e: any) => {
-        res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
-      });
-    }
+      }
+      res.json({ success: true, data: { uuid } });
+      const summary = await postSummary(newProposal, "proposal");
+      dolt.updateSummary(uuid, summary, "proposal");
+      // update nextProposalId
+      spaceCache[space].nextProposalId += 1;
+    }).catch((e: any) => {
+      res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
+    });
   } catch (e) { res.json({ success: false, error: `[NANCE ERROR]: ${e}` }); }
 });
 
@@ -274,8 +265,6 @@ router.get('/:space/proposal/:pid', async (req, res) => {
   try {
     const { dolt, config, address, nextProposalId } = await handlerReq(space, req.headers.authorization);
     proposal = await dolt.getProposalByAnyId(pid);
-    // proposal not found, try privateProposal
-    if (!proposal && address) proposal = await dolt.getPrivateProposal(pid, address);
     const proposalId = proposal.proposalId ? `${config.proposalIdPrefix}${proposal.proposalId}` : undefined;
     res.send({
       success: true,
@@ -297,16 +286,15 @@ router.get('/:space/proposal/:pid', async (req, res) => {
 // edit single proposal
 router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
-  const { proposal } = req.body as ProposalUpdateRequest;
+  const { proposal, uploaderSignature, uploaderAddress } = req.body as ProposalUpdateRequest;
   const { dolt, config, address, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
   let proposalByUuid: Proposal;
-  let isPrivate = false;
   try {
     proposalByUuid = await dolt.getProposalByAnyId(pid);
   } catch {
-    proposalByUuid = await dolt.getPrivateProposal(pid, address);
-    isPrivate = true;
+    res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
+    return;
   }
   if (!canEditProposal(proposalByUuid.status)) {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
@@ -320,7 +308,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     || isNanceSpaceOwner(spaceOwners, address)
     || isNanceAddress(address)
   );
-  if (proposal.status === STATUS.ARCHIVED && !permissions) {
+  if (proposal.status === "Archived" && !permissions) {
     res.json({ success: false, error: '[PERMISSIONS] User not authorized to archive proposal' });
     return;
   }
@@ -330,7 +318,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   if (address && !proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
     coauthors?.push(address);
   }
-  const proposalId = (!proposalByUuid.proposalId && proposal.status === STATUS.DISCUSSION) ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
+  const proposalId = (!proposalByUuid.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
   console.log('======================================================');
   console.log('=================== EDIT PROPOSAL ====================');
   console.log('======================================================');
@@ -341,7 +329,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   console.log('======================================================');
 
   // update governance cycle to current if proposal is a draft
-  if (proposal.status === STATUS.DRAFT) {
+  if (proposal.status === "Draft") {
     governanceCycle = currentGovernanceCycle + 1;
   }
 
@@ -354,19 +342,12 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     governanceCycle,
   };
 
-  const editFunction = (p: Proposal) => {
-    if (isPrivate && (proposal.status === STATUS.DISCUSSION || proposal.status === STATUS.DRAFT)) return dolt.addProposalToDb(p);
-    if (isPrivate) return dolt.editPrivateProposal(p);
-    return dolt.editProposal(p);
-  };
   const discord = await discordLogin(config);
-  editFunction(updateProposal).then(async (uuid: string) => {
-    if (!isPrivate) dolt.actionDirector(updateProposal, proposalByUuid);
-    if (isPrivate) dolt.deletePrivateProposal(uuid);
+  dolt.addProposalToDb(updateProposal).then(async (uuid: string) => {
     // if proposal moved form Draft to Discussion, send discord message
     const shouldCreateDiscussion = (
-      (proposalByUuid.status === STATUS.DRAFT || proposalByUuid.status === STATUS.PRIVATE)
-      && proposal.status === STATUS.DISCUSSION && !proposalByUuid.discussionThreadURL
+      (proposalByUuid.status === "Draft")
+      && proposal.status === "Discussion" && !proposalByUuid.discussionThreadURL
     );
     if (shouldCreateDiscussion) {
       try {
@@ -378,11 +359,11 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       }
     }
     // archive alert
-    if (proposal.status === STATUS.ARCHIVED) {
+    if (proposal.status === "Archived") {
       try { await discord.sendProposalArchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
     }
     // unarchive alert
-    if (proposal.status === STATUS.DISCUSSION && proposalByUuid.status === STATUS.ARCHIVED) {
+    if (proposal.status === "Discussion" && proposalByUuid.status === "Archived") {
       try { await discord.sendProposalUnarchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
     }
 
@@ -406,12 +387,11 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
   const { dolt, config, spaceOwners, address } = await handlerReq(space, req.headers.authorization);
   if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal delete' }); return; }
   let proposalByUuid: Proposal;
-  let isPrivate = false;
   try {
     proposalByUuid = await dolt.getProposalByAnyId(uuid);
     if (!proposalByUuid) {
-      proposalByUuid = await dolt.getPrivateProposal(uuid, address);
-      isPrivate = true;
+      res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
+      return;
     }
     if (!proposalByUuid) { throw new Error('proposal not found'); }
   } catch {
@@ -428,10 +408,10 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
     || isNanceSpaceOwner(spaceOwners, address)
     || isNanceAddress(address)
   );
-  const deleteFunction = (u: string) => { return isPrivate ? dolt.deletePrivateProposal(u) : dolt.deleteProposal(uuid); };
+
   if (permissions) {
     logger.info(`DELETE issued by ${address}`);
-    deleteFunction(uuid).then(async (affectedRows: number) => {
+    dolt.deleteProposal(uuid).then(async (affectedRows: number) => {
       const discord = new DiscordHandler(config);
       // eslint-disable-next-line no-await-in-loop
       while (!discord.ready()) { await sleep(50); }
@@ -457,58 +437,6 @@ router.get('/:space/summary/:type/:pid', async (req, res) => {
   res.json({ success: true, data: summary });
 });
 
-// ==================================== //
-// ======== multisig functions ======== //
-// ==================================== //
-
-router.get('/:space/reconfigure', async (req, res) => {
-  const { space } = req.params;
-  const { version = 'V3', address = ZERO_ADDRESS, datetime = new Date() } = req.query as unknown as FetchReconfigureRequest;
-  const { dolt, config, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-  const ens = await getENS(address);
-  const { gnosisSafeAddress, governorAddress, network } = config.juicebox;
-  const treasury = new NanceTreasury(config, dolt, myProvider(config.juicebox.network), currentGovernanceCycle);
-  const memo = `submitted by ${ens} at ${datetime} from juicetool & nance`;
-  // *** governor reconfiguration *** //
-  if (governorAddress && !gnosisSafeAddress) {
-    const abi = await doltSys.getABI('NANCEGOV');
-    return res.send(
-      await treasury.fetchReconfiguration(version as string, memo).then((txn: BasicTransaction) => {
-        const governorProposal: GovernorProposeTransaction = {
-          targets: [txn.address],
-          values: [0],
-          calldatas: [txn.bytes],
-          description: 'hi',
-        };
-        const contract = new Contract(governorAddress, abi);
-        const encodedData = contract.interface.encodeFunctionData('propose', [governorProposal.targets, governorProposal.values, governorProposal.calldatas, governorProposal.description]);
-
-        return { success: true, data: { governorProposal, governor: governorAddress, transaction: encodedData } };
-      }).catch((e: any) => {
-        return { success: false, error: e };
-      })
-    );
-  }
-  // *** gnosis reconfiguration *** //
-  if (gnosisSafeAddress && !governorAddress) {
-    const currentNonce = await GnosisHandler.getCurrentNonce(gnosisSafeAddress, network).then((nonce: string) => {
-      return nonce;
-    }).catch((e: any) => {
-      return res.json({ success: false, error: e });
-    });
-    if (!currentNonce) { return res.json({ success: false, error: 'safe not found' }); }
-    const nonce = (Number(currentNonce) + 1).toString();
-    return res.send(
-      await treasury.fetchReconfiguration(version as string, memo).then((txn: any) => {
-        return { success: true, data: { safe: gnosisSafeAddress, transaction: txn, nonce } };
-      }).catch((e: any) => {
-        return { success: false, error: e };
-      })
-    );
-  }
-  return { success: false, error: 'no multisig or governor found' };
-});
-
 // ===================================== //
 // ======== admin-ish functions ======== //
 // ===================================== //
@@ -519,7 +447,7 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
   const { config, dolt } = await handlerReq(space, req.headers.authorization);
   const proposal = await dolt.getProposalByAnyId(uuid);
   let discussionThreadURL = '';
-  if (proposal.status === STATUS.DISCUSSION && !proposal.discussionThreadURL) {
+  if (proposal.status === "Discussion" && !proposal.discussionThreadURL) {
     const dialogHandler = new DiscordHandler(config);
     // eslint-disable-next-line no-await-in-loop
     while (!dialogHandler.ready()) { await sleep(50); }

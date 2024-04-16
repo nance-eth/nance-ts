@@ -1,6 +1,5 @@
 import { nanceAddress } from '../../keys';
 import { GnosisHandler } from '../../gnosis/gnosisHandler';
-import { STATUS } from '../../constants';
 
 export const isMultisig = async (safeAddress: string, address: string) => {
   return GnosisHandler.getSigners(safeAddress).then((multisig) => {
@@ -18,11 +17,10 @@ export const isNanceSpaceOwner = (spaceOwners: string[], address: string) => {
 
 export function canEditProposal(status: string) {
   return ([
-    STATUS.DISCUSSION,
-    STATUS.DRAFT,
-    STATUS.TEMPERATURE_CHECK,
-    STATUS.PRIVATE,
-    STATUS.ARCHIVED,
+    "Discussion",
+    "Draft",
+    "Temperature Check",
+    "Archive",
     undefined,
   ].includes(status));
 }
