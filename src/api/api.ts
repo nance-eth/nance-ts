@@ -5,11 +5,11 @@ import {
   ProposalUploadRequest,
   SpaceInfo,
   ProposalsPacket,
-  EditPayoutsRequest,
   SQLPayout,
   SQLTransfer,
   ProposalUpdateRequest,
-  SpaceConfig
+  SpaceConfig,
+  ProposalDeleteRequest
 } from '@nance/nance-sdk';
 import logger from '../logging';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
@@ -51,7 +51,7 @@ async function handlerReq(_query: string, auth: string | undefined) {
     const spaceInfo = await getSpaceInfo(spaceConfig);
     const dolt = new DoltHandler(pools[query], spaceInfo.config.proposalIdPrefix);
     const jwt = auth?.split('Bearer ')[1];
-    const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
+    const bearerAddress = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
 
     // get nextProposalId
     let nextProposalId = spaceCache[query]?.nextProposalId;
@@ -64,7 +64,7 @@ async function handlerReq(_query: string, auth: string | undefined) {
       name: query,
       displayName: spaceInfo.displayName,
       spaceOwners: spaceInfo.spaceOwners,
-      address,
+      bearerAddress,
       config: spaceInfo.config,
       currentGovernanceCycle: spaceInfo.currentCycle,
       cycleStartDate: spaceInfo.cycleStartDate,
@@ -162,28 +162,22 @@ router.get('/:space/proposals', async (req, res) => {
 router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   const { proposal, uploaderAddress, uploaderSignature } = req.body as ProposalUploadRequest;
-  console.log("uploaderAddress", uploaderAddress);
-  console.log("uploaderSignature", uploaderSignature);
   try {
-    const { config, dolt, address, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const { config, dolt, bearerAddress, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const address = bearerAddress || uploaderAddress;
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
+    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
     if (uploaderAddress && uploaderSignature) {
-      console.log("checking signature");
-      const decodedAddress = await addressFromSignature(proposal, uploaderSignature);
+      const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
       if (uploaderAddress !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
       }
     }
-    if (!address && !uploaderSignature) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE address for proposal upload' }); return; }
+
     // check Guildxyz access, allow draft uploads regardless of Guildxyz access
     if (config.guildxyz && proposal.status === "Discussion") {
-      const checkAddress = address || uploaderAddress;
-      if (!checkAddress) {
-        res.json({ success: false, error: '[PERMISSIONS] User not authorized to upload proposal' });
-        return;
-      }
-      const access = await addressHasGuildRole(checkAddress, config.guildxyz.id, config.guildxyz.roles);
+      const access = await addressHasGuildRole(address, config.guildxyz.id, config.guildxyz.roles);
       console.log(`[PERMISSIONS] ${address} has access: ${access}`);
       if (!access) {
         res.json({
@@ -196,8 +190,7 @@ router.post('/:space/proposals', async (req, res) => {
       ...proposal,
       uuid: proposal.uuid || uuidGen(),
       createdTime: new Date().toISOString(),
-      lastEditedTime: new Date().toISOString(),
-      authorAddress: uploaderAddress,
+      authorAddress: address,
       discussionThreadURL: ""
     };
     if (!newProposal.governanceCycle) {
@@ -263,7 +256,7 @@ router.get('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   let proposal: Proposal | undefined;
   try {
-    const { dolt, config, address, nextProposalId } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, nextProposalId } = await handlerReq(space, req.headers.authorization);
     proposal = await dolt.getProposalByAnyId(pid);
     const proposalId = proposal.proposalId ? `${config.proposalIdPrefix}${proposal.proposalId}` : undefined;
     res.send({
@@ -287,15 +280,17 @@ router.get('/:space/proposal/:pid', async (req, res) => {
 router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   const { proposal, uploaderSignature, uploaderAddress } = req.body as ProposalUpdateRequest;
-  const { dolt, config, address, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
-  let proposalByUuid: Proposal;
-  try {
-    proposalByUuid = await dolt.getProposalByAnyId(pid);
-  } catch {
-    res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
-    return;
+  const { dolt, config, bearerAddress, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+  const address = bearerAddress || uploaderAddress;
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
+  if (uploaderAddress && uploaderSignature) {
+    const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
+    if (uploaderAddress !== decodedAddress) {
+      res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+      return;
+    }
   }
+  const proposalByUuid = await dolt.getProposalByAnyId(pid);
   if (!canEditProposal(proposalByUuid.status)) {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
@@ -343,7 +338,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   };
 
   const discord = await discordLogin(config);
-  dolt.addProposalToDb(updateProposal).then(async (uuid: string) => {
+  dolt.editProposal(updateProposal).then(async (uuid: string) => {
     // if proposal moved form Draft to Discussion, send discord message
     const shouldCreateDiscussion = (
       (proposalByUuid.status === "Draft")
@@ -384,20 +379,23 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 // delete single proposal
 router.delete('/:space/proposal/:uuid', async (req, res) => {
   const { space, uuid } = req.params;
-  const { dolt, config, spaceOwners, address } = await handlerReq(space, req.headers.authorization);
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal delete' }); return; }
-  let proposalByUuid: Proposal;
-  try {
-    proposalByUuid = await dolt.getProposalByAnyId(uuid);
-    if (!proposalByUuid) {
-      res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
+  const { deleterAddress, deleterSignature } = req.body as ProposalDeleteRequest;
+  const { dolt, config, spaceOwners, bearerAddress } = await handlerReq(space, req.headers.authorization);
+  const address = bearerAddress || deleterAddress;
+  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' }); return; }
+  const proposalByUuid = await dolt.getProposalByAnyId(uuid);
+  if (deleterAddress && deleterSignature) {
+    const decodedAddress = await addressFromSignature(proposalByUuid, deleterSignature, "DeleteProposal");
+    if (deleterAddress !== decodedAddress) {
+      res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
       return;
     }
-    if (!proposalByUuid) { throw new Error('proposal not found'); }
-  } catch {
+  }
+  if (!proposalByUuid) {
     res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
     return;
   }
+  if (!proposalByUuid) { throw new Error('proposal not found'); }
   if (!canEditProposal(proposalByUuid.status)) {
     res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
     return;
@@ -490,21 +488,6 @@ router.get('/:space/payouts', async (req, res) => {
   } catch (e) {
     res.json({ success: false, error: e });
   }
-});
-
-// edit payouts table
-router.put('/:space/payouts', async (req, res) => {
-  const { space } = req.params;
-  const { config, dolt, address, spaceOwners } = await handlerReq(space, req.headers.authorization);
-  const { payouts } = req.body as EditPayoutsRequest;
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing SIWE adddress for proposal upload' }); return; }
-  const safeAddress = config.juicebox.gnosisSafeAddress;
-  if (await isMultisig(safeAddress, address) || isNanceAddress(address) || isNanceSpaceOwner(spaceOwners, address)) {
-    logger.info(`EDIT PAYOUTS by ${address}`);
-    dolt.bulkEditPayouts(payouts).then(() => {
-      res.json({ success: true });
-    }).catch((e: any) => { res.json({ success: false, error: e }); });
-  } else { res.json({ success: false, error: '[PERMISSIONS] User not authorized to edit payouts' }); }
 });
 
 // ===================================== //

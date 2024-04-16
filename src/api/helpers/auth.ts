@@ -2,10 +2,11 @@ import { decode } from "next-auth/jwt";
 import {
   signatureTypes,
   signatureDomain,
-  SignNewProposal,
   NewProposal,
+  UpdateProposal,
+  SignatureTypes,
 } from "@nance/nance-sdk";
-import { verifyTypedData } from "ethers/lib/utils";
+import { recoverTypedDataAddress } from "viem";
 import { unixTimeStampNow } from "../../utils";
 import { keys } from "../../keys";
 import { getAddressRoles } from "../../guildxyz/guildxyz";
@@ -29,20 +30,20 @@ export async function addressFromJWT(jwt: string): Promise<string> {
   });
 }
 
-export async function addressFromSignature(proposal: NewProposal, signature: string): Promise<string> {
-  const message = {
-    uuid: proposal.uuid,
-    title: proposal.title,
-    body: proposal.body,
-    status: proposal.status,
-  };
+export async function addressFromSignature(
+  message: NewProposal | UpdateProposal | { uuid: string },
+  signature: string,
+  primaryType: SignatureTypes
+): Promise<string> {
+  if (!message.uuid) return Promise.reject(new Error("Proposal uuid is required"));
 
-  const address = verifyTypedData(
-    signatureDomain,
-    signatureTypes,
+  const address = await recoverTypedDataAddress({
+    types: signatureTypes,
+    domain: signatureDomain,
+    primaryType,
     message,
-    signature
-  );
+    signature: signature as `0x${string}`,
+  });
   console.log("addressFromSignature", address);
   return address;
 }
