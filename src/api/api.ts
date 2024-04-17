@@ -189,12 +189,12 @@ router.post('/:space/proposals', async (req, res) => {
       }
     }
     const newProposal: Proposal = {
+      actions: [],
       ...proposal,
       uuid: proposal.uuid || uuidGen(),
       createdTime: new Date().toISOString(),
       authorAddress: address,
       discussionThreadURL: "",
-      actions: [],
     };
     if (!newProposal.governanceCycle) {
       newProposal.governanceCycle = currentGovernanceCycle + 1;
@@ -229,8 +229,10 @@ router.post('/:space/proposals', async (req, res) => {
         }
       }
       res.json({ success: true, data: { uuid } });
-      const summary = await postSummary(newProposal, "proposal");
-      dolt.updateSummary(uuid, summary, "proposal");
+      if (space !== "waterbox") {
+        const summary = await postSummary(newProposal, "proposal");
+        dolt.updateSummary(uuid, summary, "proposal");
+      }
       // update nextProposalId
       spaceCache[space].nextProposalId += 1;
     }).catch((e: any) => {
@@ -315,9 +317,10 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
   // eslint-disable-next-line prefer-const
   let { authorAddress, coauthors, governanceCycle } = proposalByUuid;
-  if (address && !proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
-    coauthors?.push(address);
+  if (!proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
+    coauthors = !coauthors ? [address] : [...coauthors, address];
   }
+
   const proposalId = (!proposalByUuid.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
   console.log('======================================================');
   console.log('=================== EDIT PROPOSAL ====================');
@@ -344,6 +347,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
   const discord = await discordLogin(config);
   dolt.editProposal(updateProposal).then(async (uuid: string) => {
+    dolt.actionDirector(updateProposal, proposalByUuid);
     // if proposal moved form Draft to Discussion, send discord message
     const shouldCreateDiscussion = (
       (proposalByUuid.status === "Draft")
