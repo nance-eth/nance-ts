@@ -14,7 +14,7 @@ export const postSummary = async (proposal: Proposal, type: "proposal" | "thread
     data: {
       ...proposal
     },
-  } as ProposalQueryResponse;
+  };
   const res = await axios.post(`${API}/${type}`, proposalQueryResponse);
   return res.data;
 };

@@ -9,7 +9,8 @@ import {
   SQLTransfer,
   ProposalUpdateRequest,
   SpaceConfig,
-  ProposalDeleteRequest
+  ProposalDeleteRequest,
+  ProposalQueryResponse
 } from '@nance/nance-sdk';
 import logger from '../logging';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
@@ -145,6 +146,7 @@ router.get('/:space/proposals', async (req, res) => {
         snapshotSpace: config?.snapshot.space || space,
         proposalIdPrefix: config.proposalIdPrefix,
         minTokenPassingAmount: config?.snapshot.minTokenPassingAmount || 0,
+        nextProposalId: spaceCache[space].nextProposalId || 0,
       },
       proposals,
       hasMore,
@@ -191,7 +193,8 @@ router.post('/:space/proposals', async (req, res) => {
       uuid: proposal.uuid || uuidGen(),
       createdTime: new Date().toISOString(),
       authorAddress: address,
-      discussionThreadURL: ""
+      discussionThreadURL: "",
+      actions: [],
     };
     if (!newProposal.governanceCycle) {
       newProposal.governanceCycle = currentGovernanceCycle + 1;
@@ -258,17 +261,19 @@ router.get('/:space/proposal/:pid', async (req, res) => {
   try {
     const { dolt, config, nextProposalId } = await handlerReq(space, req.headers.authorization);
     proposal = await dolt.getProposalByAnyId(pid);
-    const proposalId = proposal.proposalId ? `${config.proposalIdPrefix}${proposal.proposalId}` : undefined;
+    if (!proposal) { throw Error(); }
     res.send({
       success: true,
       data: {
         ...proposal,
-        proposalId,
-        minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
-        snapshotSpace: config.snapshot.space,
-        nextProposalId
+        proposalInfo: {
+          proposalIdPrefix: config.proposalIdPrefix,
+          minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
+          snapshotSpace: config.snapshot.space,
+          nextProposalId
+        }
       }
-    });
+    } as ProposalQueryResponse);
   } catch (e) {
     res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
   } finally {
