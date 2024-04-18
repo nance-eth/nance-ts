@@ -42,10 +42,7 @@ export async function addressFromSignature(
     types: signatureTypes,
     domain: signatureDomain,
     primaryType,
-    message: {
-      ...message,
-      uuid: `${message.uuid.replace("6", "7")}`,
-    },
+    message,
     signature: signature as `0x${string}`,
   });
   console.log("addressFromSignature", address);
