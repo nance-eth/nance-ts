@@ -387,48 +387,52 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
 // delete single proposal
 router.delete('/:space/proposal/:uuid', async (req, res) => {
-  const { space, uuid } = req.params;
-  const { deleterAddress, deleterSignature } = req.body as ProposalDeleteRequest;
-  const { dolt, config, spaceOwners, bearerAddress } = await handlerReq(space, req.headers.authorization);
-  const address = bearerAddress || deleterAddress;
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' }); return; }
-  const proposalByUuid = await dolt.getProposalByAnyId(uuid);
-  if (deleterAddress && deleterSignature) {
-    const decodedAddress = await addressFromSignature(proposalByUuid, deleterSignature, "DeleteProposal");
-    if (deleterAddress !== decodedAddress) {
-      res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+  try {
+    const { space, uuid } = req.params;
+    const { deleterAddress, deleterSignature } = req.body as ProposalDeleteRequest;
+    const { dolt, config, spaceOwners, bearerAddress } = await handlerReq(space, req.headers.authorization);
+    const address = bearerAddress || deleterAddress;
+    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' }); return; }
+    const proposalByUuid = await dolt.getProposalByAnyId(uuid);
+    if (deleterAddress && deleterSignature) {
+      const decodedAddress = await addressFromSignature(proposalByUuid, deleterSignature, "DeleteProposal");
+      if (deleterAddress !== decodedAddress) {
+        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        return;
+      }
+    }
+    if (!proposalByUuid) {
+      res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
       return;
     }
-  }
-  if (!proposalByUuid) {
-    res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
-    return;
-  }
-  if (!proposalByUuid) { throw new Error('proposal not found'); }
-  if (!canEditProposal(proposalByUuid.status)) {
-    res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
-    return;
-  }
-  const permissions = (
-    address === proposalByUuid.authorAddress
-    || await isMultisig(config.juicebox.gnosisSafeAddress, address)
-    || isNanceSpaceOwner(spaceOwners, address)
-    || isNanceAddress(address)
-  );
+    if (!proposalByUuid) { throw new Error('proposal not found'); }
+    if (!canEditProposal(proposalByUuid.status)) {
+      res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
+      return;
+    }
+    const permissions = (
+      address === proposalByUuid.authorAddress
+      || await isMultisig(config.juicebox.gnosisSafeAddress, address)
+      || isNanceSpaceOwner(spaceOwners, address)
+      || isNanceAddress(address)
+    );
 
-  if (permissions) {
-    logger.info(`DELETE issued by ${address}`);
-    dolt.deleteProposal(uuid).then(async (affectedRows: number) => {
-      const discord = new DiscordHandler(config);
-      // eslint-disable-next-line no-await-in-loop
-      while (!discord.ready()) { await sleep(50); }
-      try { await discord.sendProposalDelete(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
-      res.json({ success: true, data: { affectedRows } });
-    }).catch((e: any) => {
-      res.json({ success: false, error: e });
-    });
-  } else {
-    res.json({ success: false, error: '[PERMISSIONS] User not authorized to delete proposal' });
+    if (permissions) {
+      logger.info(`DELETE issued by ${address}`);
+      dolt.deleteProposal(uuid).then(async (affectedRows: number) => {
+        const discord = new DiscordHandler(config);
+        // eslint-disable-next-line no-await-in-loop
+        while (!discord.ready()) { await sleep(50); }
+        try { await discord.sendProposalDelete(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
+        res.json({ success: true, data: { affectedRows } });
+      }).catch((e: any) => {
+        res.json({ success: false, error: e });
+      });
+    } else {
+      res.json({ success: false, error: '[PERMISSIONS] User not authorized to delete proposal' });
+    }
+  } catch (e) {
+    res.json({ success: false, error: e });
   }
 });
 

@@ -35,13 +35,17 @@ export async function addressFromSignature(
   signature: string,
   primaryType: SignatureTypes
 ): Promise<string> {
-  if (!message.uuid) return Promise.reject(new Error("Proposal uuid is required"));
+  console.log("addressFromSignature", message, signature, primaryType);
+  if (!message?.uuid) return Promise.reject(new Error("Proposal uuid is required"));
 
   const address = await recoverTypedDataAddress({
     types: signatureTypes,
     domain: signatureDomain,
     primaryType,
-    message,
+    message: {
+      ...message,
+      uuid: `${message.uuid.replace("6", "7")}`,
+    },
     signature: signature as `0x${string}`,
   });
   console.log("addressFromSignature", address);
