@@ -38,12 +38,10 @@ const doltSys = new DoltSysHandler(pools.nance_sys);
 type Cache = {
   spaceInfo?: SpaceInfoExtended;
   nextProposalId?: number;
-  proposalsPacket?: {
-    [key: string]: ProposalsPacket;
-  };
+  proposalsPacket?: Record<string, ProposalsPacket>;
 };
 
-const cache = {} as { [key: string]: Cache };
+const cache = {} as Record<string, Cache>;
 
 async function handlerReq(_query: string, auth: string | undefined) {
   try {
@@ -302,19 +300,24 @@ router.get('/:space/proposal/:pid', async (req, res) => {
   let proposal: Proposal | undefined;
   try {
     const { dolt, config, nextProposalId } = await handlerReq(space, req.headers.authorization);
+    const proposalInfo = {
+      proposalIdPrefix: config.proposalIdPrefix,
+      minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
+      snapshotSpace: config.snapshot.space,
+      nextProposalId
+    };
+
+    // look for proposal in cache
+    if (cache[space].proposalsPacket) {
+      const packets = Object.values(cache[space].proposalsPacket as Record<string, ProposalsPacket>);
+      const proposals = packets.map((p) => p.proposals).flat();
+      proposal = proposals.find((p) => p.uuid === pid || p.voteURL === pid || p?.proposalId === Number(pid));
+      res.json({ success: true, data: { ...proposal, proposalInfo } });
+      return;
+    }
     proposal = await dolt.getProposalByAnyId(pid);
     if (!proposal) { throw Error(); }
-    res.send({
-      success: true,
-      data: {
-        ...proposal,
-        proposalInfo: {
-          proposalIdPrefix: config.proposalIdPrefix,
-          minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
-          snapshotSpace: config.snapshot.space,
-          nextProposalId
-        }
-      }
+    res.json({ success: true, data: { ...proposal, proposalInfo }
     } as ProposalQueryResponse);
   } catch (e) {
     res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
