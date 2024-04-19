@@ -266,6 +266,9 @@ router.post('/:space/proposals', async (req, res) => {
           cache[space].nextProposalId = proposalRes.proposalId + 1;
         }
 
+        // clear proposal cache
+        cache[space].proposalsPacket = {};
+
         // push to nancedb
         addProposalToNanceDB(space, newProposal);
       } catch (e) {
@@ -388,6 +391,9 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     // return uuid to client, then continue doing things
     res.json({ success: true, data: { uuid } });
 
+    // clear proposal cache
+    cache[space].proposalsPacket = {};
+
     try {
       const discord = await discordLogin(config);
 
@@ -467,7 +473,8 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
       logger.info(`DELETE issued by ${address}`);
       dolt.deleteProposal(uuid).then(async (affectedRows: number) => {
         res.json({ success: true, data: { affectedRows } });
-
+        // clear proposal cache
+        cache[space].proposalsPacket = {};
         try {
           const discord = await discordLogin(config);
           await discord.sendProposalDelete(proposalByUuid);
@@ -492,6 +499,10 @@ router.get('/:space/summary/:type/:pid', async (req, res) => {
   const summary = await getSummary(space, pid, type);
   const proposal = await dolt.getProposalByAnyId(pid);
   await dolt.updateSummary(proposal.uuid, summary, type);
+
+  // clear proposal cache
+  cache[space].proposalsPacket = {};
+
   res.json({ success: true, data: summary });
 });
 
