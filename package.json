@@ -23,6 +23,7 @@
     "@nance/nance-sdk": "^2.0.1",
     "@snapshot-labs/snapshot.js": "^0.3.96",
     "axios": "^1.5.0",
+    "better-sqlite3": "^9.5.0",
     "common-tags": "^1.8.2",
     "cors": "^2.8.5",
     "diff": "^5.1.0",
@@ -46,6 +47,7 @@
     "winston": "^3.7.2"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.9",
     "@types/common-tags": "^1.8.1",
     "@types/cors": "^2.8.12",
     "@types/diff": "^5.0.3",

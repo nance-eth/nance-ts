@@ -29,6 +29,7 @@ import { fetchSnapshotProposal } from "../snapshot/snapshotProposals";
 import { getSummary, postSummary } from "../nancearizer";
 import { discordLogin } from "./helpers/discord";
 import { headToUrl } from "../dolt/doltAPI";
+import { addProposalToNanceDB } from "./helpers/nancedb";
 
 const router = express.Router();
 
@@ -235,6 +236,10 @@ router.post('/:space/proposals', async (req, res) => {
       }
       // update nextProposalId
       spaceCache[space].nextProposalId += 1;
+
+      // push to nancedb
+      const dbRes = await addProposalToNanceDB(space, newProposal);
+      console.log(dbRes);
     }).catch((e: any) => {
       res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
     });

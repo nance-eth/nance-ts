@@ -84,6 +84,7 @@ export class SnapshotHandler {
         votes
         type
         start
+        end
         state
         choices
         scores

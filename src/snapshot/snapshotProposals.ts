@@ -2,6 +2,7 @@ import { request as gqlRequest, gql } from 'graphql-request';
 import { Proposal, ProposalStatus, SnapshotProposal } from "@nance/nance-sdk";
 import { getCacheSnapshotProposal, setCacheSnapshotProposal } from "../dolt/doltCommon";
 import { postSummary } from "../nancearizer";
+import { uuidGen } from "../utils";
 
 const hub = 'https://hub.snapshot.org';
 
@@ -10,12 +11,16 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
   if (sProposal.state === 'closed') {
     status = sProposal.scores[0] > sProposal.scores[1] ? "Approved" : "Cancelled";
   }
-  const title = sProposal.title || 'Title Unknown';
+  const cleanedTitle = sProposal?.title?.replace(/^([A-Z]+-\d+): /, '');
+  const proposalIdMatch = sProposal?.title?.match(/^([A-Z]+-(\d+)): /);
+  const proposalId = proposalIdMatch ? Number(proposalIdMatch[2]) : undefined;
+  console.log('proposalId', proposalId);
   return {
-    uuid: 'snapshot',
-    title,
+    uuid: uuidGen(),
+    title: cleanedTitle || 'Title Unknown',
     body: sProposal.body || 'Body Unknown',
     status: status as ProposalStatus,
+    proposalId,
     authorAddress: sProposal.author,
     createdTime: new Date(Number(sProposal.start) * 1000).toISOString(),
     lastEditedTime: new Date(Number(sProposal.end) * 1000).toISOString(),
