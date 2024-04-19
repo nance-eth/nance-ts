@@ -211,7 +211,7 @@ export class DoltHandler {
       proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices),
       JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes
     ]);
-    return proposal.uuid;
+    return { uuid: proposal.uuid, proposalId: proposal.proposalId };
   }
 
   async addPayoutToDb(payout: Payout, uuidOfProposal: string, governanceCycle: number, payName: string, uuid?: string, status?: string) {

@@ -8,9 +8,9 @@ import {
   SQLPayout,
   SQLTransfer,
   ProposalUpdateRequest,
-  SpaceConfig,
   ProposalDeleteRequest,
-  ProposalQueryResponse
+  ProposalQueryResponse,
+  SpaceInfoExtended
 } from '@nance/nance-sdk';
 import logger from '../logging';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
@@ -35,7 +35,15 @@ const router = express.Router();
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
-const spaceCache = {} as { [key: string]: { spaceConfig: SpaceConfig, nextProposalId: number } };
+type Cache = {
+  spaceInfo?: SpaceInfoExtended;
+  nextProposalId?: number;
+  proposalsPacket?: {
+    [key: string]: ProposalsPacket;
+  };
+};
+
+const cache = {} as { [key: string]: Cache };
 
 async function handlerReq(_query: string, auth: string | undefined) {
   try {
@@ -44,22 +52,26 @@ async function handlerReq(_query: string, auth: string | undefined) {
       return await Promise.reject(new Error(`space ${query} not found`));
     }
 
-    // cache spaceConfig to reduce SQL calls
-    let spaceConfig = spaceCache[query]?.spaceConfig;
-    if (!spaceConfig) {
-      spaceConfig = await doltSys.getSpaceConfig(query);
-      spaceCache[query] = { spaceConfig, nextProposalId: 0 };
+    let spaceInfo = cache[query]?.spaceInfo;
+    const now = new Date().toISOString();
+    const currentEventEnd = spaceInfo?.currentEvent?.end;
+    const refresh = currentEventEnd ? now > currentEventEnd : false;
+    if (!spaceInfo || refresh) {
+      console.log(`[CACHE] refreshing ${query}`);
+      const spaceConfig = await doltSys.getSpaceConfig(query);
+      spaceInfo = await getSpaceInfo(spaceConfig);
+      cache[query] = { spaceInfo };
     }
-    const spaceInfo = await getSpaceInfo(spaceConfig);
+
     const dolt = new DoltHandler(pools[query], spaceInfo.config.proposalIdPrefix);
     const jwt = auth?.split('Bearer ')[1];
     const bearerAddress = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
 
     // get nextProposalId
-    let nextProposalId = spaceCache[query]?.nextProposalId;
+    let nextProposalId = cache[query]?.nextProposalId;
     if (!nextProposalId) {
       nextProposalId = await dolt.getNextProposalId();
-      spaceCache[query].nextProposalId = nextProposalId;
+      cache[query].nextProposalId = nextProposalId;
     }
 
     return {
@@ -140,18 +152,28 @@ router.get('/:space/proposals', async (req, res) => {
     const _offset = _page ? (_page - 1) * _limit : 0;
 
     const cycleSearch = cycle || currentGovernanceCycle.toString();
+
+    // cache
+    const key = `${space}:${JSON.stringify(req.query)}`;
+    let data = cache[space]?.proposalsPacket?.[key];
+    if (data) {
+      return res.send({ success: true, data });
+    }
+
     const { proposals, hasMore } = await dolt.getProposals({ governanceCycle: cycleSearch, keyword, author, limit: _limit, offset: _offset });
 
-    const data: ProposalsPacket = {
+    data = {
       proposalInfo: {
         snapshotSpace: config?.snapshot.space || space,
         proposalIdPrefix: config.proposalIdPrefix,
         minTokenPassingAmount: config?.snapshot.minTokenPassingAmount || 0,
-        nextProposalId: spaceCache[space].nextProposalId || 0,
+        nextProposalId: cache[space].nextProposalId || 0,
       },
       proposals,
       hasMore,
     };
+
+    cache[space].proposalsPacket = { ...cache[space].proposalsPacket, [key]: data };
 
     return res.send({ success: true, data });
   } catch (e) {
@@ -211,7 +233,8 @@ router.post('/:space/proposals', async (req, res) => {
     console.log('======================================================');
     console.log('======================================================');
     console.log('======================================================');
-    dolt.addProposalToDb(newProposal).then(async (uuid: string) => {
+    dolt.addProposalToDb(newProposal).then(async (proposalRes) => {
+      const { uuid } = proposalRes;
       proposal.uuid = uuid;
       dolt.actionDirector(newProposal);
 
@@ -238,8 +261,10 @@ router.post('/:space/proposals', async (req, res) => {
           const summary = await postSummary(newProposal, "proposal");
           dolt.updateSummary(uuid, summary, "proposal");
         }
-        // update nextProposalId
-        spaceCache[space].nextProposalId += 1;
+        // update nextProposalId cache
+        if (proposalRes.proposalId) {
+          cache[space].nextProposalId = proposalRes.proposalId + 1;
+        }
 
         // push to nancedb
         addProposalToNanceDB(space, newProposal);
@@ -492,6 +517,12 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
     return res.json({ success: true, data: discussionThreadURL });
   }
   return res.send({ success: false, error: 'proposal already has a discussion created' });
+});
+
+router.get('/:space/cache/clear', async (req, res) => {
+  const { space } = req.params;
+  cache[space] = {};
+  res.json({ success: true });
 });
 
 // ===================================== //
