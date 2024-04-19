@@ -215,6 +215,9 @@ router.post('/:space/proposals', async (req, res) => {
       proposal.uuid = uuid;
       dolt.actionDirector(newProposal);
 
+      // return uuid to client, then continue doing things
+      res.json({ success: true, data: { uuid } });
+
       // send discord message
       const discordEnabled = config.discord.channelIds.proposals !== null;
       if ((proposal.status === "Discussion" || proposal.status === "Approved") && discordEnabled) {
@@ -229,7 +232,7 @@ router.post('/:space/proposals', async (req, res) => {
           logger.error(`[DISCORD] ${e}`);
         }
       }
-      res.json({ success: true, data: { uuid } });
+
       if (space !== "waterbox") {
         const summary = await postSummary(newProposal, "proposal");
         dolt.updateSummary(uuid, summary, "proposal");
@@ -238,8 +241,7 @@ router.post('/:space/proposals', async (req, res) => {
       spaceCache[space].nextProposalId += 1;
 
       // push to nancedb
-      const dbRes = await addProposalToNanceDB(space, newProposal);
-      console.log(dbRes);
+      addProposalToNanceDB(space, newProposal);
     }).catch((e: any) => {
       res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
     });
@@ -350,9 +352,13 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     governanceCycle,
   };
 
-  const discord = await discordLogin(config);
   dolt.editProposal(updateProposal).then(async (uuid: string) => {
     dolt.actionDirector(updateProposal, proposalByUuid);
+    // return uuid to client, then continue doing things
+    res.json({ success: true, data: { uuid } });
+
+    const discord = await discordLogin(config);
+
     // if proposal moved form Draft to Discussion, send discord message
     const shouldCreateDiscussion = (
       (proposalByUuid.status === "Draft")
@@ -384,7 +390,6 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       await discord.sendProposalDiff(updateProposal, diff);
     }
     discord.logout();
-    res.json({ success: true, data: { uuid } });
   }).catch((e: any) => {
     res.json({ success: false, error: JSON.stringify(e) });
   });
@@ -425,11 +430,10 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
     if (permissions) {
       logger.info(`DELETE issued by ${address}`);
       dolt.deleteProposal(uuid).then(async (affectedRows: number) => {
-        const discord = new DiscordHandler(config);
-        // eslint-disable-next-line no-await-in-loop
-        while (!discord.ready()) { await sleep(50); }
-        try { await discord.sendProposalDelete(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
         res.json({ success: true, data: { affectedRows } });
+
+        const discord = await discordLogin(config);
+        try { await discord.sendProposalDelete(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
       }).catch((e: any) => {
         res.json({ success: false, error: e });
       });
@@ -464,9 +468,7 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
   const proposal = await dolt.getProposalByAnyId(uuid);
   let discussionThreadURL = '';
   if (proposal.status === "Discussion" && !proposal.discussionThreadURL) {
-    const dialogHandler = new DiscordHandler(config);
-    // eslint-disable-next-line no-await-in-loop
-    while (!dialogHandler.ready()) { await sleep(50); }
+    const dialogHandler = await discordLogin(config);
     try {
       discussionThreadURL = await dialogHandler.startDiscussion(proposal);
       await dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
