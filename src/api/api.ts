@@ -29,7 +29,7 @@ import { fetchSnapshotProposal } from "../snapshot/snapshotProposals";
 import { getSummary, postSummary } from "../nancearizer";
 import { discordLogin } from "./helpers/discord";
 import { headToUrl } from "../dolt/doltAPI";
-import { addProposalToNanceDB } from "./helpers/nancedb";
+import { addProposalToNanceDB, updateProposalInNanceDB } from "./helpers/nancedb";
 
 const router = express.Router();
 
@@ -399,6 +399,8 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     // clear proposal cache
     cache[space].proposalsPacket = {};
 
+    // send to nancedb
+    updateProposalInNanceDB(space, updateProposal);
     try {
       const discord = await discordLogin(config);
 
