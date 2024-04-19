@@ -218,30 +218,35 @@ router.post('/:space/proposals', async (req, res) => {
       // return uuid to client, then continue doing things
       res.json({ success: true, data: { uuid } });
 
-      // send discord message
-      const discordEnabled = config.discord.channelIds.proposals !== null;
-      if ((proposal.status === "Discussion" || proposal.status === "Approved") && discordEnabled) {
-        const dialogHandler = new DiscordHandler(config);
-        // eslint-disable-next-line no-await-in-loop
-        while (!dialogHandler.ready()) { await sleep(50); }
-        try {
-          const discussionThreadURL = await dialogHandler.startDiscussion(newProposal);
-          dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
-          dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
-        } catch (e) {
-          logger.error(`[DISCORD] ${e}`);
+      try {
+        // send discord message
+        const discordEnabled = config.discord.channelIds.proposals !== null;
+        if ((proposal.status === "Discussion" || proposal.status === "Approved") && discordEnabled) {
+          const dialogHandler = new DiscordHandler(config);
+          // eslint-disable-next-line no-await-in-loop
+          while (!dialogHandler.ready()) { await sleep(50); }
+          try {
+            const discussionThreadURL = await dialogHandler.startDiscussion(newProposal);
+            dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+            dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
+          } catch (e) {
+            logger.error(`[DISCORD] ${e}`);
+          }
         }
-      }
 
-      if (space !== "waterbox") {
-        const summary = await postSummary(newProposal, "proposal");
-        dolt.updateSummary(uuid, summary, "proposal");
-      }
-      // update nextProposalId
-      spaceCache[space].nextProposalId += 1;
+        if (space !== "waterbox") {
+          const summary = await postSummary(newProposal, "proposal");
+          dolt.updateSummary(uuid, summary, "proposal");
+        }
+        // update nextProposalId
+        spaceCache[space].nextProposalId += 1;
 
-      // push to nancedb
-      addProposalToNanceDB(space, newProposal);
+        // push to nancedb
+        addProposalToNanceDB(space, newProposal);
+      } catch (e) {
+        logger.error(`[DISCORD] ${space}`);
+        logger.error(`[DISCORD] ${e}`);
+      }
     }).catch((e: any) => {
       res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
     });
@@ -293,106 +298,112 @@ router.get('/:space/proposal/:pid', async (req, res) => {
 // edit single proposal
 router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
-  const { proposal, uploaderSignature, uploaderAddress } = req.body as ProposalUpdateRequest;
-  const { dolt, config, bearerAddress, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-  const address = bearerAddress || uploaderAddress;
-  if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-  if (uploaderAddress && uploaderSignature) {
-    const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
-    if (uploaderAddress !== decodedAddress) {
-      res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+  try {
+    const { proposal, uploaderSignature, uploaderAddress } = req.body as ProposalUpdateRequest;
+    const { dolt, config, bearerAddress, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const address = bearerAddress || uploaderAddress;
+    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
+    if (uploaderAddress && uploaderSignature) {
+      const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
+      if (uploaderAddress !== decodedAddress) {
+        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        return;
+      }
+    }
+    const proposalByUuid = await dolt.getProposalByAnyId(pid);
+    if (!canEditProposal(proposalByUuid.status)) {
+      res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
       return;
     }
-  }
-  const proposalByUuid = await dolt.getProposalByAnyId(pid);
-  if (!canEditProposal(proposalByUuid.status)) {
-    res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
-    return;
-  }
 
-  // only allow archives by original author, multisig, or spaceOwner
-  const permissions = (
-    address === proposalByUuid.authorAddress
-    || await isMultisig(config.juicebox.gnosisSafeAddress, address)
-    || isNanceSpaceOwner(spaceOwners, address)
-    || isNanceAddress(address)
-  );
-  if (proposal.status === "Archived" && !permissions) {
-    res.json({ success: false, error: '[PERMISSIONS] User not authorized to archive proposal' });
-    return;
-  }
+    // only allow archives by original author, multisig, or spaceOwner
+    const permissions = (
+      address === proposalByUuid.authorAddress
+      || await isMultisig(config.juicebox.gnosisSafeAddress, address)
+      || isNanceSpaceOwner(spaceOwners, address)
+      || isNanceAddress(address)
+    );
+    if (proposal.status === "Archived" && !permissions) {
+      res.json({ success: false, error: '[PERMISSIONS] User not authorized to archive proposal' });
+      return;
+    }
 
-  // eslint-disable-next-line prefer-const
-  let { authorAddress, coauthors, governanceCycle } = proposalByUuid;
-  if (!proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
-    coauthors = !coauthors ? [address] : [...coauthors, address];
-  }
+    // eslint-disable-next-line prefer-const
+    let { authorAddress, coauthors, governanceCycle } = proposalByUuid;
+    if (!proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
+      coauthors = !coauthors ? [address] : [...coauthors, address];
+    }
 
-  const proposalId = (!proposalByUuid.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
-  console.log('======================================================');
-  console.log('=================== EDIT PROPOSAL ====================');
-  console.log('======================================================');
-  console.log(`space ${space}, author ${address}`);
-  console.log(proposal);
-  console.log('======================================================');
-  console.log('======================================================');
-  console.log('======================================================');
+    const proposalId = (!proposalByUuid.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
+    console.log('======================================================');
+    console.log('=================== EDIT PROPOSAL ====================');
+    console.log('======================================================');
+    console.log(`space ${space}, author ${address}`);
+    console.log(proposal);
+    console.log('======================================================');
+    console.log('======================================================');
+    console.log('======================================================');
 
-  // update governance cycle to current if proposal is a draft
-  if (proposal.status === "Draft") {
-    governanceCycle = currentGovernanceCycle + 1;
-  }
+    // update governance cycle to current if proposal is a draft
+    if (proposal.status === "Draft") {
+      governanceCycle = currentGovernanceCycle + 1;
+    }
 
-  const updateProposal: Proposal = {
-    ...proposalByUuid,
-    ...proposal,
-    proposalId,
-    authorAddress,
-    coauthors,
-    governanceCycle,
-  };
+    const updateProposal: Proposal = {
+      ...proposalByUuid,
+      ...proposal,
+      proposalId,
+      authorAddress,
+      coauthors,
+      governanceCycle,
+    };
 
-  dolt.editProposal(updateProposal).then(async (uuid: string) => {
-    dolt.actionDirector(updateProposal, proposalByUuid);
+    const uuid = await dolt.editProposal(updateProposal);
+    await dolt.actionDirector(updateProposal, proposalByUuid);
     // return uuid to client, then continue doing things
     res.json({ success: true, data: { uuid } });
 
-    const discord = await discordLogin(config);
+    try {
+      const discord = await discordLogin(config);
 
-    // if proposal moved form Draft to Discussion, send discord message
-    const shouldCreateDiscussion = (
-      (proposalByUuid.status === "Draft")
-      && proposal.status === "Discussion" && !proposalByUuid.discussionThreadURL
-    );
-    if (shouldCreateDiscussion) {
-      try {
-        const discussionThreadURL = await discord.startDiscussion(updateProposal);
-        await discord.setupPoll(getLastSlash(discussionThreadURL));
-        await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
-      } catch (e) {
-        logger.error(`[DISCORD] ${e}`);
+      // if proposal moved form Draft to Discussion, send discord message
+      const shouldCreateDiscussion = (
+        (proposalByUuid.status === "Draft")
+        && proposal.status === "Discussion" && !proposalByUuid.discussionThreadURL
+      );
+      if (shouldCreateDiscussion) {
+        try {
+          const discussionThreadURL = await discord.startDiscussion(updateProposal);
+          await discord.setupPoll(getLastSlash(discussionThreadURL));
+          await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
+        } catch (e) {
+          logger.error(`[DISCORD] ${e}`);
+        }
       }
-    }
-    // archive alert
-    if (proposal.status === "Archived") {
-      try { await discord.sendProposalArchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
-    }
-    // unarchive alert
-    if (proposal.status === "Discussion" && proposalByUuid.status === "Archived") {
-      try { await discord.sendProposalUnarchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
-    }
+      // archive alert
+      if (proposal.status === "Archived") {
+        try { await discord.sendProposalArchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
+      }
+      // unarchive alert
+      if (proposal.status === "Discussion" && proposalByUuid.status === "Archived") {
+        try { await discord.sendProposalUnarchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
+      }
 
-    // send diff to discord
-    const diff = diffLineCounts(proposalByUuid.body || '', proposal.body || '');
-    if (proposalByUuid.discussionThreadURL && diff) {
-      updateProposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
-      await discord.editDiscussionTitle(updateProposal);
-      await discord.sendProposalDiff(updateProposal, diff);
+      // send diff to discord
+      const diff = diffLineCounts(proposalByUuid.body || '', proposal.body || '');
+      if (proposalByUuid.discussionThreadURL && diff) {
+        updateProposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
+        await discord.editDiscussionTitle(updateProposal);
+        await discord.sendProposalDiff(updateProposal, diff);
+      }
+      discord.logout();
+    } catch (e) {
+      logger.error(`[DISCORD] ${space}`);
+      logger.error(`[DISCORD] ${e}`);
     }
-    discord.logout();
-  }).catch((e: any) => {
-    res.json({ success: false, error: JSON.stringify(e) });
-  });
+  } catch (e) {
+    res.json({ success: false, error: e });
+  }
 });
 
 // delete single proposal
@@ -432,8 +443,10 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
       dolt.deleteProposal(uuid).then(async (affectedRows: number) => {
         res.json({ success: true, data: { affectedRows } });
 
-        const discord = await discordLogin(config);
-        try { await discord.sendProposalDelete(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
+        try {
+          const discord = await discordLogin(config);
+          await discord.sendProposalDelete(proposalByUuid);
+        } catch (e) { logger.error(`[DISCORD] ${e}`); }
       }).catch((e: any) => {
         res.json({ success: false, error: e });
       });
