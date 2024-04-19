@@ -312,8 +312,10 @@ router.get('/:space/proposal/:pid', async (req, res) => {
       const packets = Object.values(cache[space].proposalsPacket as Record<string, ProposalsPacket>);
       const proposals = packets.map((p) => p.proposals).flat();
       proposal = proposals.find((p) => p.uuid === pid || p.voteURL === pid || p?.proposalId === Number(pid));
-      res.json({ success: true, data: { ...proposal, proposalInfo } });
-      return;
+      if (proposal) {
+        res.json({ success: true, data: { ...proposal, proposalInfo } });
+        return;
+      }
     }
     proposal = await dolt.getProposalByAnyId(pid);
     if (!proposal) { throw Error(); }
