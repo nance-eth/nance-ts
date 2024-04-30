@@ -28,20 +28,21 @@ async function main() {
     CREATE TABLE IF NOT EXISTS config (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       space TEXT,
+      display_name TEXT,
       created_at INTEGER,
       updated_at INTEGER,
       write_validation TEXT,
-      db_cid TEXT,
-      juicebox_project_id INTEGER,
-      safe_address TEXT,
-      governor_address TEXT,
       proposal_id_prefix TEXT,
       space_owners TEXT,
       discord_settings TEXT,
       calendar TEXT,
+      juicebox_project_id INTEGER,
+      safe_address TEXT,
+      governor_address TEXT,
       cycle_trigger_time TEXT,
       cycle_stage_lengths TEXT,
       dialog_handler_message_ids TEXT,
+      current_governance_cycle INTEGER,
       template TEXT
     )
   `);
@@ -162,39 +163,41 @@ async function main() {
     sys.prepare(`
       INSERT INTO config (
         space,
+        display_name,
         created_at,
         updated_at,
         write_validation,
-        db_cid,
-        juicebox_project_id,
-        safe_address,
-        governor_address,
         proposal_id_prefix,
         space_owners,
         discord_settings,
         calendar,
+        juicebox_project_id,
+        safe_address,
+        governor_address,
         cycle_trigger_time,
         cycle_stage_lengths,
         dialog_handler_message_ids,
+        current_governance_cycle,
         template
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       [
         space.space,
+        space.displayName,
         nullCheck(new Date().getTime()),
         nullCheck(new Date().getTime()),
         null,
-        null,
-        nullCheck(space.config.juicebox.projectId),
-        nullCheck(safe_address),
-        nullCheck(governor_address),
         nullCheck(space.config.proposalIdPrefix),
         nullCheck(space.spaceOwners),
         nullCheck(space.config.discord),
         nullCheck(space.calendar),
+        nullCheck(space.config.juicebox.projectId),
+        nullCheck(safe_address),
+        nullCheck(governor_address),
         nullCheck(space.cycleTriggerTime),
         nullCheck(space.cycleStageLengths),
         nullCheck(space.dialogHandlerMessageIds),
+        nullCheck(space.currentGovernanceCycle),
         nullCheck(space.template)
       ]
     );

@@ -23,7 +23,7 @@ async function main() {
       await jobFunc(space);
     });
     // schedule all calendar based events
-    if (calendar) {
+    if (calendar && cycleStageLengths) {
       const now = new Date();
       const events = getNextEvents(calendar, cycleStageLengths, now);
       scheduleCalendarTasks(space, config, events);
