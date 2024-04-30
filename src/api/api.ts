@@ -12,6 +12,7 @@ import {
   ProposalQueryResponse,
   SpaceInfoExtended
 } from '@nance/nance-sdk';
+import { isEqual } from "lodash";
 import logger from '../logging';
 import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getLastSlash, sleep, uuidGen } from '../utils';
@@ -428,11 +429,15 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       }
 
       // send diff to discord
-      const diff = diffLineCounts(proposalByUuid.body || '', proposal.body || '');
-      if (proposalByUuid.discussionThreadURL && diff) {
+      const diff = diffLineCounts(proposalByUuid.body, proposal.body);
+      const actionsChanged = !isEqual(proposalByUuid.actions, proposal.actions);
+      if (
+        proposalByUuid.discussionThreadURL
+        && (diff.added || diff.removed || actionsChanged)
+      ) {
         updateProposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
-        await discord.editDiscussionTitle(updateProposal);
-        await discord.sendProposalDiff(updateProposal, diff);
+        await discord.editDiscussionMessage(updateProposal);
+        if (diff.added || diff.removed) await discord.sendProposalDiff(updateProposal, diff);
       }
       discord.logout();
     } catch (e) {

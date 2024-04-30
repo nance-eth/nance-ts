@@ -13,6 +13,7 @@ import {
   AttachmentBuilder,
   escapeMarkdown,
 } from 'discord.js';
+import { isEqual } from "lodash";
 import { Proposal, PollResults, NanceConfig, SQLPayout } from '@nance/nance-sdk';
 import logger from '../logging';
 import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp } from '../utils';
@@ -84,7 +85,7 @@ export class DiscordHandler {
 
   async startDiscussion(proposal: Proposal): Promise<string> {
     const authorENS = await getENS(proposal.authorAddress);
-    const message = discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+    const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
     const messageObj = await this.getAlertChannel().send({ embeds: [message] });
     const thread = await messageObj.startThread({
       name: limitLength(proposal.title),
@@ -289,11 +290,14 @@ export class DiscordHandler {
     this.discord.user?.setActivity(' ');
   }
 
-  async editDiscussionTitle(proposal: Proposal) {
+  async editDiscussionMessage(proposal: Proposal) {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
     const authorENS = await getENS(proposal.authorAddress);
-    const message = discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
-    if (messageObj.embeds[0].title !== message.data.title) {
+    const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+    if (
+      messageObj.embeds[0].title !== message.data.title
+      || !isEqual(messageObj.embeds[0].fields, message.data.fields)
+    ) {
       messageObj.edit({ embeds: [message] });
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
     }
@@ -373,7 +377,7 @@ export class DiscordHandler {
   async sendProposalUnarchive(proposal: Proposal) {
     const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
     const authorENS = await getENS(proposal.authorAddress);
-    const message = discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+    const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
     // keep url the same
     message.setURL(messageObj.embeds[0].url);
     messageObj.edit({ embeds: [message] });

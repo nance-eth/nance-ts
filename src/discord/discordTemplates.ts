@@ -6,21 +6,27 @@ import {
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal } from '@nance/nance-sdk';
-import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, limitLength, maybePlural, numToPrettyString } from '../utils';
+import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, maybePlural, numToPrettyString } from '../utils';
 import { EMOJI } from '../constants';
 import { DiffLines } from "../api/helpers/diff";
+import { actionsToMarkdown } from "../tasks/voteSetup";
 
 export const getProposalURL = (space: string, proposal: Proposal) => {
   return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.uuid}`;
 };
 
-export const startDiscussionMessage = (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
-  const m = new EmbedBuilder().setTitle(`📃 ${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`).setURL(getProposalURL(space, proposal)).addFields([
-    { name: 'author', value: `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})`, inline: true },
-  ]);
+export const startDiscussionMessage = async (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
+  const m = new EmbedBuilder().setTitle(`${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`)
+    .setURL(getProposalURL(space, proposal))
+    .setAuthor({ name: `📃 GC#${proposal.governanceCycle}`, url: `${DEFAULT_DASHBOARD}/s/${space}?cycle=${proposal.governanceCycle}` })
+    .addFields([
+      { name: 'author', value: `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})`, inline: true },
+    ]);
   if (proposal.authorDiscordId) {
     m.addFields({ name: 'discord user', value: `<@${proposal.authorDiscordId}>`, inline: true });
   }
+  const actions = await actionsToMarkdown(proposal.actions);
+  m.addFields({ name: 'actions', value: actions || "NONE", inline: false });
   return m;
 };
 

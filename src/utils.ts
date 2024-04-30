@@ -196,3 +196,7 @@ export function isHexString(text: string) {
 export function maybePlural(text: string, count: number) {
   return count === 1 ? text : `${text}s`;
 }
+
+export const numberWithCommas = (x: number) => {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};

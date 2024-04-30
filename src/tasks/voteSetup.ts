@@ -4,20 +4,19 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { keys } from '../keys';
 import { dotPin } from '../storage/storageHandler';
-import { DEFAULT_DASHBOARD, addSecondsToDate, maybePlural } from '../utils';
+import { DEFAULT_DASHBOARD, addSecondsToDate, maybePlural, numberWithCommas } from '../utils';
 import { getENS } from '../api/helpers/ens';
 import logger from '../logging';
+import { getProjectHandle } from "../juicebox/api";
 
 const actionsHeading = '## Proposed Actions\n\n';
 
 export const formatCustomTransaction = (action: CustomTransaction) => {
-  const functionNameOnly = action.functionName.split('function ')[1];
-  const regex = /(\w+)\s+(\w+)(?=[,)])/g;
-  const inputsWithType = Array.from(functionNameOnly.matchAll(regex), (match) => { return [match[1], match[2]]; });
-  const prettyOutput = inputsWithType.map((input, index) => {
-    return `${input[1]}(${input[0]}): ${action.args[index]}`;
+  const functionNameOnly = action.functionName.split('function ')[1].split('(')[0];
+  const prettyOutput = action.args.map((arg) => {
+    return `*${arg.name}:* ${arg.value}`;
   });
-  return prettyOutput.join(', ');
+  return `${functionNameOnly}(${prettyOutput.join(', ')})`;
 };
 
 const getActionsFooter = (space: string) => { return `*actions appended to proposal body by [Nance](${DEFAULT_DASHBOARD}/s/${space})*`; };
@@ -25,22 +24,24 @@ export const actionsToMarkdown = async (actions: Action[]) => {
   const results = await Promise.all(actions.map(async (action, index) => {
     if (action.type === 'Custom Transaction') {
       const payload = action.payload as CustomTransaction;
-      return `${index + 1}. [${payload.contract}](https://etherscan.io/address/${payload.contract}).(${formatCustomTransaction(payload)})`;
+      return `${index + 1}. **[TXN]** [${payload.contract}](https://etherscan.io/address/${payload.contract}).${formatCustomTransaction(payload)}`;
     }
     if (action.type === 'Payout') {
       const payload = action.payload as Payout;
       const ens = await getENS(payload.address);
+      const projectHandle = await getProjectHandle(payload.project);
+      const projectLinkText = (projectHandle) ? `[@${projectHandle} *(${payload.project})*](https://juicebox.money/@${projectHandle})` : `[ProjectId ${payload.project}](https://juicebox.money/v2/p/${payload.project})`;
       const toWithLink = (payload.project)
-        ? `[Juicebox Project ${payload.project}](https://juicebox.money/v2/p/${payload.project})`
+        ? projectLinkText
         : `[${ens}](https://etherscan.io/address/${payload.address})`;
-      return `${index + 1}. *Juicebox Payout* ${toWithLink} $${payload.amountUSD.toLocaleString()} for ${payload.count} ${maybePlural('cycle', payload.count)}`;
+      return `${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(payload.amountUSD)} for ${payload.count} ${maybePlural('cycle', payload.count)} ($${numberWithCommas(payload.amountUSD * payload.count)})`;
     }
     if (action.type === 'Transfer') {
       const payload = action.payload as Transfer;
       const ens = await getENS(payload.to);
-      return `${index + 1}. *Transfer* ${payload.amount} [${payload.contract}](https://etherscan.io/address/${payload.contract}) to [${ens}](https://etherscan.io/address/${payload.to})`;
+      return `${index + 1}. **[TRANSFER]** ${payload.amount} [${payload.contract}](https://etherscan.io/address/${payload.contract}) to [${ens}](https://etherscan.io/address/${payload.to})`;
     }
-    return '';
+    return undefined;
   }));
   return results.join('\n');
 };
