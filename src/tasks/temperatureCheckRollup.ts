@@ -11,7 +11,7 @@ export const temperatureCheckRollup = async (space: string, config: NanceConfig,
     const dialogHandler = await discordLogin(config);
     const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
     const proposals = await dolt.getDiscussionProposals();
-    if (proposals.length === 0) return;
+    if (proposals.length === 0) return await Promise.resolve();
     const temperatureCheckRollupMessageId = await dialogHandler.sendTemperatureCheckRollup(
       proposals,
       endDate,
@@ -23,8 +23,10 @@ export const temperatureCheckRollup = async (space: string, config: NanceConfig,
       temperatureCheckRollupMessageId
     );
     dialogHandler.logout();
+    return await Promise.resolve();
   } catch (e) {
     logger.error(`error rolling up temperatureCheck for ${space}`);
     logger.error(e);
+    return Promise.reject(e);
   }
 };

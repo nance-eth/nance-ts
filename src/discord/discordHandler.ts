@@ -106,6 +106,8 @@ export class DiscordHandler {
     const message = discordTemplates.temperatureCheckRollUpMessage(this.config.proposalIdPrefix, proposals, this.config.name, endDate);
     return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
       return messageObj.id;
+    }).catch((e) => {
+      return Promise.reject(e);
     });
   }
 

@@ -40,23 +40,26 @@ export const deletedDiscussionMessage = (proposal: Proposal) => {
 
 export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {
   return new EmbedBuilder().setColor('#c1272d').setTitle(
-    `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`
-  ).setDescription(`${String(proposals.length)} proposals`).addFields(
-    proposals.map((proposal: Proposal) => {
-      return {
-        name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
-        value: stripIndents`
+    `Temperature checks are open until <t:${dateToUnixTimeStamp(endDate)}>`)
+    .setDescription(`${String(proposals.length)} proposals`)
+    .setAuthor({ name: `📃 GC#${proposals[0].governanceCycle}`, url: `${DEFAULT_DASHBOARD}/s/${space}?cycle=${proposals[0].governanceCycle}` })
+    .addFields(
+      proposals.map((proposal: Proposal) => {
+        return {
+          name: `*${proposalIdPrefix}${proposal.proposalId}*: ${proposal.title}`,
+          value: stripIndents`
         [proposal](${getProposalURL(space, proposal)}) | [discussion](${proposal.discussionThreadURL})
         -----------------------------------------`,
-      };
-    })
-  );
+        };
+      })
+    );
 };
 
 export const voteRollUpMessage = (voteURL: string, proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {
   return new EmbedBuilder().setColor('#009460').setTitle(
     `Voting is open until <t:${dateToUnixTimeStamp(endDate)}>`
   ).setURL(voteURL).setDescription(`${String(proposals.length)} proposals`)
+    .setAuthor({ name: `📃 GC#${proposals[0].governanceCycle}`, url: `${DEFAULT_DASHBOARD}/s/${space}?cycle=${proposals[0].governanceCycle}` })
     .addFields(
       proposals.map((proposal: Proposal) => {
         return {
@@ -93,6 +96,7 @@ export const voteResultsRollUpMessage = (url: string, space: string, proposalIdP
   return new EmbedBuilder().setColor('#2772af').setTitle(
     'Voting has ended. Thanks for participating!'
   ).setURL(url).setDescription(`${String(proposals.length)} proposals`)
+    .setAuthor({ name: `📃 GC#${proposals[0].governanceCycle}`, url: `${DEFAULT_DASHBOARD}/s/${space}?cycle=${proposals[0].governanceCycle}` })
     .addFields(
       proposals.map((proposal: Proposal) => {
         if (proposal.voteResults) {
