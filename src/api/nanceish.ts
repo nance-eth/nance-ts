@@ -4,7 +4,7 @@ import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
 import { dotPin } from '../storage/storageHandler';
-import { mergeTemplateConfig, mergeConfig, sleep } from '../utils';
+import { mergeTemplateConfig, mergeConfig, sleep, uuidGen } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
 import { dbOptions } from '../dolt/dbConfig';
@@ -19,6 +19,10 @@ const doltSys = new DoltSysHandler(pools.nance_sys);
 
 router.get('/', (_, res) => {
   res.send('nance-ish control panel');
+});
+
+router.get('/uuid', async (_, res) => {
+  res.json({ success: true, data: uuidGen() });
 });
 
 router.get('/config/:space', async (req, res) => {

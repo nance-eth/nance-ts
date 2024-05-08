@@ -5,8 +5,6 @@ import {
   ProposalUploadRequest,
   SpaceInfo,
   ProposalsPacket,
-  SQLPayout,
-  SQLTransfer,
   ProposalUpdateRequest,
   ProposalDeleteRequest,
   ProposalQueryResponse,
@@ -549,48 +547,8 @@ router.get('/:space/cache/clear', async (req, res) => {
 });
 
 // ===================================== //
-// ========= payout functions ========== //
-// ===================================== //
-
-// get payouts table
-router.get('/:space/payouts', async (req, res) => {
-  const { space } = req.params;
-  try {
-    const { cycle } = req.query as { cycle: string };
-    const { dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-
-    if (!cycle) {
-      dolt.getPayoutsDb(currentGovernanceCycle).then((data: SQLPayout[]) => {
-        res.json({ success: true, data });
-      }).catch((e: any) => {
-        res.json({ success: false, error: e });
-      });
-    } else {
-      dolt.getPreviousPayoutsDb('V3', Number(cycle)).then((data: SQLPayout[]) => {
-        res.json({ success: true, data });
-      }).catch((e: any) => {
-        res.json({ success: false, error: e });
-      });
-    }
-  } catch (e) {
-    res.json({ success: false, error: e });
-  }
-});
-
-// ===================================== //
 // ======== transfer functions ========= //
 // ===================================== //
-
-// get transfers table
-router.get('/:space/transfers', async (req, res) => {
-  const { space } = req.params;
-  const { dolt, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
-  dolt.getTransfersDb(currentGovernanceCycle).then((data: SQLTransfer[]) => {
-    res.json({ success: true, data });
-  }).catch((e: any) => {
-    res.json({ success: false, error: e });
-  });
-});
 
 // basic simulation of a single customTransaction sent from the space gnosis safe
 router.get('/:space/simulate/:uuid', async (req, res) => {

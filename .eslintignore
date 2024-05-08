@@ -2,3 +2,4 @@ node_modules/
 dist/
 scripts/
 jest.config.ts
+link.js
