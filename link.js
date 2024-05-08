@@ -1,3 +1,4 @@
+// Usage: node link <module-name> [create|remove]
 const fs = require('fs');
 const path = require('path');
 
@@ -80,7 +81,7 @@ function restoreOriginalModule(moduleName) {
 function main() {
   const args = process.argv.slice(2);
   if (args.length !== 2) {
-    console.error('Usage: node symlink <module-name> [create|remove]');
+    console.error('Usage: node link <module-name> [create|remove]');
     return;
   }
 
