@@ -23,6 +23,11 @@ export const getNextEvents = (originalStart: Date, cycleStageLengths: number[], 
       start,
       end,
     });
+    nextEvents.push({
+      title: name,
+      start: new Date(start.getTime() + interval),
+      end: new Date(end.getTime() + interval),
+    });
   });
   // sort by start date and remove events that have ended
   const nextEventsCleaned = nextEvents.sort((a, b) => {
