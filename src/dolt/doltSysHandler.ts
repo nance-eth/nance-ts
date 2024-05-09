@@ -74,22 +74,20 @@ export class DoltSysHandler {
         cid,
         spaceOwners,
         config,
-        calendar,
-        cycleTriggerTime,
+        cycleStartReference,
         cycleStageLengths,
         dialogHandlerMessageIds,
         currentGovernanceCycle,
         autoEnable,
-        lastUpdated,
+        lastUpdated
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE
         cid = VALUES(cid),
         displayName = VALUES(displayName),
         spaceOwners = VALUES(spaceOwners),
         config = VALUES(config),
-        calendar = VALUES(calendar),
-        cycleTriggerTime = VALUES(cycleTriggerTime),
+        cycleStartReference = VALUES(cycleStartReference),
         cycleStageLengths = VALUES(cycleStageLengths),
         lastUpdated = NOW()
     `, [
@@ -98,8 +96,7 @@ export class DoltSysHandler {
       c.cid,
       JSON.stringify(c.spaceOwners),
       JSON.stringify(c.config),
-      JSON.stringify(c.calendar),
-      c.cycleTriggerTime,
+      c.cycleStartReference?.toISOString(),
       JSON.stringify(c.cycleStageLengths),
       JSON.stringify(defaultDialogHandlerMessageIds),
       defaultGovernanceCycle,

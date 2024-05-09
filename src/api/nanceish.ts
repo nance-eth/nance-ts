@@ -11,7 +11,7 @@ import { dbOptions } from '../dolt/dbConfig';
 import { DoltSQL } from '../dolt/doltSQL';
 import { addressFromJWT } from './helpers/auth';
 import { getAllSpaceInfo, getSpaceConfig } from './helpers/getSpace';
-import { createCalendarAndCycleInfo } from '../calendar/create';
+// import { createCalendarAndCycleInfo } from '../calendar/create';
 
 const router = express.Router();
 
@@ -70,10 +70,8 @@ router.post('/config', async (req, res) => {
   const { config, governanceCycleForm, spaceOwners, dryrun } = req.body as ConfigSpaceRequest;
   const space = config.name.replaceAll(' ', '_').toLowerCase();
   const spaceConfig = await getSpaceConfig(space);
-  let calendar = spaceConfig?.calendar;
-  let cycleTriggerTime = spaceConfig?.cycleTriggerTime;
-  let cycleStageLengths = spaceConfig?.cycleStageLengths;
-  if (governanceCycleForm) ({ calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm));
+  // let cycleStageLengths = spaceConfig?.cycleStageLengths;
+  // if (governanceCycleForm) ({ calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm));
   const displayName = config.name;
 
   // get address from jwt (SIWE)
@@ -100,9 +98,6 @@ router.post('/config', async (req, res) => {
       cid,
       spaceOwners: spaceOwnersIn,
       config: configIn,
-      calendar,
-      cycleTriggerTime,
-      cycleStageLengths,
       autoEnable: 1,
     }).then(() => {
       res.json({ success: true, data: { space, spaceOwners: spaceOwnersIn } });
@@ -112,8 +107,8 @@ router.post('/config', async (req, res) => {
     });
   } else {
     console.log('dryrun');
-    console.log(space, displayName, cid, spaceOwnersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths);
-    res.json({ success: true, data: { dryrun, space, displayName, cid, spaceOwnersIn, configIn, calendar, cycleTriggerTime, cycleStageLengths } });
+    console.log(space, displayName, cid, spaceOwnersIn, configIn,);
+    res.json({ success: true, data: { dryrun, space, displayName, cid, spaceOwnersIn, configIn, } });
   }
 
   // create space database if it doesn't exist

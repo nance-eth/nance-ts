@@ -20,9 +20,9 @@ export const getSpaceInfo = async (spaceConfig: SpaceConfig): Promise<SpaceInfoE
     let cycleCurrentDay: number;
     let cycleStartDate;
     let { currentGovernanceCycle } = spaceConfig;
-    const { config, cycleStageLengths, calendar, cycleTriggerTime } = spaceConfig;
-    if (!calendar || !cycleStageLengths || !cycleTriggerTime) {
-      juiceboxTimeOutput = await juiceboxTime(config.juicebox.projectId, config.juicebox.network);
+    const { config, cycleStageLengths, cycleStartReference } = spaceConfig;
+    if (!cycleStageLengths || !cycleStartReference) {
+      juiceboxTimeOutput = await juiceboxTime(config.juicebox.projectId, config.juicebox.network as 'mainnet' | 'goerli');
       ({ cycleCurrentDay, currentGovernanceCycle } = juiceboxTimeOutput);
       currentEvent = {
         title: EVENTS.UNKNOWN,
@@ -31,7 +31,7 @@ export const getSpaceInfo = async (spaceConfig: SpaceConfig): Promise<SpaceInfoE
       };
       cycleStartDate = currentEvent.start;
     } else {
-      currentEvent = getCurrentEvent(calendar, cycleStageLengths, new Date());
+      currentEvent = getCurrentEvent(cycleStartReference, cycleStageLengths, new Date());
       cycleCurrentDay = getCurrentGovernanceCycleDay(currentEvent, cycleStageLengths, new Date());
       cycleStartDate = getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.start || new Date();
       // if this the cycle start date is in the past, then we are currently in TEMPERATURE_CHECK and need to add 14 days
@@ -44,6 +44,7 @@ export const getSpaceInfo = async (spaceConfig: SpaceConfig): Promise<SpaceInfoE
       start: currentEvent.start.toISOString(),
       end: currentEvent.end.toISOString(),
     };
+    const cycleTriggerTime = cycleStartReference?.toISOString().split('T')[1] || "00:00:00";
     return {
       name: spaceConfig.space,
       displayName: spaceConfig.displayName || spaceConfig.space,

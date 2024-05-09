@@ -1,11 +1,11 @@
 import { decode } from "next-auth/jwt";
-import {
-  signatureTypes,
-  signatureDomain,
-  NewProposal,
-  UpdateProposal,
-  SignatureTypes,
-} from "@nance/nance-sdk";
+// import {
+//   signatureTypes,
+//   signatureDomain,
+//   NewProposal,
+//   UpdateProposal,
+//   SignatureTypes,
+// } from "@nance/nance-sdk";
 import { recoverTypedDataAddress } from "viem";
 import { unixTimeStampNow } from "../../utils";
 import { keys } from "../../keys";
@@ -30,24 +30,24 @@ export async function addressFromJWT(jwt: string): Promise<string> {
   });
 }
 
-export async function addressFromSignature(
-  message: NewProposal | UpdateProposal | { uuid: string },
-  signature: string,
-  primaryType: SignatureTypes
-): Promise<string> {
-  console.log("addressFromSignature", message, signature, primaryType);
-  if (!message?.uuid) return Promise.reject(new Error("Proposal uuid is required"));
+// export async function addressFromSignature(
+//   message: NewProposal | UpdateProposal | { uuid: string },
+//   signature: string,
+//   primaryType: SignatureTypes
+// ): Promise<string> {
+//   console.log("addressFromSignature", message, signature, primaryType);
+//   if (!message?.uuid) return Promise.reject(new Error("Proposal uuid is required"));
 
-  const address = await recoverTypedDataAddress({
-    types: signatureTypes,
-    domain: signatureDomain,
-    primaryType,
-    message,
-    signature: signature as `0x${string}`,
-  });
-  console.log("addressFromSignature", address);
-  return address;
-}
+//   const address = await recoverTypedDataAddress({
+//     types: signatureTypes,
+//     domain: signatureDomain,
+//     primaryType,
+//     message,
+//     signature: signature as `0x${string}`,
+//   });
+//   console.log("addressFromSignature", address);
+//   return address;
+// }
 
 export const addressHasGuildRole = async (address: string, guildId: number, roleId: number[]) => {
   const access = await getAddressRoles(address, guildId);

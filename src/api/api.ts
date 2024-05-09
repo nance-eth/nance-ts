@@ -12,15 +12,12 @@ import {
 } from '@nance/nance-sdk';
 import { isEqual } from "lodash";
 import logger from '../logging';
-import { GnosisHandler } from '../gnosis/gnosisHandler';
 import { getLastSlash, sleep, uuidGen } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { diffLineCounts } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
-import { encodeCustomTransaction, encodeGnosisMulticall } from '../transactions/transactionHandler';
-import { TenderlyHandler } from '../tenderly/tenderlyHandler';
-import { addressFromJWT, addressFromSignature, addressHasGuildRole } from './helpers/auth';
+import { addressFromJWT, addressHasGuildRole } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { getSpaceInfo } from './helpers/getSpace';
@@ -189,13 +186,13 @@ router.post('/:space/proposals', async (req, res) => {
     const address = bearerAddress || uploaderAddress;
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-    if (uploaderAddress && uploaderSignature) {
-      const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
-      if (uploaderAddress !== decodedAddress) {
-        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
-        return;
-      }
-    }
+    // if (uploaderAddress && uploaderSignature) {
+    //   const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
+    //   if (uploaderAddress !== decodedAddress) {
+    //     res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+    //     return;
+    //   }
+    // }
 
     // check Guildxyz access, allow draft uploads regardless of Guildxyz access
     if (config.guildxyz && proposal.status === "Discussion") {
@@ -335,13 +332,13 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     const { dolt, config, bearerAddress, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
     const address = bearerAddress || uploaderAddress;
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-    if (uploaderAddress && uploaderSignature) {
-      const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
-      if (uploaderAddress !== decodedAddress) {
-        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
-        return;
-      }
-    }
+    // if (uploaderAddress && uploaderSignature) {
+    //   const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
+    //   if (uploaderAddress !== decodedAddress) {
+    //     res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+    //     return;
+    //   }
+    // }
     const proposalByUuid = await dolt.getProposalByAnyId(pid);
     if (!canEditProposal(proposalByUuid.status)) {
       res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
@@ -456,13 +453,13 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
     const address = bearerAddress || deleterAddress;
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' }); return; }
     const proposalByUuid = await dolt.getProposalByAnyId(uuid);
-    if (deleterAddress && deleterSignature) {
-      const decodedAddress = await addressFromSignature(proposalByUuid, deleterSignature, "DeleteProposal");
-      if (deleterAddress !== decodedAddress) {
-        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
-        return;
-      }
-    }
+    // if (deleterAddress && deleterSignature) {
+    //   const decodedAddress = await addressFromSignature(proposalByUuid, deleterSignature, "DeleteProposal");
+    //   if (deleterAddress !== decodedAddress) {
+    //     res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+    //     return;
+    //   }
+    // }
     if (!proposalByUuid) {
       res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
       return;
@@ -544,46 +541,6 @@ router.get('/:space/cache/clear', async (req, res) => {
   const { space } = req.params;
   cache[space] = {};
   res.json({ success: true });
-});
-
-// ===================================== //
-// ======== transfer functions ========= //
-// ===================================== //
-
-// basic simulation of a single customTransaction sent from the space gnosis safe
-router.get('/:space/simulate/:uuid', async (req, res) => {
-  try {
-    const { space, uuid } = req.params;
-    const { dolt, config } = await handlerReq(space, req.headers.authorization);
-    const txn = await dolt.getTransactionsByUuids([uuid]);
-    if (!txn || txn.length === 0) { res.json({ success: false, error: 'no transaction found' }); return; }
-    const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
-    const encodedTransaction = await encodeCustomTransaction(txn[0]);
-    const from = config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress;
-    const tenderlyResults = await tenderly.simulate(encodedTransaction.bytes, encodedTransaction.address, from);
-    res.json({ success: true, data: { ...tenderlyResults } });
-  } catch (e) {
-    res.json({ success: false, error: e });
-  }
-});
-
-// tenderly simulation of multiple transactions, encoded using gnosis MultiCall
-// pass in comma separated uuids of transactions to simulate as a query ex: ?uuids=uuid1,uuid2,uuid3...
-router.get('/:space/simulateMulticall', async (req, res) => {
-  try {
-    const { space } = req.params;
-    const { uuids, uuidOfProposal } = req.query as { uuids: string, uuidOfProposal: string };
-    const { dolt, config } = await handlerReq(space, req.headers.authorization);
-    const txn = (uuidOfProposal) ? await dolt.getTransactionsByProposalUuid(uuidOfProposal) : await dolt.getTransactionsByUuids(uuids.split(','));
-    if (!txn || txn.length === 0) { res.json({ success: false, error: 'no transaction found' }); return; }
-    const signer = (await GnosisHandler.getSigners(config.juicebox.gnosisSafeAddress))[0]; // get the first signer to encode MultiCall
-    const encodedTransactions = await encodeGnosisMulticall(txn, signer);
-    const tenderly = new TenderlyHandler({ account: 'jigglyjams', project: 'nance' });
-    const tenderlyResults = await tenderly.simulate(encodedTransactions.data, config.juicebox.gnosisSafeAddress, signer, true);
-    res.json({ success: true, data: { ...tenderlyResults, transactionCount: encodedTransactions.count, transactions: encodedTransactions.transactions } });
-  } catch (e) {
-    res.json({ success: false, error: e });
-  }
 });
 
 export default router;

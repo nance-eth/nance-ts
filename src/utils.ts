@@ -5,7 +5,8 @@ import path from 'path';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { NanceConfig, Network } from '@nance/nance-sdk';
+import { Action, NanceConfig } from '@nance/nance-sdk';
+// import YAML from 'yaml';
 import { keys } from './keys';
 import { NETWORKS } from './constants';
 
@@ -16,7 +17,7 @@ const networkToRPC = {
   [NETWORKS.OPTIMISM]: `https://optimism-mainnet.infura.io/v3/${keys.INFURA_KEY}`,
 };
 
-export const myProvider = (network = 'mainnet' as Network) => {
+export const myProvider = (network = 'mainnet') => {
   const RPC_HOST = networkToRPC[network];
   return new JsonRpcProvider(RPC_HOST);
 };
@@ -200,3 +201,19 @@ export function maybePlural(text: string, count: number) {
 export const numberWithCommas = (x: number) => {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
+
+// const actionsHeader = "```nance-actions\n---nance-actions\n";
+// const actionsFooter = "\n```";
+// export const actionsToYaml = (actions: Action[]) => {
+//   return `${actionsHeader}${YAML.stringify(actions)}${actionsFooter}`;
+// };
+
+// export const getActionsFromBody = (body: string) => {
+//   const regex = /(?<=```nance-actions\n)([\s\S]*?)(?=\n```)/g;
+//   const matches = body.match(regex);
+
+//   if (matches && matches.length > 0) {
+//     return YAML.parse(matches[0].trim());
+//   }
+//   return null;
+// };

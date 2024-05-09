@@ -1,7 +1,7 @@
 import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
-import { Proposal, SnapshotVoteOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '@nance/nance-sdk';
+import { Proposal, SnapshotVoteSetupOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '@nance/nance-sdk';
 import { dateToUnixTimeStamp, limitLength, myProvider } from '../utils';
 import { snapshotProposalToProposal } from './snapshotProposals';
 import { keys } from '../keys';
@@ -24,7 +24,7 @@ export class SnapshotHandler {
     this.snapshot = new snapshot.Client712(this.hub);
   }
 
-  async createProposal(proposal: Proposal, startDate: Date, endDate: Date, options: SnapshotVoteOptions, jitter: number): Promise<string> {
+  async createProposal(proposal: Proposal, startDate: Date, endDate: Date, options: SnapshotVoteSetupOptions, jitter: number): Promise<string> {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();

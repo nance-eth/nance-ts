@@ -1,32 +1,28 @@
-import { InternalDateEvent, DateEvent } from '@nance/nance-sdk';
+import { InternalDateEvent, DateEvent, GovernanceEventName } from '@nance/nance-sdk';
 import { EVENTS, ONE_DAY_MILLISECONDS } from '../constants';
+import { addDaysToDate } from "../utils";
 
 const cycleStageLengthsToInterval = (cycleStageLengths: number[]) => {
   const totalCycleDays = cycleStageLengths.reduce((a, b) => { return a + b; }, 0);
   return totalCycleDays * ONE_DAY_MILLISECONDS;
 };
 
-export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date): InternalDateEvent[] => {
+export const getNextEvents = (originalStart: Date, cycleStageLengths: number[], inputDate: Date): InternalDateEvent[] => {
   const interval = cycleStageLengthsToInterval(cycleStageLengths);
-  const repeats = Math.floor((inputDate.getTime() - new Date(events[0].start).getTime()) / interval);
+  const repeats = Math.floor((inputDate.getTime() - new Date(originalStart).getTime()) / interval);
   const nextEvents: InternalDateEvent[] = [];
-  events.forEach((event) => {
-    const originalStart = new Date(event.start);
-    const originalEnd = new Date(event.end);
-    const start = new Date(originalStart.getTime() + repeats * interval);
-    const end = new Date(originalEnd.getTime() + repeats * interval);
-    nextEvents.push(
-      {
-        title: event.title,
-        start,
-        end,
-      },
-      {
-        title: event.title,
-        start: new Date(start.getTime() + interval),
-        end: new Date(end.getTime() + interval),
-      }
-    );
+  GovernanceEventName.forEach((name, index) => {
+    if (name === "Unknown") return;
+    if (cycleStageLengths[index] === 0) return;
+    const start = (index > 0)
+      ? nextEvents[index - 1].end
+      : new Date(originalStart.getTime() + (repeats * interval));
+    const end = addDaysToDate(start, cycleStageLengths[index]);
+    nextEvents.push({
+      title: name,
+      start,
+      end,
+    });
   });
   // sort by start date and remove events that have ended
   const nextEventsCleaned = nextEvents.sort((a, b) => {
@@ -37,8 +33,8 @@ export const getNextEvents = (events: DateEvent[], cycleStageLengths: number[], 
   return nextEventsCleaned;
 };
 
-export const getCurrentEvent = (events: DateEvent[], cycleStageLengths: number[], inputDate: Date) : InternalDateEvent => {
-  const nextEvents = getNextEvents(events, cycleStageLengths, inputDate);
+export const getCurrentEvent = (originalStart: Date, cycleStageLengths: number[], inputDate: Date) : InternalDateEvent => {
+  const nextEvents = getNextEvents(originalStart, cycleStageLengths, inputDate);
   const currentEvent = nextEvents.find((event) => {
     return inputDate >= event.start && inputDate < event.end;
   });
@@ -57,7 +53,7 @@ export const getCycleStartDays = (cycleStageLengths: number[]) => {
 export const getCurrentGovernanceCycleDay = (currentEvent: InternalDateEvent, cycleStageLengths: number[], input: Date) => {
   if (!currentEvent) return 0;
   const cycleStartDays = getCycleStartDays(cycleStageLengths);
-  const eventIndex = Object.values(EVENTS).indexOf(currentEvent.title);
+  const eventIndex = Object.values(GovernanceEventName).indexOf(currentEvent.title);
   const dayDelta = Math.floor((input.getTime() - currentEvent.start.getTime()) / ONE_DAY_MILLISECONDS);
   const currentGovernanceCycleDay = cycleStartDays[eventIndex] + dayDelta;
   return currentGovernanceCycleDay;

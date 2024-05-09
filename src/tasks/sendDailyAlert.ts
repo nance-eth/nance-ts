@@ -13,9 +13,9 @@ export async function sendDailyAlert(space: string) {
   try {
     // refetch spaceConfig to get latest cycle information
     const spaceConfig = await getSpaceConfig(space);
-    if (!spaceConfig || !spaceConfig.calendar || !spaceConfig.cycleStageLengths) return false;
+    if (!spaceConfig || !spaceConfig.cycleStartReference || !spaceConfig.cycleStageLengths) return false;
     const { config, currentGovernanceCycle } = spaceConfig;
-    const currentEvent = getCurrentEvent(spaceConfig.calendar, spaceConfig.cycleStageLengths, now);
+    const currentEvent = getCurrentEvent(spaceConfig.cycleStartReference, spaceConfig.cycleStageLengths, now);
     const currentGovernanceCycleDay = getCurrentGovernanceCycleDay(currentEvent, spaceConfig.cycleStageLengths, now);
     logger.info(`currentGovernanceCycleDay: ${currentGovernanceCycleDay}`);
     logger.info(`currentEvent: ${JSON.stringify(currentEvent)}`);

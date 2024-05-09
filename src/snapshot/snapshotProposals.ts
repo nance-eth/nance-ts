@@ -11,7 +11,7 @@ export const snapshotProposalToProposal = (sProposal: SnapshotProposal, quorum: 
   if (sProposal.state === 'closed') {
     status = sProposal.scores[0] > sProposal.scores[1] ? "Approved" : "Cancelled";
   }
-  const cleanedTitle = sProposal?.title?.replace(/^([A-Z]+-\d+): /, '');
+  const cleanedTitle = sProposal?.title?.replace(/^([A-Z]+-\d+): /, '').trim();
   const proposalIdMatch = sProposal?.title?.match(/^([A-Z]+-(\d+)): /);
   const proposalId = proposalIdMatch ? Number(proposalIdMatch[2]) : undefined;
   console.log('proposalId', proposalId);

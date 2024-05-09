@@ -116,11 +116,11 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
 
 export const scheduleAllCalendarTasks = async (spaceConfigs: SpaceConfig[]) => {
   spaceConfigs.forEach((spaceConfig) => {
-    const { space, cycleStageLengths, calendar, config } = spaceConfig;
+    const { space, cycleStartReference, cycleStageLengths, config } = spaceConfig;
     // schedule all calendar based events
-    if (calendar && cycleStageLengths) {
+    if (cycleStartReference && cycleStageLengths) {
       const now = new Date();
-      const events = getNextEvents(calendar, cycleStageLengths, now);
+      const events = getNextEvents(cycleStartReference, cycleStageLengths, now);
       scheduleCalendarTasks(space, config, events);
     }
   });
