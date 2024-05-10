@@ -18,7 +18,7 @@ async function main() {
     const [hours, minutes] = cycleTriggerTime.split(':').map((str) => { return Number(str); });
     const cronNotation = `${minutes} ${hours} * * *`;
     schedule.scheduleJob(`${space}:${TASKS.sendDailyAlert}`, cronNotation, async () => {
-      await tasks.sendDailyJBAlert(space);
+      await tasks.sendDailyAlert(space);
     });
     // schedule all calendar based events
     if (cycleStartReference && cycleStageLengths) {

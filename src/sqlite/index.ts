@@ -39,9 +39,8 @@ async function main() {
       juicebox_project_id INTEGER,
       safe_address TEXT,
       governor_address TEXT,
-      cycle_trigger_time TEXT,
+      cycle_start_reference TEXT,
       cycle_stage_lengths TEXT,
-      dialog_handler_message_ids TEXT,
       current_governance_cycle INTEGER,
       template TEXT
     )
@@ -170,16 +169,14 @@ async function main() {
         proposal_id_prefix,
         space_owners,
         discord_settings,
-        calendar,
         juicebox_project_id,
         safe_address,
         governor_address,
-        cycle_trigger_time,
+        cycle_start_reference,
         cycle_stage_lengths,
-        dialog_handler_message_ids,
         current_governance_cycle,
         template
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       [
         space.space,
@@ -190,13 +187,11 @@ async function main() {
         nullCheck(space.config.proposalIdPrefix),
         nullCheck(space.spaceOwners),
         nullCheck(space.config.discord),
-        nullCheck(space.calendar),
         nullCheck(space.config.juicebox.projectId),
         nullCheck(safe_address),
         nullCheck(governor_address),
-        nullCheck(space.cycleTriggerTime),
+        nullCheck(space.cycleStartReference),
         nullCheck(space.cycleStageLengths),
-        nullCheck(space.dialogHandlerMessageIds),
         nullCheck(space.currentGovernanceCycle),
         nullCheck(space.template)
       ]
