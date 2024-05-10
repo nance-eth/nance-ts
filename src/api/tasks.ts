@@ -1,5 +1,5 @@
 import express from 'express';
-import { SpaceConfig } from '@nance/nance-sdk';
+import { SQLSpaceConfig } from '@nance/nance-sdk';
 import { getSpaceConfig } from './helpers/getSpace';
 import { addressFromJWT } from './helpers/auth';
 import { isNanceSpaceOwner } from './helpers/permissions';
@@ -48,7 +48,7 @@ router.get('/:space/dailyAlert', async (req, res) => {
 });
 
 router.get('/:space/incrementGovernanceCycle', async (req, res) => {
-  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
+  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SQLSpaceConfig };
   incrementGovernanceCycle(spaceConfig.space).then(() => {
     res.json({ success: true });
   }).catch((e) => {
@@ -58,7 +58,7 @@ router.get('/:space/incrementGovernanceCycle', async (req, res) => {
 
 router.get('/:space/temperatureCheckStart', async (req, res) => {
   const { endDate } = req.query;
-  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
+  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SQLSpaceConfig };
   const temperatureCheckEndDate = endDate ? new Date(endDate as string)
     : getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.end
     || new Date(addSecondsToDate(new Date(), 3600));
@@ -70,7 +70,7 @@ router.get('/:space/temperatureCheckStart', async (req, res) => {
 });
 
 router.get('/:space/temperatureCheckClose', async (req, res) => {
-  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
+  const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SQLSpaceConfig };
   temperatureCheckClose(space, spaceConfig.config).then(() => {
     res.json({ success: true });
   }).catch((e) => {
@@ -81,7 +81,7 @@ router.get('/:space/temperatureCheckClose', async (req, res) => {
 router.get('/:space/voteSetup', async (req, res) => {
   try {
     const { endDate } = req.query;
-    const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
+    const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SQLSpaceConfig };
     const voteEndDate = endDate ? new Date(endDate as string)
       : getNextEventByName(EVENTS.SNAPSHOT_VOTE, spaceConfig)?.end
       || new Date(addSecondsToDate(new Date(), 3600));
@@ -95,7 +95,7 @@ router.get('/:space/voteSetup', async (req, res) => {
 
 router.get('/:space/voteClose', async (req, res) => {
   try {
-    const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SpaceConfig };
+    const { space, spaceConfig } = res.locals as { space: string, spaceConfig: SQLSpaceConfig };
     const proposals = await voteClose(space, spaceConfig.config);
     await voteResultsRollup(space, spaceConfig.config, proposals);
     res.json({ success: true });

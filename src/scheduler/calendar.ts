@@ -1,6 +1,6 @@
 import schedule from 'node-schedule';
 import retry from 'promise-retry';
-import { InternalDateEvent, NanceConfig, SpaceConfig } from '@nance/nance-sdk';
+import { InternalDateEvent, NanceConfig, SQLSpaceConfig } from '@nance/nance-sdk';
 import { EVENTS, ONE_HOUR_SECONDS, TASKS } from '../constants';
 import * as tasks from '../tasks';
 import { addDaysToDate, addSecondsToDate } from '../utils';
@@ -114,7 +114,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
   });
 };
 
-export const scheduleAllCalendarTasks = async (spaceConfigs: SpaceConfig[]) => {
+export const scheduleAllCalendarTasks = async (spaceConfigs: SQLSpaceConfig[]) => {
   spaceConfigs.forEach((spaceConfig) => {
     const { space, cycleStartReference, cycleStageLengths, config } = spaceConfig;
     // schedule all calendar based events

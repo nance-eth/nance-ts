@@ -38,8 +38,13 @@ export const getNextEvents = (originalStart: Date, cycleStageLengths: number[], 
   return nextEventsCleaned;
 };
 
-export const getCurrentEvent = (originalStart: Date, cycleStageLengths: number[], inputDate: Date) : InternalDateEvent => {
-  const nextEvents = getNextEvents(originalStart, cycleStageLengths, inputDate);
+export const getCurrentEvent = (
+  originalStart: Date,
+  cycleStageLengths: number[],
+  inputDate: Date,
+  _nextEvents?: InternalDateEvent[],
+) : InternalDateEvent => {
+  const nextEvents = _nextEvents || getNextEvents(originalStart, cycleStageLengths, inputDate);
   const currentEvent = nextEvents.find((event) => {
     return inputDate >= event.start && inputDate < event.end;
   });

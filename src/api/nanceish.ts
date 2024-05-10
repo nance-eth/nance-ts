@@ -4,7 +4,7 @@ import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
 import { dotPin } from '../storage/storageHandler';
-import { mergeTemplateConfig, mergeConfig, sleep, uuidGen } from '../utils';
+import { mergeTemplateConfig, mergeConfig, uuidGen } from '../utils';
 import logger from '../logging';
 import { pools } from '../dolt/pools';
 import { dbOptions } from '../dolt/dbConfig';
@@ -40,14 +40,7 @@ router.get('/all', async (_, res) => {
     const infos = await Promise.all(data.map(async (space) => {
       const dolt = new DoltHandler(pools[space.name], '');
       const spaceInfo: SpaceInfo = {
-        name: space.name,
-        displayName: space.displayName || space.name,
-        currentCycle: space.currentCycle,
-        cycleStartDate: space.cycleStartDate,
-        currentEvent: space.currentEvent,
-        spaceOwners: space.spaceOwners,
-        snapshotSpace: space.config.snapshot.space,
-        juiceboxProjectId: space.config.juicebox.projectId,
+        ...space,
         dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, await dolt.getHead()),
         nextProposalId: await dolt.getNextProposalId(),
       };

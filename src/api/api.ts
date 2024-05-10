@@ -69,14 +69,8 @@ async function handlerReq(_query: string, auth: string | undefined) {
     }
 
     return {
-      name: query,
-      displayName: spaceInfo.displayName,
-      spaceOwners: spaceInfo.spaceOwners,
+      ...spaceInfo,
       bearerAddress,
-      config: spaceInfo.config,
-      currentGovernanceCycle: spaceInfo.currentCycle,
-      cycleStartDate: spaceInfo.cycleStartDate,
-      currentEvent: spaceInfo.currentEvent,
       dolt,
       dolthubLink: headToUrl(spaceInfo.config.dolt.owner, spaceInfo.config.dolt.repo), // just send back repo link to reduce SQL calls
       nextProposalId,
@@ -94,12 +88,14 @@ router.get('/:space', async (req, res) => {
   console.time("space");
   const { space } = req.params;
   try {
-    const { config, name, displayName, currentEvent, currentGovernanceCycle, dolthubLink, spaceOwners, nextProposalId, cycleStartDate } = await handlerReq(space, req.headers.authorization);
+    const { config, name, displayName, currentEvent, currentCycle, currentCycleDay, dolthubLink, spaceOwners, nextProposalId, cycleStartDate, nextEvents } = await handlerReq(space, req.headers.authorization);
     const spaceInfo: SpaceInfo = {
       name,
       displayName,
-      currentCycle: currentGovernanceCycle,
+      currentCycle,
+      currentCycleDay,
       currentEvent,
+      nextEvents,
       spaceOwners,
       snapshotSpace: config.snapshot.space,
       juiceboxProjectId: config.juicebox.projectId,
@@ -138,14 +134,14 @@ router.get('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   try {
     const { cycle, keyword, author, limit, page } = req.query as { cycle: string, keyword: string, author: string, limit: string, page: string };
-    const { dolt, config, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, currentCycle } = await handlerReq(space, req.headers.authorization);
 
     // calculate offset for SQL pagination
     const _limit = limit ? Number(limit) : 0;
     const _page = page ? Number(page) : 0;
     const _offset = _page ? (_page - 1) * _limit : 0;
 
-    const cycleSearch = cycle || currentGovernanceCycle.toString();
+    const cycleSearch = cycle || currentCycle.toString();
 
     // cache
     const key = `${space}:${JSON.stringify(req.query)}`;
@@ -182,7 +178,7 @@ router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   const { proposal, uploaderAddress, uploaderSignature } = req.body as ProposalUploadRequest;
   try {
-    const { config, dolt, bearerAddress, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const { config, dolt, bearerAddress, currentCycle } = await handlerReq(space, req.headers.authorization);
     const address = bearerAddress || uploaderAddress;
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
@@ -214,7 +210,7 @@ router.post('/:space/proposals', async (req, res) => {
       discussionThreadURL: "",
     };
     if (!newProposal.governanceCycle) {
-      newProposal.governanceCycle = currentGovernanceCycle + 1;
+      newProposal.governanceCycle = currentCycle + 1;
     }
     if (!newProposal.authorAddress) { newProposal.authorAddress = address || uploaderAddress; }
     if (newProposal.status === "Archived") { newProposal.status = "Discussion"; } // proposal forked from an archive, set to discussion
@@ -329,7 +325,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   try {
     const { proposal, uploaderSignature, uploaderAddress } = req.body as ProposalUpdateRequest;
-    const { dolt, config, bearerAddress, spaceOwners, currentGovernanceCycle } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, bearerAddress, spaceOwners, currentCycle } = await handlerReq(space, req.headers.authorization);
     const address = bearerAddress || uploaderAddress;
     if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
     // if (uploaderAddress && uploaderSignature) {
@@ -375,7 +371,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
     // update governance cycle to current if proposal is a draft
     if (proposal.status === "Draft") {
-      governanceCycle = currentGovernanceCycle + 1;
+      governanceCycle = currentCycle + 1;
     }
 
     const updateProposal: Proposal = {

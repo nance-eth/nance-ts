@@ -1,5 +1,5 @@
 import { oneLine } from 'common-tags';
-import { DialogHandlerMessageIds, SpaceConfig } from '@nance/nance-sdk';
+import { DialogHandlerMessageIds, SQLSpaceConfig, SpaceConfig } from '@nance/nance-sdk';
 import { DoltSQL, cleanResultsHeader } from './doltSQL';
 import { dbOptions } from './dbConfig';
 import { sqlSchemaToString } from '../utils';
@@ -66,7 +66,7 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async setSpaceConfig(c: Partial<SpaceConfig>) {
+  async setSpaceConfig(c: Partial<SQLSpaceConfig>) {
     return this.localDolt.queryResults(oneLine`
       INSERT INTO ${system} (
         space,
@@ -136,40 +136,40 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async getSpaceConfig(space: string): Promise<SpaceConfig> {
+  async getSpaceConfig(space: string): Promise<SQLSpaceConfig> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
       WHERE space = LOWER(?) LIMIT 1
     `, [space.toLowerCase()]).then((res) => {
-      return res[0] as unknown as SpaceConfig;
+      return res[0] as unknown as SQLSpaceConfig;
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async getAllSpaceConfig(where?: string): Promise<SpaceConfig[]> {
+  async getAllSpaceConfig(where?: string): Promise<SQLSpaceConfig[]> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
       ${(where) ? `WHERE ${where}` : ''}
     `).then((res) => {
-      return res as unknown as SpaceConfig[];
+      return res as unknown as SQLSpaceConfig[];
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async getAllSpaceNames(where?: string): Promise<SpaceConfig[]> {
+  async getAllSpaceNames(where?: string): Promise<SQLSpaceConfig[]> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
       ${(where) ? `WHERE ${where}` : ''}
       `).then((res) => {
-      return res as unknown as SpaceConfig[];
+      return res as unknown as SQLSpaceConfig[];
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async getSpaceByDiscordGuildId(discordGuildId: string): Promise<SpaceConfig> {
+  async getSpaceByDiscordGuildId(discordGuildId: string): Promise<SQLSpaceConfig> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
       WHERE JSON_EXTRACT(config, '$.discord.guildId') = ?
       LIMIT 1
     `, [discordGuildId]).then((res) => {
-      return res[0] as unknown as SpaceConfig;
+      return res[0] as unknown as SQLSpaceConfig;
     }).catch((e) => { return Promise.reject(e); });
   }
 

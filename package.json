@@ -22,7 +22,7 @@
     "@gnosis.pm/safe-core-sdk-types": "^1.4.0",
     "@gnosis.pm/safe-ethers-lib": "^1.4.0",
     "@jigglyjams/juice-sdk-v3": "^3.2.2-alpha",
-    "@nance/nance-sdk": "^2.1.0",
+    "@nance/nance-sdk": "^2.1.2",
     "@snapshot-labs/snapshot.js": "^0.3.96",
     "axios": "^1.5.0",
     "better-sqlite3": "^9.5.0",
