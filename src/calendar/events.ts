@@ -1,6 +1,16 @@
-import { InternalDateEvent, DateEvent, GovernanceEventName } from '@nance/nance-sdk';
-import { EVENTS, ONE_DAY_MILLISECONDS } from '../constants';
+import { InternalDateEvent, GovernanceEventName } from '@nance/nance-sdk';
+import { ONE_DAY_MILLISECONDS } from '../constants';
 import { addDaysToDate } from "../utils";
+
+export const getCycleStartDays = (cycleStageLengths: number[]) => {
+  let accumulatedDays = 1;
+  return cycleStageLengths.map((_, index, array) => {
+    if (array[index] === 0) return 0;
+    if (index === 0) return 1;
+    accumulatedDays += array[index - 1];
+    return accumulatedDays;
+  });
+};
 
 const cycleStageLengthsToInterval = (cycleStageLengths: number[]) => {
   const totalCycleDays = cycleStageLengths.reduce((a, b) => { return a + b; }, 0);
@@ -11,19 +21,17 @@ export const getNextEvents = (originalStart: Date, cycleStageLengths: number[], 
   const interval = cycleStageLengthsToInterval(cycleStageLengths);
   const repeats = Math.floor((inputDate.getTime() - new Date(originalStart).getTime()) / interval);
   const nextEvents: InternalDateEvent[] = [];
+  const accumulatedDays = getCycleStartDays(cycleStageLengths);
   GovernanceEventName.forEach((name, index) => {
     if (name === "Unknown") return;
     if (cycleStageLengths[index] === 0) return;
-    const start = (index > 0)
-      ? nextEvents[index - 1].end
-      : new Date(originalStart.getTime() + (repeats * interval));
+    const start = addDaysToDate(new Date(originalStart.getTime() + (repeats * interval)), accumulatedDays[index] - 1);
     const end = addDaysToDate(start, cycleStageLengths[index]);
     nextEvents.push({
       title: name,
       start,
       end,
-    });
-    nextEvents.push({
+    }, {
       title: name,
       start: new Date(start.getTime() + interval),
       end: new Date(end.getTime() + interval),
@@ -49,15 +57,6 @@ export const getCurrentEvent = (
     return inputDate >= event.start && inputDate < event.end;
   });
   return currentEvent as InternalDateEvent;
-};
-
-export const getCycleStartDays = (cycleStageLengths: number[]) => {
-  let accumulatedDays = 1;
-  return cycleStageLengths.map((_, index, array) => {
-    if (index === 0) return 1;
-    accumulatedDays += array[index - 1];
-    return accumulatedDays;
-  });
 };
 
 export const getCurrentGovernanceCycleDay = (currentEvent: InternalDateEvent, cycleStageLengths: number[], input: Date) => {
