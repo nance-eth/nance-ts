@@ -16,7 +16,13 @@ const isNotScheduled = (jobName: string) => {
 const scheduleJob = (jobName: string, date: Date, func: () => void) => {
   const now = new Date();
   if (isNotScheduled(jobName) && date > now) {
-    schedule.scheduleJob(jobName, date, func);
+    schedule.scheduleJob(jobName, date, () => {
+      try {
+        func();
+      } catch (e) {
+        console.error(e);
+      }
+    });
   }
 };
 
