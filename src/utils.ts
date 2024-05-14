@@ -201,19 +201,3 @@ export function maybePlural(text: string, count: number) {
 export const numberWithCommas = (x: number) => {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
-
-// const actionsHeader = "```nance-actions\n---nance-actions\n";
-// const actionsFooter = "\n```";
-// export const actionsToYaml = (actions: Action[]) => {
-//   return `${actionsHeader}${YAML.stringify(actions)}${actionsFooter}`;
-// };
-
-// export const getActionsFromBody = (body: string) => {
-//   const regex = /(?<=```nance-actions\n)([\s\S]*?)(?=\n```)/g;
-//   const matches = body.match(regex);
-
-//   if (matches && matches.length > 0) {
-//     return YAML.parse(matches[0].trim());
-//   }
-//   return null;
-// };

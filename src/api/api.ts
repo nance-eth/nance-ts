@@ -226,7 +226,7 @@ router.post('/:space/proposals', async (req, res) => {
     dolt.addProposalToDb(newProposal).then(async (proposalRes) => {
       const { uuid } = proposalRes;
       proposal.uuid = uuid;
-      dolt.actionDirector(newProposal);
+      // dolt.actionDirector(newProposal);
 
       // return uuid to client, then continue doing things
       res.json({ success: true, data: { uuid } });
@@ -384,7 +384,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     };
 
     const uuid = await dolt.editProposal(updateProposal);
-    await dolt.actionDirector(updateProposal, proposalByUuid);
+    // await dolt.actionDirector(updateProposal, proposalByUuid);
     // return uuid to client, then continue doing things
     res.json({ success: true, data: { uuid } });
 
