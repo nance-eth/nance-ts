@@ -29,6 +29,12 @@ const scheduleJob = (jobName: string, date: Date, func: () => void) => {
 export const scheduleCalendarTasks = async (space: string, config: NanceConfig, events: InternalDateEvent[]) => {
   events.forEach(async (event) => {
     if (event.title === EVENTS.TEMPERATURE_CHECK) {
+      // Increment Governance Cycle 5 seconds before Temperature Check starts
+      const incrementGovernanceCycleDate = addSecondsToDate(event.start, -5);
+      scheduleJob(`${space}:${TASKS.incrementGovernanceCycle}`, incrementGovernanceCycleDate, () => {
+        tasks.incrementGovernanceCycle(space);
+      });
+
       // Temperature Check start alert
       const sendTemperatureCheckStartDate = addSecondsToDate(event.start, -ONE_HOUR_SECONDS);
       scheduleJob(`${space}:${TASKS.temperatureCheckStartAlert}`, sendTemperatureCheckStartDate, () => {
@@ -108,13 +114,6 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       const bookkeepingDate = addSecondsToDate(event.start, 5 * 60);
       scheduleJob(`${space}:${TASKS.sendBookkeeping}`, bookkeepingDate, () => {
         tasks.sendBookkeeping(space, config);
-      });
-    }
-    if (event.title === EVENTS.DELAY) {
-      // Increment Governance Cycle 5 seconds before Delay ends
-      const incrementGovernanceCycleDate = addSecondsToDate(event.end, -5);
-      scheduleJob(`${space}:${TASKS.incrementGovernanceCycle}`, incrementGovernanceCycleDate, () => {
-        tasks.incrementGovernanceCycle(space);
       });
     }
   });
