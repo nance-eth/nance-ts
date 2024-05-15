@@ -5,7 +5,7 @@ import {
   AttachmentBuilder, EmbedBuilder, ThreadChannel, EmbedField
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
-import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal } from '@nance/nance-sdk';
+import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal, getActionsFromBody } from '@nance/nance-sdk';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, maybePlural, numToPrettyString } from '../utils';
 import { EMOJI } from '../constants';
 import { DiffLines } from "../api/helpers/diff";
@@ -25,8 +25,9 @@ export const startDiscussionMessage = async (space: string, proposalIdPrefix: st
   if (proposal.authorDiscordId) {
     m.addFields({ name: 'discord user', value: `<@${proposal.authorDiscordId}>`, inline: true });
   }
-  const actions = await actionsToMarkdown(proposal.actions);
-  m.addFields({ name: 'actions', value: actions || "NONE", inline: false });
+  const actions = getActionsFromBody(proposal.body);
+  const actionsMd = actions ? await actionsToMarkdown(actions) : '';
+  m.addFields({ name: 'actions', value: actionsMd || "NONE", inline: false });
   return m;
 };
 

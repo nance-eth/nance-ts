@@ -8,7 +8,8 @@ import {
   ProposalUpdateRequest,
   ProposalDeleteRequest,
   ProposalQueryResponse,
-  SpaceInfoExtended
+  SpaceInfoExtended,
+  getActionsFromBody
 } from '@nance/nance-sdk';
 import { isEqual } from "lodash";
 import logger from '../logging';
@@ -17,7 +18,7 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { DiscordHandler } from '../discord/discordHandler';
 import { diffLineCounts } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
-import { addressFromJWT, addressHasGuildRole } from './helpers/auth';
+import { addressFromJWT, addressFromSignature, addressHasGuildRole } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { getSpaceInfo } from './helpers/getSpace';
@@ -176,24 +177,24 @@ router.get('/:space/proposals', async (req, res) => {
 // upload new proposal
 router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
-  const { proposal, uploaderAddress, uploaderSignature } = req.body as ProposalUploadRequest;
+  const { proposal, signature, address } = req.body as ProposalUploadRequest;
   try {
     const { config, dolt, bearerAddress, currentCycle } = await handlerReq(space, req.headers.authorization);
-    const address = bearerAddress || uploaderAddress;
+    const uploaderAddress = bearerAddress || address;
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
-    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-    // if (uploaderAddress && uploaderSignature) {
-    //   const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
-    //   if (uploaderAddress !== decodedAddress) {
-    //     res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
-    //     return;
-    //   }
-    // }
+    if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
+    if (address && signature && !bearerAddress) {
+      const decodedAddress = await addressFromSignature(proposal, signature);
+      if (address !== decodedAddress) {
+        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        return;
+      }
+    }
 
     // check Guildxyz access, allow draft uploads regardless of Guildxyz access
     if (config.guildxyz && proposal.status === "Discussion") {
-      const access = await addressHasGuildRole(address, config.guildxyz.id, config.guildxyz.roles);
-      console.log(`[PERMISSIONS] ${address} has access: ${access}`);
+      const access = await addressHasGuildRole(uploaderAddress, config.guildxyz.id, config.guildxyz.roles);
+      console.log(`[PERMISSIONS] ${uploaderAddress} has access: ${access}`);
       if (!access) {
         res.json({
           success: false,
@@ -202,23 +203,21 @@ router.post('/:space/proposals', async (req, res) => {
       }
     }
     const newProposal: Proposal = {
-      actions: [],
       ...proposal,
       uuid: proposal.uuid || uuidGen(),
       createdTime: new Date().toISOString(),
-      authorAddress: address,
+      authorAddress: uploaderAddress,
       discussionThreadURL: "",
     };
     if (!newProposal.governanceCycle) {
       newProposal.governanceCycle = currentCycle + 1;
     }
-    if (!newProposal.authorAddress) { newProposal.authorAddress = address || uploaderAddress; }
     if (newProposal.status === "Archived") { newProposal.status = "Discussion"; } // proposal forked from an archive, set to discussion
     if (config.submitAsApproved) { newProposal.status = "Approved"; }
     console.log('======================================================');
     console.log('==================== NEW PROPOSAL ====================');
     console.log('======================================================');
-    console.log(`space ${space}, author ${address}`);
+    console.log(`space ${space}, author ${uploaderAddress}`);
     console.dir(newProposal, { depth: null });
     console.log('======================================================');
     console.log('======================================================');
@@ -226,7 +225,6 @@ router.post('/:space/proposals', async (req, res) => {
     dolt.addProposalToDb(newProposal).then(async (proposalRes) => {
       const { uuid } = proposalRes;
       proposal.uuid = uuid;
-      // dolt.actionDirector(newProposal);
 
       // return uuid to client, then continue doing things
       res.json({ success: true, data: { uuid } });
@@ -324,17 +322,17 @@ router.get('/:space/proposal/:pid', async (req, res) => {
 router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   try {
-    const { proposal, uploaderSignature, uploaderAddress } = req.body as ProposalUpdateRequest;
+    const { proposal, signature, address } = req.body as ProposalUpdateRequest;
     const { dolt, config, bearerAddress, spaceOwners, currentCycle } = await handlerReq(space, req.headers.authorization);
-    const address = bearerAddress || uploaderAddress;
-    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-    // if (uploaderAddress && uploaderSignature) {
-    //   const decodedAddress = await addressFromSignature(proposal, uploaderSignature, "Proposal");
-    //   if (uploaderAddress !== decodedAddress) {
-    //     res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
-    //     return;
-    //   }
-    // }
+    const uploaderAddress = bearerAddress || address;
+    if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
+    if (address && signature && !bearerAddress) {
+      const decodedAddress = await addressFromSignature(proposal as any, signature);
+      if (address !== decodedAddress) {
+        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        return;
+      }
+    }
     const proposalByUuid = await dolt.getProposalByAnyId(pid);
     if (!canEditProposal(proposalByUuid.status)) {
       res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
@@ -343,10 +341,10 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
     // only allow archives by original author, multisig, or spaceOwner
     const permissions = (
-      address === proposalByUuid.authorAddress
-      || await isMultisig(config.juicebox.gnosisSafeAddress, address)
-      || isNanceSpaceOwner(spaceOwners, address)
-      || isNanceAddress(address)
+      uploaderAddress === proposalByUuid.authorAddress
+      || await isMultisig(config.juicebox.gnosisSafeAddress, uploaderAddress)
+      || isNanceSpaceOwner(spaceOwners, uploaderAddress)
+      || isNanceAddress(uploaderAddress)
     );
     if (proposal.status === "Archived" && !permissions) {
       res.json({ success: false, error: '[PERMISSIONS] User not authorized to archive proposal' });
@@ -355,15 +353,15 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
     // eslint-disable-next-line prefer-const
     let { authorAddress, coauthors, governanceCycle } = proposalByUuid;
-    if (!proposalByUuid.coauthors?.includes(address) && address !== proposalByUuid.authorAddress) {
-      coauthors = !coauthors ? [address] : [...coauthors, address];
+    if (!proposalByUuid.coauthors?.includes(uploaderAddress) && uploaderAddress !== proposalByUuid.authorAddress) {
+      coauthors = !coauthors ? [uploaderAddress] : [...coauthors, uploaderAddress];
     }
 
     const proposalId = (!proposalByUuid.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
     console.log('======================================================');
     console.log('=================== EDIT PROPOSAL ====================');
     console.log('======================================================');
-    console.log(`space ${space}, author ${address}`);
+    console.log(`space ${space}, author ${uploaderAddress}`);
     console.log(proposal);
     console.log('======================================================');
     console.log('======================================================');
