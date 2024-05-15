@@ -442,18 +442,18 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 router.delete('/:space/proposal/:uuid', async (req, res) => {
   try {
     const { space, uuid } = req.params;
-    const { deleterAddress, deleterSignature } = req.body as ProposalDeleteRequest;
+    const { address, signature } = req.body as ProposalDeleteRequest;
     const { dolt, config, spaceOwners, bearerAddress } = await handlerReq(space, req.headers.authorization);
-    const address = bearerAddress || deleterAddress;
-    if (!address) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' }); return; }
+    const deleterAddress = bearerAddress || address;
+    if (!deleterAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' }); return; }
     const proposalByUuid = await dolt.getProposalByAnyId(uuid);
-    // if (deleterAddress && deleterSignature) {
-    //   const decodedAddress = await addressFromSignature(proposalByUuid, deleterSignature, "DeleteProposal");
-    //   if (deleterAddress !== decodedAddress) {
-    //     res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
-    //     return;
-    //   }
-    // }
+    if (address && signature) {
+      const decodedAddress = await addressFromSignature(proposalByUuid, signature);
+      if (address !== decodedAddress) {
+        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        return;
+      }
+    }
     if (!proposalByUuid) {
       res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
       return;
@@ -464,14 +464,14 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
       return;
     }
     const permissions = (
-      address === proposalByUuid.authorAddress
-      || await isMultisig(config.juicebox.gnosisSafeAddress, address)
-      || isNanceSpaceOwner(spaceOwners, address)
-      || isNanceAddress(address)
+      deleterAddress === proposalByUuid.authorAddress
+      || await isMultisig(config.juicebox.gnosisSafeAddress, deleterAddress)
+      || isNanceSpaceOwner(spaceOwners, deleterAddress)
+      || isNanceAddress(deleterAddress)
     );
 
     if (permissions) {
-      logger.info(`DELETE issued by ${address}`);
+      logger.info(`DELETE issued by ${deleterAddress}`);
       dolt.deleteProposal(uuid).then(async (affectedRows: number) => {
         res.json({ success: true, data: { affectedRows } });
         // clear proposal cache
