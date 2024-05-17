@@ -2,6 +2,7 @@ import snapshot from '@snapshot-labs/snapshot.js';
 import { request as gqlRequest, gql } from 'graphql-request';
 import { ethers } from 'ethers';
 import { Proposal, SnapshotVoteSetupOptions, NanceConfig, SnapshotProposal, SnapshotVoteResultsId, SnapshotVoteSettings } from '@nance/nance-sdk';
+import { ProposalType } from "@snapshot-labs/snapshot.js/dist/sign/types";
 import { dateToUnixTimeStamp, limitLength, myProvider } from '../utils';
 import { snapshotProposalToProposal } from './snapshotProposals';
 import { keys } from '../keys';
@@ -31,7 +32,7 @@ export class SnapshotHandler {
     if (!proposal.body) return Promise.reject(Error('Proposal body is required'));
     const snapProposal = {
       space: this.config.snapshot.space,
-      type: options.type,
+      type: options.type as ProposalType,
       title: `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`,
       body: limitLength(proposal.body, 10_000),
       discussion: proposal.discussionThreadURL,

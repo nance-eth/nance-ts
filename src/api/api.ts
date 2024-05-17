@@ -9,7 +9,6 @@ import {
   ProposalDeleteRequest,
   ProposalQueryResponse,
   SpaceInfoExtended,
-  getActionsFromBody
 } from '@nance/nance-sdk';
 import { isEqual } from "lodash";
 import logger from '../logging';
@@ -27,6 +26,7 @@ import { getSummary, postSummary } from "../nancearizer";
 import { discordLogin } from "./helpers/discord";
 import { headToUrl } from "../dolt/doltAPI";
 import { addProposalToNanceDB, updateProposalInNanceDB } from "./helpers/nancedb";
+import { dotPin, pin } from "../storage/storageHandler";
 
 const router = express.Router();
 
@@ -177,14 +177,26 @@ router.get('/:space/proposals', async (req, res) => {
 // upload new proposal
 router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
-  const { proposal, signature, address } = req.body as ProposalUploadRequest;
+  const { proposal, envelope } = req.body as ProposalUploadRequest;
   try {
     const { config, dolt, bearerAddress, currentCycle } = await handlerReq(space, req.headers.authorization);
-    const uploaderAddress = bearerAddress || address;
+    const uploaderAddress = bearerAddress || envelope?.address;
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-    if (address && signature && !bearerAddress) {
-      const decodedAddress = await addressFromSignature(proposal, signature);
+    let receipt: string | undefined;
+    if (envelope && !bearerAddress) {
+      const { address, signature, domain, types, message } = envelope;
+      const decodedAddress = await addressFromSignature(message, signature);
+      const data = {
+        address,
+        sig: signature,
+        data: {
+          domain,
+          types,
+          message,
+        }
+      };
+      receipt = await dotPin(JSON.stringify(envelope));
       if (address !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
@@ -205,7 +217,7 @@ router.post('/:space/proposals', async (req, res) => {
     const newProposal: Proposal = {
       ...proposal,
       uuid: proposal.uuid || uuidGen(),
-      createdTime: new Date().toISOString(),
+      createdTime: proposal.createdTime || new Date().toISOString(),
       authorAddress: uploaderAddress,
       discussionThreadURL: "",
     };
@@ -222,7 +234,7 @@ router.post('/:space/proposals', async (req, res) => {
     console.log('======================================================');
     console.log('======================================================');
     console.log('======================================================');
-    dolt.addProposalToDb(newProposal).then(async (proposalRes) => {
+    dolt.addProposalToDb(newProposal, receipt).then(async (proposalRes) => {
       const { uuid } = proposalRes;
       proposal.uuid = uuid;
 
@@ -322,16 +334,28 @@ router.get('/:space/proposal/:pid', async (req, res) => {
 router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   try {
-    const { proposal, signature, address } = req.body as ProposalUpdateRequest;
+    const { proposal, envelope } = req.body as ProposalUpdateRequest;
     const { dolt, config, bearerAddress, spaceOwners, currentCycle } = await handlerReq(space, req.headers.authorization);
-    const uploaderAddress = bearerAddress || address;
+    const uploaderAddress = bearerAddress || envelope?.address;
     if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-    if (address && signature && !bearerAddress) {
-      const decodedAddress = await addressFromSignature(proposal as any, signature);
+    let receipt: string | undefined;
+    if (envelope && !bearerAddress) {
+      const { address, signature, domain, types, message } = envelope;
+      const decodedAddress = await addressFromSignature(address, signature);
       if (address !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
       }
+      const data = {
+        address,
+        sig: signature,
+        data: {
+          domain,
+          types,
+          message,
+        }
+      };
+      receipt = await dotPin(JSON.stringify(envelope));
     }
     const proposalByUuid = await dolt.getProposalByAnyId(pid);
     if (!canEditProposal(proposalByUuid.status)) {
@@ -381,7 +405,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       governanceCycle,
     };
 
-    const uuid = await dolt.editProposal(updateProposal);
+    const uuid = await dolt.editProposal(updateProposal, receipt);
     // await dolt.actionDirector(updateProposal, proposalByUuid);
     // return uuid to client, then continue doing things
     res.json({ success: true, data: { uuid } });
@@ -448,7 +472,7 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
     if (!deleterAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' }); return; }
     const proposalByUuid = await dolt.getProposalByAnyId(uuid);
     if (address && signature) {
-      const decodedAddress = await addressFromSignature(proposalByUuid, signature);
+      const decodedAddress = await addressFromSignature("", signature);
       if (address !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;

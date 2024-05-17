@@ -194,7 +194,7 @@ export class DoltHandler {
   // ========== add functions ============ //
   // ===================================== //
 
-  async addProposalToDb(proposal: Proposal) {
+  async addProposalToDb(proposal: Proposal, receipt?: string) {
     const now = new Date().toISOString();
     const voteType = proposal.voteSetup?.type || 'basic';
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
@@ -205,11 +205,11 @@ export class DoltHandler {
       INSERT INTO ${proposalsTable}
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, authorDiscordId,
         governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices,
-        snapshotVotes, snapshotId, voteAddressCount)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        snapshotVotes, snapshotId, voteAddressCount, signature)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [proposal.uuid, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.authorDiscordId,
       proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices),
-      JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes
+      JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes, receipt
     ]);
     return { uuid: proposal.uuid, proposalId: proposal.proposalId };
   }
@@ -291,15 +291,16 @@ export class DoltHandler {
   // ====== edit/update functions ======== //
   // ===================================== //
 
-  async editProposal(proposal: Partial<Proposal>) {
+  async editProposal(proposal: Partial<Proposal>, receipt?: string) {
     const updates: string[] = [];
     const cleanedProposal = this.toSQLProposal(proposal);
     cleanedProposal.lastEditedTime = new Date();
     Object.keys(cleanedProposal).forEach((key) => {
       updates.push(`${key} = ?`);
     });
+    updates.push("signature = ?");
     const query = `UPDATE ${proposalsTable} SET ${updates.join(',')} WHERE uuid = ?`;
-    const vars = [...Object.values(cleanedProposal), cleanedProposal.uuid];
+    const vars = [...Object.values(cleanedProposal), receipt, cleanedProposal.uuid];
     await this.localDolt.db.query(query, vars);
     return proposal.uuid || Promise.reject('Proposal uuid not found');
   }

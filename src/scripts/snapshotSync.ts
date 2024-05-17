@@ -15,7 +15,7 @@ async function main() {
   const lastProposal = await dolt.getProposalByAnyId(lastProposalId);
   const lastProposalTime = lastProposal.lastEditedTime ? new Date(lastProposal?.lastEditedTime).getTime() / 1000 : undefined;
   const snapshot = new SnapshotHandler('', config);
-  const proposals = await snapshot.getAllProposalsByScore(1692939193);
+  const proposals = await snapshot.getAllProposalsByScore(lastProposalTime);
   console.log(proposals)
   proposals.forEach(async (proposal) => {
     dolt.addProposalToDb(proposal);
