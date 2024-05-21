@@ -26,7 +26,7 @@ import { getSummary, postSummary } from "../nancearizer";
 import { discordLogin } from "./helpers/discord";
 import { headToUrl } from "../dolt/doltAPI";
 import { addProposalToNanceDB, updateProposalInNanceDB } from "./helpers/nancedb";
-import { dotPin, pin } from "../storage/storageHandler";
+import { dotPin } from "../storage/storageHandler";
 
 const router = express.Router();
 
@@ -185,17 +185,9 @@ router.post('/:space/proposals', async (req, res) => {
     if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
     let receipt: string | undefined;
     if (envelope && !bearerAddress) {
-      const { address, signature, domain, types, message } = envelope;
-      const decodedAddress = await addressFromSignature(message, signature);
-      const data = {
-        address,
-        sig: signature,
-        data: {
-          domain,
-          types,
-          message,
-        }
-      };
+      const { address, sig, data } = envelope;
+      const { message } = data;
+      const decodedAddress = await addressFromSignature(message, sig);
       receipt = await dotPin(JSON.stringify(envelope));
       if (address !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
@@ -340,21 +332,13 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
     let receipt: string | undefined;
     if (envelope && !bearerAddress) {
-      const { address, signature, domain, types, message } = envelope;
-      const decodedAddress = await addressFromSignature(address, signature);
+      const { address, sig, data } = envelope;
+      const { message } = data;
+      const decodedAddress = await addressFromSignature(message, sig);
       if (address !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
       }
-      const data = {
-        address,
-        sig: signature,
-        data: {
-          domain,
-          types,
-          message,
-        }
-      };
       receipt = await dotPin(JSON.stringify(envelope));
     }
     const proposalByUuid = await dolt.getProposalByAnyId(pid);

@@ -30,7 +30,7 @@ export async function addressFromJWT(jwt: string): Promise<string> {
 }
 
 export async function addressFromSignature(
-  message: string,
+  message: SnapshotTypes.Proposal | string, // string hack for now
   signature: string,
 ): Promise<string> {
   console.log("addressFromSignature: INPUT", message, signature);
