@@ -11,6 +11,7 @@ import {
   SpaceInfoExtended,
 } from '@nance/nance-sdk';
 import { isEqual } from "lodash";
+import { _TypedDataEncoder } from "ethers/lib/utils";
 import logger from '../logging';
 import { getLastSlash, sleep, uuidGen } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
@@ -184,15 +185,17 @@ router.post('/:space/proposals', async (req, res) => {
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
     let receipt: string | undefined;
+    let snapshotId: string | undefined;
     if (envelope && !bearerAddress) {
       const { address, sig, data } = envelope;
-      const { message } = data;
+      const { domain, types, message } = data;
       const decodedAddress = await addressFromSignature(message, sig);
       receipt = await dotPin(JSON.stringify(envelope));
       if (address !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
       }
+      snapshotId = _TypedDataEncoder.hash(domain, types, message);
     }
 
     // check Guildxyz access, allow draft uploads regardless of Guildxyz access
@@ -212,6 +215,7 @@ router.post('/:space/proposals', async (req, res) => {
       createdTime: proposal.createdTime || new Date().toISOString(),
       authorAddress: uploaderAddress,
       discussionThreadURL: "",
+      voteURL: snapshotId,
     };
     if (!newProposal.governanceCycle) {
       newProposal.governanceCycle = currentCycle + 1;
@@ -331,15 +335,17 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     const uploaderAddress = bearerAddress || envelope?.address;
     if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
     let receipt: string | undefined;
+    let snapshotId: string | undefined;
     if (envelope && !bearerAddress) {
       const { address, sig, data } = envelope;
-      const { message } = data;
+      const { domain, types, message } = data;
       const decodedAddress = await addressFromSignature(message, sig);
+      receipt = await dotPin(JSON.stringify(envelope));
       if (address !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
       }
-      receipt = await dotPin(JSON.stringify(envelope));
+      snapshotId = _TypedDataEncoder.hash(domain, types, message);
     }
     const proposalByUuid = await dolt.getProposalByAnyId(pid);
     if (!canEditProposal(proposalByUuid.status)) {
@@ -383,6 +389,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     const updateProposal: Proposal = {
       ...proposalByUuid,
       ...proposal,
+      voteURL: snapshotId,
       proposalId,
       authorAddress,
       coauthors,

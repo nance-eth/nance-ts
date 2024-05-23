@@ -129,6 +129,7 @@ export class DoltHandler {
       body: proposal.body || undefined,
       proposalStatus: proposal.status,
       proposalId: proposal.proposalId || undefined,
+      snapshotId: proposal.voteURL || undefined,
       discussionURL: proposal.discussionThreadURL || undefined,
       governanceCycle: proposal.governanceCycle || undefined,
       authorAddress: proposal.authorAddress || undefined,
