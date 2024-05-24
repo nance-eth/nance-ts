@@ -1,6 +1,11 @@
 import { decode } from "next-auth/jwt";
 import { recoverTypedDataAddress } from "viem";
-import { Proposal, SnapshotTypes } from "@nance/nance-sdk";
+import {
+  BasicNanceSignature,
+  NanceSignaturePrimaryTypesMap,
+  NanceSignatureTypesMap,
+  domain
+} from "@nance/nance-sdk";
 import { unixTimeStampNow } from "../../utils";
 import { keys } from "../../keys";
 import { getAddressRoles } from "../../guildxyz/guildxyz";
@@ -11,11 +16,6 @@ interface DecodedJWT {
   exp: number;
   jti: string;
 }
-
-const domain = {
-  name: "snapshot",
-  version: "0.1.4"
-};
 
 export async function addressFromJWT(jwt: string): Promise<string> {
   return decode({ token: jwt, secret: keys.NEXTAUTH_SECRET }).then(async (decoded) => {
@@ -30,15 +30,14 @@ export async function addressFromJWT(jwt: string): Promise<string> {
 }
 
 export async function addressFromSignature(
-  message: SnapshotTypes.Proposal | string, // string hack for now
-  signature: string,
+  { type, signature, message }: BasicNanceSignature
 ): Promise<string> {
   console.log("addressFromSignature: INPUT", message, signature);
   try {
     const address = await recoverTypedDataAddress({
-      types: SnapshotTypes.proposalTypes,
+      types: NanceSignatureTypesMap[type] as any,
       domain,
-      primaryType: "Proposal",
+      primaryType: NanceSignaturePrimaryTypesMap[type] as any,
       message: message as any,
       signature: signature as `0x${string}`,
     });

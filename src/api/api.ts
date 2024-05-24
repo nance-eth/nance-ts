@@ -28,6 +28,7 @@ import { discordLogin } from "./helpers/discord";
 import { headToUrl } from "../dolt/doltAPI";
 import { addProposalToNanceDB, updateProposalInNanceDB } from "./helpers/nancedb";
 import { dotPin } from "../storage/storageHandler";
+import { formatSnapshotEnvelope, getSnapshotId } from "./helpers/snapshotUtils";
 
 const router = express.Router();
 
@@ -187,15 +188,13 @@ router.post('/:space/proposals', async (req, res) => {
     let receipt: string | undefined;
     let snapshotId: string | undefined;
     if (envelope && !bearerAddress) {
-      const { address, sig, data } = envelope;
-      const { domain, types, message } = data;
-      const decodedAddress = await addressFromSignature(message, sig);
-      receipt = await dotPin(JSON.stringify(envelope));
-      if (address !== decodedAddress) {
+      const decodedAddress = await addressFromSignature(envelope);
+      if (uploaderAddress !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
       }
-      snapshotId = _TypedDataEncoder.hash(domain, types, message);
+      receipt = await dotPin(formatSnapshotEnvelope(envelope));
+      snapshotId = getSnapshotId(envelope);
     }
 
     // check Guildxyz access, allow draft uploads regardless of Guildxyz access
@@ -337,15 +336,13 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     let receipt: string | undefined;
     let snapshotId: string | undefined;
     if (envelope && !bearerAddress) {
-      const { address, sig, data } = envelope;
-      const { domain, types, message } = data;
-      const decodedAddress = await addressFromSignature(message, sig);
-      receipt = await dotPin(JSON.stringify(envelope));
-      if (address !== decodedAddress) {
+      const decodedAddress = await addressFromSignature(envelope);
+      if (uploaderAddress !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
       }
-      snapshotId = _TypedDataEncoder.hash(domain, types, message);
+      receipt = await dotPin(formatSnapshotEnvelope(envelope));
+      snapshotId = getSnapshotId(envelope);
     }
     const proposalByUuid = await dolt.getProposalByAnyId(pid);
     if (!canEditProposal(proposalByUuid.status)) {
@@ -457,14 +454,14 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 router.delete('/:space/proposal/:uuid', async (req, res) => {
   try {
     const { space, uuid } = req.params;
-    const { address, signature } = req.body as ProposalDeleteRequest;
+    const { envelope } = req.body as ProposalDeleteRequest;
     const { dolt, config, spaceOwners, bearerAddress } = await handlerReq(space, req.headers.authorization);
-    const deleterAddress = bearerAddress || address;
+    const deleterAddress = bearerAddress || envelope?.address;
     if (!deleterAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' }); return; }
     const proposalByUuid = await dolt.getProposalByAnyId(uuid);
-    if (address && signature) {
-      const decodedAddress = await addressFromSignature("", signature);
-      if (address !== decodedAddress) {
+    if (envelope && !bearerAddress) {
+      const decodedAddress = await addressFromSignature(envelope);
+      if (deleterAddress !== decodedAddress) {
         res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
         return;
       }
