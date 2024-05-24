@@ -15,6 +15,12 @@ export const getProposalURL = (space: string, proposal: Proposal) => {
   return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.uuid}`;
 };
 
+const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPrefix: string) => {
+  return proposals.map((proposal) => {
+    return `[${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}](${getProposalURL(space, proposal)})`;
+  }).join('\n');
+};
+
 export const startDiscussionMessage = async (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
   const m = new EmbedBuilder().setTitle(`${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`)
     .setURL(getProposalURL(space, proposal))
@@ -168,11 +174,25 @@ const getPreamble = (type: string) => {
   return undefined;
 };
 
-export const dailyImageReminder = async (day: number, imagesCID: string, governanceCycle: number, type: string, contentLink: string, endSeconds: number) => {
+export const dailyImageReminder = async (
+  day: number,
+  imagesCID: string,
+  governanceCycle: number,
+  type: string,
+  proposals: Proposal[],
+  space: string,
+  proposalIdPrefix: string,
+  contentLink: string,
+  endSeconds: number
+) => {
   const { thumbnail, image } = await getReminderImages(imagesCID, day);
   const thumbnailAttachment = new AttachmentBuilder(thumbnail, { name: 'thumbnail.png' });
   const imageAttachment = new AttachmentBuilder(image, { name: 'image.png' });
   const preamble = getPreamble(type);
+
+  const proposalsThisCycle = proposals.filter((proposal) => proposal.governanceCycle === governanceCycle);
+  const proposalsNextCycle = proposals.filter((proposal) => proposal.governanceCycle === governanceCycle + 1);
+
   const message = new EmbedBuilder().setTitle('Governance Status').setDescription(
     stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n
@@ -183,6 +203,14 @@ export const dailyImageReminder = async (day: number, imagesCID: string, governa
   ).setImage(
     'attachment://image.png'
   );
+
+  if (proposalsThisCycle.length > 0) {
+    message.addFields({ name: '\u200b', value: '\u200b' });
+    message.addFields({ name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) });
+  }
+  if (proposalsNextCycle.length > 0) {
+    message.addFields({ name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) });
+  }
   return {
     message,
     attachments: [thumbnailAttachment, imageAttachment]
@@ -201,11 +229,29 @@ export const dailyJuiceboxBasedReminder = (governanceCycle: number, day: number,
   return { message, attachments: [] };
 };
 
-export const dailyBasicReminder = (governanceCycle: number, day: number, type: string, endSeconds?: number, contentLink?: string) => {
-  const message = new EmbedBuilder().setTitle('Governance Status').setDescription(`Today is day ${day} of GC#${governanceCycle}\n`).addFields(
-    { name: 'Current Event', value: type },
-    { name: 'Ends At', value: `<t:${endSeconds}:f> (<t:${endSeconds}:R>)` },
-  );
+export const dailyBasicReminder = (
+  governanceCycle: number,
+  day: number,
+  type: string,
+  proposals: Proposal[],
+  space: string,
+  proposalIdPrefix: string,
+  endSeconds?: number) => {
+  const proposalsThisCycle = proposals.filter((proposal) => proposal.governanceCycle === governanceCycle);
+  const proposalsNextCycle = proposals.filter((proposal) => proposal.governanceCycle === governanceCycle + 1);
+  const message = new EmbedBuilder().setTitle('Governance Status')
+    .setDescription(`Today is day ${day} of GC#${governanceCycle}\n`)
+    .addFields(
+      { name: 'Current Event', value: type },
+      { name: 'Ends At', value: `<t:${endSeconds}:f> (<t:${endSeconds}:R>)` },
+    );
+  if (proposalsThisCycle.length > 0) {
+    message.addFields({ name: '\u200b', value: '\u200b' });
+    message.addFields({ name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) });
+  }
+  if (proposalsNextCycle.length > 0) {
+    message.addFields({ name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) });
+  }
   return { message, attachments: [] };
 };
 
@@ -278,7 +324,7 @@ export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPay
       { name: 'REMOVE', value: '=============' },
       { name: 'Proposal ID', value: '\u200b', inline: true },
       { name: 'Amount', value: '\u200b', inline: true },
-      { name: 'Receipient', value: '\u200b', inline: true },
+      { name: 'Recipient', value: '\u200b', inline: true },
       ...removals
     ).setTitle('\u200b');
   }

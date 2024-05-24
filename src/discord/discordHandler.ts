@@ -175,7 +175,15 @@ export class DiscordHandler {
     });
   }
 
-  async sendDailyReminder(day: number, governanceCycle: number, type: string, endDate: Date, juiceboxTimeDelay?: number) {
+  async sendDailyReminder(
+    day: number,
+    governanceCycle: number,
+    space: string,
+    type: string,
+    endDate: Date,
+    proposals: Proposal[],
+    juiceboxTimeDelay?: number
+  ) {
     const endSeconds = endDate.getTime() / 1000;
     const link = this.spaceURL;
     const reminderType = this.config.discord.reminder.type;
@@ -183,18 +191,26 @@ export class DiscordHandler {
     let attachments: AttachmentBuilder[];
     if (reminderType === 'image') {
       try {
-        ({ message, attachments } = await discordTemplates.dailyImageReminder(day, this.config.discord.reminder.imagesCID, governanceCycle, type, link, endSeconds));
+        ({ message, attachments } = await discordTemplates.dailyImageReminder(
+          day,
+          this.config.discord.reminder.imagesCID,
+          governanceCycle,
+          type,
+          proposals,
+          space,
+          this.config.proposalIdPrefix,
+          link,
+          endSeconds)
+        );
       } catch (e) {
         logger.error(`Could not send daily image reminder for ${this.config.name}`);
         logger.error(e);
-        ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, endSeconds, link));
+        ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds));
       }
-    } else if (reminderType === 'basic') {
-      ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, endSeconds, link));
     } else if (reminderType === 'juicebox') {
       ({ message, attachments } = discordTemplates.dailyJuiceboxBasedReminder(governanceCycle, day, endSeconds, juiceboxTimeDelay || (3 * 24 * 3600), link));
     } else { // default to basic
-      ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, endSeconds, link));
+      ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds));
     }
     const channelsSent = await Promise.all(this.getDailyUpdateChannels().map(async (channel) => {
       if (!channel) return undefined as unknown as TextChannel;
