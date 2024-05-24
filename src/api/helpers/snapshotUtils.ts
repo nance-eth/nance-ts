@@ -1,24 +1,19 @@
 import { _TypedDataEncoder } from "ethers/lib/utils";
 import {
   BasicNanceSignature,
-  NanceSignatureTypesMap,
-  SnapshotTypes,
   SnapshotUploadProposalEnvelope,
-  archiveTypes,
-  domain
+  domain,
+  nanceSignatureMap
 } from "@nance/nance-sdk";
 
 export const getSnapshotId = (envelope: BasicNanceSignature): string => {
-  return _TypedDataEncoder.hash(domain, NanceSignatureTypesMap[envelope.type], envelope.message);
+  const { types } = nanceSignatureMap[envelope.type];
+  return _TypedDataEncoder.hash(domain, types, envelope.message);
 };
 
 export const formatSnapshotEnvelope = (envelope: BasicNanceSignature): string => {
   const { type, address, signature, message } = envelope;
-  let types;
-  if (type === "SnapshotSubmitProposal") types = SnapshotTypes.proposalTypes;
-  if (type === "SnapshotCancelProposal") types = SnapshotTypes.cancelProposal2Types;
-  if (type === "NanceArchiveProposal") types = archiveTypes;
-  if (!types) throw new Error("Invalid snapshot type");
+  const types = nanceSignatureMap[type];
   const snapshotEnvelope: SnapshotUploadProposalEnvelope = {
     address,
     sig: signature,

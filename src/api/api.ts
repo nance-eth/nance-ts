@@ -8,7 +8,6 @@ import {
   ProposalUpdateRequest,
   ProposalDeleteRequest,
   ProposalQueryResponse,
-  SpaceInfoExtended,
 } from '@nance/nance-sdk';
 import { isEqual } from "lodash";
 import { _TypedDataEncoder } from "ethers/lib/utils";
@@ -29,18 +28,11 @@ import { headToUrl } from "../dolt/doltAPI";
 import { addProposalToNanceDB, updateProposalInNanceDB } from "./helpers/nancedb";
 import { dotPin } from "../storage/storageHandler";
 import { formatSnapshotEnvelope, getSnapshotId } from "./helpers/snapshotUtils";
+import { cache, clearCache } from "./helpers/cache";
 
 const router = express.Router();
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
-
-type Cache = {
-  spaceInfo?: SpaceInfoExtended;
-  nextProposalId?: number;
-  proposalsPacket?: Record<string, ProposalsPacket>;
-};
-
-const cache = {} as Record<string, Cache>;
 
 async function handlerReq(_query: string, auth: string | undefined) {
   try {
@@ -557,7 +549,7 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
 
 router.get('/:space/cache/clear', async (req, res) => {
   const { space } = req.params;
-  cache[space] = {};
+  clearCache(space);
   res.json({ success: true });
 });
 

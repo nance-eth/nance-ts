@@ -2,9 +2,8 @@ import { decode } from "next-auth/jwt";
 import { recoverTypedDataAddress } from "viem";
 import {
   BasicNanceSignature,
-  NanceSignaturePrimaryTypesMap,
-  NanceSignatureTypesMap,
-  domain
+  nanceSignatureMap,
+  domain,
 } from "@nance/nance-sdk";
 import { unixTimeStampNow } from "../../utils";
 import { keys } from "../../keys";
@@ -32,13 +31,15 @@ export async function addressFromJWT(jwt: string): Promise<string> {
 export async function addressFromSignature(
   { type, signature, message }: BasicNanceSignature
 ): Promise<string> {
+  if (!signature.startsWith("0x")) return Promise.reject(new Error("Invalid signature"));
   console.log("addressFromSignature: INPUT", message, signature);
   try {
+    const { primaryType, types } = nanceSignatureMap[type];
     const address = await recoverTypedDataAddress({
-      types: NanceSignatureTypesMap[type] as any,
+      types,
       domain,
-      primaryType: NanceSignaturePrimaryTypesMap[type] as any,
-      message: message as any,
+      primaryType,
+      message: message as Record<string, unknown>,
       signature: signature as `0x${string}`,
     });
     console.log("addressFromSignature: OUTPUT", address);
