@@ -4,6 +4,7 @@ import {
   NanceSignatureTypesMap,
   SnapshotTypes,
   SnapshotUploadProposalEnvelope,
+  archiveTypes,
   domain
 } from "@nance/nance-sdk";
 
@@ -16,6 +17,7 @@ export const formatSnapshotEnvelope = (envelope: BasicNanceSignature): string =>
   let types;
   if (type === "SnapshotSubmitProposal") types = SnapshotTypes.proposalTypes;
   if (type === "SnapshotCancelProposal") types = SnapshotTypes.cancelProposal2Types;
+  if (type === "NanceArchiveProposal") types = archiveTypes;
   if (!types) throw new Error("Invalid snapshot type");
   const snapshotEnvelope: SnapshotUploadProposalEnvelope = {
     address,

@@ -43,9 +43,8 @@ export async function addressFromSignature(
     });
     console.log("addressFromSignature: OUTPUT", address);
     return address;
-  } catch (e) {
-    console.error("addressFromSignature: ERROR", e);
-    return Promise.reject(e);
+  } catch (e: any) {
+    return Promise.reject(e.message);
   }
 }
 

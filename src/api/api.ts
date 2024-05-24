@@ -190,7 +190,10 @@ router.post('/:space/proposals', async (req, res) => {
     if (envelope && !bearerAddress) {
       const decodedAddress = await addressFromSignature(envelope);
       if (uploaderAddress !== decodedAddress) {
-        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        res.json({
+          success: false,
+          error: `address and signature do not match\naddress: ${uploaderAddress}\nsignature: ${decodedAddress}`
+        });
         return;
       }
       receipt = await dotPin(formatSnapshotEnvelope(envelope));
@@ -273,7 +276,7 @@ router.post('/:space/proposals', async (req, res) => {
     }).catch((e: any) => {
       res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
     });
-  } catch (e) { res.json({ success: false, error: `[NANCE ERROR]: ${e}` }); }
+  } catch (e: any) { res.json({ success: false, error: e.toString() }); }
 });
 
 // =========================================== //
@@ -331,6 +334,14 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   try {
     const { proposal, envelope } = req.body as ProposalUpdateRequest;
     const { dolt, config, bearerAddress, spaceOwners, currentCycle } = await handlerReq(space, req.headers.authorization);
+
+    const proposalByUuid = await dolt.getProposalByAnyId(pid);
+    console.log(proposalByUuid);
+    if (!canEditProposal(proposalByUuid.status)) {
+      res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
+      return;
+    }
+
     const uploaderAddress = bearerAddress || envelope?.address;
     if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
     let receipt: string | undefined;
@@ -338,16 +349,14 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     if (envelope && !bearerAddress) {
       const decodedAddress = await addressFromSignature(envelope);
       if (uploaderAddress !== decodedAddress) {
-        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        res.json({
+          success: false,
+          error: `address and signature do not match\naddress: ${uploaderAddress}\nsignature: ${decodedAddress}`
+        });
         return;
       }
       receipt = await dotPin(formatSnapshotEnvelope(envelope));
       snapshotId = getSnapshotId(envelope);
-    }
-    const proposalByUuid = await dolt.getProposalByAnyId(pid);
-    if (!canEditProposal(proposalByUuid.status)) {
-      res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
-      return;
     }
 
     // only allow archives by original author, multisig, or spaceOwner
@@ -445,8 +454,8 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       logger.error(`[DISCORD] ${space}`);
       logger.error(`[DISCORD] ${e}`);
     }
-  } catch (e) {
-    res.json({ success: false, error: e });
+  } catch (e: any) {
+    res.json({ success: false, error: e.toString() });
   }
 });
 
@@ -462,7 +471,10 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
     if (envelope && !bearerAddress) {
       const decodedAddress = await addressFromSignature(envelope);
       if (deleterAddress !== decodedAddress) {
-        res.json({ success: false, error: '[NANCE ERROR]: uploaderAddress and uploaderSignature do not match' });
+        res.json({
+          success: false,
+          error: `address and signature do not match\naddress: ${deleterAddress}\nsignature: ${decodedAddress}`
+        });
         return;
       }
     }
@@ -492,14 +504,14 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
           const discord = await discordLogin(config);
           await discord.sendProposalDelete(proposalByUuid);
         } catch (e) { logger.error(`[DISCORD] ${e}`); }
-      }).catch((e: any) => {
+      }).catch((e) => {
         res.json({ success: false, error: e });
       });
     } else {
       res.json({ success: false, error: '[PERMISSIONS] User not authorized to delete proposal' });
     }
-  } catch (e) {
-    res.json({ success: false, error: e });
+  } catch (e: any) {
+    res.json({ success: false, error: e.toString() });
   }
 });
 
