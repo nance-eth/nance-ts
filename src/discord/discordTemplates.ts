@@ -16,9 +16,11 @@ export const getProposalURL = (space: string, proposal: Proposal) => {
 };
 
 const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPrefix: string) => {
-  return proposals.map((proposal) => {
+  const list = proposals.map((proposal) => {
     return `[${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}](${getProposalURL(space, proposal)})`;
   }).join('\n');
+  if (list === '') { return 'None'; }
+  return list;
 };
 
 export const startDiscussionMessage = async (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
@@ -204,13 +206,13 @@ export const dailyImageReminder = async (
     'attachment://image.png'
   );
 
-  if (proposalsThisCycle.length > 0) {
-    message.addFields({ name: '\u200b', value: '\u200b' });
-    message.addFields({ name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) });
-  }
-  if (proposalsNextCycle.length > 0) {
-    message.addFields({ name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) });
-  }
+  message.addFields([
+    { name: '\u200b', value: '\u200b' },
+    { name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) },
+    { name: '\u200b', value: '\u200b' },
+    { name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) },
+  ]);
+
   return {
     message,
     attachments: [thumbnailAttachment, imageAttachment]
@@ -245,13 +247,12 @@ export const dailyBasicReminder = (
       { name: 'Current Event', value: type },
       { name: 'Ends At', value: `<t:${endSeconds}:f> (<t:${endSeconds}:R>)` },
     );
-  if (proposalsThisCycle.length > 0) {
-    message.addFields({ name: '\u200b', value: '\u200b' });
-    message.addFields({ name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) });
-  }
-  if (proposalsNextCycle.length > 0) {
-    message.addFields({ name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) });
-  }
+  message.addFields([
+    { name: '\u200b', value: '\u200b' },
+    { name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) },
+    { name: '\u200b', value: '\u200b' },
+    { name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) },
+  ]);
   return { message, attachments: [] };
 };
 
