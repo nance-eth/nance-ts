@@ -1,4 +1,5 @@
 import schedule from 'node-schedule';
+import { Proposal } from "@nance/nance-sdk";
 import { getSpaceConfig } from '../api/helpers/getSpace';
 import { discordLogin } from '../api/helpers/discord';
 import { juiceboxTime } from '../api/helpers/juicebox';
@@ -21,7 +22,7 @@ export async function sendDailyJBAlert(space: string) {
     if (juiceboxTimeBasedDaysRemaining.includes(daysRemainingToSubmitReconfig)) {
       const endDate = new Date(end);
       const dialogHandler = await discordLogin(config);
-      await dialogHandler.sendDailyReminder(cycleCurrentDay, currentGovernanceCycle, '', endDate, delay);
+      await dialogHandler.sendDailyReminder(cycleCurrentDay, currentGovernanceCycle, '', '', endDate, [] as Proposal[], delay);
       logger.info(`dailyJBAlert sent for ${space}`);
       logger.info(`next innvocation at ${schedule.scheduledJobs[`${space}:dailyJBAlert`].nextInvocation().toISOString()}`);
     } else {
