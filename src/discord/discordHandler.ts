@@ -12,6 +12,9 @@ import {
   EmbedField,
   AttachmentBuilder,
   escapeMarkdown,
+  ForumChannel,
+  ThreadChannel,
+  Events,
 } from 'discord.js';
 import { isEqual } from "lodash";
 import { Proposal, PollResults, NanceConfig, SQLPayout } from '@nance/nance-sdk';
@@ -22,6 +25,7 @@ import * as discordTemplates from './discordTemplates';
 import { getENS } from '../api/helpers/ens';
 import { EMOJI } from '../constants';
 import { DiffLines } from "../api/helpers/diff";
+import { pollActionRow } from "./button/poll";
 
 const SILENT_FLAG = 1 << 12;
 
@@ -86,20 +90,51 @@ export class DiscordHandler {
   async startDiscussion(proposal: Proposal): Promise<string> {
     const authorENS = await getENS(proposal.authorAddress);
     const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
-    const messageObj = await this.getAlertChannel().send({ embeds: [message] });
-    const thread = await messageObj.startThread({
-      name: limitLength(proposal.title),
-      autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
-    });
-    return discordTemplates.threadToURL(thread);
+    try {
+      const messageObj = await this.getAlertChannel().send({ embeds: [message] });
+      const thread = await messageObj.startThread({
+        name: limitLength(proposal.title),
+        autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek
+      });
+      return discordTemplates.threadToURL(thread);
+    } catch (e) {
+      // if send fails try as forum (kind of a hack could improve later)
+      const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
+      const channel = this.getAlertChannel() as unknown as ForumChannel;
+      const messageObj = await channel.threads.create({
+        name: limitLength(title),
+        message: {
+          embeds: [message]
+        },
+        autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek
+      });
+      return discordTemplates.threadToURL(messageObj);
+    }
   }
 
   async setupPoll(messageId: string) {
-    const messageObj = await this.getAlertChannel().messages.fetch(messageId);
-    await Promise.all([
-      messageObj.react(EMOJI.YES),
-      messageObj.react(EMOJI.NO),
-    ]);
+    try {
+      const messageObj = await this.getAlertChannel().messages.fetch(messageId);
+      await Promise.all([
+        messageObj.react(EMOJI.YES),
+        messageObj.react(EMOJI.NO),
+      ]);
+      return await Promise.resolve();
+    } catch (e) {
+      try {
+        // if send fails, do blind poll for moondao (kind of a hack could improve later)
+        const channel = this.getAlertChannel() as unknown as ForumChannel;
+        const post = await channel.threads.fetch(messageId) as ThreadChannel;
+        const messageObj = await post.fetchStarterMessage();
+        await messageObj?.edit({
+          embeds: [messageObj.embeds[0]],
+          components: [pollActionRow]
+        });
+        return Promise.resolve();
+      } catch (finalError) {
+        return Promise.reject(finalError);
+      }
+    }
   }
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
@@ -350,7 +385,7 @@ export class DiscordHandler {
     const thread = await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] }).then((messageObj) => {
       return messageObj.startThread({
         name: limitLength(message.data.title ?? 'thread'),
-        autoArchiveDuration: 24 * 60 * 7 as ThreadAutoArchiveDuration
+        autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek
       });
     });
     return thread.id;

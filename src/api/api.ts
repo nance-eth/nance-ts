@@ -12,9 +12,8 @@ import {
 import { isEqual } from "lodash";
 import { _TypedDataEncoder } from "ethers/lib/utils";
 import logger from '../logging';
-import { getLastSlash, sleep, uuidGen } from '../utils';
+import { getLastSlash, uuidGen } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
-import { DiscordHandler } from '../discord/discordHandler';
 import { diffLineCounts } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
 import { addressFromJWT, addressFromSignature, addressHasGuildRole } from './helpers/auth';
@@ -235,13 +234,12 @@ router.post('/:space/proposals', async (req, res) => {
         // send discord message
         const discordEnabled = config.discord.channelIds.proposals !== null;
         if ((proposal.status === "Discussion" || proposal.status === "Approved") && discordEnabled) {
-          const dialogHandler = new DiscordHandler(config);
-          // eslint-disable-next-line no-await-in-loop
-          while (!dialogHandler.ready()) { await sleep(50); }
+          const discord = await discordLogin(config);
           try {
-            const discussionThreadURL = await dialogHandler.startDiscussion(newProposal);
-            dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+            const discussionThreadURL = await discord.startDiscussion(newProposal);
+            await discord.setupPoll(getLastSlash(discussionThreadURL));
             dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
+            discord.logout();
           } catch (e) {
             logger.error(`[DISCORD] ${e}`);
           }
@@ -495,6 +493,7 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
         try {
           const discord = await discordLogin(config);
           await discord.sendProposalDelete(proposalByUuid);
+          discord.logout();
         } catch (e) { logger.error(`[DISCORD] ${e}`); }
       }).catch((e) => {
         res.json({ success: false, error: e });
@@ -534,15 +533,16 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
   const proposal = await dolt.getProposalByAnyId(uuid);
   let discussionThreadURL = '';
   if (proposal.status === "Discussion" && !proposal.discussionThreadURL) {
-    const dialogHandler = await discordLogin(config);
+    const discord = await discordLogin(config);
     try {
-      discussionThreadURL = await dialogHandler.startDiscussion(proposal);
-      await dialogHandler.setupPoll(getLastSlash(discussionThreadURL));
+      discussionThreadURL = await discord.startDiscussion(proposal);
+      await discord.setupPoll(getLastSlash(discussionThreadURL));
       await dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
     } catch (e) {
       logger.error(`[DISCORD] ${e}`);
     }
-    return res.json({ success: true, data: discussionThreadURL });
+    res.json({ success: true, data: discussionThreadURL });
+    discord.logout();
   }
   return res.send({ success: false, error: 'proposal already has a discussion created' });
 });

@@ -27,6 +27,7 @@ const payoutsTable = 'payouts';
 const reservesTable = 'reserves';
 const transfersTable = 'transfers';
 const transactionsTable = 'customTransactions';
+const pollsTable = 'polls';
 const DEFAULT_TREASURY_VERSION = 3;
 
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
@@ -60,7 +61,7 @@ export class DoltHandler {
     });
   }
 
-  async queryDbResults(query: string, variables?: (string | number | undefined)[]) {
+  async queryDbResults(query: string, variables?: (string | number | boolean | undefined)[]) {
     return this.localDolt.queryResults(query, variables).then((res) => {
       return res;
     }).catch((e) => {
@@ -625,6 +626,12 @@ export class DoltHandler {
       uuidOfTransaction IN (${uuids.map((uuid) => { return `'${uuid}'`; }).join(',')})
     `) as unknown as SQLCustomTransaction[];
     return results;
+  }
+
+  async insertPoll(poll: { id: string, answer: boolean }) {
+    return this.queryDbResults(oneLine`
+      INSERT INTO ${pollsTable} (id, answer) VALUES (?, ?)
+    `, [poll.id, poll.answer]);
   }
 
   // ===================================== //

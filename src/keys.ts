@@ -12,7 +12,6 @@ const requiredVariables = [
   'PUBLIC_ADDRESS',
   'DOLT_CERT',
   'NEXTAUTH_SECRET',
-  'NANCE_AUTO_KEY',
 ];
 
 const missingVariables = requiredVariables.filter((variable) => { return !process.env[variable]; });
@@ -37,7 +36,5 @@ export const keys = {
 
 export const nanceAddress = process.env.PUBLIC_ADDRESS!;
 export const DOLT_CERT = process.env.DOLT_CERT!;
-
-export const { NANCE_AUTO_KEY } = process.env;
 
 logger.info(`DOLT_HOST: ${process.env.DOLT_HOST!}`);

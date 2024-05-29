@@ -96,10 +96,9 @@ CREATE TABLE IF NOT EXISTS customTransactions (
   PRIMARY KEY (uuidOfTransaction)
 );
 
-CREATE TABLE IF NOT EXISTS reconfigurations (
-  uuidOfReconfiguration VARCHAR(35) NOT NULL,
+CREATE TABLE IF NOT EXISTS polls (
+  id VARCHAR(64) NOT NULL,
   uuidOfProposal VARCHAR(35),
-  JBFundingCycleData JSON NOT NULL,
-  JBFundingCycleMetaData JSON NOT NULL,
-  PRIMARY KEY (uuidOfReconfiguration)
+  answer BOOLEAN,
+  PRIMARY KEY (id)
 );
