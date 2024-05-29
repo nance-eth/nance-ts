@@ -45,6 +45,7 @@
     "function-paren-newline": "off",
     "no-underscore-dangle": "off",
     "no-bitwise": "off",
-    "@typescript-eslint/quotes": "off"
+    "@typescript-eslint/quotes": "off",
+    "operator-linebreak": "off"
   }
 }

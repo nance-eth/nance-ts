@@ -1,3 +1,4 @@
+import { Proposal } from "@nance/nance-sdk";
 import { getSpaceConfig } from '../api/helpers/getSpace';
 import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../calendar/events';
 import { discordLogin } from '../api/helpers/discord';
@@ -21,7 +22,19 @@ export async function sendDailyAlert(space: string) {
 
     const governanceCycle = `${currentGovernanceCycle}+${currentGovernanceCycle + 1}`;
     const proposalsPacket = await dolt.getProposals({ governanceCycle });
-    const { proposals } = proposalsPacket;
+    // perform some filtering and sorting
+    const proposals = proposalsPacket.proposals.reduce((acc, proposal) => {
+      if (
+        (proposal.status === "Discussion" ||
+        proposal.status === "Temperature Check" ||
+        proposal.status === "Voting" ||
+        proposal.status === "Approved" ||
+        proposal.status === "Cancelled") &&
+        proposal.proposalId
+      ) acc.push(proposal);
+      return acc;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    }, [] as Proposal[]).sort((a, b) => a.proposalId! - b.proposalId!);
 
     const currentEvent = getCurrentEvent(spaceConfig.cycleStartReference, spaceConfig.cycleStageLengths, now);
     const currentGovernanceCycleDay = getCurrentGovernanceCycleDay(currentEvent, spaceConfig.cycleStageLengths, now);

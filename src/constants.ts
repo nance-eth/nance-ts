@@ -41,6 +41,8 @@ export const TASKS = {
 export const EMOJI = {
   YES: '👍',
   NO: '👎',
+  DISCUSSION: '💬',
+  TEMPERATURE_CHECK: '🌡️',
   VOTE: '🗳️',
   APPROVED: '✅',
   CANCELLED: '❌',

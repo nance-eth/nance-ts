@@ -4,7 +4,7 @@
 import {
   AttachmentBuilder, EmbedBuilder, ThreadChannel, EmbedField
 } from 'discord.js';
-import { stripIndents } from 'common-tags';
+import { oneLine, stripIndents } from 'common-tags';
 import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal, getActionsFromBody } from '@nance/nance-sdk';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, maybePlural, numToPrettyString } from '../utils';
 import { EMOJI } from '../constants';
@@ -16,8 +16,14 @@ export const getProposalURL = (space: string, proposal: Proposal) => {
 };
 
 const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPrefix: string) => {
-  const list = proposals.map((proposal) => {
-    return `[${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}](${getProposalURL(space, proposal)})`;
+  const list = proposals.map((proposal, i) => {
+    let emoji = '';
+    if (proposal.status === 'Temperature Check') { emoji = EMOJI.TEMPERATURE_CHECK; }
+    if (proposal.status === 'Voting') { emoji = EMOJI.VOTE; }
+    if (proposal.status === 'Discussion') { emoji = EMOJI.DISCUSSION; }
+    if (proposal.status === 'Approved') { emoji = EMOJI.APPROVED; }
+    if (proposal.status === 'Cancelled') { emoji = EMOJI.CANCELLED; }
+    return `${emoji}\u00a0[${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}](${getProposalURL(space, proposal)})`;
   }).join('\n');
   if (list === '') { return 'None'; }
   return list;
@@ -198,8 +204,7 @@ export const dailyImageReminder = async (
   const message = new EmbedBuilder().setTitle('Governance Status').setDescription(
     stripIndents`
     Today is day ${day} of GC#${governanceCycle}\n
-    ${preamble} [here](${contentLink}) by <t:${endSeconds}:f> (<t:${endSeconds}:R>)!\n
-    Read about our governance process [here](${contentLink})`
+    ${preamble} [here](${contentLink}) by <t:${endSeconds}:f> (<t:${endSeconds}:R>)!`
   ).setThumbnail(
     'attachment://thumbnail.png'
   ).setImage(
@@ -207,9 +212,7 @@ export const dailyImageReminder = async (
   );
 
   message.addFields([
-    { name: '\u200b', value: '\u200b' },
     { name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) },
-    { name: '\u200b', value: '\u200b' },
     { name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) },
   ]);
 
@@ -248,9 +251,7 @@ export const dailyBasicReminder = (
       { name: 'Ends At', value: `<t:${endSeconds}:f> (<t:${endSeconds}:R>)` },
     );
   message.addFields([
-    { name: '\u200b', value: '\u200b' },
     { name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) },
-    { name: '\u200b', value: '\u200b' },
     { name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) },
   ]);
   return { message, attachments: [] };
