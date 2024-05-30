@@ -100,11 +100,12 @@ export class DiscordHandler {
     } catch (e) {
       // if send fails try as forum (kind of a hack could improve later)
       const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
+      const pollResults = discordTemplates.blindPollMessage({ yes: 0, no: 0 });
       const channel = this.getAlertChannel() as unknown as ForumChannel;
       const messageObj = await channel.threads.create({
         name: limitLength(title),
         message: {
-          embeds: [message]
+          embeds: [message, pollResults],
         },
         autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek
       });
@@ -127,7 +128,6 @@ export class DiscordHandler {
         const post = await channel.threads.fetch(messageId) as ThreadChannel;
         const messageObj = await post.fetchStarterMessage();
         await messageObj?.edit({
-          embeds: [messageObj.embeds[0]],
           components: [pollActionRow]
         });
         return Promise.resolve();
@@ -416,15 +416,27 @@ export class DiscordHandler {
   }
 
   async sendProposalArchive(proposal: Proposal) {
-    const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-    const message = discordTemplates.archiveDiscussionMessage(proposal);
-    // keep url the same
-    message.setURL(messageObj.embeds[0].url);
-    messageObj.edit({ embeds: [message] });
-    messageObj.thread?.edit({ name: limitLength(proposal.title) });
-    // send alert to thread
-    const archiveMessage = discordTemplates.proposalArchiveAlert();
-    await messageObj.thread?.send({ content: archiveMessage });
+    try {
+      const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
+      const message = discordTemplates.archiveDiscussionMessage(proposal);
+      // keep url the same
+      message.setURL(messageObj.embeds[0].url);
+      messageObj.edit({ embeds: [message] });
+      messageObj.thread?.edit({ name: limitLength(proposal.title) });
+      // send alert to thread
+      const archiveMessage = discordTemplates.proposalArchiveAlert();
+      await messageObj.thread?.send({ content: archiveMessage });
+    } catch (e) {
+      const channel = this.getAlertChannel() as unknown as ForumChannel;
+      const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
+      const messageObj = await post.fetchStarterMessage();
+      await post.edit({ name: `[ARCHIVED] ${limitLength(proposal.title)}` });
+      await messageObj?.edit({
+        embeds: [discordTemplates.archiveDiscussionMessage(proposal)],
+        components: []
+      });
+      await post.send({ content: discordTemplates.proposalArchiveAlert() });
+    }
   }
 
   async sendProposalUnarchive(proposal: Proposal) {
@@ -448,16 +460,26 @@ export class DiscordHandler {
   }
 
   async sendProposalDelete(proposal: Proposal) {
-    const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-    const message = discordTemplates.deletedDiscussionMessage(proposal);
-    // keep url the same
-    message.setURL(messageObj.embeds[0].url);
-    messageObj.edit({ embeds: [message] });
-    messageObj.thread?.edit({ name: limitLength(proposal.title) });
-    // send alert to thread
-    const deleteMessage = discordTemplates.proposalDeleteAlert();
-    // remove all reacts
-    await messageObj.reactions.removeAll();
-    await messageObj.thread?.send({ content: deleteMessage });
+    try {
+      const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
+      const message = discordTemplates.deletedDiscussionMessage(proposal);
+      messageObj.edit({ embeds: [message] });
+      messageObj.thread?.edit({ name: limitLength(proposal.title) });
+      // send alert to thread
+      const deleteMessage = discordTemplates.proposalDeleteAlert();
+      // remove all reacts
+      await messageObj.reactions.removeAll();
+      await messageObj.thread?.send({ content: deleteMessage });
+    } catch (e) {
+      const channel = this.getAlertChannel() as unknown as ForumChannel;
+      const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
+      const messageObj = await post.fetchStarterMessage();
+      await post.edit({ name: `[DELETED] ${limitLength(proposal.title)}` });
+      await messageObj?.edit({
+        embeds: [discordTemplates.deletedDiscussionMessage(proposal)],
+        components: []
+      });
+      await post.send({ content: discordTemplates.proposalDeleteAlert() });
+    }
   }
 }

@@ -567,6 +567,15 @@ export class DoltHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
+  async getProposalByThreadURL(url: string): Promise<Proposal> {
+    return this.queryProposals(oneLine`
+      SELECT * FROM ${proposalsTable}
+      WHERE discussionURL = '${url}' LIMIT 1
+    `).then((res) => {
+      return res[0];
+    }).catch((e) => { return Promise.reject(e); });
+  }
+
   async getPayoutsDb(currentGovernanceCycle: number): Promise<SQLPayout[]> {
     const treasuryVersion = 3;
     const results = this.queryDb(`
@@ -628,10 +637,21 @@ export class DoltHandler {
     return results;
   }
 
-  async insertPoll(poll: { id: string, answer: boolean }) {
+  async insertPoll({ id, uuidOfProposal, answer }: { id: string; uuidOfProposal: string; answer: boolean }) {
+    const now = new Date().toISOString();
     return this.queryDbResults(oneLine`
-      INSERT INTO ${pollsTable} (id, answer) VALUES (?, ?)
-    `, [poll.id, poll.answer]);
+      INSERT INTO ${pollsTable}
+        (id, uuidOfProposal, answer, createdTime, updatedTime) VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        answer = VALUES(answer), updatedTime = VALUES(updatedTime)
+    `, [id, uuidOfProposal, answer, now, now]);
+  }
+
+  async getPollsByProposalUuid(uuid: string) {
+    return this.queryDbResults(oneLine`
+      SELECT answer from ${pollsTable} WHERE
+      uuidOfProposal = ?
+    `, [uuid]);
   }
 
   // ===================================== //

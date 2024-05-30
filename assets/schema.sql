@@ -100,5 +100,7 @@ CREATE TABLE IF NOT EXISTS polls (
   id VARCHAR(64) NOT NULL,
   uuidOfProposal VARCHAR(35),
   answer BOOLEAN,
+  createdTime DATETIME,
+  updatedTime DATETIME,
   PRIMARY KEY (id)
 );

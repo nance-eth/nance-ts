@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* eslint-disable no-param-reassign */
 /* eslint-disable max-len */
 /* eslint-disable newline-per-chained-call */
@@ -364,4 +365,14 @@ export const proposalUnarchiveAlert = () => {
 export const proposalDeleteAlert = () => {
   const message = '🗑️ This proposal has been deleted by the author. It has been permanently removed from the Nance database 🗑️';
   return message;
+};
+
+export const blindPollMessage = ({ yes, no }: { yes: number, no: number }) => {
+  return new EmbedBuilder().setTitle('Temperature Check')
+    .setDescription(`Last updated\n<t:${Math.floor(Date.now() / 1000)}>`)
+    .addFields([
+      { name: EMOJI.YES, value: `${yes}`, inline: true },
+      { name: EMOJI.NO, value: `${no}`, inline: true },
+    ])
+    .setColor('#FF0000');
 };
