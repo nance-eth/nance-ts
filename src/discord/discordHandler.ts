@@ -344,15 +344,28 @@ export class DiscordHandler {
   }
 
   async editDiscussionMessage(proposal: Proposal) {
-    const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-    const authorENS = await getENS(proposal.authorAddress);
-    const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
-    if (
-      messageObj.embeds[0].title !== message.data.title
-      || !isEqual(messageObj.embeds[0].fields, message.data.fields)
-    ) {
-      messageObj.edit({ embeds: [message] });
-      messageObj.thread?.edit({ name: limitLength(proposal.title) });
+    try {
+      const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
+      const authorENS = await getENS(proposal.authorAddress);
+      const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+      if (
+        messageObj.embeds[0].title !== message.data.title
+        || !isEqual(messageObj.embeds[0].fields, message.data.fields)
+      ) {
+        messageObj.edit({ embeds: [message] });
+        messageObj.thread?.edit({ name: limitLength(proposal.title) });
+      }
+    } catch (e) {
+      const channel = this.getAlertChannel() as unknown as ForumChannel;
+      const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
+      const messageObj = await post.fetchStarterMessage();
+      const authorENS = await getENS(proposal.authorAddress);
+      const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+      const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
+      await post.edit({ name: limitLength(title) });
+      await messageObj?.edit({
+        embeds: [message, messageObj.embeds[1]],
+      });
     }
   }
 

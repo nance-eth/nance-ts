@@ -5,61 +5,65 @@ import { getSpaceByDiscordGuildId } from "../../api/helpers/getSpace";
 import { keys } from "../../keys";
 import { DoltHandler } from "../../dolt/doltHandler";
 import { pools } from "../../dolt/pools";
-import { blindPollMessage, pollResultsMessage } from "../discordTemplates";
+import { blindPollMessage } from "../discordTemplates";
 import { pollActionRow } from "./poll";
 
 export async function buttonManager(interaction: ButtonInteraction) {
-  if (!interaction.guildId) return;
-  const { name, config } = await getSpaceByDiscordGuildId(interaction.guildId);
+  try {
+    if (!interaction.guildId) return;
+    const { name, config } = await getSpaceByDiscordGuildId(interaction.guildId);
 
-  // check user has verifyRole
-  const member = await interaction.guild?.members.fetch(interaction.user.id);
-  if (!member?.roles.cache.has(config.discord.poll.verifyRole)) {
-    interaction.reply({
-      content: `You must have <@&${config.discord.poll.verifyRole}> role to be eligible`,
-      ephemeral: true
+    // check user has verifyRole
+    const member = await interaction.guild?.members.fetch(interaction.user.id);
+    if (!member?.roles.cache.has(config.discord.poll.verifyRole)) {
+      await interaction.reply({
+        content: `You must have <@&${config.discord.poll.verifyRole}> role to be eligible`,
+        ephemeral: true
+      });
+      return;
+    }
+
+    // init dolt to fetch proposal add poll
+    const dolt = new DoltHandler(pools[name], config.proposalIdPrefix);
+    // interaction url is different than we store
+    const discussionURL = oneLineTrim`https://discord.com/channels/
+      ${config.discord.guildId}/
+      ${config.discord.channelIds.proposals}/
+      ${interaction.message.id}
+    `;
+    const proposal = await dolt.getProposalByThreadURL(discussionURL);
+    if (!proposal) {
+      await interaction.reply({ content: "Proposal not found 😔", ephemeral: true });
+      return;
+    }
+
+    const answer = interaction.customId.split("poll:")[1] === "1";
+    const discordId = interaction.user.id;
+
+    // hash discordId and proposal.uuid with secret to get unique id
+    const hmac = createHmac("sha256", keys.NEXTAUTH_SECRET);
+    const hashDiscordId = hmac.update(`${discordId}${proposal.uuid}`).digest("base64");
+
+    const poll = { id: hashDiscordId, uuidOfProposal: proposal.uuid, answer };
+    await dolt.insertPoll(poll);
+
+    // get all polls
+    const polls = await dolt.getPollsByProposalUuid(proposal.uuid) as unknown as { answer: boolean }[];
+    if (!polls || polls.length === 0) {
+      await interaction.reply({ content: "Something went wrong. Try again 🙏", ephemeral: true });
+      return;
+    }
+    const yes = polls.filter((p) => p.answer).length;
+    const no = polls.length - yes;
+    // fetch initial message
+    const initialMessage = await interaction.channel?.messages.fetch(interaction.message.id);
+    const results = blindPollMessage({ yes, no });
+    initialMessage?.edit({
+      embeds: [initialMessage.embeds[0], results],
+      components: [pollActionRow]
     });
-    return;
+    await interaction.reply({ content: "Your vote has been recorded", ephemeral: true });
+  } catch (error) {
+    console.error("Hosted bot most likely handled interaction");
   }
-
-  // init dolt to fetch proposal add poll
-  const dolt = new DoltHandler(pools[name], config.proposalIdPrefix);
-  // interaction url is different than we store
-  const discussionURL = oneLineTrim`https://discord.com/channels/
-    ${config.discord.guildId}/
-    ${config.discord.channelIds.proposals}/
-    ${interaction.message.id}
-  `;
-  const proposal = await dolt.getProposalByThreadURL(discussionURL);
-  if (!proposal) {
-    interaction.reply({ content: "Proposal not found 😔", ephemeral: true });
-    return;
-  }
-
-  const answer = interaction.customId.split("poll:")[1] === "1";
-  const discordId = interaction.user.id;
-
-  // hash discordId and proposal.uuid with secret to get unique id
-  const hmac = createHmac("sha256", keys.NEXTAUTH_SECRET);
-  const hashDiscordId = hmac.update(`${discordId}${proposal.uuid}`).digest("base64");
-
-  const poll = { id: hashDiscordId, uuidOfProposal: proposal.uuid, answer };
-  await dolt.insertPoll(poll);
-
-  // get all polls
-  const polls = await dolt.getPollsByProposalUuid(proposal.uuid) as unknown as { answer: boolean }[];
-  if (!polls || polls.length === 0) {
-    interaction.reply({ content: "Something went wrong. Try again 🙏", ephemeral: true });
-    return;
-  }
-  const yes = polls.filter((p) => p.answer).length;
-  const no = polls.length - yes;
-  // fetch initial message
-  const initialMessage = await interaction.channel?.messages.fetch(interaction.message.id);
-  const results = blindPollMessage({ yes, no });
-  initialMessage?.edit({
-    embeds: [initialMessage.embeds[0], results],
-    components: [pollActionRow]
-  });
-  interaction.reply({ content: "Your vote has been recorded", ephemeral: true });
 }
