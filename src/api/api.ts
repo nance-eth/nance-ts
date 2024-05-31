@@ -297,7 +297,6 @@ router.get('/:space/proposal/:pid', async (req, res) => {
       nextProposalId
     };
 
-    // look for proposal in cache
     if (cache[space].proposalsPacket) {
       const packets = Object.values(cache[space].proposalsPacket as Record<string, ProposalsPacket>);
       const proposals = packets.map((p) => p.proposals).flat();
@@ -543,8 +542,9 @@ router.get('/:space/discussion/:uuid', async (req, res) => {
     }
     res.json({ success: true, data: discussionThreadURL });
     discord.logout();
+    return;
   }
-  return res.send({ success: false, error: 'proposal already has a discussion created' });
+  res.send({ success: false, error: 'proposal already has a discussion created' });
 });
 
 router.get('/:space/cache/clear', async (req, res) => {

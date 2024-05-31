@@ -453,16 +453,32 @@ export class DiscordHandler {
   }
 
   async sendProposalUnarchive(proposal: Proposal) {
-    const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-    const authorENS = await getENS(proposal.authorAddress);
-    const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
-    // keep url the same
-    message.setURL(messageObj.embeds[0].url);
-    messageObj.edit({ embeds: [message] });
-    messageObj.thread?.edit({ name: limitLength(proposal.title) });
-    // send alert to thread
-    const archiveMessage = discordTemplates.proposalUnarchiveAlert();
-    await messageObj.thread?.send({ content: archiveMessage });
+    try {
+      const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
+      const authorENS = await getENS(proposal.authorAddress);
+      const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+      // keep url the same
+      message.setURL(messageObj.embeds[0].url);
+      messageObj.edit({ embeds: [message] });
+      messageObj.thread?.edit({ name: limitLength(proposal.title) });
+      // send alert to thread
+      const archiveMessage = discordTemplates.proposalUnarchiveAlert();
+      await messageObj.thread?.send({ content: archiveMessage });
+    } catch (e) {
+      const channel = this.getAlertChannel() as unknown as ForumChannel;
+      const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
+      const messageObj = await post.fetchStarterMessage();
+      const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
+      await post.edit({ name: limitLength(title) });
+      const authorENS = await getENS(proposal.authorAddress);
+      const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+      const pollResults = discordTemplates.blindPollMessage({ yes: 0, no: 0 });
+      await messageObj?.edit({
+        embeds: [message, pollResults],
+        components: [pollActionRow]
+      });
+      await post.send({ content: discordTemplates.proposalUnarchiveAlert() });
+    }
   }
 
   async deleteMessage(messageId: string) {
