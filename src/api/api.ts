@@ -9,7 +9,7 @@ import {
   ProposalDeleteRequest,
   ProposalQueryResponse,
 } from '@nance/nance-sdk';
-import { isEqual } from "lodash";
+import { isEqual, min } from "lodash";
 import { _TypedDataEncoder } from "ethers/lib/utils";
 import logger from '../logging';
 import { getLastSlash, uuidGen } from '../utils';
@@ -28,6 +28,7 @@ import { addProposalToNanceDB, updateProposalInNanceDB } from "./helpers/nancedb
 import { dotPin } from "../storage/storageHandler";
 import { formatSnapshotEnvelope, getSnapshotId } from "./helpers/snapshotUtils";
 import { cache, clearCache } from "./helpers/cache";
+import { getAddressVotingPower } from "../snapshot/snapshotVotingPower";
 
 const router = express.Router();
 
@@ -202,14 +203,30 @@ router.post('/:space/proposals', async (req, res) => {
         return;
       }
     }
+
+    // check author snapshot voting power
+    // if author doesn't meet the minimum balance, set author to undefined and add uploaderAddress to coauthors
+    // then a valid author will need to resign the proposal
+    let authorAddress: string | undefined = uploaderAddress;
+    let { coauthors } = proposal;
+    if (config.proposalSubmissionValidation) {
+      const { minBalance } = config.proposalSubmissionValidation;
+      const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
+      if (balance < minBalance) {
+        authorAddress = undefined;
+        coauthors = !coauthors ? [uploaderAddress] : [...coauthors, uploaderAddress];
+      }
+    }
+
     const newProposal: Proposal = {
       ...proposal,
       uuid: proposal.uuid || uuidGen(),
       createdTime: proposal.createdTime || new Date().toISOString(),
-      authorAddress: uploaderAddress,
-      discussionThreadURL: "",
+      authorAddress,
+      coauthors,
       voteURL: snapshotId,
     };
+    console.log(newProposal);
     if (!newProposal.governanceCycle) {
       newProposal.governanceCycle = currentCycle + 1;
     }
@@ -360,10 +377,18 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       return;
     }
 
-    // eslint-disable-next-line prefer-const
-    let { authorAddress, coauthors, governanceCycle } = proposalByUuid;
-    if (!proposalByUuid.coauthors?.includes(uploaderAddress) && uploaderAddress !== proposalByUuid.authorAddress) {
-      coauthors = !coauthors ? [uploaderAddress] : [...coauthors, uploaderAddress];
+    // check author snapshot voting power
+    // if author doesn't meet the minimum balance, set author to undefined and add uploaderAddress to coauthors
+    // then a valid author will need to resign the proposal
+    let authorAddress: string | undefined = proposalByUuid.authorAddress || uploaderAddress;
+    let { coauthors } = proposal;
+    if (config.proposalSubmissionValidation) {
+      const { minBalance } = config.proposalSubmissionValidation;
+      const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
+      if (balance < minBalance) {
+        authorAddress = undefined;
+        coauthors = !coauthors ? [uploaderAddress] : [...coauthors, uploaderAddress];
+      }
     }
 
     const proposalId = (!proposalByUuid.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
@@ -377,6 +402,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     console.log('======================================================');
 
     // update governance cycle to current if proposal is a draft
+    let { governanceCycle } = proposalByUuid;
     if (proposal.status === "Draft") {
       governanceCycle = currentCycle + 1;
     }

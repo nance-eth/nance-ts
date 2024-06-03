@@ -207,11 +207,11 @@ export class DoltHandler {
       INSERT INTO ${proposalsTable}
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, authorDiscordId,
         governanceCycle, proposalStatus, proposalId, discussionURL, voteType, choices,
-        snapshotVotes, snapshotId, voteAddressCount, signature)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        snapshotVotes, snapshotId, voteAddressCount, signature, coauthors)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [proposal.uuid, proposal.createdTime || now, now, proposal.title, proposal.body, proposal.authorAddress, proposal.authorDiscordId,
       proposal.governanceCycle, proposal.status, proposal.proposalId, proposal.discussionThreadURL, voteType, JSON.stringify(voteChoices),
-      JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes, receipt
+      JSON.stringify(proposal.voteResults?.scores), proposal.voteURL, proposal.voteResults?.votes, receipt, JSON.stringify(proposal.coauthors)
     ]);
     return { uuid: proposal.uuid, proposalId: proposal.proposalId };
   }
