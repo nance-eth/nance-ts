@@ -275,7 +275,7 @@ export const payoutsTable = (payouts: SQLPayout[], governanceCycle: number, spac
     const payoutHeadline = getPayoutHeadline(payout);
     const payoutHeadlineFull = `[${payoutHeadline.text}](${payoutHeadline.link})`;
     const proposalURL = getProposalURL(space, { proposalId: payout.proposalId, uuid: payout.uuidOfProposal } as Proposal);
-    payoutsText.push(`_${payoutNum}/${payout.numberOfPayouts}_ ${payoutHeadlineFull} **$${payout.amount.toLocaleString()}** [[${proposalIdPrefix}${payout.proposalId}]](${proposalURL})\n`);
+    payoutsText.push(`_${payoutNum}/${payout.numberOfPayouts}_ ${payoutHeadlineFull} **$${Number(payout.amount).toLocaleString()}** [[${proposalIdPrefix}${payout.proposalId}]](${proposalURL})\n`);
   });
   message.setDescription(
     stripIndents`
