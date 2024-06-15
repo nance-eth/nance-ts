@@ -533,18 +533,22 @@ router.delete('/:space/proposal/:uuid', async (req, res) => {
 
 // fetch summary and save to db
 router.get('/:space/summary/:type/:pid', async (req, res) => {
-  const { space, pid, type } = req.params;
-  const { dolt } = await handlerReq(space, req.headers.authorization);
-  if (type !== "proposal" && type !== "thread") { res.json({ success: false, error: "invalid summary type" }); return; }
+  try {
+    const { space, pid, type } = req.params;
+    const { dolt } = await handlerReq(space, req.headers.authorization);
+    if (type !== "proposal" && type !== "thread") { res.json({ success: false, error: "invalid summary type" }); return; }
 
-  const summary = await getSummary(space, pid, type);
-  const proposal = await dolt.getProposalByAnyId(pid);
-  await dolt.updateSummary(proposal.uuid, summary, type);
+    const summary = await getSummary(space, pid, type);
+    const proposal = await dolt.getProposalByAnyId(pid);
+    await dolt.updateSummary(proposal.uuid, summary, type);
 
-  // clear proposal cache
-  cache[space].proposalsPacket = {};
+    // clear proposal cache
+    cache[space].proposalsPacket = {};
 
-  res.json({ success: true, data: summary });
+    res.json({ success: true, data: summary });
+  } catch (e: any) {
+    res.json({ success: false, error: e.toString() });
+  }
 });
 
 // ===================================== //
