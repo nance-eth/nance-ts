@@ -16,6 +16,7 @@ import {
   SQLTransfer,
   SQLCustomTransaction,
   ProposalStatus,
+  PollResults,
 } from '@nance/nance-sdk';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, uuidGen, isHexString } from '../utils';
@@ -139,6 +140,13 @@ export class DoltHandler {
     return omitBy(sqlProposal, isNil);
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  toBlindYesNoResults(polls: { answer: boolean }[]): PollResults {
+    const yes = polls.filter((a) => a.answer).map(() => "unknown");
+    const no = polls.filter((a) => !a.answer).map(() => "unknown");
+    return { voteYesUsers: yes, voteNoUsers: no, unverifiedUsers: [] };
+  }
+
   proposalIdNumber = (proposalId: string): number | null => {
     const value = Number(proposalId.split(this.proposalIdPrefix)[1]);
     return (Number.isNaN(value)) ? null : value;
@@ -202,7 +210,10 @@ export class DoltHandler {
     const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
     proposal.status = proposal.status || 'Discussion';
     proposal.uuid = proposal.uuid || uuidGen();
-    proposal.proposalId = (proposal.status === 'Discussion') ? await this.getNextProposalId() : proposal.proposalId;
+    proposal.proposalId =
+      (proposal.status === 'Discussion' || proposal.status === 'Temperature Check') ?
+        await this.getNextProposalId() :
+        proposal.proposalId;
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable}
       (uuid, createdTime, lastEditedTime, title, body, authorAddress, authorDiscordId,
@@ -648,10 +659,17 @@ export class DoltHandler {
   }
 
   async getPollsByProposalUuid(uuid: string) {
-    return this.queryDbResults(oneLine`
-      SELECT answer from ${pollsTable} WHERE
-      uuidOfProposal = ?
-    `, [uuid]);
+    try {
+      const answers = await this.queryDbResults(oneLine`
+        SELECT answer from ${pollsTable} WHERE
+        uuidOfProposal = ?
+      `, [uuid]) as unknown as { answer: boolean }[];
+      return this.toBlindYesNoResults(answers);
+    } catch (e) {
+      console.log(e);
+      // table doesn't exist, kinda hacky
+      return undefined;
+    }
   }
 
   // ===================================== //

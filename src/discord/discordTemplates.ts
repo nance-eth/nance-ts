@@ -31,11 +31,15 @@ const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPref
 };
 
 export const startDiscussionMessage = async (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
+  const proposalAuthor = proposal.authorAddress ?
+    `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})` :
+    "Sponsor Required!";
   const m = new EmbedBuilder().setTitle(`${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`)
     .setURL(getProposalURL(space, proposal))
+    // "author" field of Discord message is a nice way to display Governance Cycle
     .setAuthor({ name: `📃 GC#${proposal.governanceCycle}`, url: `${DEFAULT_DASHBOARD}/s/${space}?cycle=${proposal.governanceCycle}` })
     .addFields([
-      { name: 'author', value: `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})`, inline: true },
+      { name: 'author', value: proposalAuthor, inline: true },
     ]);
   if (proposal.authorDiscordId) {
     m.addFields({ name: 'discord user', value: `<@${proposal.authorDiscordId}>`, inline: true });
@@ -367,12 +371,20 @@ export const proposalDeleteAlert = () => {
   return message;
 };
 
-export const blindPollMessage = ({ yes, no }: { yes: number, no: number }) => {
-  return new EmbedBuilder().setTitle('Temperature Check')
+export const blindPollMessage = ({ yes, no }: { yes: number, no: number }, pass?: boolean) => {
+  const message = new EmbedBuilder().setTitle('Temperature Check')
     .setDescription(`Last updated\n<t:${Math.floor(Date.now() / 1000)}>`)
     .addFields([
       { name: EMOJI.YES, value: `${yes}`, inline: true },
       { name: EMOJI.NO, value: `${no}`, inline: true },
     ])
     .setColor('#FF0000');
+  if (pass !== undefined) {
+    const outcome = pass ? EMOJI.YES : EMOJI.NO;
+    const results = pass ? `${yes}/${yes + no}` : `${no}/${yes + no}`;
+    message.addFields([
+      { name: "Outcome", value: `${results} ${outcome}` }
+    ]);
+  }
+  return message;
 };

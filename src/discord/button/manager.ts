@@ -51,15 +51,15 @@ export async function buttonManager(interaction: ButtonInteraction) {
     await dolt.insertPoll(poll);
 
     // get all polls
-    const polls = await dolt.getPollsByProposalUuid(proposal.uuid) as unknown as { answer: boolean }[];
-    if (!polls || polls.length === 0) {
+    const pollsResults = await dolt.getPollsByProposalUuid(proposal.uuid);
+    if (!pollsResults) {
       await interaction.reply({ content: "Something went wrong. Try again 🙏", ephemeral: true });
       return;
     }
-    const yes = polls.filter((p) => p.answer).length;
-    const no = polls.length - yes;
     // fetch initial message
     const initialMessage = await interaction.channel?.messages.fetch(interaction.message.id);
+    const yes = pollsResults.voteYesUsers.length;
+    const no = pollsResults.voteNoUsers.length;
     const results = blindPollMessage({ yes, no });
     initialMessage?.edit({
       embeds: [initialMessage.embeds[0], results],

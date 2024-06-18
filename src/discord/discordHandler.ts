@@ -14,7 +14,6 @@ import {
   escapeMarkdown,
   ForumChannel,
   ThreadChannel,
-  Events,
 } from 'discord.js';
 import { isEqual } from "lodash";
 import { Proposal, PollResults, NanceConfig, SQLPayout } from '@nance/nance-sdk';
@@ -100,13 +99,11 @@ export class DiscordHandler {
     } catch (e) {
       // if send fails try as forum (kind of a hack could improve later)
       const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
-      const pollResults = discordTemplates.blindPollMessage({ yes: 0, no: 0 });
       const channel = this.getAlertChannel() as unknown as ForumChannel;
+      const embeds = [message];
       const messageObj = await channel.threads.create({
         name: limitLength(title),
-        message: {
-          embeds: [message, pollResults],
-        },
+        message: { embeds },
         autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek
       });
       return discordTemplates.threadToURL(messageObj);
@@ -127,7 +124,9 @@ export class DiscordHandler {
         const channel = this.getAlertChannel() as unknown as ForumChannel;
         const post = await channel.threads.fetch(messageId) as ThreadChannel;
         const messageObj = await post.fetchStarterMessage();
+        const pollResults = discordTemplates.blindPollMessage({ yes: 0, no: 0 });
         await messageObj?.edit({
+          embeds: [messageObj.embeds[0], pollResults],
           components: [pollActionRow]
         });
         return Promise.resolve();
@@ -339,6 +338,24 @@ export class DiscordHandler {
     else messageObj.react(EMOJI.CANCELLED);
   }
 
+  async sendBlindPollResults(
+    threadId: string,
+    yes: number,
+    no: number,
+    pass: boolean
+  ) {
+    try {
+      const messageObj = await this.getAlertChannel().messages.fetch(threadId);
+      const results = discordTemplates.blindPollMessage({ yes, no }, pass);
+      await messageObj?.edit({
+        embeds: [messageObj.embeds[0], results],
+      });
+      return true;
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
   async setStatus() {
     this.discord.user?.setActivity(' ');
   }
@@ -362,10 +379,9 @@ export class DiscordHandler {
       const authorENS = await getENS(proposal.authorAddress);
       const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
       const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
+      const embeds = [message];
       await post.edit({ name: limitLength(title) });
-      await messageObj?.edit({
-        embeds: [message, messageObj.embeds[1]],
-      });
+      await messageObj?.edit({ embeds });
     }
   }
 
