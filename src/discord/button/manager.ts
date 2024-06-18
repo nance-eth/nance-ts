@@ -6,7 +6,7 @@ import { keys } from "../../keys";
 import { DoltHandler } from "../../dolt/doltHandler";
 import { pools } from "../../dolt/pools";
 import { blindPollMessage } from "../discordTemplates";
-import { pollActionRow } from "./poll";
+import { ID_KEYWORD, pollActionRow } from "./poll";
 
 export async function buttonManager(interaction: ButtonInteraction) {
   try {
@@ -37,7 +37,10 @@ export async function buttonManager(interaction: ButtonInteraction) {
       return;
     }
 
-    const answer = interaction.customId.split("poll:")[1] === "1";
+    // so deployed bot doesn't respond when doing dev
+    const respondToInteraction = interaction.customId.includes(ID_KEYWORD);
+    if (!respondToInteraction) return;
+    const answer = interaction.customId.split(ID_KEYWORD)[1] === "1";
     const discordId = interaction.user.id;
 
     // hash discordId and proposal.uuid with secret to get unique id
