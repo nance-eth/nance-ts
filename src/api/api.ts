@@ -9,8 +9,7 @@ import {
   ProposalDeleteRequest,
   ProposalQueryResponse,
 } from '@nance/nance-sdk';
-import { isEqual, min } from "lodash";
-import { _TypedDataEncoder } from "ethers/lib/utils";
+import { isEqual } from "lodash";
 import logger from '../logging';
 import { getLastSlash, uuidGen } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
@@ -396,6 +395,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
         coauthors = !coauthors ? [uploaderAddress] : [...coauthors, uploaderAddress];
       } else {
         authorMeetsValidation = true;
+        proposal.status = "Temperature Check";
       }
     }
 

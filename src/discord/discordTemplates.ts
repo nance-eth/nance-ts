@@ -382,9 +382,11 @@ export const blindPollMessage = ({ yes, no }: { yes: number, no: number }, pass?
   if (pass !== undefined) {
     const outcome = pass ? EMOJI.YES : EMOJI.NO;
     const results = pass ? `${yes}/${yes + no}` : `${no}/${yes + no}`;
-    message.addFields([
-      { name: "Outcome", value: `${results} ${outcome}` }
-    ]);
+    message
+      .setDescription(`Poll closed\n<t:${Math.floor(Date.now() / 1000)}>`)
+      .addFields([
+        { name: "Outcome", value: `${results} ${outcome}` }
+      ]);
   }
   return message;
 };

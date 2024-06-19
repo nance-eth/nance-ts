@@ -345,10 +345,13 @@ export class DiscordHandler {
     pass: boolean
   ) {
     try {
-      const messageObj = await this.getAlertChannel().messages.fetch(threadId);
+      const channel = this.getAlertChannel() as unknown as ForumChannel;
+      const post = await channel.threads.fetch(threadId) as ThreadChannel;
+      const messageObj = await post.fetchStarterMessage();
       const results = discordTemplates.blindPollMessage({ yes, no }, pass);
       await messageObj?.edit({
         embeds: [messageObj.embeds[0], results],
+        components: []
       });
       return true;
     } catch (e) {
@@ -379,7 +382,8 @@ export class DiscordHandler {
       const authorENS = await getENS(proposal.authorAddress);
       const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
       const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
-      const embeds = [message];
+      const currentEmbeds = messageObj?.embeds || [];
+      const embeds = [message, ...currentEmbeds];
       await post.edit({ name: limitLength(title) });
       await messageObj?.edit({ embeds });
     }
