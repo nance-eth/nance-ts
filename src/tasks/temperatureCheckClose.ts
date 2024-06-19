@@ -22,14 +22,15 @@ export const temperatureCheckClose = async (space: string, config: NanceConfig) 
     if (temperatureCheckProposals.length === 0) return;
     await Promise.all(temperatureCheckProposals.map(async (proposal) => {
       const threadId = getLastSlash(proposal.discussionThreadURL);
-      // assume blind poll first
       let pollResults;
-      let blind = true;
-      pollResults = await dolt.getPollsByProposalUuid(proposal.uuid);
-      if (!pollResults) {
+      let blind = false;
+      try {
         pollResults = await dialogHandler.getPollVoters(threadId);
-        blind = false;
+      } catch {
+        pollResults = await dolt.getPollsByProposalUuid(proposal.uuid);
+        blind = true;
       }
+      if (!pollResults) return;
       const yes = pollResults.voteYesUsers.length;
       const no = pollResults.voteNoUsers.length;
       const pass = pollPassCheck(config, yes, no);

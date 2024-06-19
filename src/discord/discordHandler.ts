@@ -303,20 +303,24 @@ export class DiscordHandler {
   }
 
   async getPollVoters(messageId: string): Promise<PollResults> {
-    const messageObj = await this.getAlertChannel().messages.fetch(messageId);
-    const yesVoteUserList = await this.getUserReactions(
-      messageObj,
-      EMOJI.YES
-    );
-    const noVoteUserList = await this.getUserReactions(
-      messageObj,
-      EMOJI.NO
-    );
-    return {
-      voteYesUsers: yesVoteUserList.verified,
-      voteNoUsers: noVoteUserList.verified,
-      unverifiedUsers: [...yesVoteUserList.unverified, ...noVoteUserList.unverified]
-    };
+    try {
+      const messageObj = await this.getAlertChannel().messages.fetch(messageId);
+      const yesVoteUserList = await this.getUserReactions(
+        messageObj,
+        EMOJI.YES
+      );
+      const noVoteUserList = await this.getUserReactions(
+        messageObj,
+        EMOJI.NO
+      );
+      return {
+        voteYesUsers: yesVoteUserList.verified,
+        voteNoUsers: noVoteUserList.verified,
+        unverifiedUsers: [...yesVoteUserList.unverified, ...noVoteUserList.unverified]
+      };
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
   async sendPollResults(pollResults: PollResults, outcome: boolean, threadId: string) {
