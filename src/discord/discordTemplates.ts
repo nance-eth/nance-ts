@@ -5,14 +5,15 @@
 import {
   AttachmentBuilder, EmbedBuilder, ThreadChannel, EmbedField
 } from 'discord.js';
-import { oneLine, stripIndents } from 'common-tags';
+import { stripIndents } from 'common-tags';
 import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal, getActionsFromBody } from '@nance/nance-sdk';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, maybePlural, numToPrettyString } from '../utils';
 import { EMOJI } from '../constants';
 import { DiffLines } from "../api/helpers/diff";
 import { actionsToMarkdown } from "../tasks/voteSetup";
 
-export const getProposalURL = (space: string, proposal: Proposal) => {
+export const getProposalURL = (space: string, proposal: Proposal, customDomain?: string) => {
+  if (customDomain) return `${customDomain}/proposal/${proposal.proposalId || proposal.uuid}`;
   return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.uuid}`;
 };
 
@@ -30,12 +31,18 @@ const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPref
   return list;
 };
 
-export const startDiscussionMessage = async (space: string, proposalIdPrefix: string, proposal: Proposal, authorENS: string) => {
+export const startDiscussionMessage = async (
+  space: string,
+  proposalIdPrefix: string,
+  proposal: Proposal,
+  authorENS: string,
+  customDomain?: string,
+) => {
   const proposalAuthor = proposal.authorAddress ?
     `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})` :
     "Sponsor Required!";
   const m = new EmbedBuilder().setTitle(`${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`)
-    .setURL(getProposalURL(space, proposal))
+    .setURL(getProposalURL(space, proposal, customDomain))
     // "author" field of Discord message is a nice way to display Governance Cycle
     .setAuthor({ name: `📃 GC#${proposal.governanceCycle}`, url: `${DEFAULT_DASHBOARD}/s/${space}?cycle=${proposal.governanceCycle}` })
     .addFields([

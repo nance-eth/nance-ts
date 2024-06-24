@@ -88,7 +88,14 @@ export class DiscordHandler {
 
   async startDiscussion(proposal: Proposal): Promise<string> {
     const authorENS = await getENS(proposal.authorAddress);
-    const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+    const { customDomain } = this.config;
+    const message = await discordTemplates.startDiscussionMessage(
+      this.config.name,
+      this.config.proposalIdPrefix,
+      proposal,
+      authorENS,
+      customDomain
+    );
     try {
       const messageObj = await this.getAlertChannel().send({ embeds: [message] });
       const thread = await messageObj.startThread({
@@ -371,7 +378,14 @@ export class DiscordHandler {
     try {
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const authorENS = await getENS(proposal.authorAddress);
-      const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+      const { customDomain } = this.config;
+      const message = await discordTemplates.startDiscussionMessage(
+        this.config.name,
+        this.config.proposalIdPrefix,
+        proposal,
+        authorENS,
+        customDomain
+      );
       if (
         messageObj.embeds[0].title !== message.data.title
         || !isEqual(messageObj.embeds[0].fields, message.data.fields)
@@ -384,7 +398,14 @@ export class DiscordHandler {
       const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
       const authorENS = await getENS(proposal.authorAddress);
-      const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+      const { customDomain } = this.config;
+      const message = await discordTemplates.startDiscussionMessage(
+        this.config.name,
+        this.config.proposalIdPrefix,
+        proposal,
+        authorENS,
+        customDomain
+      );
       const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
       const currentEmbeds = messageObj?.embeds || [];
       const embeds = [message, ...currentEmbeds];
@@ -480,7 +501,14 @@ export class DiscordHandler {
     try {
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const authorENS = await getENS(proposal.authorAddress);
-      const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+      const { customDomain } = this.config;
+      const message = await discordTemplates.startDiscussionMessage(
+        this.config.name,
+        this.config.proposalIdPrefix,
+        proposal,
+        authorENS,
+        customDomain
+      );
       // keep url the same
       message.setURL(messageObj.embeds[0].url);
       messageObj.edit({ embeds: [message] });
@@ -495,7 +523,14 @@ export class DiscordHandler {
       const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
       await post.edit({ name: limitLength(title) });
       const authorENS = await getENS(proposal.authorAddress);
-      const message = await discordTemplates.startDiscussionMessage(this.config.name, this.config.proposalIdPrefix, proposal, authorENS);
+      const { customDomain } = this.config;
+      const message = await discordTemplates.startDiscussionMessage(
+        this.config.name,
+        this.config.proposalIdPrefix,
+        proposal,
+        authorENS,
+        customDomain
+      );
       const pollResults = discordTemplates.blindPollMessage({ yes: 0, no: 0 });
       await messageObj?.edit({
         embeds: [message, pollResults],
