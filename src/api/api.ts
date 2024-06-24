@@ -9,7 +9,7 @@ import {
   ProposalDeleteRequest,
   ProposalQueryResponse,
 } from '@nance/nance-sdk';
-import { isEqual } from "lodash";
+import { isEqual, uniq } from "lodash";
 import logger from '../logging';
 import { getLastSlash, uuidGen } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
@@ -392,7 +392,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
       if (balance < minBalance) {
         authorAddress = undefined;
-        coauthors = !coauthors ? [uploaderAddress] : [...coauthors, uploaderAddress];
+        coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
       } else {
         authorMeetsValidation = true;
         proposal.status = "Temperature Check";
@@ -426,7 +426,6 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     };
 
     const uuid = await dolt.editProposal(updateProposal, receipt);
-    // await dolt.actionDirector(updateProposal, proposalByUuid);
     // return uuid to client, then continue doing things
     res.json({ success: true, data: { uuid } });
 
