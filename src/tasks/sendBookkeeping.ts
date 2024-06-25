@@ -46,7 +46,10 @@ export const sendBookkeeping = async (space: string, config: NanceConfig, testCo
     const { currentGovernanceCycle } = await getSpaceConfig(space);
     await dolt.setStalePayouts(currentGovernanceCycle);
     const payouts = await dolt.getPayoutsDb(currentGovernanceCycle);
-    const { proposals } = await dolt.getProposals({ governanceCycle: String(currentGovernanceCycle) });
+    const { proposals } = await dolt.getProposals(
+      { governanceCycle: String(currentGovernanceCycle),
+        status: ["Approved"]
+      });
     const actionsFromProposals = proposals.map((p) => getActionsFromBody(p.body));
     const payoutsFromProposals: Action[] = [];
     actionsFromProposals.forEach((actions) => {
@@ -54,8 +57,7 @@ export const sendBookkeeping = async (space: string, config: NanceConfig, testCo
         if (a.type === "Payout") payoutsFromProposals.push(a);
       });
     });
-    const sqlPayoutsFromProposals = payoutsFromProposals.map((p, index) => payouts.push(payActionToSQLPayout(proposals[index], p) as unknown as SQLPayout));
-    console.log(payouts);
+    payoutsFromProposals.forEach((p, index) => payouts.push(payActionToSQLPayout(proposals[index], p) as unknown as SQLPayout));
     if (payouts.length === 0) return;
     const dialogHandler = await discordLogin(testConfig || config);
     await dialogHandler.sendPayoutsTable(await formatPayouts(payouts), currentGovernanceCycle);

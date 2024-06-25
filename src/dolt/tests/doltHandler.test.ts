@@ -9,7 +9,7 @@ async function main() {
   const { config } = await getSpaceConfig('waterbox');
   await sleep(1000);
   const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
-  const proposals = await dolt.getProposals({ where: `proposalStatus = "Temperature Check" OR proposalStatus = "Voting"` });
+  const proposals = await dolt.getProposals({ status: ["Temperature Check", "Voting"] });
   console.log(proposals.proposals.length);
 }
 

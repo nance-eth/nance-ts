@@ -495,15 +495,23 @@ export class DoltHandler {
     });
   }
 
-  async getProposals({ governanceCycle, keyword, author, limit, offset, where } :
-  { governanceCycle?: string; keyword?: string; author?: string, limit?: number; offset?: number; where?: string; }) {
+  async getProposals({
+    governanceCycle,
+    keyword,
+    author,
+    limit,
+    offset,
+    status
+  } : {
+    governanceCycle?: string;
+    keyword?: string;
+    author?: string;
+    limit?: number;
+    offset?: number;
+    status?: ProposalStatus[]
+  }) {
     const whereClauses = [];
     let selectRelevance = '';
-
-    // Handle where
-    if (where) {
-      whereClauses.push(where);
-    }
 
     // Handle governanceCycle
     if (governanceCycle) {
@@ -518,6 +526,10 @@ export class DoltHandler {
     }
 
     if (author) { whereClauses.push(`authorAddress = '${author}'`); }
+    if (status && status.length > 0) {
+      const statusConditions = status.map((s) => `proposalStatus = '${s}'`).join(' OR ');
+      whereClauses.push(`(${statusConditions})`);
+    }
 
     const whereStatement = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
     const orderByStatement = keyword ? 'ORDER BY relevance DESC' : 'ORDER BY createdTime DESC';
