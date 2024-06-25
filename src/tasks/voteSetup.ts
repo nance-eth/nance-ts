@@ -38,8 +38,11 @@ export const actionsToMarkdown = async (actions: Action[]) => {
     }
     if (action.type === 'Transfer') {
       const payload = action.payload as Transfer;
+      const contract = payload.contract === "ETH" ?
+        payload.contract :
+        `[${payload.contract}](https://etherscan.io/address/${payload.contract})`;
       const ens = await getENS(payload.to);
-      return `${index + 1}. **[TRANSFER]** ${payload.amount} [${payload.contract}](https://etherscan.io/address/${payload.contract}) to [${ens}](https://etherscan.io/address/${payload.to})`;
+      return `${index + 1}. **[TRANSFER]** ${payload.amount} ${contract} to [${ens}](https://etherscan.io/address/${payload.to})`;
     }
     return undefined;
   }));
