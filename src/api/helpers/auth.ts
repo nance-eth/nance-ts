@@ -48,9 +48,3 @@ export async function addressFromSignature(
     return Promise.reject(e.message);
   }
 }
-
-export const addressHasGuildRole = async (address: string, guildId: number, roleId: number[]) => {
-  const access = await getAddressRoles(address, guildId);
-  const rolesAccess = access.map((a) => a.access);
-  return rolesAccess.includes(true);
-};

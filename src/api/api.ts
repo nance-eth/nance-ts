@@ -15,7 +15,7 @@ import { getLastSlash, uuidGen } from '../utils';
 import { DoltHandler } from '../dolt/doltHandler';
 import { diffLineCounts } from './helpers/diff';
 import { canEditProposal, isMultisig, isNanceAddress, isNanceSpaceOwner } from './helpers/permissions';
-import { addressFromJWT, addressFromSignature, addressHasGuildRole } from './helpers/auth';
+import { addressFromJWT, addressFromSignature } from './helpers/auth';
 import { DoltSysHandler } from '../dolt/doltSysHandler';
 import { pools } from '../dolt/pools';
 import { getSpaceInfo } from './helpers/getSpace';
@@ -196,15 +196,20 @@ router.post('/:space/proposals', async (req, res) => {
     // then a valid author will need to resign the proposal to move it to Temperature Check
     let authorAddress: string | undefined = uploaderAddress;
     let { coauthors } = proposal;
-    let authorMeetsValidation = false;
-    if (config.proposalSubmissionValidation) {
-      const { minBalance } = config.proposalSubmissionValidation;
+    const { status } = proposal;
+    const { proposalSubmissionValidation } = config;
+    if (
+      (status === "Discussion" || status === "Temperature Check") &&
+      proposalSubmissionValidation
+    ) {
+      const { minBalance } = proposalSubmissionValidation;
       const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
       if (balance < minBalance) {
         authorAddress = undefined;
-        coauthors = !coauthors ? [uploaderAddress] : [...coauthors, uploaderAddress];
+        coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
+        proposal.status = proposalSubmissionValidation.notMetStatus;
       } else {
-        authorMeetsValidation = true;
+        proposal.status = proposalSubmissionValidation.metStatus;
       }
     }
 
@@ -222,7 +227,7 @@ router.post('/:space/proposals', async (req, res) => {
     }
     if (newProposal.status === "Archived") newProposal.status = "Discussion"; // proposal forked from an archive, set to discussion
     if (config.submitAsApproved) newProposal.status = "Approved";
-    if (authorMeetsValidation) newProposal.status = "Temperature Check";
+
     console.log('======================================================');
     console.log('==================== NEW PROPOSAL ====================');
     console.log('======================================================');
@@ -239,11 +244,11 @@ router.post('/:space/proposals', async (req, res) => {
       res.json({ success: true, data: { uuid } });
 
       try {
-        if (proposal.status === "Discussion") {
+        if (newProposal.status === "Discussion" || newProposal.status === "Temperature Check") {
           const discord = await discordLogin(config);
           try {
             const discussionThreadURL = await discord.startDiscussion(newProposal);
-            if (authorMeetsValidation) {
+            if (newProposal.status === "Temperature Check") {
               await discord.setupPoll(getLastSlash(discussionThreadURL));
             }
             await dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
@@ -363,7 +368,8 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       || isNanceSpaceOwner(spaceOwners, uploaderAddress)
       || isNanceAddress(uploaderAddress)
     );
-    if (proposal.status === "Archived" && !permissions) {
+    const { status } = proposal;
+    if (status === "Archived" && !permissions) {
       res.json({ success: false, error: '[PERMISSIONS] User not authorized to archive proposal' });
       return;
     }
@@ -373,16 +379,19 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     // then a valid author will need to resign the proposal to move it to Temperature Check
     let authorAddress: string | undefined = uploaderAddress;
     let { coauthors } = proposal;
-    let authorMeetsValidation = false;
-    if (config.proposalSubmissionValidation) {
-      const { minBalance } = config.proposalSubmissionValidation;
+    const { proposalSubmissionValidation } = config;
+    if (
+      (status === "Discussion" || status === "Temperature Check") &&
+      proposalSubmissionValidation
+    ) {
+      const { minBalance } = proposalSubmissionValidation;
       const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
       if (balance < minBalance) {
         authorAddress = undefined;
         coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
+        proposal.status = proposalSubmissionValidation.notMetStatus;
       } else {
-        authorMeetsValidation = true;
-        proposal.status = "Temperature Check";
+        proposal.status = proposalSubmissionValidation.metStatus;
       }
     }
 
@@ -441,7 +450,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
 
       // if proposal got sponsored by a valid author,
       // add Temperature Check embed and setup poll buttons
-      if (proposalByUuid.status === "Discussion" && authorMeetsValidation) {
+      if (proposalByUuid.status === "Discussion" && updateProposal.status === "Temperature Check") {
         await discord.editDiscussionMessage(updateProposal);
         await discord.setupPoll(getLastSlash(proposalByUuid.discussionThreadURL));
       }
