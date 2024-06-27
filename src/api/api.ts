@@ -191,18 +191,6 @@ router.post('/:space/proposals', async (req, res) => {
       snapshotId = getSnapshotId(envelope);
     }
 
-    // check Guildxyz access, allow draft uploads regardless of Guildxyz access
-    if (config.guildxyz && proposal.status === "Discussion") {
-      const access = await addressHasGuildRole(uploaderAddress, config.guildxyz.id, config.guildxyz.roles);
-      console.log(`[PERMISSIONS] ${uploaderAddress} has access: ${access}`);
-      if (!access) {
-        res.json({
-          success: false,
-          error: `[PERMISSIONS] User doesn't have role ${config.guildxyz.roles} for ${config.guildxyz.id}` });
-        return;
-      }
-    }
-
     // check author snapshot voting power
     // if author doesn't meet the minimum balance, set author to undefined and add uploaderAddress to coauthors
     // then a valid author will need to resign the proposal to move it to Temperature Check
@@ -218,8 +206,7 @@ router.post('/:space/proposals', async (req, res) => {
       } else {
         authorMeetsValidation = true;
       }
-    // if no proposalSubmissionValidation then author meets validation
-    } else authorMeetsValidation = true;
+    }
 
     const newProposal: Proposal = {
       ...proposal,
