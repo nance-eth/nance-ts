@@ -377,7 +377,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     // check author snapshot voting power
     // if author doesn't meet the minimum balance, set author to undefined and add uploaderAddress to coauthors
     // then a valid author will need to resign the proposal to move it to Temperature Check
-    let authorAddress: string | undefined = uploaderAddress;
+    let { authorAddress } = proposalByUuid;
     let { coauthors } = proposal;
     const { proposalSubmissionValidation } = config;
     if (
@@ -387,11 +387,12 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       const { minBalance } = proposalSubmissionValidation;
       const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
       if (balance < minBalance) {
-        authorAddress = undefined;
         coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
         proposal.status = proposalSubmissionValidation.notMetStatus;
       } else {
         proposal.status = proposalSubmissionValidation.metStatus;
+        if (!authorAddress) authorAddress = uploaderAddress;
+        else coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
       }
     }
 
