@@ -392,7 +392,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
         proposal.status = proposalSubmissionValidation.notMetStatus;
       } else {
         authorMeetsValidation = true;
-        proposal.status = proposalSubmissionValidation.metStatus;
+        if (proposal.status === "Discussion") proposal.status = proposalSubmissionValidation.metStatus;
         if (!authorAddress) authorAddress = uploaderAddress;
         else coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
       }
