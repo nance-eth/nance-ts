@@ -195,6 +195,7 @@ router.post('/:space/proposals', async (req, res) => {
     // if author doesn't meet the minimum balance, set author to undefined and add uploaderAddress to coauthors
     // then a valid author will need to resign the proposal to move it to Temperature Check
     let authorAddress: string | undefined = uploaderAddress;
+    let authorMeetsValidation = false;
     let { coauthors } = proposal;
     const { status } = proposal;
     const { proposalSubmissionValidation } = config;
@@ -209,6 +210,7 @@ router.post('/:space/proposals', async (req, res) => {
         coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
         proposal.status = proposalSubmissionValidation.notMetStatus;
       } else {
+        authorMeetsValidation = true;
         proposal.status = proposalSubmissionValidation.metStatus;
       }
     }
@@ -248,9 +250,7 @@ router.post('/:space/proposals', async (req, res) => {
           const discord = await discordLogin(config);
           try {
             const discussionThreadURL = await discord.startDiscussion(newProposal);
-            if (newProposal.status === "Temperature Check") {
-              await discord.setupPoll(getLastSlash(discussionThreadURL));
-            }
+            if (authorMeetsValidation) await discord.setupPoll(getLastSlash(discussionThreadURL));
             await dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
             discord.logout();
           } catch (e) {
@@ -378,6 +378,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     // if author doesn't meet the minimum balance, set author to undefined and add uploaderAddress to coauthors
     // then a valid author will need to resign the proposal to move it to Temperature Check
     let { authorAddress } = proposalByUuid;
+    let authorMeetsValidation = false;
     let { coauthors } = proposal;
     const { proposalSubmissionValidation } = config;
     if (
@@ -390,6 +391,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
         coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
         proposal.status = proposalSubmissionValidation.notMetStatus;
       } else {
+        authorMeetsValidation = true;
         proposal.status = proposalSubmissionValidation.metStatus;
         if (!authorAddress) authorAddress = uploaderAddress;
         else coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
@@ -442,7 +444,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       if (shouldCreateDiscussion) {
         try {
           const discussionThreadURL = await discord.startDiscussion(updateProposal);
-          await discord.setupPoll(getLastSlash(discussionThreadURL));
+          if (authorMeetsValidation) await discord.setupPoll(getLastSlash(discussionThreadURL));
           await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
         } catch (e) {
           logger.error(`[DISCORD] ${e}`);
