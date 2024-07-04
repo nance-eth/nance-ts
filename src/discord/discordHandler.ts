@@ -251,7 +251,7 @@ export class DiscordHandler {
     } else if (reminderType === 'juicebox') {
       ({ message, attachments } = discordTemplates.dailyJuiceboxBasedReminder(governanceCycle, day, endSeconds, juiceboxTimeDelay || (3 * 24 * 3600), link));
     } else { // default to basic
-      ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds));
+      ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds, this.config.customDomain));
     }
     const channelsSent = await Promise.all(this.getDailyUpdateChannels().map(async (channel) => {
       if (!channel) return undefined as unknown as TextChannel;

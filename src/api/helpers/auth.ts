@@ -7,7 +7,6 @@ import {
 } from "@nance/nance-sdk";
 import { unixTimeStampNow } from "../../utils";
 import { keys } from "../../keys";
-import { getAddressRoles } from "../../guildxyz/guildxyz";
 
 interface DecodedJWT {
   sub: string;

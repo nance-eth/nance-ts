@@ -17,7 +17,7 @@ export const getProposalURL = (space: string, proposal: Proposal, customDomain?:
   return `${DEFAULT_DASHBOARD}/s/${space}/${proposal.proposalId || proposal.uuid}`;
 };
 
-const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPrefix: string) => {
+const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPrefix: string, customDomain?: string) => {
   const list = proposals.map((proposal, i) => {
     let emoji = '';
     if (proposal.status === 'Temperature Check') { emoji = EMOJI.TEMPERATURE_CHECK; }
@@ -25,7 +25,7 @@ const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPref
     if (proposal.status === 'Discussion') { emoji = EMOJI.DISCUSSION; }
     if (proposal.status === 'Approved') { emoji = EMOJI.APPROVED; }
     if (proposal.status === 'Cancelled') { emoji = EMOJI.CANCELLED; }
-    return `${emoji}\u00a0[${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}](${getProposalURL(space, proposal)})`;
+    return `${emoji}\u00a0[${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}](${getProposalURL(space, proposal, customDomain)})`;
   }).join('\n');
   if (list === '') { return 'None'; }
   return list;
@@ -253,7 +253,9 @@ export const dailyBasicReminder = (
   proposals: Proposal[],
   space: string,
   proposalIdPrefix: string,
-  endSeconds?: number) => {
+  endSeconds?: number,
+  customDomain?: string,
+) => {
   const proposalsThisCycle = proposals.filter((proposal) => proposal.governanceCycle === governanceCycle);
   const proposalsNextCycle = proposals.filter((proposal) => proposal.governanceCycle === governanceCycle + 1);
   const message = new EmbedBuilder().setTitle('Governance Status')
@@ -263,8 +265,8 @@ export const dailyBasicReminder = (
       { name: 'Ends At', value: `<t:${endSeconds}:f> (<t:${endSeconds}:R>)` },
     );
   message.addFields([
-    { name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix) },
-    { name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix) },
+    { name: 'Proposals This Cycle', value: simpleProposalList(proposalsThisCycle, space, proposalIdPrefix, customDomain) },
+    { name: 'Proposals Next Cycle', value: simpleProposalList(proposalsNextCycle, space, proposalIdPrefix, customDomain) },
   ]);
   return { message, attachments: [] };
 };
