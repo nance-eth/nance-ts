@@ -1,4 +1,4 @@
-import { Action, CustomTransaction, NanceConfig, Payout, Proposal, Transfer } from '@nance/nance-sdk';
+import { Action, CustomTransaction, NanceConfig, Payout, Proposal, RequestBudget, Transfer } from '@nance/nance-sdk';
 import { SnapshotHandler } from '../snapshot/snapshotHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
@@ -43,6 +43,26 @@ export const actionsToMarkdown = async (actions: Action[]) => {
         `[${payload.contract}](https://etherscan.io/address/${payload.contract})`;
       const ens = await getENS(payload.to);
       return `${index + 1}. **[TRANSFER]** ${payload.amount} ${contract} to [${ens}](https://etherscan.io/address/${payload.to})`;
+    }
+    if (action.type === "Request Budget") {
+      const payload = action.payload as RequestBudget;
+      const transferMap: { [key: string]: number } = {};
+      payload.budget.forEach((lineItem) => {
+        let symbol = lineItem.token;
+        if (lineItem.token === "ETH") {
+          symbol = "ETH";
+        } else if (lineItem.token === "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48") {
+          symbol = "USDC";
+        }
+        transferMap[symbol] = (transferMap[symbol] || 0) + Number(lineItem.amount);
+      });
+      const tokensText = Object.entries(transferMap).map(([token, amount]) => {
+        return `${numberWithCommas(amount)} ${token}`;
+      }).join('\n');
+      const teamText = payload.projectTeam.map((teamMember) => {
+        return `* <@${teamMember.discordUserId}>`;
+      }).join('\n');
+      return `**[BUDGET REQUEST]**\n${tokensText}\n\n**[TEAM MEMBERS]**\n${teamText}`;
     }
     return undefined;
   }));

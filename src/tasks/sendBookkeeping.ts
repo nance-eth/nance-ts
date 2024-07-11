@@ -21,23 +21,30 @@ const formatPayouts = async (payouts: SQLPayout[]): Promise<SQLPayout[]> => {
   }));
 };
 
-const payActionToSQLPayout = (proposal: Proposal, action: Action): SQLPayout | undefined => {
-  if (action.type !== "Payout") return undefined;
-  const payout = action.payload as Payout;
-  return {
-    uuidOfPayout: action.uuid || "",
-    uuidOfProposal: proposal.uuid,
-    treasuryVersion: 3,
-    governanceCycleStart: proposal.governanceCycle || 0,
-    numberOfPayouts: Number(payout.count),
-    lockedUntil: 0,
-    amount: Number(payout.amountUSD),
-    currency: "USD",
-    payName: proposal.title,
-    payAddress: payout.address,
-    payProject: payout.project,
-    proposalId: proposal.proposalId
-  };
+const getSQLPayoutsFromProposal = (proposal: Proposal): SQLPayout[] | undefined => {
+  const sqlPayouts: SQLPayout[] = [];
+  proposal.actions?.forEach((action) => {
+    if (action.type === 'Payout') {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const gc = action.uuid === '22a8e7669e4a40ef974698422c3f847b' ? proposal.governanceCycle! + 1 : proposal.governanceCycle || 0;
+      const payout = action.payload as Payout;
+      sqlPayouts.push({
+        uuidOfPayout: action?.uuid || "",
+        uuidOfProposal: proposal.uuid,
+        treasuryVersion: 3,
+        governanceCycleStart: gc,
+        numberOfPayouts: Number(payout.count),
+        lockedUntil: 0,
+        amount: Number(payout.amountUSD),
+        currency: "USD",
+        payName: proposal.title,
+        payAddress: payout.address,
+        payProject: payout.project,
+        proposalId: proposal.proposalId
+      });
+    }
+  });
+  return sqlPayouts;
 };
 
 export const sendBookkeeping = async (space: string, config: NanceConfig, testConfig?: NanceConfig) => {
@@ -47,17 +54,20 @@ export const sendBookkeeping = async (space: string, config: NanceConfig, testCo
     await dolt.setStalePayouts(currentGovernanceCycle);
     const payouts = await dolt.getPayoutsDb(currentGovernanceCycle);
     const { proposals } = await dolt.getProposals(
-      { governanceCycle: String(currentGovernanceCycle),
+      { governanceCycle: `${currentGovernanceCycle - 1}+${currentGovernanceCycle}`,
         status: ["Approved"]
       });
-    const actionsFromProposals = proposals.map((p) => getActionsFromBody(p.body));
-    const payoutsFromProposals: Action[] = [];
-    actionsFromProposals.forEach((actions) => {
-      actions?.forEach((a) => {
-        if (a.type === "Payout") payoutsFromProposals.push(a);
-      });
+
+    proposals.forEach((p) => {
+      const proposalWithActions = {
+        ...p,
+        actions: getActionsFromBody(p.body)
+      } as Proposal;
+      const sqlPayouts = getSQLPayoutsFromProposal(proposalWithActions);
+      if (sqlPayouts) payouts.push(...sqlPayouts);
     });
-    payoutsFromProposals.forEach((p, index) => payouts.push(payActionToSQLPayout(proposals[index], p) as unknown as SQLPayout));
+
+    console.log(payouts);
     if (payouts.length === 0) return;
     const dialogHandler = await discordLogin(testConfig || config);
     await dialogHandler.sendPayoutsTable(await formatPayouts(payouts), currentGovernanceCycle);

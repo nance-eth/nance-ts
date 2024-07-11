@@ -197,12 +197,8 @@ router.post('/:space/proposals', async (req, res) => {
     let authorAddress: string | undefined = uploaderAddress;
     let authorMeetsValidation = false;
     let { coauthors } = proposal;
-    const { status } = proposal;
     const { proposalSubmissionValidation } = config;
-    if (
-      (status === "Discussion" || status === "Temperature Check") &&
-      proposalSubmissionValidation
-    ) {
+    if (proposalSubmissionValidation) {
       const { minBalance } = proposalSubmissionValidation;
       const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
       if (balance < minBalance) {
