@@ -197,6 +197,7 @@ router.post('/:space/proposals', async (req, res) => {
     let authorAddress: string | undefined = uploaderAddress;
     let authorMeetsValidation = false;
     let { coauthors } = proposal;
+    const { status } = proposal;
     const { proposalSubmissionValidation } = config;
     if (proposalSubmissionValidation) {
       const { minBalance } = proposalSubmissionValidation;
@@ -204,10 +205,10 @@ router.post('/:space/proposals', async (req, res) => {
       if (balance < minBalance) {
         authorAddress = undefined;
         coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
-        proposal.status = proposalSubmissionValidation.notMetStatus;
+        proposal.status = (status === "Discussion") ? proposalSubmissionValidation.notMetStatus : proposal.status;
       } else {
         authorMeetsValidation = true;
-        proposal.status = proposalSubmissionValidation.metStatus;
+        proposal.status = (status === "Discussion") ? proposalSubmissionValidation.metStatus : proposal.status;
       }
     }
 
