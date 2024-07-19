@@ -1,10 +1,10 @@
 /* eslint-disable no-nested-ternary */
 import { oneLine } from "common-tags";
-import { Proposal, ProposalStatus, SnapshotProposal, SQLSnapshotProposal } from "@nance/nance-sdk";
+import { Proposal, ProposalPacket, ProposalStatus, SnapshotProposal, SQLSnapshotProposal } from "@nance/nance-sdk";
 import { pools } from "./pools";
 import { cleanResultsHeader } from "./doltSQL";
 
-const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): Proposal => {
+const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): ProposalPacket => {
   return {
     uuid: 'snapshot',
     title: cacheProposal.title,
@@ -28,10 +28,16 @@ const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): Pr
       quorumMet: false,
     },
     proposalSummary: cacheProposal.proposalSummary,
+    proposalInfo: {
+      snapshotSpace: cacheProposal.snapshotSpace,
+      proposalIdPrefix: '',
+      minTokenPassingAmount: 0,
+      nextProposalId: 0,
+    }
   };
 };
 
-export const getCacheSnapshotProposal = async (snapshotId: string): Promise<Proposal | undefined> => {
+export const getCacheSnapshotProposal = async (snapshotId: string): Promise<ProposalPacket | undefined> => {
   const dolt = pools.common;
   const proposal = await dolt.db.query(oneLine`
     SELECT * from proposals
