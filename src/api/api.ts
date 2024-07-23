@@ -454,7 +454,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
         try { await discord.sendProposalArchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
       }
       // unarchive alert
-      if (proposal.status === "Discussion" && proposalByUuid.status === "Archived") {
+      if (proposal.status === proposalSubmissionValidation?.metStatus && proposalByUuid.status === "Archived") {
         try { await discord.sendProposalUnarchive(proposalByUuid); } catch (e) { logger.error(`[DISCORD] ${e}`); }
       }
 
