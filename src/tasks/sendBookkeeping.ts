@@ -7,6 +7,15 @@ import logger from '../logging';
 import { getProjectHandle } from '../juicebox/api';
 import { getENS } from '../api/helpers/ens';
 
+const getGovernanceCycles = (currentGovernanceCycle: number) => {
+  // return array of previous 20 governance cycles
+  const previousGovernanceCycles = [currentGovernanceCycle];
+  for (let i = 1; i <= 20; i += 1) {
+    previousGovernanceCycles.push(currentGovernanceCycle - i);
+  }
+  return previousGovernanceCycles.join("+");
+};
+
 const formatPayouts = async (payouts: SQLPayout[]): Promise<SQLPayout[]> => {
   return Promise.all(payouts.map(async (payout) => {
     const { payAddress, payProject } = payout;
@@ -21,13 +30,15 @@ const formatPayouts = async (payouts: SQLPayout[]): Promise<SQLPayout[]> => {
   }));
 };
 
-const getSQLPayoutsFromProposal = (proposal: Proposal): SQLPayout[] | undefined => {
+const getSQLPayoutsFromProposal = (proposal: Proposal, currentGovernanceCycle: number): SQLPayout[] | undefined => {
   const sqlPayouts: SQLPayout[] = [];
   proposal.actions?.forEach((action) => {
     if (action.type === 'Payout') {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const gc = action.uuid === '22a8e7669e4a40ef974698422c3f847b' ? proposal.governanceCycle! + 1 : proposal.governanceCycle || 0;
       const payout = action.payload as Payout;
+      const include = gc + Number(payout.count) - 1 >= currentGovernanceCycle;
+      if (!include) return;
       sqlPayouts.push({
         uuidOfPayout: action?.uuid || "",
         uuidOfProposal: proposal.uuid,
@@ -53,8 +64,9 @@ export const sendBookkeeping = async (space: string, config: NanceConfig, testCo
     const { currentGovernanceCycle } = await getSpaceConfig(space);
     await dolt.setStalePayouts(currentGovernanceCycle);
     const payouts = await dolt.getPayoutsDb(currentGovernanceCycle);
+    const previousGovernanceCycles = getGovernanceCycles(currentGovernanceCycle);
     const { proposals } = await dolt.getProposals(
-      { governanceCycle: `${currentGovernanceCycle - 1}+${currentGovernanceCycle}`,
+      { governanceCycle: previousGovernanceCycles,
         status: ["Approved"]
       });
 
@@ -63,7 +75,7 @@ export const sendBookkeeping = async (space: string, config: NanceConfig, testCo
         ...p,
         actions: getActionsFromBody(p.body)
       } as Proposal;
-      const sqlPayouts = getSQLPayoutsFromProposal(proposalWithActions);
+      const sqlPayouts = getSQLPayoutsFromProposal(proposalWithActions, currentGovernanceCycle);
       if (sqlPayouts) payouts.push(...sqlPayouts);
     });
 
