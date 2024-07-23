@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS proposals (
   authorAddress CHAR(42),
   coauthors JSON,
   authorDiscordId CHAR(18),
-  category VARCHAR(64),
   proposalStatus VARCHAR(30) NOT NULL,
   proposalId INT,
   temperatureCheckVotes JSON,
