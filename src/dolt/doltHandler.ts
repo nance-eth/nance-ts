@@ -307,13 +307,16 @@ export class DoltHandler {
   async editProposal(proposal: Partial<Proposal>, receipt?: string) {
     const updates: string[] = [];
     const cleanedProposal = this.toSQLProposal(proposal);
+    if (!cleanedProposal.uuid) return Promise.reject('Proposal uuid not found');
     cleanedProposal.lastEditedTime = new Date();
     Object.keys(cleanedProposal).forEach((key) => {
       updates.push(`${key} = ?`);
     });
-    updates.push("signature = ?");
+    if (receipt) updates.push("signature = ?");
     const query = `UPDATE ${proposalsTable} SET ${updates.join(',')} WHERE uuid = ?`;
-    const vars = [...Object.values(cleanedProposal), receipt, cleanedProposal.uuid];
+    const vars = [...Object.values(cleanedProposal)];
+    if (receipt) vars.push(receipt);
+    vars.push(cleanedProposal.uuid);
     await this.localDolt.db.query(query, vars);
     return proposal.uuid || Promise.reject('Proposal uuid not found');
   }

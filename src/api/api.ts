@@ -23,7 +23,6 @@ import { fetchSnapshotProposal } from "../snapshot/snapshotProposals";
 import { getSummary, postSummary } from "../nancearizer";
 import { discordLogin } from "./helpers/discord";
 import { headToUrl } from "../dolt/doltAPI";
-import { addProposalToNanceDB, updateProposalInNanceDB } from "./helpers/nancedb";
 import { dotPin } from "../storage/storageHandler";
 import { formatSnapshotEnvelope, getSnapshotId } from "./helpers/snapshotUtils";
 import { cache, clearCache } from "./helpers/cache";
@@ -266,9 +265,6 @@ router.post('/:space/proposals', async (req, res) => {
 
         // clear proposal cache
         cache[space].proposalsPacket = {};
-
-        // push to nancedb
-        addProposalToNanceDB(space, newProposal);
       } catch (e) {
         logger.error(`[DISCORD] ${space}`);
         logger.error(`[DISCORD] ${e}`);
@@ -428,8 +424,6 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     // clear proposal cache
     cache[space].proposalsPacket = {};
 
-    // send to nancedb
-    updateProposalInNanceDB(space, updateProposal);
     try {
       const discord = await discordLogin(config);
 
