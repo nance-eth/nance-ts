@@ -14,7 +14,6 @@ import {
   ActionTracking,
   ActionStatus,
   PayoutV1,
-  ActionV1,
 } from '@nance/nance-sdk';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, uuidGen, isHexString } from '../utils';
@@ -111,7 +110,7 @@ export class DoltHandler {
   toProposal(proposal: SQLProposal): Proposal {
     const title = isHexString(proposal.title) ? Buffer.from(proposal.title, 'hex').toString('utf8') : proposal.title;
     const body = isHexString(proposal.body) ? Buffer.from(proposal.body, 'hex').toString('utf8') : proposal.body;
-    const actions = (): Action[] | undefined => {
+    const actions = (): Action[] => {
       const oldActions = JSON.parse(proposal.actions as unknown as string).flat(2) as Action[];
       const _actions = oldActions.length > 0 ? oldActions : getActionsFromBody(body);
       if (_actions && _actions.length > 0) {
@@ -123,7 +122,7 @@ export class DoltHandler {
           };
         });
       }
-      return undefined;
+      return [];
     };
     const cleanProposal: Proposal = {
       uuid: proposal.uuid,
