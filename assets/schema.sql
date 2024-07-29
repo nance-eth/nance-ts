@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   coauthors JSON,
   authorDiscordId CHAR(18),
   proposalStatus VARCHAR(30) NOT NULL,
+  actionTracking JSON,
   proposalId INT,
   temperatureCheckVotes JSON,
   snapshotId VARCHAR(66),

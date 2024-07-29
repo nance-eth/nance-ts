@@ -1,4 +1,13 @@
-import { Action, CustomTransaction, NanceConfig, Payout, Proposal, RequestBudget, Transfer } from '@nance/nance-sdk';
+import {
+  Action,
+  CustomTransaction,
+  getPayoutCountAmount,
+  NanceConfig,
+  Payout,
+  Proposal,
+  RequestBudget,
+  Transfer
+} from '@nance/nance-sdk';
 import { SnapshotHandler } from '../snapshot/snapshotHandler';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
@@ -27,14 +36,15 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       return `${index + 1}. **[TXN]** [${payload.contract}](https://etherscan.io/address/${payload.contract}).${formatCustomTransaction(payload)}`;
     }
     if (action.type === 'Payout') {
-      const payload = action.payload as Payout;
-      const ens = await getENS(payload.address);
-      const projectHandle = await getProjectHandle(payload.project);
-      const projectLinkText = (projectHandle) ? `[@${projectHandle} *(${payload.project})*](https://juicebox.money/@${projectHandle})` : `[ProjectId ${payload.project}](https://juicebox.money/v2/p/${payload.project})`;
-      const toWithLink = (payload.project)
+      const { amount, count } = getPayoutCountAmount(action);
+      const payout = action.payload as Payout;
+      const ens = await getENS(payout.address);
+      const projectHandle = await getProjectHandle(payout.project);
+      const projectLinkText = (projectHandle) ? `[@${projectHandle} *(${payout.project})*](https://juicebox.money/@${projectHandle})` : `[ProjectId ${payout.project}](https://juicebox.money/v2/p/${payout.project})`;
+      const toWithLink = (payout.project)
         ? projectLinkText
-        : `[${ens}](https://etherscan.io/address/${payload.address})`;
-      return `${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(payload.amountUSD)} for ${payload.count} ${maybePlural('cycle', payload.count)} ($${numberWithCommas(payload.amountUSD * payload.count)})`;
+        : `[${ens}](https://etherscan.io/address/${payout.address})`;
+      return `${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(amount)} for ${count} ${maybePlural('cycle', count)} ($${numberWithCommas(amount * count)})`;
     }
     if (action.type === 'Transfer') {
       const payload = action.payload as Transfer;
@@ -72,7 +82,7 @@ export const actionsToMarkdown = async (actions: Action[]) => {
 export const voteSetup = async (space: string, config: NanceConfig, endDate: Date, proposals?: Proposal[]) => {
   try {
     const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
-    const voteProposals = proposals || await dolt.getVoteProposals();
+    const voteProposals = proposals || await dolt.getVoteProposals({ uploadedToSnapshot: true });
     if (voteProposals.length === 0) return [];
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, config);
     const snapshotVoteSettings = await snapshot.getVotingSettings().then((settings) => {

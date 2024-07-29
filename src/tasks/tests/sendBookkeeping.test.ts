@@ -6,7 +6,7 @@ async function main() {
   const { config: jucieboxConfig } = await getSpaceConfig('juicebox');
   const { config: waterboxConfig } = await getSpaceConfig('waterbox');
   await sleep(2000);
-  await sendBookkeeping('waterbox', jucieboxConfig, waterboxConfig);
+  await sendBookkeeping('juicebox', jucieboxConfig, waterboxConfig);
 }
 
 main();

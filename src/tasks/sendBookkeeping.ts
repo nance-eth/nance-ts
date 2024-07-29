@@ -1,4 +1,11 @@
-import { NanceConfig, SQLPayout, getActionsFromBody, Action, Proposal, Payout } from '@nance/nance-sdk';
+import {
+  NanceConfig,
+  SQLPayout,
+  getActionsFromBody,
+  Proposal,
+  Payout,
+  getPayoutCountAmount
+} from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { getSpaceConfig } from '../api/helpers/getSpace';
 import { DoltHandler } from '../dolt/doltHandler';
@@ -32,21 +39,22 @@ const formatPayouts = async (payouts: SQLPayout[]): Promise<SQLPayout[]> => {
 
 const getSQLPayoutsFromProposal = (proposal: Proposal, currentGovernanceCycle: number): SQLPayout[] | undefined => {
   const sqlPayouts: SQLPayout[] = [];
-  proposal.actions?.forEach((action) => {
+  proposal.actions?.forEach((action, index) => {
     if (action.type === 'Payout') {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const gc = action.uuid === '22a8e7669e4a40ef974698422c3f847b' ? proposal.governanceCycle! + 1 : proposal.governanceCycle || 0;
+      const { amount, count } = getPayoutCountAmount(action);
+      const gc = proposal?.actions?.[index].actionTracking?.[0].governanceCycle || 0;
+      const cancelled = proposal?.actions?.[index].actionTracking?.find((g) => g.governanceCycle === currentGovernanceCycle)?.status === "Cancelled";
       const payout = action.payload as Payout;
-      const include = gc + Number(payout.count) - 1 >= currentGovernanceCycle;
-      if (!include) return;
+      const include = gc + count - 1 >= currentGovernanceCycle;
+      if (!include || cancelled) return;
       sqlPayouts.push({
         uuidOfPayout: action?.uuid || "",
         uuidOfProposal: proposal.uuid,
         treasuryVersion: 3,
         governanceCycleStart: gc,
-        numberOfPayouts: Number(payout.count),
+        numberOfPayouts: count,
         lockedUntil: 0,
-        amount: Number(payout.amountUSD),
+        amount,
         currency: "USD",
         payName: proposal.title,
         payAddress: payout.address,
@@ -63,7 +71,7 @@ export const sendBookkeeping = async (space: string, config: NanceConfig, testCo
     const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
     const { currentGovernanceCycle } = await getSpaceConfig(space);
     await dolt.setStalePayouts(currentGovernanceCycle);
-    const payouts = await dolt.getPayoutsDb(currentGovernanceCycle);
+    const payouts: SQLPayout[] = [];
     const previousGovernanceCycles = getGovernanceCycles(currentGovernanceCycle);
     const { proposals } = await dolt.getProposals(
       { governanceCycle: previousGovernanceCycles,
@@ -71,18 +79,14 @@ export const sendBookkeeping = async (space: string, config: NanceConfig, testCo
       });
 
     proposals.forEach((p) => {
-      const proposalWithActions = {
-        ...p,
-        actions: getActionsFromBody(p.body)
-      } as Proposal;
-      const sqlPayouts = getSQLPayoutsFromProposal(proposalWithActions, currentGovernanceCycle);
+      const sqlPayouts = getSQLPayoutsFromProposal(p, currentGovernanceCycle);
       if (sqlPayouts) payouts.push(...sqlPayouts);
     });
 
     console.log(payouts);
     if (payouts.length === 0) return;
     const dialogHandler = await discordLogin(testConfig || config);
-    await dialogHandler.sendPayoutsTable(await formatPayouts(payouts), currentGovernanceCycle);
+    await dialogHandler.sendPayoutsTable(await formatPayouts(payouts.reverse()), currentGovernanceCycle);
   } catch (e) {
     logger.error(`Error sending bookkeeping for ${space}`);
     logger.error(e);
