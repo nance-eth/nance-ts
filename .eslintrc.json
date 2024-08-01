@@ -40,7 +40,7 @@
     "@typescript-eslint/lines-between-class-members": "off",
     "arrow-body-style": ["off", "always"],
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
     "object-curly-newline": "off",
     "function-paren-newline": "off",
     "no-underscore-dangle": "off",

@@ -27,11 +27,11 @@ const pollsTable = 'polls';
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
 export class DoltHandler {
   localDolt;
-  proposalIdPrefix;
+  proposalIdPrefix?;
 
   constructor(
     localDolt: DoltSQL,
-    proposalIdPrefix: string
+    proposalIdPrefix?: string
   ) {
     this.localDolt = localDolt;
     this.proposalIdPrefix = proposalIdPrefix;
@@ -196,6 +196,7 @@ export class DoltHandler {
   }
 
   proposalIdNumber = (proposalId: string): number | null => {
+    if (!this.proposalIdPrefix) return null;
     const value = Number(proposalId.split(this.proposalIdPrefix)[1]);
     return (Number.isNaN(value)) ? null : value;
   };
@@ -499,7 +500,7 @@ export class DoltHandler {
     let where = `WHERE ${proposalsTable}`;
     if (uuidOrId.length === 32) {
       where = `${where}.uuid = '${uuidOrId}'`;
-    } else if (uuidOrId.includes(this.proposalIdPrefix)) {
+    } else if (this.proposalIdPrefix && uuidOrId.includes(this.proposalIdPrefix)) {
       const id = this.proposalIdNumber(uuidOrId);
       if (!id) return Promise.reject('bad proposalId');
       where = `${where}.proposalId = ${id}`;

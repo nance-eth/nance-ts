@@ -1,12 +1,9 @@
-import {
-  ProposalStatus,
-  ProposalStatusNames
-} from "@nance/nance-sdk";
+import { ProposalStatus } from "@nance/nance-sdk";
 import { nanceAddress } from '../../keys';
-import { GnosisHandler } from '../../gnosis/gnosisHandler';
+import { SafeHandler } from '../../safe/safeHandler';
 
 export const isMultisig = async (safeAddress: string, address: string) => {
-  return GnosisHandler.getSigners(safeAddress).then((multisig) => {
+  return SafeHandler.getSigners(safeAddress).then((multisig) => {
     return multisig.includes(address);
   }).catch(() => { return false; });
 };
@@ -20,13 +17,10 @@ export const isNanceSpaceOwner = (spaceOwners: string[], address: string) => {
 };
 
 export function canEditProposal(status: ProposalStatus) {
-  const statusesThatAllowEdit = ProposalStatusNames.filter((s) => {
-    return (
-      s === "Discussion"
-      || s === "Draft"
-      || s === "Temperature Check"
-      || s === "Archived"
-    );
-  });
-  return (statusesThatAllowEdit.includes(status));
+  return (
+    status === "Discussion" ||
+    status === "Draft" ||
+    status === "Temperature Check" ||
+    status === "Archived"
+  );
 }

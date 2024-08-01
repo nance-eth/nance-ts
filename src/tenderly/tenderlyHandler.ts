@@ -1,7 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import axios from 'axios';
 import { ethers } from 'ethers';
-import { BasicTransaction } from '@nance/nance-sdk';
 import { keys } from '../keys';
 
 // docs: https://docs-api.tenderly.co, https://docs.tenderly.co/simulations-and-forks/simulation-api
@@ -52,7 +51,7 @@ export class TenderlyHandler {
     await this.provider.send('evm_increaseTime', [time]);
   }
 
-  async sendTransaction(txn: BasicTransaction, from: string): Promise<string> {
+  async sendTransaction(txn: { address: string, bytes: string }, from: string): Promise<string> {
     const params = [{
       to: txn.address,
       from,

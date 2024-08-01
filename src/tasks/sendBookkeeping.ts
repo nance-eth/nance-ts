@@ -1,7 +1,6 @@
 import {
   NanceConfig,
   SQLPayout,
-  getActionsFromBody,
   Proposal,
   Payout,
   getPayoutCountAmount
@@ -66,11 +65,11 @@ const getSQLPayoutsFromProposal = (proposal: Proposal, currentGovernanceCycle: n
   return sqlPayouts;
 };
 
-export const sendBookkeeping = async (space: string, config: NanceConfig, testConfig?: NanceConfig) => {
+export const gatherPayouts = async (space: string, currentGovernanceCycle: number) => {
   try {
-    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
-    const { currentGovernanceCycle } = await getSpaceConfig(space);
-    await dolt.setStalePayouts(currentGovernanceCycle);
+    const dolt = new DoltHandler(pools[space]);
+    // TODO: set action tracking for all payouts in another function
+    // await dolt.setStalePayouts(currentGovernanceCycle);
     const payouts: SQLPayout[] = [];
     const previousGovernanceCycles = getGovernanceCycles(currentGovernanceCycle);
     const { proposals } = await dolt.getProposals(
@@ -83,10 +82,21 @@ export const sendBookkeeping = async (space: string, config: NanceConfig, testCo
       if (sqlPayouts) payouts.push(...sqlPayouts);
     });
 
-    console.log(payouts);
-    if (payouts.length === 0) return;
+    if (payouts.length === 0) return undefined;
+    const formattedPayouts = await formatPayouts(payouts.reverse());
+    return formattedPayouts;
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+export const sendBookkeeping = async (space: string, config: NanceConfig, testConfig?: NanceConfig) => {
+  try {
+    const { currentGovernanceCycle } = await getSpaceConfig(space);
+    const payouts = await gatherPayouts(space, currentGovernanceCycle);
+    if (!payouts) return;
     const dialogHandler = await discordLogin(testConfig || config);
-    await dialogHandler.sendPayoutsTable(await formatPayouts(payouts.reverse()), currentGovernanceCycle);
+    await dialogHandler.sendPayoutsTable(payouts, currentGovernanceCycle);
   } catch (e) {
     logger.error(`Error sending bookkeeping for ${space}`);
     logger.error(e);

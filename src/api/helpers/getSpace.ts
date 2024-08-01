@@ -1,5 +1,6 @@
 /* eslint-disable prefer-promise-reject-errors */
-import { SpaceInfoExtended, InternalDateEvent, SpaceConfig, DateEvent, SQLSpaceConfig } from '@nance/nance-sdk';
+import { SpaceInfoExtended, InternalDateEvent, DateEvent, SQLSpaceConfig } from '@nance/nance-sdk';
+import { sum } from "lodash";
 import { DoltSysHandler } from '../../dolt/doltSysHandler';
 import { pools } from '../../dolt/pools';
 import { juiceboxTime } from './juicebox';
@@ -38,7 +39,7 @@ export const getSpaceInfo = async (spaceConfig: SQLSpaceConfig): Promise<SpaceIn
       cycleStartDate = getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.start || new Date();
       // if this the cycle start date is in the past, then we are currently in TEMPERATURE_CHECK and need to add 14 days
       if (cycleStartDate < new Date()) {
-        cycleStartDate = addDaysToDate(cycleStartDate, 14);
+        cycleStartDate = addDaysToDate(cycleStartDate, sum(cycleStageLengths));
       }
     }
     const stringCurrentEvent = {

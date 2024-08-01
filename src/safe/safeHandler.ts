@@ -10,7 +10,7 @@ const headers = { 'Content-type': 'application/json' };
 
 export const API = (network = 'mainnet') => { return `https://safe-transaction-${network}.safe.global`; };
 
-export class GnosisHandler {
+export class SafeHandler {
   private TRANSACTION_API;
   private walletAddress;
 
@@ -34,7 +34,7 @@ export class GnosisHandler {
       signerOrProvider: wallet,
     });
     const safe = await Safe.create({ ethAdapter, safeAddress });
-    return new GnosisHandler(safeAddress, safe, wallet, network);
+    return new SafeHandler(safeAddress, safe, wallet, network);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -130,7 +130,7 @@ export class GnosisHandler {
     });
   }
 
-  static async getCurrentNonce(safeAddress: string, network: string, queued = true) {
+  static async getCurrentNonce(safeAddress: string, network: string, queued = true): Promise<number> {
     return axios({
       method: 'get',
       url: `${API()}/api/v1/safes/${safeAddress}/all-transactions`,
@@ -143,7 +143,7 @@ export class GnosisHandler {
       },
     }).then((response) => {
       const { nonce } = response.data.results.find((txn: any) => { return txn.nonce; });
-      return nonce;
+      return Number(nonce);
     }).catch((e) => {
       return Promise.reject(e);
     });
