@@ -233,7 +233,7 @@ export class DoltHandler {
         snapshotId,
         voteAddressCount,
         signature,
-        coauthors,
+        coauthors
       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       proposal.uuid,
