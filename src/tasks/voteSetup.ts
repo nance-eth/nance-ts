@@ -56,7 +56,7 @@ export const actionsToMarkdown = async (actions: Action[]) => {
         payload.contract :
         `[${payload.contract}](${explorer}/address/${payload.contract})`;
       const ens = await getENS(payload.to);
-      return `${index + 1}. **[TRANSFER]** ${payload.amount} ${contract} to [${ens}](${explorer}/address/${payload.to})`;
+      return `${index + 1}. **[TRANSFER]** ${numberWithCommas(payload.amount)} ${contract} to [${ens}](${explorer}/address/${payload.to})`;
     }
     if (action.type === "Request Budget") {
       const payload = action.payload as RequestBudget;
