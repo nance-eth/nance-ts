@@ -13,7 +13,7 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { keys } from '../keys';
 import { dotPin } from '../storage/storageHandler';
-import { DEFAULT_DASHBOARD, addSecondsToDate, maybePlural, numberWithCommas } from '../utils';
+import { DEFAULT_DASHBOARD, addSecondsToDate, chainIdToExplorer, maybePlural, numberWithCommas } from '../utils';
 import { getENS } from '../api/helpers/ens';
 import logger from '../logging';
 import { getProjectHandle } from "../juicebox/api";
@@ -29,11 +29,15 @@ export const formatCustomTransaction = (action: CustomTransaction) => {
 };
 
 const getActionsFooter = (space: string) => { return `*actions appended to proposal body by [Nance](${DEFAULT_DASHBOARD}/s/${space})*`; };
+
 export const actionsToMarkdown = async (actions: Action[]) => {
   const results = await Promise.all(actions.map(async (action, index) => {
+    const { chainId } = action;
+    const explorer = chainIdToExplorer(chainId);
+
     if (action.type === 'Custom Transaction') {
       const payload = action.payload as CustomTransaction;
-      return `${index + 1}. **[TXN]** [${payload.contract}](https://etherscan.io/address/${payload.contract}).${formatCustomTransaction(payload)}`;
+      return `${index + 1}. **[TXN]** [${payload.contract}](${explorer}/${payload.contract}).${formatCustomTransaction(payload)}`;
     }
     if (action.type === 'Payout') {
       const { amount, count } = getPayoutCountAmount(action);
@@ -43,16 +47,16 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       const projectLinkText = (projectHandle) ? `[@${projectHandle} *(${payout.project})*](https://juicebox.money/@${projectHandle})` : `[ProjectId ${payout.project}](https://juicebox.money/v2/p/${payout.project})`;
       const toWithLink = (payout.project)
         ? projectLinkText
-        : `[${ens}](https://etherscan.io/address/${payout.address})`;
+        : `[${ens}](${explorer}/address/${payout.address})`;
       return `${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(amount)} for ${count} ${maybePlural('cycle', count)} ($${numberWithCommas(amount * count)})`;
     }
     if (action.type === 'Transfer') {
       const payload = action.payload as Transfer;
       const contract = payload.contract === "ETH" ?
         payload.contract :
-        `[${payload.contract}](https://etherscan.io/address/${payload.contract})`;
+        `[${payload.contract}](${explorer}/address/${payload.contract})`;
       const ens = await getENS(payload.to);
-      return `${index + 1}. **[TRANSFER]** ${payload.amount} ${contract} to [${ens}](https://etherscan.io/address/${payload.to})`;
+      return `${index + 1}. **[TRANSFER]** ${payload.amount} ${contract} to [${ens}](${explorer}/address/${payload.to})`;
     }
     if (action.type === "Request Budget") {
       const payload = action.payload as RequestBudget;

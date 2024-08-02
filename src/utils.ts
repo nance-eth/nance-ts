@@ -16,6 +16,13 @@ const networkToRPC = {
   [NETWORKS.OPTIMISM]: `https://optimism-mainnet.infura.io/v3/${keys.INFURA_KEY}`,
 };
 
+export const chainIdToExplorer = (chainId: number) => {
+  if (chainId === 5) return "https://goerli.etherscan.io";
+  if (chainId === 100) return "https://gnosisscan.io";
+  if (chainId === 10) return "https://optimistic.etherscan.io";
+  return "https://etherscan.io";
+};
+
 export const myProvider = (network = 'mainnet') => {
   const RPC_HOST = networkToRPC[network];
   return new JsonRpcProvider(RPC_HOST);
