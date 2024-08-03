@@ -246,7 +246,7 @@ router.post('/:space/proposals', async (req, res) => {
           const discord = await discordLogin(config);
           try {
             const discussionThreadURL = await discord.startDiscussion(newProposal);
-            if (authorMeetsValidation) await discord.setupPoll(getLastSlash(discussionThreadURL));
+            if (authorMeetsValidation || !proposalSubmissionValidation) await discord.setupPoll(getLastSlash(discussionThreadURL));
             await dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
             discord.logout();
           } catch (e) {
