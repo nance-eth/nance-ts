@@ -1,3 +1,7 @@
+// =============================================================================
+// ============================= Controller Types ==============================
+// =============================================================================
+
 export type JBFundingCycleData = {
   duration: bigint;
   weight: bigint;
@@ -62,4 +66,17 @@ export type JBReconfigureFundingCycleData = {
   groupedSplits: JBGroupedSplits[];
   fundAccessConstraints: JBFundAccessConstraints[];
   memo: string;
+};
+
+// =============================================================================
+// ======================= Payment Terminal Types ==============================
+// =============================================================================
+
+export type JBDistributePayoutsOfData = {
+  projectId: bigint;
+  amount: bigint;
+  currency: bigint;
+  token: `0x${string}`;
+  minReturnedTokens: bigint;
+  metadata: `0x${string}`;
 };

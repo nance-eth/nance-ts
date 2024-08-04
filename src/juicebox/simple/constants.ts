@@ -13,8 +13,8 @@ export const GROUP_RESERVED = 2n;
 export const defaultFundingCycleData: JBReconfigureFundingCycleData = {
   projectId: 1n,
   data: {
-    duration: 0n,
-    weight: 0n,
+    duration: 1209600n,
+    weight: 1n,
     discountRate: 0n,
     ballot: JB3DayReconfigurationBufferBallot_Address
   },

@@ -435,7 +435,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
       if (shouldCreateDiscussion) {
         try {
           const discussionThreadURL = await discord.startDiscussion(updateProposal);
-          if (authorMeetsValidation) await discord.setupPoll(getLastSlash(discussionThreadURL));
+          if (authorMeetsValidation || !proposalSubmissionValidation) await discord.setupPoll(getLastSlash(discussionThreadURL));
           await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
         } catch (e) {
           logger.error(`[DISCORD] ${e}`);

@@ -6,7 +6,6 @@ export const saltBaeSprinkle = (splits: JBSplit[], remainder: bigint): JBSplit[]
   const extraSprinkle = remainder % splitCount;
   const sprinkledSplits = splits.map((split, i) => {
     const sprinkle = baseSprinkleAmount + (i < Number(extraSprinkle) ? 1n : 0n);
-    console.log(`adding ${sprinkle} to split ${split.projectId} ${split.beneficiary}`);
     return {
       ...split,
       percent: split.percent + sprinkle

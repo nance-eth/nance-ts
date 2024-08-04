@@ -13,7 +13,7 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { keys } from '../keys';
 import { dotPin } from '../storage/storageHandler';
-import { DEFAULT_DASHBOARD, addSecondsToDate, chainIdToExplorer, maybePlural, numberWithCommas } from '../utils';
+import { DEFAULT_DASHBOARD, addSecondsToDate, chainIdToExplorer, maybePlural, numToPrettyString, numberWithCommas } from '../utils';
 import { getENS } from '../api/helpers/ens';
 import logger from '../logging';
 import { getProjectHandle } from "../juicebox/api";
@@ -52,11 +52,16 @@ export const actionsToMarkdown = async (actions: Action[]) => {
     }
     if (action.type === 'Transfer') {
       const payload = action.payload as Transfer;
+
+      // hotfix for chainId not being set properly
+      const { chainId: chainIdPayload } = payload as any;
+      const explorerPayload = chainIdToExplorer(chainIdPayload);
+
       const contract = payload.contract === "ETH" ?
         payload.contract :
-        `[${payload.contract}](${explorer}/address/${payload.contract})`;
+        `[${payload.contract}](${explorerPayload}/address/${payload.contract})`;
       const ens = await getENS(payload.to);
-      return `${index + 1}. **[TRANSFER]** ${numberWithCommas(payload.amount)} ${contract} to [${ens}](${explorer}/address/${payload.to})`;
+      return `${index + 1}. **[TRANSFER]** ${numToPrettyString(payload.amount)} ${contract} to [${ens}](${explorerPayload}/address/${payload.to})`;
     }
     if (action.type === "Request Budget") {
       const payload = action.payload as RequestBudget;

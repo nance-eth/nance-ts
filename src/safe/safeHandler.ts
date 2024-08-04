@@ -1,4 +1,4 @@
-import { ethers, Signer, Wallet } from 'ethers';
+import { ethers, Wallet } from 'ethers';
 import axios from 'axios';
 import EthersAdapter from '@gnosis.pm/safe-ethers-lib';
 import { SafeTransactionDataPartial } from '@gnosis.pm/safe-core-sdk-types';

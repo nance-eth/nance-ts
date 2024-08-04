@@ -24,8 +24,9 @@ export class TenderlyHandler {
     this.headers = { 'X-Access-Key': keys.TENDERLY_KEY };
   }
 
-  getForkURL() {
-    return `https://dashboard.tenderly.co/${this.config.account}/${this.config.project}/fork/${this.forkId}`;
+  getForkURL(shared = true) {
+    if (!shared) return `https://dashboard.tenderly.co/${this.config.account}/${this.config.project}/fork/${this.forkId}`;
+    return `https://dashboard.tenderly.co/explorer/fork/${this.forkId}`;
   }
 
   async getForkProvider(description?: string, forkId?: string) {
@@ -51,11 +52,14 @@ export class TenderlyHandler {
     await this.provider.send('evm_increaseTime', [time]);
   }
 
-  async sendTransaction(txn: { address: string, bytes: string }, from: string): Promise<string> {
+  async sendTransaction(
+    { address, data, from }:
+    { address: `0x${string}`; data: `0x${string}`; from: string }
+  ): Promise<string> {
     const params = [{
-      to: txn.address,
+      to: address,
       from,
-      data: txn.bytes,
+      data,
       gas: ethers.utils.hexValue(3000000),
       gasPrice: ethers.utils.hexValue(1),
       value: ethers.utils.hexValue(0)

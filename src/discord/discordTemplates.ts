@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
 import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal, getActionsFromBody } from '@nance/nance-sdk';
-import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, maybePlural, numToPrettyString } from '../utils';
+import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, maybePlural, numToPrettyString, numberWithCommas } from '../utils';
 import { EMOJI } from '../constants';
 import { DiffLines } from "../api/helpers/diff";
 import { actionsToMarkdown } from "../tasks/voteSetup";
@@ -271,16 +271,17 @@ export const dailyBasicReminder = (
   return { message, attachments: [] };
 };
 
+const getPayoutHeadline = (payout: SQLPayout) => {
+  if (payout.payProjectHandle) { return { text: `@${payout.payProjectHandle} (v2p${payout.payProject})`, link: `https://juicebox.money/@${payout.payProjectHandle}` }; }
+  if (payout.payProject) { return { text: `v2p${payout.payProject}`, link: `https://juicebox.money/v2/p/${payout.payProject}` }; }
+  if (payout.payENS) { return { text: `${payout.payENS}`, link: `https://etherscan.com/address/${payout.payAddress}` }; }
+  return { text: `${payout.payAddress?.slice(0, 5)}...${payout.payAddress?.slice(38)}`, link: `https://etherscan.com/address/${payout.payAddress}` };
+};
+
 export const payoutsTable = (payouts: SQLPayout[], governanceCycle: number, space: string, proposalIdPrefix: string) => {
   const message = new EmbedBuilder();
   const toAlert: string[] = [];
   const payoutsText: string[] = [];
-  const getPayoutHeadline = (payout: SQLPayout) => {
-    if (payout.payProjectHandle) { return { text: `@${payout.payProjectHandle}`, link: `https://juicebox.money/@${payout.payProjectHandle}` }; }
-    if (payout.payProject) { return { text: `@${payout.payProject}`, link: `https://juicebox.money/v2/p/${payout.payProject}` }; }
-    if (payout.payENS) { return { text: `${payout.payENS}`, link: `https://etherscan.com/address/${payout.payAddress}` }; }
-    return { text: `${payout.payAddress?.slice(0, 5)}...${payout.payAddress?.slice(38)}`, link: `https://etherscan.com/address/${payout.payAddress}` };
-  };
   const totalDistribution = payouts.reduce((acc, payout) => { return acc + payout.amount; }, 0);
   payouts.forEach((payout) => {
     const payoutNum = governanceCycle - payout.governanceCycleStart + 1;
@@ -306,56 +307,42 @@ export const transactionThread = (nonce: number, operation: string, links: Embed
   return message;
 };
 
-export const transactionSummary = (proposalIdPrefix: string, addPayouts?: SQLPayout[], removePayouts?: SQLPayout[], oldDistributionLimit?: number, newDistributionLimit?: number, otherProposals?: SQLProposal[]) => {
-  const message = new EmbedBuilder().setTitle('Summary');
-  if (addPayouts) {
-    const additions = addPayouts.map((payout) => {
-      // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) --> **+$${payout.amount.toLocaleString()}** ${payout.payName} \`(${payout.payAddress || payout.payProject})\``;
-      // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) +$${payout.amount.toLocaleString()} ${payout.payName}`;
-      return [
-        { name: '-------', value: `[${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId})`, inline: true },
-        { name: '-------', value: `+$${payout.amount.toLocaleString()}`, inline: true },
-        { name: '-------', value: `${payout.payName} (${payout.payAddress || payout.payProject})`, inline: true }
-      ];
-    }).flatMap((a) => { return a; }) as unknown as EmbedField[];
-    message.addFields(
-      { name: 'ADD', value: '=============' },
-      { name: 'Proposal ID', value: '\u200b', inline: true },
-      { name: 'Amount', value: '\u200b', inline: true },
-      { name: 'Receipient', value: '\u200b', inline: true },
-      ...additions
-    ).setTitle('\u200b');
+export const transactionSummary = (
+  space: string,
+  deadline: Date,
+  proposalIdPrefix: string,
+  oldDistributionLimit: number,
+  newDistributionLimit: number,
+  addPayouts: SQLPayout[],
+  removePayouts: SQLPayout[],
+  otherProposals?: SQLProposal[],
+) => {
+  // const message = new EmbedBuilder().setTitle('Summary');
+  let message = `## __Summary__\nDeadline: <t:${deadline.getTime() / 1000}:F> (<t:${deadline.getTime() / 1000}:R>)\n`;
+  if (addPayouts && addPayouts.length > 0) {
+    message += `### Add payouts\n`;
+    const additions = addPayouts.map((payout, index) => {
+      const proposalURL = getProposalURL(space, { proposalId: payout.proposalId } as Proposal);
+      const payoutHeadline = getPayoutHeadline(payout);
+      const payoutHeadlineFull = `[${payoutHeadline.text}](${payoutHeadline.link})`;
+      const line = `  ${index}. [[${proposalIdPrefix}${payout.proposalId}]](${proposalURL}) +$${numberWithCommas(payout.amount)} to ${payoutHeadlineFull}`;
+      return line;
+    });
+    message += additions.join('\n');
   }
-  if (removePayouts) {
-    const removals = removePayouts.map((payout) => {
-      // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) --> **+$${payout.amount.toLocaleString()}** ${payout.payName} \`(${payout.payAddress || payout.payProject})\``;
-      // return `* [${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId}) +$${payout.amount.toLocaleString()} ${payout.payName}`;
-      return [
-        { name: '-------', value: `[${proposalIdPrefix}${payout.proposalId}](https://jbdao.org/snapshot/${payout.snapshotId})`, inline: true },
-        { name: '-------', value: `-$${payout.amount.toLocaleString()}`, inline: true },
-        { name: '-------', value: `${payout.payName} (${payout.payAddress || payout.payProject})`, inline: true }
-      ];
-    }).flatMap((a) => { return a; }) as unknown as EmbedField[];
-    message.addFields(
-      { name: 'REMOVE', value: '=============' },
-      { name: 'Proposal ID', value: '\u200b', inline: true },
-      { name: 'Amount', value: '\u200b', inline: true },
-      { name: 'Recipient', value: '\u200b', inline: true },
-      ...removals
-    ).setTitle('\u200b');
+  if (removePayouts && removePayouts.length > 0) {
+    message += `### Remove payouts\n`;
+    const removals = removePayouts.map((payout, index) => {
+      const proposalURL = getProposalURL(space, { proposalId: payout.proposalId } as Proposal);
+      const payoutHeadline = getPayoutHeadline(payout);
+      const payoutHeadlineFull = `[${payoutHeadline.text}](<${payoutHeadline.link}>)`;
+      const line = `  ${index + 1}. [[${proposalIdPrefix}${payout.proposalId}]](${proposalURL}) -$${numberWithCommas(payout.amount)} to ${payoutHeadlineFull}`;
+      return line;
+    });
+    message += removals.join('\n');
   }
-  if (oldDistributionLimit && newDistributionLimit) {
-    message.addFields(
-      { name: 'OLD DISTRIBUTION LIMIT', value: `$${oldDistributionLimit.toLocaleString()}`, inline: true },
-      { name: 'NEW DISTRIBUTION LIMIT', value: `$${newDistributionLimit.toLocaleString()}`, inline: true }
-    );
-  }
-  if (otherProposals) {
-    const value = otherProposals.map((proposal) => {
-      return `* [${proposalIdPrefix}${proposal.proposalId}](https://jbdao.org/snapshot/${proposal.snapshotId})`;
-    }).join('\n');
-    message.addFields({ name: 'OTHER PASSED PROPOSALS', value });
-  }
+  message += `\n### Old Distribution Limit\n$${numberWithCommas(oldDistributionLimit)}\n`;
+  message += `### New Distribution Limit\n$${numberWithCommas(newDistributionLimit)}\n`;
   return message;
 };
 

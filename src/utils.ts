@@ -130,7 +130,8 @@ export function limitLength(text: string, length = 100) {
   return text;
 }
 
-export function numToPrettyString(num: number | undefined, fixed = 1) {
+export function numToPrettyString(_num: number | string | undefined, fixed = 1) {
+  const num = Number(_num);
   if (num === undefined) {
     return '';
   } if (num === 0) {
@@ -139,7 +140,7 @@ export function numToPrettyString(num: number | undefined, fixed = 1) {
     return `${(num / 1E9).toFixed(fixed)}B`;
   } if (num > 1E6) {
     return `${(num / 1E6).toFixed(fixed)}M`;
-  } if (num > 1E3) {
+  } if (num >= 1E3) {
     return `${(num / 1E3).toFixed(fixed)}k`;
   }
   return num.toFixed(1);
@@ -207,3 +208,10 @@ export function maybePlural(text: string, count: number) {
 export const numberWithCommas = (x: number | string) => {
   return Number(x).toLocaleString();
 };
+
+export function bigIntSerializer(_: string, value: any) {
+  if (typeof value === 'bigint') {
+    return `${value.toString()}n`;
+  }
+  return value;
+}

@@ -18,7 +18,7 @@ import {
 import { isEqual } from "lodash";
 import { Proposal, PollResults, NanceConfig, SQLPayout } from '@nance/nance-sdk';
 import logger from '../logging';
-import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp } from '../utils';
+import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp, bigIntSerializer } from '../utils';
 
 import * as discordTemplates from './discordTemplates';
 import { getENS } from '../api/helpers/ens';
@@ -438,7 +438,7 @@ export class DiscordHandler {
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 
-  async createTransactionThread(nonce: number, operation: string, oldDistributionLimit: number, newDistributionLimit: number, links: EmbedField[]) {
+  async createTransactionThread(nonce: number, operation: string, links: EmbedField[]) {
     const message = discordTemplates.transactionThread(nonce, operation, links);
     const thread = await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] }).then((messageObj) => {
       return messageObj.startThread({
@@ -459,12 +459,35 @@ export class DiscordHandler {
     messageObj.edit({ embeds: [editedMessage] });
   }
 
-  async sendTransactionSummary(threadId: string, addPayouts: SQLPayout[], removePayouts: SQLPayout[], oldDistributionLimit: number, newDistributionLimit: number) {
-    const message1 = discordTemplates.transactionSummary(this.config.proposalIdPrefix, addPayouts);
-    const message2 = discordTemplates.transactionSummary(this.config.proposalIdPrefix, undefined, removePayouts);
-    const message3 = discordTemplates.transactionSummary(this.config.proposalIdPrefix, undefined, undefined, oldDistributionLimit, newDistributionLimit, undefined);
-
-    await this.getChannelById(threadId).send({ embeds: [message3, message1, message2] });
+  async sendTransactionSummary(
+    governanceCycle: number,
+    threadId: string,
+    deadline: Date,
+    oldDistributionLimit: number,
+    newDistributionLimit: number,
+    addPayouts: SQLPayout[],
+    removePayouts: SQLPayout[],
+    encodeReconfigureFundingCycle?: string,
+    viemFormatReconfig?: any,
+  ) {
+    const message = discordTemplates.transactionSummary(
+      this.config.name,
+      deadline,
+      this.config.proposalIdPrefix,
+      oldDistributionLimit,
+      newDistributionLimit,
+      addPayouts,
+      removePayouts,
+    );
+    await this.getChannelById(threadId).send(message);
+    if (encodeReconfigureFundingCycle) {
+      const attachment = new AttachmentBuilder(Buffer.from(encodeReconfigureFundingCycle, 'utf-8'), { name: `GC${governanceCycle}_hex.txt` });
+      await this.getChannelById(threadId).send({ files: [attachment] });
+    }
+    if (viemFormatReconfig) {
+      const attachment = new AttachmentBuilder(Buffer.from(viemFormatReconfig, 'utf-8'), { name: `GC${governanceCycle}_viem.txt` });
+      await this.getChannelById(threadId).send({ files: [attachment] });
+    }
   }
 
   async sendProposalDiff(proposal: Proposal, diffLineCounts: DiffLines) {
