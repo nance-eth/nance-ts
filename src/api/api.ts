@@ -171,7 +171,7 @@ router.post('/:space/proposals', async (req, res) => {
   const { space } = req.params;
   const { proposal, envelope } = req.body as ProposalUploadRequest;
   try {
-    const { config, dolt, bearerAddress, currentCycle } = await handlerReq(space, req.headers.authorization);
+    const { config, dolt, bearerAddress, currentCycle, currentEvent } = await handlerReq(space, req.headers.authorization);
     const uploaderAddress = bearerAddress || envelope?.address;
     if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
     if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
@@ -197,7 +197,10 @@ router.post('/:space/proposals', async (req, res) => {
     let authorMeetsValidation = false;
     let { coauthors } = proposal;
     const { status } = proposal;
-    const { proposalSubmissionValidation } = config;
+    const {
+      proposalSubmissionValidation,
+      allowCurrentCycleSubmission,
+    } = config;
     if (proposalSubmissionValidation) {
       const { minBalance } = proposalSubmissionValidation;
       const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
@@ -221,6 +224,12 @@ router.post('/:space/proposals', async (req, res) => {
     };
 
     if (!newProposal.governanceCycle) {
+      if (
+        currentEvent.title === "Temperature Check" &&
+        allowCurrentCycleSubmission
+      ) {
+        newProposal.governanceCycle = currentCycle;
+      }
       newProposal.governanceCycle = currentCycle + 1;
     }
     if (newProposal.status === "Archived") newProposal.status = "Discussion"; // proposal forked from an archive, set to discussion
@@ -328,7 +337,7 @@ router.put('/:space/proposal/:pid', async (req, res) => {
   const { space, pid } = req.params;
   try {
     const { proposal, envelope } = req.body as ProposalUpdateRequest;
-    const { dolt, config, bearerAddress, spaceOwners, currentCycle } = await handlerReq(space, req.headers.authorization);
+    const { dolt, config, bearerAddress, spaceOwners, currentCycle, currentEvent } = await handlerReq(space, req.headers.authorization);
 
     const proposalByUuid = await dolt.getProposalByAnyId(pid);
     console.log(proposalByUuid);
@@ -373,7 +382,10 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     let { authorAddress } = proposalByUuid;
     let authorMeetsValidation = false;
     let { coauthors } = proposal;
-    const { proposalSubmissionValidation } = config;
+    const {
+      proposalSubmissionValidation,
+      allowCurrentCycleSubmission
+    } = config;
     if (
       (status === "Discussion" || status === "Temperature Check") &&
       proposalSubmissionValidation
@@ -404,6 +416,9 @@ router.put('/:space/proposal/:pid', async (req, res) => {
     // update governance cycle to current if proposal is a draft
     let { governanceCycle } = proposalByUuid;
     if (proposal.status === "Draft") {
+      if (currentEvent.title === "Temperature Check" && allowCurrentCycleSubmission) {
+        governanceCycle = currentCycle;
+      }
       governanceCycle = currentCycle + 1;
     }
 
