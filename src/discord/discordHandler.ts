@@ -374,7 +374,7 @@ export class DiscordHandler {
     this.discord.user?.setActivity(' ');
   }
 
-  async editDiscussionMessage(proposal: Proposal) {
+  async editDiscussionMessage(proposal: Proposal, forceEdit = false) {
     try {
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const authorENS = await getENS(proposal.authorAddress);
@@ -389,6 +389,7 @@ export class DiscordHandler {
       if (
         messageObj.embeds[0].title !== message.data.title
         || !isEqual(messageObj.embeds[0].fields, message.data.fields)
+        || forceEdit
       ) {
         messageObj.edit({ embeds: [message] });
         messageObj.thread?.edit({ name: limitLength(proposal.title) });

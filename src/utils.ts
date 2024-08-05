@@ -215,3 +215,17 @@ export function bigIntSerializer(_: string, value: any) {
   }
   return value;
 }
+
+export const getContractName = async (address: string) => {
+  try {
+    const res = await axios.get(`https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${keys.ETHERSCAN_KEY}`);
+    if (res.data.message === 'NOTOK') {
+      console.log(res.data.result);
+      return address;
+    }
+    return res.data.result[0].ContractName;
+  } catch (e) {
+    console.log(e);
+    return address;
+  }
+};

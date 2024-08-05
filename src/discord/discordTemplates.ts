@@ -52,8 +52,8 @@ export const startDiscussionMessage = async (
     m.addFields({ name: 'discord user', value: `<@${proposal.authorDiscordId}>`, inline: true });
   }
   const actions = getActionsFromBody(proposal.body);
-  const actionsMd = actions ? await actionsToMarkdown(actions) : '';
-  m.addFields({ name: 'actions', value: actionsMd || "NONE", inline: false });
+  const actionsMd = actions ? await actionsToMarkdown(actions) : 'NONE';
+  m.setDescription(`**actions**\n${actionsMd}`);
   return m;
 };
 

@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import {
   Action,
   CustomTransaction,
@@ -13,10 +14,19 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { keys } from '../keys';
 import { dotPin } from '../storage/storageHandler';
-import { DEFAULT_DASHBOARD, addSecondsToDate, chainIdToExplorer, maybePlural, numToPrettyString, numberWithCommas } from '../utils';
 import { getENS } from '../api/helpers/ens';
 import logger from '../logging';
 import { getProjectHandle } from "../juicebox/api";
+import {
+  DEFAULT_DASHBOARD,
+  addSecondsToDate,
+  chainIdToExplorer,
+  getContractName,
+  maybePlural,
+  numToPrettyString,
+  numberWithCommas,
+  sleep
+} from '../utils';
 
 const actionsHeading = '## Proposed Actions\n\n';
 
@@ -31,13 +41,17 @@ export const formatCustomTransaction = (action: CustomTransaction) => {
 const getActionsFooter = (space: string) => { return `*actions appended to proposal body by [Nance](${DEFAULT_DASHBOARD}/s/${space})*`; };
 
 export const actionsToMarkdown = async (actions: Action[]) => {
-  const results = await Promise.all(actions.map(async (action, index) => {
+  const results: string[] = [];
+  for (let index = 0; index < actions.length; index += 1) {
+    const action = actions[index];
     const { chainId } = action;
     const explorer = chainIdToExplorer(chainId);
 
     if (action.type === 'Custom Transaction') {
       const payload = action.payload as CustomTransaction;
-      return `${index + 1}. **[TXN]** [${payload.contract}](${explorer}/${payload.contract}).${formatCustomTransaction(payload)}`;
+      const contractName = await getContractName(payload.contract);
+      await sleep(500); // avoid rate limiting
+      results.push(`${index + 1}. **[TXN]** [${contractName}](${explorer}/address/${payload.contract}).${formatCustomTransaction(payload)}`);
     }
     if (action.type === 'Payout') {
       const { amount, count } = getPayoutCountAmount(action);
@@ -48,7 +62,7 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       const toWithLink = (payout.project)
         ? projectLinkText
         : `[${ens}](${explorer}/address/${payout.address})`;
-      return `${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(amount)} for ${count} ${maybePlural('cycle', count)} ($${numberWithCommas(amount * count)})`;
+      results.push(`${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(amount)} for ${count} ${maybePlural('cycle', count)} ($${numberWithCommas(amount * count)})`);
     }
     if (action.type === 'Transfer') {
       const payload = action.payload as Transfer;
@@ -61,7 +75,7 @@ export const actionsToMarkdown = async (actions: Action[]) => {
         payload.contract :
         `[${payload.contract}](${explorerPayload}/address/${payload.contract})`;
       const ens = await getENS(payload.to);
-      return `${index + 1}. **[TRANSFER]** ${numToPrettyString(payload.amount)} ${contract} to [${ens}](${explorerPayload}/address/${payload.to})`;
+      results.push(`${index + 1}. **[TRANSFER]** ${numToPrettyString(payload.amount)} ${contract} to [${ens}](${explorerPayload}/address/${payload.to})`);
     }
     if (action.type === "Request Budget") {
       const payload = action.payload as RequestBudget;
@@ -81,10 +95,9 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       const teamText = payload.projectTeam.map((teamMember) => {
         return `* <@${teamMember.discordUserId}>`;
       }).join('\n');
-      return `**[BUDGET REQUEST]**\n${tokensText}\n\n**[TEAM MEMBERS]**\n${teamText}`;
+      results.push(`**[BUDGET REQUEST]**\n${tokensText}\n\n**[TEAM MEMBERS]**\n${teamText}`);
     }
-    return undefined;
-  }));
+  }
   return results.join('\n');
 };
 
