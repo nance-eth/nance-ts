@@ -1,11 +1,12 @@
-import { getSpaceInfo } from '../api/helpers/getSpace';
+import { getSpaceConfig, getSpaceInfo } from '../api/helpers/getSpace';
 import { DiscordHandler } from '../discord/discordHandler';
 import { sleep } from '../utils';
 
-const messageId = process.argv[2];
+const spaceId = process.argv[2];
+const messageId = process.argv[3];
 
 async function main() {
-  const { config } = await getSpaceInfo(process.env.CONFIG || '');
+  const { config } = await getSpaceConfig(spaceId);
   const discord = new DiscordHandler(config);
   await sleep(2000);
   console.log(await discord.deleteMessage(messageId));  
