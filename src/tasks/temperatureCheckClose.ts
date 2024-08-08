@@ -1,4 +1,4 @@
-import { NanceConfig, PollResults, ProposalStatus } from '@nance/nance-sdk';
+import { NanceConfig, ProposalStatus } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
@@ -18,9 +18,9 @@ export const temperatureCheckClose = async (space: string, config: NanceConfig) 
   try {
     const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
     const dialogHandler = await discordLogin(config);
-    const temperatureCheckProposals = await dolt.getTemperatureCheckProposals();
-    if (temperatureCheckProposals.length === 0) return;
-    await Promise.all(temperatureCheckProposals.map(async (proposal) => {
+    const { proposals } = await dolt.getProposals({ status: ["Temperature Check"] });
+    if (proposals.length === 0) return;
+    await Promise.all(proposals.map(async (proposal) => {
       const threadId = getLastSlash(proposal.discussionThreadURL);
       let pollResults;
       let blind = false;

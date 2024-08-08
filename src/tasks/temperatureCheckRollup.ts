@@ -5,12 +5,14 @@ import { DoltHandler } from '../dolt/doltHandler';
 import { pools } from '../dolt/pools';
 import { TASKS } from '../constants';
 import logger from '../logging';
+import { getSpaceConfig } from "../api/helpers/getSpace";
 
 export const temperatureCheckRollup = async (space: string, config: NanceConfig, endDate: Date) => {
   try {
     const dialogHandler = await discordLogin(config);
     const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
-    const proposals = await dolt.getDiscussionProposals();
+    const { currentGovernanceCycle } = await getSpaceConfig(space);
+    const { proposals } = await dolt.getProposals({ governanceCycle: currentGovernanceCycle + 1, status: ["Discussion"] });
     if (proposals.length === 0) return await Promise.resolve();
     const temperatureCheckRollupMessageId = await dialogHandler.sendTemperatureCheckRollup(
       proposals,

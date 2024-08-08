@@ -1,6 +1,5 @@
 import express from 'express';
 import { SQLSpaceConfig } from '@nance/nance-sdk';
-import axios from "axios";
 import { getSpaceConfig } from './helpers/getSpace';
 import { addressFromJWT } from './helpers/auth';
 import { isNanceSpaceOwner } from './helpers/permissions';

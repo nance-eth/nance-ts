@@ -111,7 +111,7 @@ export class DoltHandler {
     const title = isHexString(proposal.title) ? Buffer.from(proposal.title, 'hex').toString('utf8') : proposal.title;
     const body = isHexString(proposal.body) ? Buffer.from(proposal.body, 'hex').toString('utf8') : proposal.body;
     const actions = (): Action[] => {
-      const oldActions = JSON.parse(proposal.actions as unknown as string).flat(2) as Action[];
+      const oldActions = proposal.actions ? JSON.parse(proposal.actions as unknown as string).flat(2) as Action[] : [];
       const _actions = oldActions.length > 0 ? oldActions : getActionsFromBody(body);
       if (_actions && _actions.length > 0) {
         // merge with actionStatus
@@ -383,25 +383,6 @@ export class DoltHandler {
   // ========== get functions ============ //
   // ===================================== //
 
-  async getDiscussionProposals() {
-    return this.queryProposals(`
-      SELECT * FROM ${proposalsTable} WHERE
-      proposalStatus = 'Discussion'
-      AND proposalId IS NOT NULL
-      AND discussionURL IS NOT NULL
-      AND title IS NOT NULL
-      ORDER BY proposalId ASC
-    `);
-  }
-
-  async getTemperatureCheckProposals() {
-    return this.queryProposals(oneLine`
-      SELECT * FROM ${proposalsTable} WHERE
-      proposalStatus = 'Temperature Check'
-      ORDER BY proposalId ASC
-    `);
-  }
-
   async getVoteProposals({ uploadedToSnapshot = false } : { uploadedToSnapshot?: boolean } = {}) {
     return this.queryProposals(`
       ${SELECT_ACTIONS} from ${proposalsTable} WHERE
@@ -430,7 +411,7 @@ export class DoltHandler {
     offset,
     status
   } : {
-    governanceCycle?: string;
+    governanceCycle?: string | number;
     keyword?: string;
     author?: string;
     limit?: number;
@@ -442,7 +423,7 @@ export class DoltHandler {
 
     // Handle governanceCycle
     if (governanceCycle) {
-      whereClauses.push(this.cycleWhereClause(governanceCycle));
+      whereClauses.push(this.cycleWhereClause(String(governanceCycle)));
     }
 
     // Handle keyword
