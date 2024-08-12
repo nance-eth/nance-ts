@@ -12,7 +12,7 @@ export const temperatureCheckRollup = async (space: string, config: NanceConfig,
     const dialogHandler = await discordLogin(config);
     const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
     const { currentGovernanceCycle } = await getSpaceConfig(space);
-    const { proposals } = await dolt.getProposals({ governanceCycle: currentGovernanceCycle + 1, status: ["Discussion"] });
+    const { proposals } = await dolt.getProposals({ governanceCycle: currentGovernanceCycle, status: ["Discussion"] });
     if (proposals.length === 0) return await Promise.resolve();
     const temperatureCheckRollupMessageId = await dialogHandler.sendTemperatureCheckRollup(
       proposals,
