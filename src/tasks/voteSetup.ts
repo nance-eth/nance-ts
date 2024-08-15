@@ -104,8 +104,8 @@ export const actionsToMarkdown = async (actions: Action[]) => {
 export const voteSetup = async (space: string, config: NanceConfig, endDate: Date, proposals?: Proposal[]) => {
   try {
     const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
-    const voteProposals = proposals || await dolt.getVoteProposals({ uploadedToSnapshot: true });
-    if (voteProposals.length === 0) return [];
+    const voteProposals = proposals || await dolt.getProposals({ status: ["Voting"] }).then((res) => res.proposals);
+    if (!voteProposals || voteProposals.length === 0) return [];
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, config);
     const snapshotVoteSettings = await snapshot.getVotingSettings().then((settings) => {
       return settings;
@@ -125,19 +125,12 @@ export const voteSetup = async (space: string, config: NanceConfig, endDate: Dat
       const end = (snapshotVoteSettings?.period)
         ? addSecondsToDate(start, snapshotVoteSettings.period)
         : endDate;
-      // append actions to bottom of proposal
-      let bodyWithActions;
-      if (proposal.actions && proposal.actions.length > 0) {
-        const actionsMarkdown = await actionsToMarkdown(proposal.actions);
-        const actionsFooter = getActionsFooter(space);
-        bodyWithActions = `${proposal.body}\n\n${actionsHeading}\n${actionsMarkdown}\n\n${actionsFooter}`;
-      }
-      const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${bodyWithActions || proposal.body}`;
+      const { body } = proposal;
+      const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${body}`;
       const ipfsURL = await dotPin(proposalWithHeading);
       const type = (proposal.voteSetup) ? proposal.voteSetup.type : (snapshotVoteSettings?.type || 'basic');
-      const body = bodyWithActions || proposal.body;
       const voteURL = await snapshot.createProposal(
-        { ...proposal, body },
+        proposal,
         start,
         end,
         { type, choices: proposal.voteSetup?.choices || config.snapshot.choices },

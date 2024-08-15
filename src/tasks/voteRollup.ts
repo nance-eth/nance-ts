@@ -11,10 +11,10 @@ export const voteRollup = async (space: string, config: NanceConfig, endDate: Da
     let proposals = _proposals;
     if (!proposals) {
       const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
-      proposals = await dolt.getVoteProposals({ uploadedToSnapshot: true });
+      proposals = await dolt.getProposals({ status: ["Voting"] }).then((res) => res.proposals);
     }
     const dialogHandler = await discordLogin(config);
-    if (proposals.length === 0) return;
+    if (!proposals || proposals.length === 0) return;
     const votingRollup = await dialogHandler.sendVoteRollup(
       proposals,
       endDate,

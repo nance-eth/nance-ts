@@ -383,15 +383,6 @@ export class DoltHandler {
   // ========== get functions ============ //
   // ===================================== //
 
-  async getVoteProposals({ uploadedToSnapshot = false } : { uploadedToSnapshot?: boolean } = {}) {
-    return this.queryProposals(`
-      ${SELECT_ACTIONS} from ${proposalsTable} WHERE
-      proposalStatus = 'Voting'
-      AND snapshotId IS ${uploadedToSnapshot ? 'NOT ' : ''}NULL
-      ORDER BY proposalId ASC
-    `);
-  }
-
   async getNextProposalId() {
     return this.queryDb(`
       SELECT proposalId FROM ${proposalsTable}
