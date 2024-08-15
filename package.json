@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "automated governance pipeliner",
   "license": "MIT",
+  "module": "NodeNext",
   "scripts": {
     "start": "export NODE_ENV='prod' && export CONFIG='juicebox' && ts-node src/index.ts",
     "dev": "npm run dev:api",
@@ -10,8 +11,8 @@
     "freshen": "npm run clean && npm install",
     "start:api": "node ./dist/api/index.js",
     "dev:api": "export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
-    "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 --target es2021 --moduleResolution node && cp -r ./src/config/ ./dist/config/",
-    "build:scheduler": "tsc src/scheduler/schedule.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 --target es2021 --moduleResolution node",
+    "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 --target es2021 --module commonjs && cp -r ./src/config/ ./dist/config/",
+    "build:scheduler": "tsc src/scheduler/schedule.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 --target es2021 --module commonjs",
     "start:scheduler": "node ./dist/scheduler/schedule.js",
     "dolt-client": "source .env && mysql -h$DOLT_HOST -u$DOLT_USER -p$DOLT_PASSWORD"
   },
