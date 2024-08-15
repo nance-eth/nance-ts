@@ -1,18 +1,18 @@
 /* eslint-disable no-param-reassign */
-import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
-import { merge } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { NanceConfig } from '@nance/nance-sdk';
-import { keys } from './keys';
-import { NETWORKS } from './constants';
+import axios from "axios";
+import fs from "fs";
+import path from "path";
+import { cloneDeepWith, merge } from "lodash";
+import { v4 as uuidv4 } from "uuid";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { NanceConfig } from "@nance/nance-sdk";
+import { keys } from "./keys";
+import { NETWORKS } from "./constants";
 
 const networkToRPC = {
   mainnet: `https://mainnet.infura.io/v3/${keys.INFURA_KEY}`,
   [NETWORKS.GOERLI]: `https://goerli.infura.io/v3/${keys.INFURA_KEY}`,
-  [NETWORKS.GNOSIS]: 'https://rpc.ankr.com/gnosis',
+  [NETWORKS.GNOSIS]: "https://rpc.ankr.com/gnosis",
   [NETWORKS.OPTIMISM]: `https://optimism-mainnet.infura.io/v3/${keys.INFURA_KEY}`,
 };
 
@@ -23,14 +23,14 @@ export const chainIdToExplorer = (chainId: number) => {
   return "https://etherscan.io";
 };
 
-export const myProvider = (network = 'mainnet') => {
+export const myProvider = (network = "mainnet") => {
   const RPC_HOST = networkToRPC[network];
   return new JsonRpcProvider(RPC_HOST);
 };
 
-export const IPFS_GATEWAY = 'https://nance.infura-ipfs.io';
+export const IPFS_GATEWAY = "https://nance.infura-ipfs.io";
 
-export const DEFAULT_DASHBOARD = 'https://nance.app';
+export const DEFAULT_DASHBOARD = "https://nance.app";
 
 export const sleep = (milliseconds: number) => {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds); });
@@ -88,7 +88,7 @@ export const minutesToDays = (minutes: number) => {
 };
 
 export const dateAtTime = (date: Date, time: string) => {
-  const [hour, minute, seconds] = time.split(':');
+  const [hour, minute, seconds] = time.split(":");
   date.setUTCHours(Number(hour));
   date.setUTCMinutes(Number(minute));
   date.setUTCSeconds(Number(seconds));
@@ -101,22 +101,22 @@ export const mySQLTimeToUTC = (date: Date) => {
 };
 
 export function getLastSlash(url: string) {
-  if (!url) return '';
-  if (!url.includes('/')) return url;
-  const split = url.split('/');
+  if (!url) return "";
+  if (!url.includes("/")) return url;
+  const split = url.split("/");
   return split[split.length - 1].trim();
 }
 
 export function base64ToJSON(data: string) {
-  return JSON.parse(Buffer.from(data, 'base64').toString());
+  return JSON.parse(Buffer.from(data, "base64").toString());
 }
 
 export function base64ToString(data: string) {
-  return Buffer.from(data, 'base64').toString();
+  return Buffer.from(data, "base64").toString();
 }
 
 export function stringToBase64(data: string) {
-  return Buffer.from(data).toString('base64');
+  return Buffer.from(data).toString("base64");
 }
 
 export function floatToPercentage(float: number) {
@@ -133,7 +133,7 @@ export function limitLength(text: string, length = 100) {
 export function numToPrettyString(_num: number | string | undefined, fixed = 1) {
   const num = Number(_num);
   if (num === undefined) {
-    return '';
+    return "";
   } if (num === 0) {
     return 0;
   } if (num > 1E9) {
@@ -153,16 +153,16 @@ export function omitKey(object: object, key: string): Partial<typeof object> {
 
 export async function getReminderImages(baseURL: string, day: number) {
   const thumbnail = await axios({
-    method: 'get',
+    method: "get",
     url: `${baseURL}/${day}_thumbnail.png`,
-    responseType: 'arraybuffer'
+    responseType: "arraybuffer"
   }).then((res) => {
     return res.data;
   });
   const image = await axios({
-    method: 'get',
+    method: "get",
     url: `${baseURL}/${day}.png`,
-    responseType: 'arraybuffer'
+    responseType: "arraybuffer"
   }).then((res) => {
     return res.data;
   });
@@ -170,19 +170,19 @@ export async function getReminderImages(baseURL: string, day: number) {
 }
 
 export function uuidGen(): string {
-  return uuidv4().replaceAll('-', '');
+  return uuidv4().replaceAll("-", "");
 }
 
 export function cidToLink(cid: string, gateway: string) {
-  return (cid.startsWith('Qm') ? `${gateway}/ipfs/${cid}` : `https://${cid}.${gateway}`);
+  return (cid.startsWith("Qm") ? `${gateway}/ipfs/${cid}` : `https://${cid}.${gateway}`);
 }
 
 export function sqlSchemaToString(): string[] {
-  return fs.readFileSync(`${path.join(__dirname, '../assets/schema.sql')}`, 'utf-8').split(';');
+  return fs.readFileSync(`${path.join(__dirname, "../assets/schema.sql")}`, "utf-8").split(";");
 }
 
 export function mergeTemplateConfig(config: any): NanceConfig {
-  const template = JSON.parse(fs.readFileSync(`${path.join(__dirname, './config/template/template.json')}`, 'utf-8'));
+  const template = JSON.parse(fs.readFileSync(`${path.join(__dirname, "./config/template/template.json")}`, "utf-8"));
   const merged = merge(template, config);
   merged.dolt.repo = config.name;
   return merged;
@@ -193,7 +193,7 @@ export function mergeConfig(configOld: NanceConfig, configNew: Partial<NanceConf
 }
 
 export function fetchTemplateCalendar() {
-  return fs.readFileSync(`${path.join(__dirname, './config/template/template.ics')}`, 'utf-8');
+  return fs.readFileSync(`${path.join(__dirname, "./config/template/template.ics")}`, "utf-8");
 }
 
 export function isHexString(text: string) {
@@ -209,17 +209,24 @@ export const numberWithCommas = (x: number | string) => {
   return Number(x).toLocaleString();
 };
 
-export function bigIntSerializer(_: string, value: any) {
-  if (typeof value === 'bigint') {
-    return `${value.toString()}n`;
-  }
-  return value;
+export function deepStringify(obj: object): object {
+  return cloneDeepWith(obj, (value) => {
+    if (value === null) return "null";
+    if (value === undefined) return "undefined";
+    if (typeof value === "object") {
+      if (Array.isArray(value)) {
+        return value.map((item) => deepStringify(item));
+      }
+      return undefined;
+    }
+    return String(value);
+  });
 }
 
 export const getContractName = async (address: string) => {
   try {
     const res = await axios.get(`https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${keys.ETHERSCAN_KEY}`);
-    if (res.data.message === 'NOTOK') {
+    if (res.data.message === "NOTOK") {
       console.log(res.data.result);
       return address;
     }

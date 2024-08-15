@@ -27,6 +27,8 @@ import { dotPin } from "../storage/storageHandler";
 import { formatSnapshotEnvelope, getSnapshotId } from "./helpers/snapshotUtils";
 import { cache, clearCache } from "./helpers/cache";
 import { getAddressVotingPower } from "../snapshot/snapshotVotingPower";
+import { gatherPayouts } from "../tasks/sendBookkeeping";
+import { buildJBReconfiguration } from "./helpers/juicebox";
 
 const router = express.Router();
 
@@ -114,6 +116,28 @@ router.get('/:space', async (req, res) => {
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
   } finally {
     console.timeEnd("space");
+  }
+});
+
+// =============================================== //
+// ========= juicebox project reconfig =========== //
+// =============================================== //
+
+router.get('/:space/reconfig', async (req, res) => {
+  const { space } = req.params;
+  const allowedSpaces = ["juicebox", "waterbox"];
+  if (!allowedSpaces.includes(space)) {
+    return res.json({ success: false, error: 'reconfig only allowed for juicebox and waterbox' });
+  }
+  try {
+    const { currentCycle } = await handlerReq(space, req.headers.authorization);
+    const payouts = await gatherPayouts(space, currentCycle);
+    if (!payouts) return res.json({ success: false, error: 'no payouts found' });
+    const data = buildJBReconfiguration(payouts);
+    return res.json({ success: true, data });
+  } catch (e: any) {
+    console.error("Could not reconfigure juicebox project", e);
+    return res.json({ success: false, error: e.toString() });
   }
 });
 

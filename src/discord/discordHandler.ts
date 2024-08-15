@@ -18,7 +18,7 @@ import {
 import { isEqual } from "lodash";
 import { Proposal, PollResults, NanceConfig, SQLPayout } from '@nance/nance-sdk';
 import logger from '../logging';
-import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp, bigIntSerializer } from '../utils';
+import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp } from '../utils';
 
 import * as discordTemplates from './discordTemplates';
 import { getENS } from '../api/helpers/ens';

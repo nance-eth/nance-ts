@@ -10,7 +10,7 @@ type FundingCyclePayoutData = {
   totalUSD: number;
 };
 
-export const getFundingCyclePayoutData = async (payouts: SQLPayout[]): Promise<FundingCyclePayoutData> => {
+export const getFundingCyclePayoutData = (payouts: SQLPayout[]): FundingCyclePayoutData => {
   const totalUSD = sum(payouts.map((p) => p.amount));
   const totalUSDGwei = parseUnits(totalUSD.toFixed(9), 9);
 
