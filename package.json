@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "automated governance pipeliner",
   "license": "MIT",
-  "module": "NodeNext",
   "scripts": {
     "start": "export NODE_ENV='prod' && export CONFIG='juicebox' && ts-node src/index.ts",
     "dev": "npm run dev:api",
