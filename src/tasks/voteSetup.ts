@@ -18,7 +18,6 @@ import { getENS } from '../api/helpers/ens';
 import logger from '../logging';
 import { getProjectHandle } from "../juicebox/api";
 import {
-  DEFAULT_DASHBOARD,
   addSecondsToDate,
   chainIdToExplorer,
   getContractName,
@@ -28,8 +27,6 @@ import {
   sleep
 } from '../utils';
 
-const actionsHeading = '## Proposed Actions\n\n';
-
 export const formatCustomTransaction = (action: CustomTransaction) => {
   const functionNameOnly = action.functionName.split('function ')[1].split('(')[0];
   const prettyOutput = action.args.map((arg) => {
@@ -37,8 +34,6 @@ export const formatCustomTransaction = (action: CustomTransaction) => {
   });
   return `${functionNameOnly}(${prettyOutput.join(', ')})`;
 };
-
-const getActionsFooter = (space: string) => { return `*actions appended to proposal body by [Nance](${DEFAULT_DASHBOARD}/s/${space})*`; };
 
 export const actionsToMarkdown = async (actions: Action[]) => {
   const results: string[] = [];

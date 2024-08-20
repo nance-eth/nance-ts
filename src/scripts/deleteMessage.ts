@@ -9,7 +9,7 @@ async function main() {
   const { config } = await getSpaceConfig(spaceId);
   const discord = new DiscordHandler(config);
   await sleep(2000);
-  console.log(await discord.deleteMessage(messageId));  
+  console.log(await discord.deleteMessage(messageId));
 }
 
 main();
