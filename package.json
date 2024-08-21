@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "description": "automated governance pipeliner",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "start": "export NODE_ENV='prod' && export CONFIG='juicebox' && ts-node src/index.ts",
-    "dev": "npm run dev:api",
+    "dev": "npm run build -- --watch | cat & nodemon ./dist/index.js",
+    "build": "esbuild src/api/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/index.js",
     "clean": "rm -rf node_modules && rm -rf dist",
     "freshen": "npm run clean && npm install",
     "start:api": "node ./dist/api/index.js",
-    "dev:api": "export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
+    "dev:api": "export LOG_LEVEL=silly && nodemon -r tsconfig-paths/register ./src/api/index.ts",
     "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 --target es2021 --module commonjs && cp -r ./src/config/ ./dist/config/",
     "build:scheduler": "tsc src/scheduler/schedule.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 --target es2021 --module commonjs",
     "start:scheduler": "node ./dist/scheduler/schedule.js",
@@ -61,11 +64,10 @@
     "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.21.0",
     "@typescript-eslint/parser": "^5.21.0",
+    "esbuild": "^0.23.1",
     "eslint": "^8.14.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
-    "nodemon": "^3.1.4",
-    "openai": "^3.2.1",
-    "ts-node": "^10.9.2"
+    "nodemon": "^3.1.4"
   }
 }
