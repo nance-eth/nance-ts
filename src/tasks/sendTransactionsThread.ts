@@ -47,7 +47,7 @@ export const sendTransactionThread = async (space: string, config: NanceConfig, 
     );
 
     // turn the payouts into splits and distribution limits
-    const { splits, distributionLimit, totalUSD } = await getFundingCyclePayoutData(payouts);
+    const { splits, distributionLimit, totalUSD } = getFundingCyclePayoutData(payouts);
 
     // merge the splits into the default funding cycle data
     const fundingCycleData: JBReconfigureFundingCycleData = {

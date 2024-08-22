@@ -346,9 +346,14 @@ export const transactionSummary = (
   return message;
 };
 
-export const proposalDiff = (space: string, proposal: Proposal, diffLineCounts: DiffLines) => {
+export const proposalDiff = (
+  space: string,
+  proposal: Proposal,
+  diffLineCounts: DiffLines,
+  customDomain?: string
+) => {
   const { added, removed } = diffLineCounts;
-  const message = `🎶 edit: ${added} ${maybePlural('line', added)} added ${removed} ${maybePlural('line', removed)} removed <${getProposalURL(space, proposal)}>`;
+  const message = `🎶 edit: ${added} ${maybePlural('line', added)} added ${removed} ${maybePlural('line', removed)} removed <${getProposalURL(space, proposal, customDomain)}>`;
   return message;
 };
 

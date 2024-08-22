@@ -492,8 +492,9 @@ export class DiscordHandler {
   }
 
   async sendProposalDiff(proposal: Proposal, diffLineCounts: DiffLines) {
+    const { customDomain } = this.config;
     const threadId = getLastSlash(proposal.discussionThreadURL);
-    const message = discordTemplates.proposalDiff(this.config.name, proposal, diffLineCounts);
+    const message = discordTemplates.proposalDiff(this.config.name, proposal, diffLineCounts, customDomain);
     await this.getChannelById(threadId).send(message);
   }
 
