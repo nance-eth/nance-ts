@@ -1,4 +1,3 @@
-import { sendDailyJBAlert } from './sendDailyJBAlert';
 import { sendDailyAlert } from './sendDailyAlert';
 import { sendStartOrEndAlert } from './sendStartOrEndAlert';
 import { deleteStartOrEndAlert } from './deleteStartOrEndAlert';
@@ -15,7 +14,6 @@ import { sendBookkeeping } from './sendBookkeeping';
 import { commitAndPush } from './commitAndPush';
 
 export {
-  sendDailyJBAlert,
   sendDailyAlert,
   sendStartOrEndAlert,
   deleteStartOrEndAlert,

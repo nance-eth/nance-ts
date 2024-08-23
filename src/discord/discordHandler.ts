@@ -223,7 +223,6 @@ export class DiscordHandler {
     type: string,
     endDate: Date,
     proposals: Proposal[],
-    juiceboxTimeDelay?: number
   ) {
     const endSeconds = endDate.getTime() / 1000;
     const link = this.spaceURL;
@@ -248,8 +247,6 @@ export class DiscordHandler {
         logger.error(e);
         ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds));
       }
-    } else if (reminderType === 'juicebox') {
-      ({ message, attachments } = discordTemplates.dailyJuiceboxBasedReminder(governanceCycle, day, endSeconds, juiceboxTimeDelay || (3 * 24 * 3600), link));
     } else { // default to basic
       ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds, this.config.customDomain));
     }
@@ -545,7 +542,7 @@ export class DiscordHandler {
       const channel = this.getAlertChannel() as unknown as ForumChannel;
       const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
-      const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
+      const title = `${this.config.proposalIdPrefix}s${proposal.proposalId}: ${proposal.title}`;
       await post.edit({ name: limitLength(title) });
       const authorENS = await getENS(proposal.authorAddress);
       const { customDomain } = this.config;

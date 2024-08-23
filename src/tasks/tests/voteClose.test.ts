@@ -1,6 +1,5 @@
 import { getSpaceConfig } from '../../api/helpers/getSpace';
 import { sleep } from '../../utils';
-import { getProposalsWithVotes } from '../helpers/voting';
 import { voteClose } from '../voteClose';
 
 const space = 'waterbox';

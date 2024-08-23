@@ -9,7 +9,7 @@ const SPACE = "moondao"
 async function main() {
   await sleep(2000);
   const space = await getSpaceConfig(SPACE);
-  const { config } = await getSpaceInfo(space);
+  const { config } = getSpaceInfo(space);
   const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
   const lastProposalId = ((await dolt.getNextProposalId()) - 1).toString();
   const lastProposal = await dolt.getProposalByAnyId(lastProposalId);

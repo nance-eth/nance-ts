@@ -7,7 +7,7 @@ import { getProposalsWithVotes, votePassCheck } from './helpers/voting';
 export const voteClose = async (space: string, config: NanceConfig, _proposals?: Proposal[], dryrun = false) => {
   try {
     const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
-    const proposals = _proposals || await getProposalsWithVotes(config);
+    const proposals = await getProposalsWithVotes(config, _proposals);
     if (proposals.length === 0) return [];
     const updatedProposals = await Promise.all(proposals.map(async (proposal) => {
       if (!proposal.voteResults) return proposal;

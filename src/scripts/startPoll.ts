@@ -6,9 +6,9 @@ import { discordLogin } from "../api/helpers/discord";
 
 async function main() {
   await sleep(2000);
-  const spaceConfig = await getSpaceConfig('juicebox');
+  const spaceConfig = await getSpaceConfig('moondao');
   const dolt = new DoltHandler(pools[spaceConfig.config.name], spaceConfig.config.proposalIdPrefix);
-  const proposal = await dolt.getProposalByAnyId('508');
+  const proposal = await dolt.getProposalByAnyId('152');
   const discord = await discordLogin(spaceConfig.config);
   // const discussionThreadURL = await discord.startDiscussion(proposal);
   // dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });

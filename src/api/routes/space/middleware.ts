@@ -37,7 +37,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
     if (!spaceInfo || refresh) {
       console.log(`[CACHE] refreshing ${query}`);
       const spaceConfig = await doltSys.getSpaceConfig(query);
-      spaceInfo = await getSpaceInfo(spaceConfig);
+      spaceInfo = getSpaceInfo(spaceConfig);
       cache[query] = { spaceInfo };
     }
 

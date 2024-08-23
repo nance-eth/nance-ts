@@ -25,7 +25,7 @@ const JUICEBOX_TRIGGER_TIME = "19:19:33";
 export const sendTransactionThread = async (space: string, config: NanceConfig, testConfig?: NanceConfig) => {
   try {
     const spaceConfig = await getSpaceConfig(space);
-    const spaceInfo = await getSpaceInfo(spaceConfig);
+    const spaceInfo = getSpaceInfo(spaceConfig);
     const { currentGovernanceCycle } = spaceConfig;
     const lastGovernanceCycle = currentGovernanceCycle - 1;
     const lastCyclePayouts = await gatherPayouts(space, lastGovernanceCycle);

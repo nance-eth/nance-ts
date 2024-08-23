@@ -41,7 +41,7 @@ router.get('/:pid', async (req: Request, res) => {
     const data: ProposalPacket = { ...proposal, proposalInfo };
     res.json({ success: true, data });
   } catch (e) {
-    res.send({ success: false, error: '[NANCE ERROR]: proposal not found' });
+    res.send({ success: false, error: `[NANCE ERROR]: proposal ${pid} not found for space ${space}` });
   }
 });
 

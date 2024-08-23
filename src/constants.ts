@@ -18,7 +18,6 @@ export const STATUS = {
 
 export const TASKS = {
   sendDailyAlert: 'sendDailyAlert',
-  sendDailyJBAlert: 'sendDailyJBAlert',
   temperatureCheckStartAlert: 'temperatureCheckStartAlert',
   deleteTemperatureCheckStartAlert: 'deleteTemperatureCheckStartAlert',
   temperatureCheckRollup: 'temperatureCheckRollup',

@@ -11,7 +11,7 @@ import snapshotProposal from "./routes/snapshot";
 import spaceMiddleware from "./routes/space/middleware";
 import spaceInfo from "./routes/space/info";
 import spaceProposal from "./routes/space/proposal";
-// import spaceProposals from "./routes/space/proposals";
+import spaceProposals from "./routes/space/proposals";
 // import spaceReconfig from "./routes/space/reconfig";
 // import spaceSummary from "./routes/space/summary";
 // import spaceDiscussion from "./routes/space/discussion";
@@ -44,7 +44,7 @@ const init = async () => {
   app.use("/:space", spaceMiddleware);
   app.use("/:space", spaceInfo);
   app.use("/:space/proposal", spaceProposal);
-  // app.use("/:space/proposals", spaceProposals);
+  app.use("/:space/proposals", spaceProposals);
   // app.use("/:space/reconfig", spaceReconfig);
   // app.use("/:space/summary", spaceSummary);
   // app.use("/:space/discussion", spaceDiscussion);

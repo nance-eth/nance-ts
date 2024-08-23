@@ -1,6 +1,6 @@
 import { ProposalStatus } from "@nance/nance-sdk";
-import { nanceAddress } from '../../keys';
-import { SafeHandler } from '../../safe/safeHandler';
+import { nanceAddress } from "@/keys";
+import { SafeHandler } from "@/safe/safeHandler";
 
 export const isMultisig = async (safeAddress: string, address: string) => {
   return SafeHandler.getSigners(safeAddress).then((multisig) => {

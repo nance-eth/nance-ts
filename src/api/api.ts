@@ -48,7 +48,7 @@ async function handlerReq(_query: string, auth: string | undefined) {
     if (!spaceInfo || refresh) {
       console.log(`[CACHE] refreshing ${query}`);
       const spaceConfig = await doltSys.getSpaceConfig(query);
-      spaceInfo = await getSpaceInfo(spaceConfig);
+      spaceInfo = getSpaceInfo(spaceConfig);
       cache[query] = { spaceInfo };
     }
 
