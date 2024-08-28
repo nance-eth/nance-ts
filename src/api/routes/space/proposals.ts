@@ -4,7 +4,10 @@ import { Middleware } from "./middleware";
 import { cache } from "@/api/helpers/cache";
 import { postSummary } from "@/nancearizer";
 import { discordLogin } from "@/api/helpers/discord";
-import { addressFromSignature } from "@/api/helpers/auth";
+import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
+import { validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
+import { buildProposal } from "@/api/helpers/proposal/buildProposal";
+import { getLastSlash } from "@/utils";
 
 const router = Router({ mergeParams: true });
 
@@ -66,81 +69,26 @@ router.get("/", async (req: Request, res) => {
 
 // upload new proposal
 router.post('/', async (req: Request, res) => {
-  const { space } = req.params;
-  const { proposal, envelope } = req.body as ProposalUploadRequest;
   try {
-    const { config, dolt, bearerAddress, currentCycle, currentEvent } = res.locals as Middleware;
-    const uploaderAddress = bearerAddress || envelope?.address;
-    if (!proposal) { res.json({ success: false, error: '[NANCE ERROR]: proposal object validation fail' }); return; }
-    if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-    let receipt: string | undefined;
-    let snapshotId: string | undefined;
-    if (envelope && !bearerAddress) {
-      const decodedAddress = await addressFromSignature(envelope);
-      if (uploaderAddress !== decodedAddress) {
-        res.json({
-          success: false,
-          error: `address and signature do not match\naddress: ${uploaderAddress}\nsignature: ${decodedAddress}`
-        });
-        return;
-      }
-      receipt = await dotPin(formatSnapshotEnvelope(envelope));
-      snapshotId = getSnapshotId(envelope);
-    }
+    const { space } = req.params;
+    const { proposal, envelope } = req.body as ProposalUploadRequest;
+    const { config, dolt, address, currentCycle, currentEvent, nextProposalId } = res.locals as Middleware;
 
-    // check author snapshot voting power
-    // if author doesn't meet the minimum balance, set author to undefined and add uploaderAddress to coauthors
-    // then a valid author will need to resign the proposal to move it to Temperature Check
-    let authorAddress: string | undefined = uploaderAddress;
-    let authorMeetsValidation = false;
-    let { coauthors } = proposal;
-    const { status } = proposal;
-    const {
-      proposalSubmissionValidation,
-      allowCurrentCycleSubmission,
-    } = config;
-    if (proposalSubmissionValidation) {
-      const { minBalance } = proposalSubmissionValidation;
-      const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
-      if (balance < minBalance) {
-        authorAddress = undefined;
-        coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
-        proposal.status = (status === "Discussion") ? proposalSubmissionValidation.notMetStatus : proposal.status;
-      } else {
-        authorMeetsValidation = true;
-        proposal.status = (status === "Discussion") ? proposalSubmissionValidation.metStatus : proposal.status;
-      }
-    }
+    const { uploaderAddress, receipt, snapshotId } = await validateUploaderAddress(address, envelope);
+    const { authorAddress, coauthors, status } = await validateUploaderVp({ proposal, uploaderAddress, config });
 
-    const newProposal: Proposal = {
-      ...proposal,
-      uuid: proposal.uuid || uuidGen(),
-      createdTime: proposal.createdTime || new Date().toISOString(),
+    const newProposal = buildProposal({
+      proposal,
+      status,
       authorAddress,
       coauthors,
-      voteURL: snapshotId,
-    };
+      snapshotId,
+      currentCycle,
+      currentEvent,
+      nextProposalId,
+      config,
+    });
 
-    if (!newProposal.governanceCycle) {
-      if (
-        currentEvent.title === "Temperature Check" &&
-        allowCurrentCycleSubmission
-      ) {
-        newProposal.governanceCycle = currentCycle;
-      }
-      newProposal.governanceCycle = currentCycle + 1;
-    }
-    if (newProposal.status === "Archived") newProposal.status = "Discussion"; // proposal forked from an archive, set to discussion
-    if (config.submitAsApproved) newProposal.status = "Approved";
-
-    console.log('======================================================');
-    console.log('==================== NEW PROPOSAL ====================');
-    console.log('======================================================');
-    console.log(`space ${space}, author ${uploaderAddress}`);
-    console.dir(newProposal, { depth: null });
-    console.log('======================================================');
-    console.log('======================================================');
-    console.log('======================================================');
     dolt.addProposalToDb(newProposal, receipt).then(async (proposalRes) => {
       const { uuid } = proposalRes;
       proposal.uuid = uuid;
@@ -153,7 +101,7 @@ router.post('/', async (req: Request, res) => {
           const discord = await discordLogin(config);
           try {
             const discussionThreadURL = await discord.startDiscussion(newProposal);
-            if (authorMeetsValidation || !proposalSubmissionValidation) await discord.setupPoll(getLastSlash(discussionThreadURL));
+            if (authorAddress) await discord.setupPoll(getLastSlash(discussionThreadURL));
             await dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
             discord.logout();
           } catch (e) {

@@ -16,19 +16,23 @@ export const discordLogin = async (config: NanceConfig) => {
 };
 
 export const discordInitButtonManager = async () => {
-  const discord = new DiscordClient({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.GuildMessageReactions,
-      GatewayIntentBits.GuildMembers,
-    ]
-  });
-  await discord.login(process.env.DISCORD_KEY_NANCE).then(() => {
-    console.log(`logged in as ${discord.user?.tag}`);
-    discord.on(Events.InteractionCreate, async (interaction) => {
-      if (!interaction.isButton()) return;
-      await buttonManager(interaction);
+  try {
+    const discord = new DiscordClient({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMembers,
+      ]
     });
-  });
+    await discord.login(process.env.DISCORD_KEY_NANCE).then(() => {
+      console.log(`logged in as ${discord.user?.tag}`);
+      discord.on(Events.InteractionCreate, async (interaction) => {
+        if (!interaction.isButton()) return;
+        await buttonManager(interaction);
+      });
+    });
+  } catch (e) {
+    console.error("[DISCORD] Login failed!")
+  }
 };

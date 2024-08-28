@@ -1,5 +1,5 @@
 import { Router, Request } from "express";
-import { isEqual, uniq } from "lodash";
+import { isEqual } from "lodash";
 import {
   Proposal,
   ProposalDeleteRequest,
@@ -10,9 +10,7 @@ import { Middleware } from "./middleware";
 import { clearCache, findCacheProposal } from "@/api/helpers/cache";
 import { addressFromSignature } from "@/api/helpers/auth";
 import { discordLogin } from "@/api/helpers/discord";
-import { dotPin } from "@/storage/storageHandler";
-import { formatSnapshotEnvelope, getSnapshotId } from "@/api/helpers/snapshotUtils";
-import { getAddressVotingPower } from "@/snapshot/snapshotVotingPower";
+import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
 import { getLastSlash } from "@/utils";
 import { diffLineCounts } from "@/api/helpers/diff";
 import {
@@ -21,6 +19,7 @@ import {
   isNanceAddress,
   isNanceSpaceOwner
 } from "@/api/helpers/permissions";
+import { checkPermissions, validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
 
 const router = Router({ mergeParams: true });
 
@@ -46,87 +45,22 @@ router.get('/:pid', async (req: Request, res) => {
 });
 
 router.put('/:pid', async (req: Request, res) => {
-  const { space, pid } = req.params;
   try {
+    const { space, pid } = req.params;
     const { proposal, envelope } = req.body as ProposalUpdateRequest;
-    const { dolt, config, bearerAddress, spaceOwners, currentCycle, currentEvent } = res.locals as Middleware;
+    const { dolt, config, address, spaceOwners, currentCycle, currentEvent } = res.locals as Middleware;
 
-    const proposalByUuid = await dolt.getProposalByAnyId(pid);
-    if (!canEditProposal(proposalByUuid.status)) {
-      res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
-      return;
-    }
+    const proposalInDb = await dolt.getProposalByAnyId(pid);
+    if (!canEditProposal(proposalInDb.status)) throw Error("Proposal is no longer editable");
 
-    const uploaderAddress = bearerAddress || envelope?.address;
-    if (!uploaderAddress) { res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal upload' }); return; }
-    let receipt: string | undefined;
-    let snapshotId: string | undefined;
-    // predetermine snapshotId
-    // this allows us to upload the proposal and have proper authorship displayed on snapshot.org
-    if (envelope && !bearerAddress) {
-      const decodedAddress = await addressFromSignature(envelope);
-      if (uploaderAddress !== decodedAddress) {
-        res.json({
-          success: false,
-          error: `address and signature do not match\naddress: ${uploaderAddress}\nsignature: ${decodedAddress}`
-        });
-        return;
-      }
-      receipt = await dotPin(formatSnapshotEnvelope(envelope));
-      snapshotId = getSnapshotId(envelope);
-    }
+    const { uploaderAddress, receipt, snapshotId } = await validateUploaderAddress(address, envelope);
+    checkPermissions(proposal, proposalInDb, uploaderAddress, spaceOwners, "archive");
+    const { authorAddress, coauthors, status } = await validateUploaderVp({ proposal, proposalInDb, uploaderAddress, config })
 
-    // only allow archives by original author, multisig, or spaceOwner
-    const permissions = (
-      uploaderAddress === proposalByUuid.authorAddress
-      || await isMultisig(config.juicebox.gnosisSafeAddress, uploaderAddress)
-      || isNanceSpaceOwner(spaceOwners, uploaderAddress)
-    );
-    const { status } = proposal;
-    if (status === "Archived" && !permissions) {
-      res.json({ success: false, error: '[PERMISSIONS] User not authorized to archive proposal' });
-      return;
-    }
-
-    // check author snapshot voting power
-    // if author doesn't meet the minimum balance, set author to undefined and add uploaderAddress to coauthors
-    // then a valid author will need to resign the proposal to move it to Temperature Check
-    let { authorAddress } = proposalByUuid;
-    let authorMeetsValidation = false;
-    let { coauthors } = proposal;
-    const {
-      proposalSubmissionValidation,
-      allowCurrentCycleSubmission
-    } = config;
-    if (
-      (status === "Discussion" || status === "Temperature Check") &&
-      proposalSubmissionValidation
-    ) {
-      const { minBalance } = proposalSubmissionValidation;
-      const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
-      if (balance < minBalance) {
-        coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
-        proposal.status = proposalSubmissionValidation.notMetStatus;
-      } else {
-        authorMeetsValidation = true;
-        if (proposal.status === "Discussion") proposal.status = proposalSubmissionValidation.metStatus;
-        if (!authorAddress) authorAddress = uploaderAddress;
-        if (uploaderAddress !== authorAddress) coauthors = !coauthors ? [uploaderAddress] : uniq([...coauthors, uploaderAddress]);
-      }
-    }
-
-    const proposalId = (!proposalByUuid.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalByUuid.proposalId;
-    console.log('======================================================');
-    console.log('=================== EDIT PROPOSAL ====================');
-    console.log('======================================================');
-    console.log(`space ${space}, author ${uploaderAddress}`);
-    console.log(proposal);
-    console.log('======================================================');
-    console.log('======================================================');
-    console.log('======================================================');
+    const proposalId = (!proposalInDb.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalInDb.proposalId;
 
     // update governance cycle to current if proposal is a draft
-    let { governanceCycle } = proposalByUuid;
+    let { governanceCycle } = proposalInDb;
     if (proposal.status === "Draft") {
       if (currentEvent.title === "Temperature Check" && allowCurrentCycleSubmission) {
         governanceCycle = currentCycle;
@@ -135,7 +69,7 @@ router.put('/:pid', async (req: Request, res) => {
     }
 
     const updateProposal: Proposal = {
-      ...proposalByUuid,
+      ...proposalInDb,
       ...proposal,
       voteURL: snapshotId,
       proposalId,
@@ -154,8 +88,8 @@ router.put('/:pid', async (req: Request, res) => {
       const discord = await discordLogin(config);
       // if proposal moved from Draft to Discussion, send discord message
       const shouldCreateDiscussion = (
-        (proposalByUuid.status === "Draft")
-        && proposal.status === "Discussion" && !proposalByUuid.discussionThreadURL
+        (proposalInDb.status === "Draft")
+        && proposal.status === "Discussion" && !proposalInDb.discussionThreadURL
       );
       if (shouldCreateDiscussion) {
         try {
@@ -169,28 +103,28 @@ router.put('/:pid', async (req: Request, res) => {
 
       // if proposal got sponsored by a valid author,
       // add Temperature Check embed and setup poll buttons
-      if (proposalByUuid.status === "Discussion" && updateProposal.status === "Temperature Check") {
+      if (proposalInDb.status === "Discussion" && updateProposal.status === "Temperature Check") {
         await discord.editDiscussionMessage(updateProposal);
-        await discord.setupPoll(getLastSlash(proposalByUuid.discussionThreadURL));
+        await discord.setupPoll(getLastSlash(proposalInDb.discussionThreadURL));
       }
 
       // archive alert
       if (proposal.status === "Archived") {
-        try { await discord.sendProposalArchive(proposalByUuid); } catch (e) { console.error(`[DISCORD] ${e}`); }
+        try { await discord.sendProposalArchive(proposalInDb); } catch (e) { console.error(`[DISCORD] ${e}`); }
       }
       // unarchive alert
-      if (proposal.status === proposalSubmissionValidation?.metStatus && proposalByUuid.status === "Archived") {
-        try { await discord.sendProposalUnarchive(proposalByUuid); } catch (e) { console.error(`[DISCORD] ${e}`); }
+      if (proposal.status === proposalSubmissionValidation?.metStatus && proposalInDb.status === "Archived") {
+        try { await discord.sendProposalUnarchive(proposalInDb); } catch (e) { console.error(`[DISCORD] ${e}`); }
       }
 
       // send diff to discord
-      const diff = diffLineCounts(proposalByUuid.body, proposal.body);
-      const actionsChanged = !isEqual(proposalByUuid.actions, proposal.actions);
+      const diff = diffLineCounts(proposalInDb.body, proposal.body);
+      const actionsChanged = !isEqual(proposalInDb.actions, proposal.actions);
       if (
-        proposalByUuid.discussionThreadURL &&
+        proposalInDb.discussionThreadURL &&
         (diff.added || diff.removed || actionsChanged)
       ) {
-        updateProposal.discussionThreadURL = proposalByUuid.discussionThreadURL;
+        updateProposal.discussionThreadURL = proposalInDb.discussionThreadURL;
         await discord.editDiscussionMessage(updateProposal);
         if (diff.added || diff.removed) await discord.sendProposalDiff(updateProposal, diff);
       }
@@ -208,14 +142,14 @@ router.delete('/:uuid', async (req: Request, res) => {
   try {
     const { space, uuid } = req.params;
     const { envelope } = req.body as ProposalDeleteRequest;
-    const { dolt, config, spaceOwners, bearerAddress } = res.locals as Middleware;
-    const deleterAddress = bearerAddress || envelope?.address;
+    const { dolt, config, spaceOwners, address } = res.locals as Middleware;
+    const deleterAddress = address || envelope?.address;
     if (!deleterAddress) {
       res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' });
       return;
     }
     const proposalByUuid = await dolt.getProposalByAnyId(uuid);
-    if (envelope && !bearerAddress) {
+    if (envelope && !address) {
       const decodedAddress = await addressFromSignature(envelope);
       if (deleterAddress !== decodedAddress) {
         res.json({

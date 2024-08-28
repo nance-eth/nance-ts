@@ -17,7 +17,7 @@ const doltSys = new DoltSysHandler(pools.nance_sys);
 
 export interface Middleware extends SpaceInfoExtended {
   dolt: DoltHandler;
-  bearerAddress: string | null;
+  address?: string;
   nextProposalId: number;
 }
 
@@ -43,7 +43,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
 
     const dolt = new DoltHandler(pools[query], spaceInfo.config.proposalIdPrefix);
     const jwt = auth?.split('Bearer ')[1];
-    const bearerAddress = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : null;
+    const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : undefined;
 
     // get nextProposalId
     let nextProposalId = cache[query]?.nextProposalId;
@@ -55,7 +55,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
     const locals: Middleware = {
       ...spaceInfo,
       dolt,
-      bearerAddress,
+      address,
       nextProposalId
     };
     res.locals = locals;
