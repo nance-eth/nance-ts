@@ -28,7 +28,7 @@ export async function validateUploaderAddress(
   address?: string,
   envelope?: BasicNanceSignature
 ) {
-  if ((!envelope && !address) || !address) {
+  if (!envelope && !address) {
     throw Error("no address or envelope provided for proposal upload/edit");
   }
   if (envelope && !address) {
@@ -43,5 +43,5 @@ export async function validateUploaderAddress(
     const snapshotId = getSnapshotId(envelope);
     return { uploaderAddress, receipt, snapshotId };
   }
-  return { uploaderAddress: address };
+  return { uploaderAddress: address as string };
 }
