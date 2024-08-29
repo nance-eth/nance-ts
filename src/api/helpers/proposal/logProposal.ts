@@ -7,10 +7,10 @@ export function logProposal(
   operation: string
 ) {
   console.log('======================================================');
-  console.log(`=============== ${operation} Proposal ================`)
+  console.log(`=============== ${operation} Proposal ================`);
   console.log('======================================================');
   console.log(`space ${space}, author ${uploaderAddress}`);
-  console.dir(proposal, { depth: null });
+  console.log(JSON.stringify(proposal, null, 2));
   console.log('======================================================');
   console.log('======================================================');
   console.log('======================================================');

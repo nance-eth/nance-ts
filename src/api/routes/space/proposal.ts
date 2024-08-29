@@ -20,6 +20,8 @@ import {
   isNanceSpaceOwner
 } from "@/api/helpers/permissions";
 import { checkPermissions, validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
+import { buildProposal } from "@/api/helpers/proposal/buildProposal";
+import { logProposal } from "@/api/helpers/proposal/logProposal";
 
 const router = Router({ mergeParams: true });
 
@@ -48,36 +50,28 @@ router.put('/:pid', async (req: Request, res) => {
   try {
     const { space, pid } = req.params;
     const { proposal, envelope } = req.body as ProposalUpdateRequest;
-    const { dolt, config, address, spaceOwners, currentCycle, currentEvent } = res.locals as Middleware;
+    const { dolt, config, address, spaceOwners, currentCycle, currentEvent, nextProposalId } = res.locals as Middleware;
 
     const proposalInDb = await dolt.getProposalByAnyId(pid);
     if (!canEditProposal(proposalInDb.status)) throw Error("Proposal is no longer editable");
 
     const { uploaderAddress, receipt, snapshotId } = await validateUploaderAddress(address, envelope);
     checkPermissions(proposal, proposalInDb, uploaderAddress, spaceOwners, "archive");
-    const { authorAddress, coauthors, status } = await validateUploaderVp({ proposal, proposalInDb, uploaderAddress, config })
+    const { authorAddress, coauthors, status } = await validateUploaderVp({ proposal, proposalInDb, uploaderAddress, config });
 
-    const proposalId = (!proposalInDb.proposalId && proposal.status === "Discussion") ? await dolt.getNextProposalId() : proposalInDb.proposalId;
-
-    // update governance cycle to current if proposal is a draft
-    let { governanceCycle } = proposalInDb;
-    if (proposal.status === "Draft") {
-      if (currentEvent.title === "Temperature Check" && allowCurrentCycleSubmission) {
-        governanceCycle = currentCycle;
-      }
-      governanceCycle = currentCycle + 1;
-    }
-
-    const updateProposal: Proposal = {
-      ...proposalInDb,
-      ...proposal,
-      voteURL: snapshotId,
-      proposalId,
+    const updateProposal = buildProposal({
+      proposal,
+      proposalInDb,
+      status,
       authorAddress,
       coauthors,
-      governanceCycle,
-    };
-
+      snapshotId,
+      currentCycle,
+      currentEvent,
+      nextProposalId,
+      config,
+    });
+    logProposal(updateProposal, space, uploaderAddress, "edit");
     const uuid = await dolt.editProposal(updateProposal, receipt);
     // return uuid to client, then continue doing things
     res.json({ success: true, data: { uuid } });
@@ -94,7 +88,7 @@ router.put('/:pid', async (req: Request, res) => {
       if (shouldCreateDiscussion) {
         try {
           const discussionThreadURL = await discord.startDiscussion(updateProposal);
-          if (authorMeetsValidation || !proposalSubmissionValidation) await discord.setupPoll(getLastSlash(discussionThreadURL));
+          if (authorAddress) await discord.setupPoll(getLastSlash(discussionThreadURL));
           await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
         } catch (e) {
           console.error(`[DISCORD] ${e}`);
@@ -113,7 +107,7 @@ router.put('/:pid', async (req: Request, res) => {
         try { await discord.sendProposalArchive(proposalInDb); } catch (e) { console.error(`[DISCORD] ${e}`); }
       }
       // unarchive alert
-      if (proposal.status === proposalSubmissionValidation?.metStatus && proposalInDb.status === "Archived") {
+      if (proposal.status === config.proposalSubmissionValidation?.metStatus && proposalInDb.status === "Archived") {
         try { await discord.sendProposalUnarchive(proposalInDb); } catch (e) { console.error(`[DISCORD] ${e}`); }
       }
 

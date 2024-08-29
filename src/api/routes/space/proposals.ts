@@ -8,6 +8,7 @@ import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
 import { validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
 import { buildProposal } from "@/api/helpers/proposal/buildProposal";
 import { getLastSlash } from "@/utils";
+import { logProposal } from "@/api/helpers/proposal/logProposal";
 
 const router = Router({ mergeParams: true });
 
@@ -88,7 +89,7 @@ router.post('/', async (req: Request, res) => {
       nextProposalId,
       config,
     });
-
+    logProposal(proposal, space, uploaderAddress, "new");
     dolt.addProposalToDb(newProposal, receipt).then(async (proposalRes) => {
       const { uuid } = proposalRes;
       proposal.uuid = uuid;

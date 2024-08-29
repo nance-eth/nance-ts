@@ -14,11 +14,11 @@ type BuildProposalInput = Pick<Middleware, PickFromMiddleware> & {
 
 export function buildProposal(input: BuildProposalInput): Proposal {
   // merge old and new values
-  const { proposal, config, currentEvent, currentCycle, nextProposalId } = input;
+  const { proposal, proposalInDb, config, currentEvent, currentCycle, nextProposalId } = input;
   const { status, authorAddress, coauthors, snapshotId } = input;
 
   // assign uuid
-  const uuid = proposal.uuid || uuidGen();
+  const uuid = proposalInDb?.uuid || proposal.uuid || uuidGen();
 
   // assign voteSetup
   const voteSetup = proposal.voteSetup || {
