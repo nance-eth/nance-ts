@@ -10,4 +10,4 @@ COPY . .
 
 RUN npm run build:scheduler
 
-CMD ["node", "./dist/scheduler/schedule.js"]
+CMD ["node", "./dist/scheduler/index.js"]
