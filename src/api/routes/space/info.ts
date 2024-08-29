@@ -2,10 +2,11 @@ import { SpaceInfo } from "@nance/nance-sdk";
 import { Router, Request, Response } from "express";
 import { headToUrl } from "@/dolt/doltAPI";
 import { Middleware } from "./middleware";
+import { clearCache } from "@/api/helpers/cache";
 
 const router = Router({ mergeParams: true });
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (res: Response) => {
   console.time("space");
   try {
     const {
@@ -51,6 +52,12 @@ router.get('/', async (req: Request, res: Response) => {
   } finally {
     console.timeEnd("space");
   }
+});
+
+router.get("/cache/clear", async (req: Request, res: Response) => {
+  const { space } = req.params;
+  clearCache(space);
+  res.json({ success: true });
 });
 
 export default router;
