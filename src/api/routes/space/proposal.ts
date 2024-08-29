@@ -33,11 +33,30 @@ router.get('/:pid', async (req: Request, res: Response) => {
     };
 
     proposal = findCacheProposal(space, pid) || await dolt.getProposalByAnyId(pid);
-    if (!proposal) throw Error();
+    if (!proposal) throw new Error("Proposal not found");
     const data: ProposalPacket = { ...proposal, proposalInfo };
     res.json({ success: true, data });
-  } catch (e) {
-    res.send({ success: false, error: `[NANCE ERROR]: proposal ${pid} not found for space ${space}` });
+  } catch (e: any) {
+    res.send({ success: false, error: e.toString() });
+  }
+});
+
+// POST /:space/proposal/:pid/discussion
+router.post('/:pid/discussion', async (req: Request, res: Response) => {
+  try {
+    const { space, pid } = req.params;
+    const { dolt } = res.locals as Middleware;
+    const proposal = await dolt.getProposalByAnyId(pid);
+    if (!proposal) throw new Error("Proposal not found");
+    if (proposal.discussionThreadURL) throw new Error("Discussion thread already exists");
+    const discord = await discordLogin(res.locals.config);
+    const discussionThreadURL = await discord.startDiscussion(proposal);
+    await dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+    discord.logout();
+    clearCache(space);
+    res.json({ success: true, discussionThreadURL });
+  } catch (e: any) {
+    res.send({ success: false, error: e.toString() });
   }
 });
 

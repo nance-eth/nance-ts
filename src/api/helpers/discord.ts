@@ -33,6 +33,6 @@ export const discordInitButtonManager = async () => {
       });
     });
   } catch (e) {
-    console.error("[DISCORD] Login failed!")
+    console.error("[DISCORD] Login failed!");
   }
 };

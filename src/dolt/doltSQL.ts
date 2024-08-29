@@ -138,6 +138,6 @@ export class DoltSQL {
     return this.db.query(`SELECT status from dolt_status${(table) ? ' WHERE table_name = ?' : ''}`, [table]).then((res) => {
       const { status } = cleanSingleRes(res);
       return status === 'modified' || status === 'new table';
-    }).catch((e) => { return false; });
+    }).catch(() => { return false; });
   }
 }

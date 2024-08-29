@@ -3,7 +3,7 @@ import { Router, Request, Response } from "express";
 import { headToUrl } from "@/dolt/doltAPI";
 import { Middleware } from "./middleware";
 
-const router = Router({ mergeParams: true })
+const router = Router({ mergeParams: true });
 
 router.get('/', async (req: Request, res: Response) => {
   console.time("space");

@@ -18,7 +18,7 @@ const config = isLocal ? {
     rejectUnauthorized: true,
     ca: DOLT_CERT,
   }
-}
+};
 
 if (isLocal) {
   console.log("[DATABASE] local");

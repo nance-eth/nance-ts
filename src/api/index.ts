@@ -5,7 +5,7 @@ import { params } from "./tspec";
 
 import { discordInitButtonManager } from "./helpers/discord";
 
-import tasks from "./tasks";
+import tasks from "./routes/tasks";
 import system from "./routes/system";
 import snapshotProposal from "./routes/snapshot";
 import spaceMiddleware from "./routes/space/middleware";
@@ -14,7 +14,6 @@ import spaceProposal from "./routes/space/proposal";
 import spaceProposals from "./routes/space/proposals";
 import spaceReconfig from "./routes/space/reconfig";
 import spaceSummary from "./routes/space/summary";
-// import spaceDiscussion from "./routes/space/discussion";
 
 const PORT = process.env.PORT || 3003;
 const app = express();
@@ -47,7 +46,6 @@ const init = async () => {
   app.use("/:space/proposals", spaceProposals);
   app.use("/:space/reconfig", spaceReconfig);
   app.use("/:space/summary", spaceSummary);
-  // app.use("/:space/discussion", spaceDiscussion);
   await discordInitButtonManager();
 };
 

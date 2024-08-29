@@ -1,5 +1,5 @@
 import { request as gqlRequest, gql } from 'graphql-request';
-import { Proposal, ProposalPacket, ProposalStatus, SnapshotProposal } from "@nance/nance-sdk";
+import { ProposalPacket, ProposalStatus, SnapshotProposal } from "@nance/nance-sdk";
 import { getCacheSnapshotProposal, setCacheSnapshotProposal } from "../dolt/doltCommon";
 import { postSummary } from "../nancearizer";
 import { uuidGen } from "../utils";

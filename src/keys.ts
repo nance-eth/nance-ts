@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import 'dotenv/config';
-import logger from './logging';
 
 const requiredVariables = [
   'INFURA_KEY',

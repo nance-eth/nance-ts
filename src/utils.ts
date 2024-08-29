@@ -23,6 +23,14 @@ export const chainIdToExplorer = (chainId: number) => {
   return "https://etherscan.io";
 };
 
+export const networkNameToChainId = (network: string) => {
+  if (network === "mainnet") return 1;
+  if (network === "goerli") return 5;
+  if (network === "gnosis") return 100;
+  if (network === "optimism") return 10;
+  return 1;
+};
+
 export const myProvider = (network = "mainnet") => {
   const RPC_HOST = networkToRPC[network];
   return new JsonRpcProvider(RPC_HOST);

@@ -1,7 +1,0 @@
-{
-  "arrowParens": "avoid",
-  "bracketSpacing": true,
-  "printWidth": 80,
-  "proseWrap": "always",
-  "tabWidth": 2
-}

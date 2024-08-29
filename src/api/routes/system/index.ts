@@ -11,7 +11,6 @@ import { dbOptions } from '@/dolt/dbConfig';
 import { DoltSQL } from '@/dolt/doltSQL';
 import { addressFromJWT } from '@/api/helpers/auth';
 import { getAllSpaceInfo, getSpaceConfig } from '@/api/helpers/getSpace';
-// import { createCalendarAndCycleInfo } from '@/calendar/create';
 
 const router = express.Router();
 
@@ -36,22 +35,27 @@ router.get('/config/:space', async (req, res) => {
 });
 
 router.get('/all', async (_, res) => {
+  const infos: SpaceInfo[] = [];
   getAllSpaceInfo().then(async (data) => {
-    const infos = await Promise.all(data.map(async (space) => {
-      const dolt = new DoltHandler(pools[space.name], '');
-      const spaceInfo: SpaceInfo = {
-        ...space,
-        dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, await dolt.getHead()),
-        nextProposalId: await dolt.getNextProposalId(),
-      };
-      if (space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress) {
-        spaceInfo.transactorAddress = {
-          type: space.config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
-          network: space.config.juicebox.network,
-          address: space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress,
+    await Promise.all(data.map(async (space) => {
+      try {
+        const dolt = new DoltHandler(pools[space.name], '');
+        const spaceInfo: SpaceInfo = {
+          ...space,
+          dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo),
+          nextProposalId: await dolt.getNextProposalId(),
         };
+        if (space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress) {
+          spaceInfo.transactorAddress = {
+            type: space.config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
+            network: space.config.juicebox.network,
+            address: space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress,
+          };
+        }
+        infos.push(spaceInfo);
+      } catch (e) {
+        // If there's an error, we don't push anything to infos
       }
-      return spaceInfo;
     }));
     res.json({ success: true, data: infos });
   }).catch((e) => {
