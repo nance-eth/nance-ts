@@ -20,7 +20,8 @@ type ProposalQueryParams = {
   page: string
 };
 
-// query proposals
+// GET /:space/proposals
+// GET /:space/proposals?cycle=1&keyword=keyword&author=author&limit=10&page=1
 router.get("/", async (req: Request, res) => {
   const { space } = req.params;
   try {
@@ -68,7 +69,7 @@ router.get("/", async (req: Request, res) => {
   }
 });
 
-// upload new proposal
+// POST /:space/proposals
 router.post('/', async (req: Request, res) => {
   try {
     const { space } = req.params;

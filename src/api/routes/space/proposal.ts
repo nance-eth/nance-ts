@@ -1,4 +1,4 @@
-import { Router, Request } from "express";
+import { Router, Request, Response } from "express";
 import { isEqual } from "lodash";
 import {
   Proposal,
@@ -8,24 +8,19 @@ import {
 } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
 import { clearCache, findCacheProposal } from "@/api/helpers/cache";
-import { addressFromSignature } from "@/api/helpers/auth";
 import { discordLogin } from "@/api/helpers/discord";
 import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
 import { getLastSlash } from "@/utils";
 import { diffLineCounts } from "@/api/helpers/diff";
-import {
-  canEditProposal,
-  isMultisig,
-  isNanceAddress,
-  isNanceSpaceOwner
-} from "@/api/helpers/permissions";
+import { canEditProposal } from "@/api/helpers/permissions";
 import { checkPermissions, validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
 import { buildProposal } from "@/api/helpers/proposal/buildProposal";
 import { logProposal } from "@/api/helpers/proposal/logProposal";
 
 const router = Router({ mergeParams: true });
 
-router.get('/:pid', async (req: Request, res) => {
+// GET /:space/proposal/:pid
+router.get('/:pid', async (req: Request, res: Response) => {
   const { space, pid } = req.params;
   const { dolt, config, nextProposalId } = res.locals as Middleware;
   let proposal: Proposal | undefined;
@@ -46,7 +41,8 @@ router.get('/:pid', async (req: Request, res) => {
   }
 });
 
-router.put('/:pid', async (req: Request, res) => {
+// PUT /:space/proposal/:pid
+router.put('/:pid', async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
     const { proposal, envelope } = req.body as ProposalUpdateRequest;
@@ -132,62 +128,31 @@ router.put('/:pid', async (req: Request, res) => {
   }
 });
 
-router.delete('/:uuid', async (req: Request, res) => {
+// DELETE /:space/proposal/:pid
+router.delete('/:pid', async (req: Request, res: Response) => {
   try {
-    const { space, uuid } = req.params;
+    const { space, pid } = req.params;
     const { envelope } = req.body as ProposalDeleteRequest;
     const { dolt, config, spaceOwners, address } = res.locals as Middleware;
-    const deleterAddress = address || envelope?.address;
-    if (!deleterAddress) {
-      res.json({ success: false, error: '[NANCE ERROR]: missing address for proposal delete' });
-      return;
-    }
-    const proposalByUuid = await dolt.getProposalByAnyId(uuid);
-    if (envelope && !address) {
-      const decodedAddress = await addressFromSignature(envelope);
-      if (deleterAddress !== decodedAddress) {
-        res.json({
-          success: false,
-          error: `address and signature do not match\naddress: ${deleterAddress}\nsignature: ${decodedAddress}`
-        });
-        return;
-      }
-    }
-    if (!proposalByUuid) {
-      res.json({ success: false, error: '[NANCE ERROR]: proposal not found' });
-      return;
-    }
-    if (!proposalByUuid) { throw new Error('proposal not found'); }
-    if (!canEditProposal(proposalByUuid.status)) {
-      res.json({ success: false, error: '[NANCE ERROR]: proposal edits no longer allowed' });
-      return;
-    }
-    const permissions = (
-      deleterAddress === proposalByUuid.authorAddress
-      // for proposal that requires a sponsor,
-      // authorAddress will be undefined and first coauthor will be original author
-      || (!proposalByUuid.authorAddress && deleterAddress === proposalByUuid.coauthors?.[0])
-      || await isMultisig(config.juicebox.gnosisSafeAddress, deleterAddress)
-      || isNanceSpaceOwner(spaceOwners, deleterAddress)
-      || isNanceAddress(deleterAddress)
-    );
+    const proposalInDb = await dolt.getProposalByAnyId(pid);
+    if (!proposalInDb) throw Error("Proposal not found");
+    if (!canEditProposal(proposalInDb.status)) throw Error("Proposal is no longer editable");
 
-    if (permissions) {
-      console.log(`DELETE issued by ${deleterAddress}`);
-      dolt.deleteProposal(uuid).then(async (affectedRows: number) => {
-        res.json({ success: true, data: { affectedRows } });
-        clearCache(space);
-        try {
-          const discord = await discordLogin(config);
-          await discord.sendProposalDelete(proposalByUuid);
-          discord.logout();
-        } catch (e) { console.error(`[DISCORD] ${e}`); }
-      }).catch((e) => {
-        res.json({ success: false, error: e });
-      });
-    } else {
-      res.json({ success: false, error: '[PERMISSIONS] User not authorized to delete proposal' });
-    }
+    const { uploaderAddress } = await validateUploaderAddress(address, envelope);
+    checkPermissions(proposalInDb, proposalInDb, uploaderAddress, spaceOwners, "delete");
+
+    logProposal(proposalInDb, space, uploaderAddress, "delete");
+    dolt.deleteProposal(proposalInDb.uuid).then(async (affectedRows: number) => {
+      res.json({ success: true, data: { affectedRows } });
+      clearCache(space);
+      try {
+        const discord = await discordLogin(config);
+        await discord.sendProposalDelete(proposalInDb);
+        discord.logout();
+      } catch (e) { console.error(`[DISCORD] ${e}`); }
+    }).catch((e) => {
+      res.json({ success: false, error: e });
+    });
   } catch (e: any) {
     res.json({ success: false, error: e.toString() });
   }
