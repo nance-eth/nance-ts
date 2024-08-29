@@ -1,8 +1,8 @@
 import { ethers, Wallet } from 'ethers';
 import axios from 'axios';
-import EthersAdapter from '@gnosis.pm/safe-ethers-lib';
-import { SafeTransactionDataPartial } from '@gnosis.pm/safe-core-sdk-types';
-import Safe from '@gnosis.pm/safe-core-sdk';
+import EthersAdapter from '@safe-global/safe-ethers-lib';
+import { SafeTransactionDataPartial } from '@safe-global/safe-core-sdk-types';
+import Safe from '@safe-global/safe-core-sdk';
 import { keys } from '../keys';
 import logger from '../logging';
 
