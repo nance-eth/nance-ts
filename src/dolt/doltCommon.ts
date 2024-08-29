@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import { oneLine } from "common-tags";
-import { Proposal, ProposalPacket, ProposalStatus, SnapshotProposal, SQLSnapshotProposal } from "@nance/nance-sdk";
+import { ProposalPacket, ProposalStatus, SnapshotProposal, SQLSnapshotProposal } from "@nance/nance-sdk";
 import { pools } from "./pools";
 import { cleanResultsHeader } from "./doltSQL";
 

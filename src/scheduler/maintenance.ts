@@ -5,7 +5,6 @@ import logger from '../logging';
 import { getAllSpaceConfig } from '../api/helpers/getSpace';
 import { scheduleAllCalendarTasks } from './calendar';
 import { listScheduledJobs } from './list';
-import { doltSys } from '../dolt/doltSys';
 
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';

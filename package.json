@@ -3,26 +3,24 @@
   "version": "1.0.0",
   "description": "automated governance pipeliner",
   "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "start": "export NODE_ENV='prod' && export CONFIG='juicebox' && ts-node src/index.ts",
-    "dev": "npm run dev:api",
+    "dev": "node dev.js",
     "clean": "rm -rf node_modules && rm -rf dist",
     "freshen": "npm run clean && npm install",
+    "build:api": "esbuild src/api/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/api/index.js",
+    "build:scheduler": "esbuild src/scheduler/schedule.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/scheduler/index.js",
     "start:api": "node ./dist/api/index.js",
-    "dev:api": "export LOG_LEVEL=silly && nodemon ./src/api/index.ts",
-    "build:api": "tsc src/api/index.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 --target es2021 --module commonjs && cp -r ./src/config/ ./dist/config/",
-    "build:scheduler": "tsc src/scheduler/schedule.ts --outDir ./dist --resolveJsonModule --esModuleInterop --skipLibCheck --lib es2021 --target es2021 --module commonjs",
-    "start:scheduler": "node ./dist/scheduler/schedule.js",
+    "start:scheduler": "node ./dist/scheduler/index.js",
     "dolt-client": "source .env && mysql -h$DOLT_HOST -u$DOLT_USER -p$DOLT_PASSWORD"
   },
   "dependencies": {
     "@ethersproject/bignumber": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
-    "@gnosis.pm/safe-core-sdk": "^2.3.2",
-    "@gnosis.pm/safe-core-sdk-types": "^1.4.0",
-    "@gnosis.pm/safe-ethers-lib": "^1.4.0",
-    "@jigglyjams/juice-sdk-v3": "^3.2.2-alpha",
     "@nance/nance-sdk": "^4.0.4",
+    "@safe-global/api-kit": "^2.4.5",
     "@snapshot-labs/snapshot.js": "^0.11.41",
     "axios": "^1.7.2",
     "better-sqlite3": "^11.1.2",
@@ -61,11 +59,11 @@
     "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.21.0",
     "@typescript-eslint/parser": "^5.21.0",
+    "esbuild": "^0.23.1",
     "eslint": "^8.14.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
     "nodemon": "^3.1.4",
-    "openai": "^3.2.1",
-    "ts-node": "^10.9.2"
+    "tsx": "^4.19.0"
   }
 }

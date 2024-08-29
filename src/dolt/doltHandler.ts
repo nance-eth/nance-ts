@@ -16,7 +16,7 @@ import {
   PayoutV1,
 } from '@nance/nance-sdk';
 import { DoltSQL } from './doltSQL';
-import { IPFS_GATEWAY, uuidGen, isHexString } from '../utils';
+import { IPFS_GATEWAY, isHexString } from '../utils';
 import { SELECT_ACTIONS } from './queries';
 import { STATUS } from '../constants';
 
@@ -207,14 +207,6 @@ export class DoltHandler {
 
   async addProposalToDb(proposal: Proposal, receipt?: string) {
     const now = new Date().toISOString();
-    const voteType = proposal.voteSetup?.type || 'basic';
-    const voteChoices = proposal.voteSetup?.choices || ['For', 'Against', 'Abstain'];
-    proposal.status = proposal.status || 'Discussion';
-    proposal.uuid = proposal.uuid || uuidGen();
-    proposal.proposalId =
-      (proposal.status === 'Discussion' || proposal.status === 'Temperature Check') ?
-        await this.getNextProposalId() :
-        proposal.proposalId;
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable} (
         uuid,
@@ -248,8 +240,8 @@ export class DoltHandler {
       proposal.status,
       proposal.proposalId,
       proposal.discussionThreadURL,
-      voteType,
-      JSON.stringify(voteChoices),
+      proposal.voteSetup?.type,
+      JSON.stringify(proposal.voteSetup?.choices),
       JSON.stringify(proposal.voteResults?.scores),
       proposal.voteURL,
       proposal.voteResults?.votes,
@@ -257,16 +249,6 @@ export class DoltHandler {
       JSON.stringify(proposal.coauthors),
     ]);
     return { uuid: proposal.uuid, proposalId: proposal.proposalId };
-  }
-
-  async assignProposalIds(proposals: Proposal[]) {
-    const nextProposalId = await this.getNextProposalId() ?? 1;
-    proposals.forEach((proposal, index) => {
-      if (!proposal.proposalId) {
-        proposal.proposalId = nextProposalId + index;
-      }
-    });
-    return proposals;
   }
 
   // ===================================== //

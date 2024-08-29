@@ -1,21 +1,26 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "esnext",
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "node",
     "allowJs": true,
     "alwaysStrict": true,
     "strict": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "removeComments": true,
-    "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
   "include": [
     "src/**/*",
-    "src/config/**/*.json"
+    "src/config/**/*.json",
   ],
   "exclude": ["node_modules"]
 }

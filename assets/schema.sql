@@ -21,20 +21,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   ipfsCID VARCHAR(60),
   proposalSummary TEXT,
   threadSummary TEXT,
-  PRIMARY KEY (uuid)
-);
-
-INSERT INTO dolt_ignore VALUES ("private_%", true);
-
-CREATE TABLE IF NOT EXISTS private_proposals (
-  uuid VARCHAR(35),
-  createdTime DATETIME,
-  lastEditedTime DATETIME,
-  title VARCHAR(500),
-  body MEDIUMTEXT,
-  authorAddress CHAR(42),
-  coauthors JSON,
-  actions JSON,
+  signature VARCHAR(42),
   PRIMARY KEY (uuid)
 );
 

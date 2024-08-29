@@ -2,7 +2,7 @@ import { getSpaceConfig } from '../../api/helpers/getSpace';
 import { addDaysToDate, sleep } from '../../utils';
 import { voteSetup } from '../voteSetup';
 
-const space = 'waterbox';
+const space = 'moondao';
 
 async function main() {
   const { config } = await getSpaceConfig(space);

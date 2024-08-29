@@ -3,3 +3,4 @@ dist/
 scripts/
 jest.config.ts
 link.js
+dev.js

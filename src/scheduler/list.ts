@@ -10,7 +10,7 @@ export const listScheduledJobs = () => {
   logger.info(`============ current time is ${new Date().toISOString()} =============`);
   logger.info('===================================================================');
   logger.info('=========================== SCHEDULE ==============================');
-  Object.keys(jobs).forEach((job, index) => {
+  Object.keys(jobs).forEach((job) => {
     const time = jobs[job].nextInvocation()?.toISOString();
     logger.info(`${job.padEnd(40)} || ${time}`);
   });

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import 'dotenv/config';
-import logger from './logging';
 
 const requiredVariables = [
   'INFURA_KEY',
@@ -36,5 +35,3 @@ export const keys = {
 
 export const nanceAddress = process.env.PUBLIC_ADDRESS!;
 export const DOLT_CERT = process.env.DOLT_CERT!;
-
-logger.info(`DOLT_HOST: ${process.env.DOLT_HOST!}`);

@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import snapshot from '@snapshot-labs/snapshot.js';
 import { keys } from '../../keys';
-import { unixTimeStampNow, addSecondsToDate, dateToUnixTimeStamp } from '../../utils';
+import { addSecondsToDate, dateToUnixTimeStamp } from '../../utils';
 
 const SPACE = 'jigglyjams.eth';
 const PROPOSAL = {

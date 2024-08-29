@@ -6,7 +6,7 @@ import {
   AttachmentBuilder, EmbedBuilder, ThreadChannel, EmbedField
 } from 'discord.js';
 import { stripIndents } from 'common-tags';
-import { PollResults, PollEmojis, Proposal, SQLPayout, SQLProposal, getActionsFromBody } from '@nance/nance-sdk';
+import { PollResults, PollEmojis, Proposal, SQLPayout, getActionsFromBody } from '@nance/nance-sdk';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, maybePlural, numToPrettyString, numberWithCommas } from '../utils';
 import { EMOJI } from '../constants';
 import { DiffLines } from "../api/helpers/diff";
@@ -18,7 +18,7 @@ export const getProposalURL = (space: string, proposal: Proposal, customDomain?:
 };
 
 const simpleProposalList = (proposals: Proposal[], space: string, proposalIdPrefix: string, customDomain?: string) => {
-  const list = proposals.map((proposal, i) => {
+  const list = proposals.map((proposal) => {
     let emoji = '';
     if (proposal.status === 'Temperature Check') { emoji = EMOJI.TEMPERATURE_CHECK; }
     if (proposal.status === 'Voting') { emoji = EMOJI.VOTE; }
@@ -315,7 +315,6 @@ export const transactionSummary = (
   newDistributionLimit: number,
   addPayouts: SQLPayout[],
   removePayouts: SQLPayout[],
-  otherProposals?: SQLProposal[],
 ) => {
   // const message = new EmbedBuilder().setTitle('Summary');
   let message = `## __Summary__\nDeadline: <t:${deadline.getTime() / 1000}:F> (<t:${deadline.getTime() / 1000}:R>)\n`;
@@ -346,9 +345,14 @@ export const transactionSummary = (
   return message;
 };
 
-export const proposalDiff = (space: string, proposal: Proposal, diffLineCounts: DiffLines) => {
+export const proposalDiff = (
+  space: string,
+  proposal: Proposal,
+  diffLineCounts: DiffLines,
+  customDomain?: string
+) => {
   const { added, removed } = diffLineCounts;
-  const message = `🎶 edit: ${added} ${maybePlural('line', added)} added ${removed} ${maybePlural('line', removed)} removed <${getProposalURL(space, proposal)}>`;
+  const message = `🎶 edit: ${added} ${maybePlural('line', added)} added ${removed} ${maybePlural('line', removed)} removed <${getProposalURL(space, proposal, customDomain)}>`;
   return message;
 };
 

@@ -26,16 +26,16 @@ export const quorumMet = (scoresTotal: number, quorum: number): boolean => {
   return scoresTotal >= quorum;
 };
 
-export const getProposalsWithVotes = async (config: NanceConfig): Promise<Proposal[]> => {
-  const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
-  const { proposals } = await dolt.getProposals({ status: ['Voting'] });
+export const getProposalsWithVotes = async (config: NanceConfig, _proposals?: Proposal[]): Promise<Proposal[]> => {
+  let proposals = _proposals;
+  if (!proposals) {
+    const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
+    const result = await dolt.getProposals({ status: ['Voting'] });
+    proposals = result.proposals;
+  }
   const snapshot = new SnapshotHandler('', config); // dont need private key for this call
   const proposalSnapshotIdStrings = proposals.map((proposal) => { return `"${proposal.voteURL}"`; });
   const voteResults = await snapshot.getProposalVotes(proposalSnapshotIdStrings);
-  // ignore pending vote results, sometimes snapshot takes a while to update
-  // if (voteResults.filter((result) => { return result.scores_state === 'pending'; }).length > 0) {
-  //   return Promise.reject(Error('proposals are still pending votes'));
-  // }
   const proposalsWithVotes = proposals.map((proposal) => {
     const voteResult = voteResults.find((result) => { return result.id === proposal.voteURL; });
     if (!voteResult) return proposal;

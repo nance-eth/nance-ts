@@ -1,17 +1,16 @@
 import express from 'express';
 import { ConfigSpaceRequest, SpaceInfo } from '@nance/nance-sdk';
-import { DoltSysHandler } from '../dolt/doltSysHandler';
-import { DoltHandler } from '../dolt/doltHandler';
-import { createDolthubDB, headToUrl } from '../dolt/doltAPI';
-import { dotPin } from '../storage/storageHandler';
-import { mergeTemplateConfig, mergeConfig, uuidGen } from '../utils';
-import logger from '../logging';
-import { pools } from '../dolt/pools';
-import { dbOptions } from '../dolt/dbConfig';
-import { DoltSQL } from '../dolt/doltSQL';
-import { addressFromJWT } from './helpers/auth';
-import { getAllSpaceInfo, getSpaceConfig } from './helpers/getSpace';
-// import { createCalendarAndCycleInfo } from '../calendar/create';
+import { DoltSysHandler } from '@/dolt/doltSysHandler';
+import { DoltHandler } from '@/dolt/doltHandler';
+import { createDolthubDB, headToUrl } from '@/dolt/doltAPI';
+import { dotPin } from '@/storage/storageHandler';
+import { mergeTemplateConfig, mergeConfig, uuidGen } from '@/utils';
+import logger from '@/logging';
+import { pools } from '@/dolt/pools';
+import { dbOptions } from '@/dolt/dbConfig';
+import { DoltSQL } from '@/dolt/doltSQL';
+import { addressFromJWT } from '@/api/helpers/auth';
+import { getAllSpaceInfo, getSpaceConfig } from '@/api/helpers/getSpace';
 
 const router = express.Router();
 
@@ -36,22 +35,27 @@ router.get('/config/:space', async (req, res) => {
 });
 
 router.get('/all', async (_, res) => {
+  const infos: SpaceInfo[] = [];
   getAllSpaceInfo().then(async (data) => {
-    const infos = await Promise.all(data.map(async (space) => {
-      const dolt = new DoltHandler(pools[space.name], '');
-      const spaceInfo: SpaceInfo = {
-        ...space,
-        dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo, await dolt.getHead()),
-        nextProposalId: await dolt.getNextProposalId(),
-      };
-      if (space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress) {
-        spaceInfo.transactorAddress = {
-          type: space.config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
-          network: space.config.juicebox.network,
-          address: space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress,
+    await Promise.all(data.map(async (space) => {
+      try {
+        const dolt = new DoltHandler(pools[space.name], '');
+        const spaceInfo: SpaceInfo = {
+          ...space,
+          dolthubLink: headToUrl(space.config.dolt.owner, space.config.dolt.repo),
+          nextProposalId: await dolt.getNextProposalId(),
         };
+        if (space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress) {
+          spaceInfo.transactorAddress = {
+            type: space.config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
+            network: space.config.juicebox.network,
+            address: space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress,
+          };
+        }
+        infos.push(spaceInfo);
+      } catch (e) {
+        // If there's an error, we don't push anything to infos
       }
-      return spaceInfo;
     }));
     res.json({ success: true, data: infos });
   }).catch((e) => {
@@ -60,7 +64,7 @@ router.get('/all', async (_, res) => {
 });
 
 router.post('/config', async (req, res) => {
-  const { config, governanceCycleForm, spaceOwners, dryrun } = req.body as ConfigSpaceRequest;
+  const { config, spaceOwners, dryrun } = req.body as ConfigSpaceRequest;
   const space = config.name.replaceAll(' ', '_').toLowerCase();
   const spaceConfig = await getSpaceConfig(space);
   // let cycleStageLengths = spaceConfig?.cycleStageLengths;

@@ -1,8 +1,8 @@
 import { NanceConfig } from "@nance/nance-sdk";
 import { sum } from "lodash";
+import SafeApiKit from "@safe-global/api-kit";
 import { gatherPayouts } from "./sendBookkeeping";
 import { getSpaceConfig, getSpaceInfo } from "../api/helpers/getSpace";
-import { SafeHandler } from "../safe/safeHandler";
 import { discordLogin } from "../api/helpers/discord";
 import { getFundingCyclePayoutData } from "../juicebox/simple/helpers/payouts";
 import { JBReconfigureFundingCycleData } from "../juicebox/simple/types";
@@ -11,6 +11,7 @@ import { TenderlyHandler } from "../tenderly/tenderlyHandler";
 import { JBController3_1_Address } from "../juicebox/simple/contracts/JBController3_1";
 import { distributePayoutsOf } from "../juicebox/simple/encode/distributePayouts";
 import { JBETHPaymentTerminal3_1_2_Address } from "../juicebox/simple/contracts/JBETHPaymentTerminal3_1_2";
+import { dateAtTime, networkNameToChainId } from "../utils";
 import {
   defaultFundingCycleData,
   DISTRIBUTION_CURRENCY_USD,
@@ -18,14 +19,13 @@ import {
   GROUP_RESERVED,
   TOKEN_ETH
 } from "../juicebox/simple/constants";
-import { dateAtTime } from "../utils";
 
 const JUICEBOX_TRIGGER_TIME = "19:19:33";
 
 export const sendTransactionThread = async (space: string, config: NanceConfig, testConfig?: NanceConfig) => {
   try {
     const spaceConfig = await getSpaceConfig(space);
-    const spaceInfo = await getSpaceInfo(spaceConfig);
+    const spaceInfo = getSpaceInfo(spaceConfig);
     const { currentGovernanceCycle } = spaceConfig;
     const lastGovernanceCycle = currentGovernanceCycle - 1;
     const lastCyclePayouts = await gatherPayouts(space, lastGovernanceCycle);
@@ -40,14 +40,9 @@ export const sendTransactionThread = async (space: string, config: NanceConfig, 
     console.log("addedPayouts", addedPayouts?.map((p) => p.uuidOfPayout));
     console.log("removedPayouts", removedPayouts?.map((p) => p.uuidOfPayout));
     if (!payouts) return undefined;
-    const currentNonce = await SafeHandler.getCurrentNonce(
-      config.juicebox.gnosisSafeAddress,
-      config.juicebox.network,
-      true
-    );
 
     // turn the payouts into splits and distribution limits
-    const { splits, distributionLimit, totalUSD } = await getFundingCyclePayoutData(payouts);
+    const { splits, distributionLimit, totalUSD } = getFundingCyclePayoutData(payouts);
 
     // merge the splits into the default funding cycle data
     const fundingCycleData: JBReconfigureFundingCycleData = {
@@ -93,8 +88,13 @@ export const sendTransactionThread = async (space: string, config: NanceConfig, 
       { name: "🧱 Tenderly Simulation", value: publicForkURL, inline: true },
       { name: "🗃 Juicebox Safe Diff", value: "https://juicebox.money/@juicebox/safe", inline: true }
     ];
+
+    // get next Safe nonce
+    const networkId = networkNameToChainId(config.juicebox.network);
+    const safe = new SafeApiKit({ chainId: BigInt(networkId) });
+    const nonce = await safe.getNextNonce(config.juicebox.gnosisSafeAddress);
+
     // discord
-    const nonce = currentNonce + 1;
     const discord = await discordLogin(testConfig || config);
     const threadId = await discord.createTransactionThread(nonce, "Queue Cycle", links);
     const governanceCycleExecution = spaceInfo.nextEvents.find((e) => e.title === "Execution")?.end || new Date();

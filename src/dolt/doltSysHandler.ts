@@ -1,5 +1,5 @@
 import { oneLine } from 'common-tags';
-import { DialogHandlerMessageIds, SQLSpaceConfig, SpaceConfig } from '@nance/nance-sdk';
+import { DialogHandlerMessageIds, SQLSpaceConfig } from '@nance/nance-sdk';
 import { DoltSQL, cleanResultsHeader } from './doltSQL';
 import { dbOptions } from './dbConfig';
 import { sqlSchemaToString } from '../utils';
