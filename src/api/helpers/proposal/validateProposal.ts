@@ -11,31 +11,29 @@ type ValidateProposalByVp = {
 };
 
 export async function validateUploaderVp(input: ValidateProposalByVp) {
-  const { proposal, proposalInDb, uploaderAddress: address, config } = input;
+  const { proposal, proposalInDb, uploaderAddress, config } = input;
   const { status: _status, coauthors: _coauthors } = proposal;
   const { authorAddress: _authorAddress } = proposalInDb || { authorAddress: undefined };
   const { proposalSubmissionValidation } = config;
-  if (
-    (_status === "Discussion" || _status === "Temperature Check") &&
-    proposalSubmissionValidation && address
-  ) {
-    const { minBalance } = proposalSubmissionValidation;
-    const balance = await getAddressVotingPower(address, config.snapshot.space);
-    if (balance < minBalance) {
-      // make uploader a coauthor
-      const coauthors = !_coauthors ? [address] : uniq([..._coauthors, address]);
-      const status = proposalSubmissionValidation.notMetStatus;
-      return { coauthors, status };
-    }
-    const status = (_status === "Discussion") ? proposalSubmissionValidation.metStatus : _status;
-    const authorAddress = !_authorAddress ? address : _authorAddress;
-    let coauthors = _coauthors;
-    if (address !== authorAddress) {
-      coauthors = !_coauthors ? [address] : uniq([..._coauthors, address]);
-    }
-    return { authorAddress, coauthors, status };
+
+  if (!proposalSubmissionValidation || !uploaderAddress) {
+    return { authorAddress: uploaderAddress, coauthors: _coauthors, status: _status };
   }
-  return { authorAddress: _authorAddress, coauthors: _coauthors, status: _status };
+
+  const { minBalance } = proposalSubmissionValidation;
+  const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
+
+  if (balance < minBalance) {
+    const coauthors = uniq([..._coauthors || [], uploaderAddress]);
+    return { coauthors, status: proposalSubmissionValidation.notMetStatus };
+  }
+  const status = (_status === "Discussion") ? proposalSubmissionValidation.metStatus : _status;
+  const authorAddress = _authorAddress || uploaderAddress;
+  let coauthors = _coauthors;
+  if (uploaderAddress !== authorAddress) {
+    coauthors = uniq([..._coauthors || [], uploaderAddress]);
+  }
+  return { authorAddress, coauthors, status };
 }
 
 export function checkPermissions(
@@ -52,11 +50,11 @@ export function checkPermissions(
   if (operation === "archive") {
     if (
       proposal.status === "Archived" &&
-      (!addressIsAuthor || !permissionElevated || !addressIsFirstCoauthor)) {
+      (!addressIsAuthor && !permissionElevated && !addressIsFirstCoauthor)) {
       throw new Error("only author or spaceOwner can archive proposal");
     }
   } else if (operation === "delete") {
-    if (!authorAddress && !addressIsFirstCoauthor && !permissionElevated) {
+    if (!addressIsAuthor && !addressIsFirstCoauthor && !permissionElevated) {
       throw new Error("only author or spaceOwner can delete proposal");
     }
   }

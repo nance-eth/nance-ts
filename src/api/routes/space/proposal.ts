@@ -79,7 +79,7 @@ router.put('/:pid', async (req: Request, res: Response) => {
       // if proposal moved from Draft to Discussion, send discord message
       const shouldCreateDiscussion = (
         (proposalInDb.status === "Draft")
-        && proposal.status === "Discussion" && !proposalInDb.discussionThreadURL
+        && status === "Discussion" && !proposalInDb.discussionThreadURL
       );
       if (shouldCreateDiscussion) {
         try {

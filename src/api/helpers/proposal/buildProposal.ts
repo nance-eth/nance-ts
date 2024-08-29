@@ -27,20 +27,21 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   };
 
   // assign proposalId
-  let proposalId: number | undefined;
-  if (!proposal.proposalId &&
+  let proposalId = proposalInDb?.proposalId;
+  if (!proposalId &&
     (proposal.status === "Discussion" || proposal.status === "Temperature Check")
   ) {
     proposalId = nextProposalId;
   }
 
   // assign governanceCycle
-  let governanceCycle = currentCycle;
-  if (!config.allowCurrentCycleSubmission ||
-    currentEvent.title !== "Temperature Check"
+  let governanceCycle: number;
+  if (config.allowCurrentCycleSubmission &&
+    currentEvent.title === "Temperature Check"
   ) {
-    governanceCycle += 1;
+    governanceCycle = currentCycle;
   }
+  governanceCycle = currentCycle + 1;
 
   return {
     ...proposal,
