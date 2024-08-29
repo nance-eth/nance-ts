@@ -3,7 +3,7 @@ import { fetchSnapshotProposal } from "@/snapshot/snapshotProposals";
 
 const router = Router();
 
-router.get('/~/proposal/:pid', async (req, res) => {
+router.get('/:pid', async (req, res) => {
   try {
     const proposal = await fetchSnapshotProposal(req.params.pid);
     res.json({ success: true, data: proposal });

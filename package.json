@@ -22,7 +22,6 @@
     "@gnosis.pm/safe-core-sdk": "^2.3.2",
     "@gnosis.pm/safe-core-sdk-types": "^1.4.0",
     "@gnosis.pm/safe-ethers-lib": "^1.4.0",
-    "@jigglyjams/juice-sdk-v3": "^3.2.2-alpha",
     "@nance/nance-sdk": "^4.0.4",
     "@snapshot-labs/snapshot.js": "^0.11.41",
     "axios": "^1.7.2",
