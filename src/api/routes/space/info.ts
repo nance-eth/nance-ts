@@ -6,7 +6,7 @@ import { clearCache } from "@/api/helpers/cache";
 
 const router = Router({ mergeParams: true });
 
-router.get('/', async (res: Response) => {
+router.get('/', async (_, res: Response) => {
   console.time("space");
   try {
     const {

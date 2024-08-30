@@ -40,8 +40,7 @@ const init = async () => {
   app.use("/ish", system);
   app.use("/tasks", tasks);
   app.use("/~/proposal", snapshotProposal);
-  app.use("/:space", spaceMiddleware);
-  app.use("/:space", spaceInfo);
+  app.use("/:space", spaceMiddleware, spaceInfo);
   app.use("/:space/proposal", spaceProposal);
   app.use("/:space/proposals", spaceProposals);
   app.use("/:space/reconfig", spaceReconfig);
