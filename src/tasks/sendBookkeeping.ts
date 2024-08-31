@@ -53,7 +53,7 @@ const getSQLPayoutsFromProposal = (proposal: Proposal, currentGovernanceCycle: n
         governanceCycleStart: gc,
         numberOfPayouts: count,
         lockedUntil: 0,
-        amount,
+        amount: Number(amount),
         currency: "USD",
         payName: proposal.title,
         payAddress: payout.address,
@@ -68,8 +68,6 @@ const getSQLPayoutsFromProposal = (proposal: Proposal, currentGovernanceCycle: n
 export const gatherPayouts = async (space: string, currentGovernanceCycle: number) => {
   try {
     const dolt = new DoltHandler(pools[space]);
-    // TODO: set action tracking for all payouts in another function
-    // await dolt.setStalePayouts(currentGovernanceCycle);
     const payouts: SQLPayout[] = [];
     const previousGovernanceCycles = getGovernanceCycles(currentGovernanceCycle);
     const { proposals } = await dolt.getProposals(
