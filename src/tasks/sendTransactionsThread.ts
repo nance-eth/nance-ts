@@ -97,7 +97,12 @@ export const sendTransactionThread = async (space: string, config: NanceConfig, 
     // discord
     const discord = await discordLogin(testConfig || config);
     const threadId = await discord.createTransactionThread(nonce, "Queue Cycle", links);
-    const governanceCycleExecution = spaceInfo.nextEvents.find((e) => e.title === "Execution")?.end || new Date();
+    let governanceCycleExecution;
+    if (spaceInfo.currentEvent.title === "Execution") {
+      governanceCycleExecution = spaceInfo.currentEvent.end;
+    } else {
+      governanceCycleExecution = spaceInfo.nextEvents.find((e) => e.title === "Execution")?.end || spaceInfo.currentEvent.end;
+    }
     const deadline = dateAtTime(new Date(governanceCycleExecution), JUICEBOX_TRIGGER_TIME);
     await discord.sendTransactionSummary(currentGovernanceCycle, threadId, deadline, lastTotalUSD, totalUSD, addedPayouts, removedPayouts, encodedReconfigureFundingCycle, viemFormat);
     return payouts;

@@ -323,14 +323,14 @@ export const transactionSummary = (
     const additions = addPayouts.map((payout, index) => {
       const proposalURL = getProposalURL(space, { proposalId: payout.proposalId } as Proposal);
       const payoutHeadline = getPayoutHeadline(payout);
-      const payoutHeadlineFull = `[${payoutHeadline.text}](${payoutHeadline.link})`;
+      const payoutHeadlineFull = `[${payoutHeadline.text}](<${payoutHeadline.link}>)`;
       const line = `  ${index}. [[${proposalIdPrefix}${payout.proposalId}]](${proposalURL}) +$${numberWithCommas(payout.amount)} to ${payoutHeadlineFull}`;
       return line;
     });
     message += additions.join('\n');
   }
   if (removePayouts && removePayouts.length > 0) {
-    message += `### Remove payouts\n`;
+    message += `\n### Remove payouts\n`;
     const removals = removePayouts.map((payout, index) => {
       const proposalURL = getProposalURL(space, { proposalId: payout.proposalId } as Proposal);
       const payoutHeadline = getPayoutHeadline(payout);

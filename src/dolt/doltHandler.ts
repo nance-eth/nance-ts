@@ -4,21 +4,18 @@
 import { oneLine } from 'common-tags';
 import { omitBy, isNil } from 'lodash';
 import {
+  getActionsFromBody,
   Proposal,
   SQLProposal,
-  SQLPayout,
   ProposalStatus,
   PollResults,
-  getActionsFromBody,
   Action,
   ActionTracking,
   ActionStatus,
-  PayoutV1,
 } from '@nance/nance-sdk';
 import { DoltSQL } from './doltSQL';
 import { IPFS_GATEWAY, isHexString } from '../utils';
 import { SELECT_ACTIONS } from './queries';
-import { STATUS } from '../constants';
 
 const proposalsTable = 'proposals';
 const payoutsTable = 'payouts';
@@ -61,49 +58,6 @@ export class DoltHandler {
     }).catch((e) => {
       return Promise.reject(e);
     });
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  initActionTracking(proposal: Proposal, currentGovernanceCycle: number) {
-    let actions = getActionsFromBody(proposal.body);
-    if (!actions) actions = proposal.actions || []; // old style actions stored in individual tables
-    if (actions.length === 0) return null;
-    const actionTracking: ActionTracking[][] = actions.map((action) => {
-      const oldActionTracking: ActionTracking[] = [];
-      if (action.type) {
-        const payout = action.payload as PayoutV1;
-        for (let i = 0; i < payout.count || i < 1; i += 1) {
-          const governanceCycle = Number(proposal.governanceCycle) + i;
-          let status: ActionStatus = "Future";
-          if (governanceCycle < currentGovernanceCycle) status = "Executed";
-          if (governanceCycle === currentGovernanceCycle) status = "Active";
-          const a: ActionTracking = {
-            governanceCycle,
-            status,
-          };
-          oldActionTracking.push(a);
-        }
-      }
-      if (oldActionTracking.length > 0) return oldActionTracking;
-      if (action.pollRequired) {
-        const a: ActionTracking = {
-          governanceCycle: 0, // initialize to 0, update with correct value when poll is approved
-          status: "Poll Required",
-        };
-        return [a];
-      }
-      // non-poll actions, track individual governance cycles for repeat actions
-      return action.governanceCycles?.map((governanceCycle) => {
-        const status: ActionStatus = (currentGovernanceCycle === governanceCycle) ? "Active" : "Future";
-        const a: ActionTracking = {
-          governanceCycle,
-          status,
-        };
-        return a;
-      }) || [];
-    });
-    if (actionTracking.length === 0) return null;
-    return actionTracking;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -382,7 +336,8 @@ export class DoltHandler {
     author,
     limit,
     offset,
-    status
+    status,
+    actionTrackingStatus,
   } : {
     governanceCycle?: string | number;
     keyword?: string;
@@ -390,6 +345,7 @@ export class DoltHandler {
     limit?: number;
     offset?: number;
     status?: ProposalStatus[]
+    actionTrackingStatus?: ActionStatus[];
   }) {
     const whereClauses = [];
     let selectRelevance = '';
@@ -397,6 +353,14 @@ export class DoltHandler {
     // Handle governanceCycle
     if (governanceCycle) {
       whereClauses.push(this.cycleWhereClause(String(governanceCycle)));
+    }
+
+    // Handle actionTrackingStatus
+    if (actionTrackingStatus && actionTrackingStatus.length > 0) {
+      const actionTrackingConditions = actionTrackingStatus.map((s) => {
+        return `JSON_SEARCH(actionTracking, 'all', '${s}', NULL, '$[*][*].status') IS NOT NULL`;
+      }).join(' OR ');
+      whereClauses.push(`actionTracking IS NOT NULL AND (${actionTrackingConditions})`);
     }
 
     // Handle keyword
@@ -478,34 +442,6 @@ export class DoltHandler {
     `).then((res) => {
       return res[0];
     }).catch((e) => { return Promise.reject(e); });
-  }
-
-  async getPayoutsDb(currentGovernanceCycle: number): Promise<SQLPayout[]> {
-    const treasuryVersion = 3;
-    const results = this.queryDb(`
-      SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
-      LEFT JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
-      WHERE treasuryVersion = ${treasuryVersion} AND
-      payStatus = '${STATUS.ACTION.ACTIVE}' AND
-      governanceCycleStart <= ${currentGovernanceCycle} AND
-      governanceCycleStart + numberOfPayouts >= ${currentGovernanceCycle}
-      ORDER BY proposalId ASC
-    `) as unknown as SQLPayout[];
-    return results;
-  }
-
-  async getPreviousPayoutsDb(version: string, governanceCycle: number): Promise<SQLPayout[]> {
-    const treasuryVersion = Number(version.split('V')[1]);
-    const results = this.queryDb(`
-      SELECT ${payoutsTable}.*, ${proposalsTable}.authorDiscordId, ${proposalsTable}.proposalId, ${proposalsTable}.snapshotId FROM ${payoutsTable}
-      INNER JOIN ${proposalsTable} ON ${payoutsTable}.uuidOfProposal = ${proposalsTable}.uuid
-      WHERE treasuryVersion = ${treasuryVersion} AND
-      payStatus != '${STATUS.ACTION.CANCELLED}' AND
-      governanceCycleStart <= ${governanceCycle} AND
-      governanceCycleStart + numberOfPayouts >= ${governanceCycle + 1}
-      ORDER BY proposalId ASC
-    `) as unknown as SQLPayout[];
-    return results;
   }
 
   async insertPoll({ id, uuidOfProposal, answer }: { id: string; uuidOfProposal: string; answer: boolean }) {
