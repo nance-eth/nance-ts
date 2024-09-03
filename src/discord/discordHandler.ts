@@ -23,7 +23,6 @@ import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp } fro
 import * as discordTemplates from './discordTemplates';
 import { getENS } from '../api/helpers/ens';
 import { EMOJI } from '../constants';
-import { DiffLines } from "../api/helpers/diff";
 import { pollActionRow } from "./button/poll";
 
 const SILENT_FLAG = 1 << 12;
@@ -488,10 +487,10 @@ export class DiscordHandler {
     }
   }
 
-  async sendProposalDiff(proposal: Proposal, diffLineCounts: DiffLines) {
+  async sendProposalDiff(proposal: Proposal) {
     const { customDomain } = this.config;
     const threadId = getLastSlash(proposal.discussionThreadURL);
-    const message = discordTemplates.proposalDiff(this.config.name, proposal, diffLineCounts, customDomain);
+    const message = discordTemplates.proposalDiff(this.config.name, proposal, customDomain);
     await this.getChannelById(threadId).send(message);
   }
 

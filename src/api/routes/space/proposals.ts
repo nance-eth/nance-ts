@@ -3,11 +3,10 @@ import { ProposalUploadRequest } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
 import { cache } from "@/api/helpers/cache";
 import { postSummary } from "@/nancearizer";
-import { discordLogin } from "@/api/helpers/discord";
+import { discordNewProposal } from "@/api/helpers/discord";
 import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
 import { validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
 import { buildProposal } from "@/api/helpers/proposal/buildProposal";
-import { getLastSlash } from "@/utils";
 import { logProposal } from "@/api/helpers/proposal/logProposal";
 
 const router = Router({ mergeParams: true });
@@ -99,17 +98,8 @@ router.post('/', async (req: Request, res) => {
       res.json({ success: true, data: { uuid } });
 
       try {
-        if (newProposal.status === "Discussion" || newProposal.status === "Temperature Check") {
-          const discord = await discordLogin(config);
-          try {
-            const discussionThreadURL = await discord.startDiscussion(newProposal);
-            if (authorAddress) await discord.setupPoll(getLastSlash(discussionThreadURL));
-            await dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
-            discord.logout();
-          } catch (e) {
-            console.error(`[DISCORD] ${e}`);
-          }
-        }
+        const discussionThreadURL = await discordNewProposal(newProposal, config);
+        if (discussionThreadURL) await dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
 
         if (space !== "waterbox") {
           const summary = await postSummary(newProposal, "proposal");

@@ -47,14 +47,15 @@ export function checkPermissions(
   const addressIsAuthor = authorAddress === address;
   const permissionElevated = isNanceSpaceOwner(spaceOwners, address);
   const addressIsFirstCoauthor = address === proposal?.coauthors?.[0];
+  const noAuthorAndAddressIsFirstCoauthor = !authorAddress && addressIsFirstCoauthor;
   if (operation === "archive") {
     if (
       proposal.status === "Archived" &&
-      (!addressIsAuthor && !permissionElevated && !addressIsFirstCoauthor)) {
+      (!addressIsAuthor && !permissionElevated && !noAuthorAndAddressIsFirstCoauthor)) {
       throw new Error("only author or spaceOwner can archive proposal");
     }
   } else if (operation === "delete") {
-    if (!addressIsAuthor && !addressIsFirstCoauthor && !permissionElevated) {
+    if (!addressIsAuthor && !permissionElevated && !noAuthorAndAddressIsFirstCoauthor) {
       throw new Error("only author or spaceOwner can delete proposal");
     }
   }

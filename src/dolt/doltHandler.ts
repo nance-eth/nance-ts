@@ -232,7 +232,7 @@ export class DoltHandler {
         await this.queryDbResults(oneLine`DELETE FROM ${proposalsTable} WHERE uuid = '${uuid}'`)
       ).affectedRows;
     } catch (e) {
-      return Promise.reject(e);
+      throw new Error(`Error deleting proposal: ${e}`);
     }
   }
 

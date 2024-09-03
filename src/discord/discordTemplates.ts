@@ -9,7 +9,6 @@ import { stripIndents } from 'common-tags';
 import { PollResults, PollEmojis, Proposal, SQLPayout, getActionsFromBody } from '@nance/nance-sdk';
 import { DEFAULT_DASHBOARD, dateToUnixTimeStamp, getReminderImages, maybePlural, numToPrettyString, numberWithCommas } from '../utils';
 import { EMOJI } from '../constants';
-import { DiffLines } from "../api/helpers/diff";
 import { actionsToMarkdown } from "../tasks/voteSetup";
 
 export const getProposalURL = (space: string, proposal: Proposal, customDomain?: string) => {
@@ -348,11 +347,9 @@ export const transactionSummary = (
 export const proposalDiff = (
   space: string,
   proposal: Proposal,
-  diffLineCounts: DiffLines,
   customDomain?: string
 ) => {
-  const { added, removed } = diffLineCounts;
-  const message = `🎶 edit: ${added} ${maybePlural('line', added)} added ${removed} ${maybePlural('line', removed)} removed <${getProposalURL(space, proposal, customDomain)}>`;
+  const message = `🎶 edit <${getProposalURL(space, proposal, customDomain)}>`;
   return message;
 };
 

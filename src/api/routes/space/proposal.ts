@@ -1,5 +1,4 @@
 import { Router, Request, Response } from "express";
-import { isEqual } from "lodash";
 import {
   Proposal,
   ProposalDeleteRequest,
@@ -8,10 +7,8 @@ import {
 } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
 import { clearCache, findCacheProposal } from "@/api/helpers/cache";
-import { discordLogin } from "@/api/helpers/discord";
+import { discordEditProposal, discordLogin } from "@/api/helpers/discord";
 import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
-import { getLastSlash } from "@/utils";
-import { diffLineCounts } from "@/api/helpers/diff";
 import { canEditProposal } from "@/api/helpers/permissions";
 import { checkPermissions, validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
 import { buildProposal } from "@/api/helpers/proposal/buildProposal";
@@ -92,57 +89,10 @@ router.put('/:pid', async (req: Request, res: Response) => {
     res.json({ success: true, data: { uuid } });
 
     clearCache(space);
-
-    try {
-      const discord = await discordLogin(config);
-      // if proposal moved from Draft to Discussion, send discord message
-      const shouldCreateDiscussion = (
-        (proposalInDb.status === "Draft")
-        && status === "Discussion" && !proposalInDb.discussionThreadURL
-      );
-      if (shouldCreateDiscussion) {
-        try {
-          const discussionThreadURL = await discord.startDiscussion(updateProposal);
-          if (authorAddress) await discord.setupPoll(getLastSlash(discussionThreadURL));
-          await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
-        } catch (e) {
-          console.error(`[DISCORD] ${e}`);
-        }
-      }
-
-      // if proposal got sponsored by a valid author,
-      // add Temperature Check embed and setup poll buttons
-      if (proposalInDb.status === "Discussion" && updateProposal.status === "Temperature Check") {
-        await discord.editDiscussionMessage(updateProposal);
-        await discord.setupPoll(getLastSlash(proposalInDb.discussionThreadURL));
-      }
-
-      // archive alert
-      if (proposal.status === "Archived") {
-        try { await discord.sendProposalArchive(proposalInDb); } catch (e) { console.error(`[DISCORD] ${e}`); }
-      }
-      // unarchive alert
-      if (proposal.status === config.proposalSubmissionValidation?.metStatus && proposalInDb.status === "Archived") {
-        try { await discord.sendProposalUnarchive(proposalInDb); } catch (e) { console.error(`[DISCORD] ${e}`); }
-      }
-
-      // send diff to discord
-      const diff = diffLineCounts(proposalInDb.body, proposal.body);
-      const actionsChanged = !isEqual(proposalInDb.actions, proposal.actions);
-      if (
-        proposalInDb.discussionThreadURL &&
-        (diff.added || diff.removed || actionsChanged)
-      ) {
-        updateProposal.discussionThreadURL = proposalInDb.discussionThreadURL;
-        await discord.editDiscussionMessage(updateProposal);
-        if (diff.added || diff.removed) await discord.sendProposalDiff(updateProposal, diff);
-      }
-      discord.logout();
-    } catch (e) {
-      console.error(`[DISCORD] ${space}`);
-      console.error(`[DISCORD] ${e}`);
-    }
+    const discussionThreadURL = await discordEditProposal(proposal, proposalInDb, config);
+    if (discussionThreadURL) await dolt.updateDiscussionURL({ ...proposalInDb, discussionThreadURL });
   } catch (e: any) {
+    console.error(e)
     res.json({ success: false, error: e.toString() });
   }
 });
@@ -169,8 +119,6 @@ router.delete('/:pid', async (req: Request, res: Response) => {
         await discord.sendProposalDelete(proposalInDb);
         discord.logout();
       } catch (e) { console.error(`[DISCORD] ${e}`); }
-    }).catch((e) => {
-      res.json({ success: false, error: e });
     });
   } catch (e: any) {
     res.json({ success: false, error: e.toString() });
