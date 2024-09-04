@@ -7,7 +7,6 @@ import { clearCache } from "@/api/helpers/cache";
 const router = Router({ mergeParams: true });
 
 router.get('/', async (_, res: Response) => {
-  console.time("space");
   try {
     const {
       name,
@@ -49,8 +48,6 @@ router.get('/', async (_, res: Response) => {
     });
   } catch (e) {
     return res.send({ success: false, error: `[NANCE ERROR]: ${e}` });
-  } finally {
-    console.timeEnd("space");
   }
 });
 
