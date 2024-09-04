@@ -92,7 +92,6 @@ router.put('/:pid', async (req: Request, res: Response) => {
     const discussionThreadURL = await discordEditProposal(updateProposal, proposalInDb, config);
     if (discussionThreadURL) await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
   } catch (e: any) {
-    console.error(e)
     res.json({ success: false, error: e.toString() });
   }
 });

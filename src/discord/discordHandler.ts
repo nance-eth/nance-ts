@@ -1,5 +1,4 @@
 /* eslint-disable max-lines */
-/* eslint-disable no-param-reassign */
 import {
   Client as DiscordClient,
   Collection,
@@ -14,15 +13,15 @@ import {
   escapeMarkdown,
   ForumChannel,
   ThreadChannel,
-} from 'discord.js';
+} from "discord.js";
 import { isEqual } from "lodash";
-import { Proposal, PollResults, NanceConfig, SQLPayout } from '@nance/nance-sdk';
-import logger from '../logging';
-import { limitLength, getLastSlash, DEFAULT_DASHBOARD, dateToUnixTimeStamp } from '../utils';
-
-import * as discordTemplates from './discordTemplates';
-import { getENS } from '../api/helpers/ens';
-import { EMOJI } from '../constants';
+import { Proposal, PollResults, NanceConfig, SQLPayout } from "@nance/nance-sdk";
+import logger from "../logging";
+import { limitLength, getLastSlash, dateToUnixTimeStamp } from "../utils";
+import { DEFAULT_DASHBOARD, EMOJI } from "@/constants";
+import { threadToURL } from "./helpers";
+import * as t from "./templates";
+import { getENS } from "@/api/helpers/ens";
 import { pollActionRow } from "./button/poll";
 
 const SILENT_FLAG = 1 << 12;
@@ -44,11 +43,11 @@ export class DiscordHandler {
       ]
     });
     this.discord.login(process.env[this.config.discord.API_KEY]).then(async () => {
-      this.discord.on('ready', async (discord) => {
+      this.discord.on("ready", async (discord) => {
         logger.debug(`Ready! Logged in as ${discord.user.username}`);
       });
     }).catch((e) => {
-      logger.error('discord auth failed!');
+      logger.error("discord auth failed!");
       logger.error(e);
     });
     this.roleTag = `<@&${this.config.discord.roles.governance}>`;
@@ -60,7 +59,7 @@ export class DiscordHandler {
   }
 
   logout() {
-    logger.info('logging out of discord');
+    logger.info("logging out of discord");
     this.discord.destroy();
   }
 
@@ -88,7 +87,7 @@ export class DiscordHandler {
   async startDiscussion(proposal: Proposal): Promise<string> {
     const authorENS = await getENS(proposal.authorAddress);
     const { customDomain } = this.config;
-    const message = await discordTemplates.startDiscussionMessage(
+    const message = await t.startDiscussionMessage(
       this.config.name,
       this.config.proposalIdPrefix,
       proposal,
@@ -101,7 +100,7 @@ export class DiscordHandler {
         name: limitLength(proposal.title),
         autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek
       });
-      return discordTemplates.threadToURL(thread);
+      return threadToURL(thread);
     } catch (e) {
       // if send fails try as forum (kind of a hack could improve later)
       const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
@@ -112,7 +111,7 @@ export class DiscordHandler {
         message: { embeds },
         autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek
       });
-      return discordTemplates.threadToURL(messageObj);
+      return threadToURL(messageObj);
     }
   }
 
@@ -130,7 +129,7 @@ export class DiscordHandler {
         const channel = this.getAlertChannel() as unknown as ForumChannel;
         const post = await channel.threads.fetch(messageId) as ThreadChannel;
         const messageObj = await post.fetchStarterMessage();
-        const pollResults = discordTemplates.blindPollMessage({ yes: 0, no: 0 });
+        const pollResults = t.blindPollMessage({ yes: 0, no: 0 });
         await messageObj?.edit({
           embeds: [messageObj.embeds[0], pollResults],
           components: [pollActionRow]
@@ -143,7 +142,7 @@ export class DiscordHandler {
   }
 
   async sendTemperatureCheckRollup(proposals: Proposal[], endDate: Date) {
-    const message = discordTemplates.temperatureCheckRollUpMessage(this.config.proposalIdPrefix, proposals, this.config.name, endDate);
+    const message = t.temperatureCheckRollUpMessage(this.config.proposalIdPrefix, proposals, this.config.name, endDate);
     return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
       return messageObj.id;
     }).catch((e) => {
@@ -152,7 +151,7 @@ export class DiscordHandler {
   }
 
   async sendVoteRollup(proposals: Proposal[], endDate: Date) {
-    const message = discordTemplates.voteRollUpMessage(
+    const message = t.voteRollUpMessage(
       this.spaceURL,
       this.config.proposalIdPrefix,
       proposals,
@@ -166,7 +165,7 @@ export class DiscordHandler {
   }
 
   async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
-    const message = discordTemplates.proposalsUnderQuorumMessage(this.spaceURL, this.config.proposalIdPrefix, proposals, this.config.snapshot.minTokenPassingAmount, this.config.name);
+    const message = t.proposalsUnderQuorumMessage(this.spaceURL, this.config.proposalIdPrefix, proposals, this.config.snapshot.minTokenPassingAmount, this.config.name);
     return this.getAlertChannel().send(
       { content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
         embeds: [message]
@@ -177,7 +176,7 @@ export class DiscordHandler {
   }
 
   async sendVoteResultsRollup(proposals: Proposal[]) {
-    const message = discordTemplates.voteResultsRollUpMessage(
+    const message = t.voteResultsRollUpMessage(
       this.spaceURL,
       this.config.name,
       this.config.proposalIdPrefix,
@@ -190,7 +189,7 @@ export class DiscordHandler {
 
   async editVoteResultsRollup(messageId: string, proposals: Proposal[]) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
-    const message = discordTemplates.voteResultsRollUpMessage(
+    const message = t.voteResultsRollUpMessage(
       this.spaceURL,
       this.config.name,
       this.config.proposalIdPrefix,
@@ -200,12 +199,12 @@ export class DiscordHandler {
   }
 
   async sendReminder(event: string, date: Date, type: string) {
-    const message = (type === 'start')
-      ? discordTemplates.reminderStartMessage(
+    const message = (type === "start")
+      ? t.reminderStartMessage(
         event,
         date,
       )
-      : discordTemplates.reminderEndMessage(
+      : t.reminderEndMessage(
         event,
         date,
       );
@@ -228,9 +227,9 @@ export class DiscordHandler {
     const reminderType = this.config.discord.reminder.type;
     let message: EmbedBuilder;
     let attachments: AttachmentBuilder[];
-    if (reminderType === 'image') {
+    if (reminderType === "image") {
       try {
-        ({ message, attachments } = await discordTemplates.dailyImageReminder(
+        ({ message, attachments } = await t.dailyImageReminder(
           day,
           this.config.discord.reminder.imagesCID,
           governanceCycle,
@@ -244,17 +243,17 @@ export class DiscordHandler {
       } catch (e) {
         logger.error(`Could not send daily image reminder for ${this.config.name}`);
         logger.error(e);
-        ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds));
+        ({ message, attachments } = t.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds));
       }
     } else { // default to basic
-      ({ message, attachments } = discordTemplates.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds, this.config.customDomain));
+      ({ message, attachments } = t.dailyBasicReminder(governanceCycle, day, type, proposals, space, this.config.proposalIdPrefix, endSeconds, this.config.customDomain));
     }
     const channelsSent = await Promise.all(this.getDailyUpdateChannels().map(async (channel) => {
       if (!channel) return undefined as unknown as TextChannel;
       // delete old messages
       const messages = await channel.messages.fetch({ limit: 20 });
       const deletePromises = messages.filter((m) => {
-        return m.author === this.discord.user && m.embeds[0]?.title === 'Governance Status';
+        return m.author === this.discord.user && m.embeds[0]?.title === "Governance Status";
       }).map((me) => { return me.delete(); });
       await Promise.all(deletePromises);
       try {
@@ -327,7 +326,7 @@ export class DiscordHandler {
   }
 
   async sendPollResults(pollResults: PollResults, outcome: boolean, threadId: string) {
-    const message = discordTemplates.pollResultsMessage(
+    const message = t.pollResultsMessage(
       pollResults,
       outcome,
       {
@@ -355,7 +354,7 @@ export class DiscordHandler {
       const channel = this.getAlertChannel() as unknown as ForumChannel;
       const post = await channel.threads.fetch(threadId) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
-      const results = discordTemplates.blindPollMessage({ yes, no }, pass);
+      const results = t.blindPollMessage({ yes, no }, pass);
       await messageObj?.edit({
         embeds: [messageObj.embeds[0], results],
         components: []
@@ -367,7 +366,7 @@ export class DiscordHandler {
   }
 
   async setStatus() {
-    this.discord.user?.setActivity(' ');
+    this.discord.user?.setActivity(" ");
   }
 
   async editDiscussionMessage(proposal: Proposal, forceEdit = false) {
@@ -375,7 +374,7 @@ export class DiscordHandler {
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const authorENS = await getENS(proposal.authorAddress);
       const { customDomain } = this.config;
-      const message = await discordTemplates.startDiscussionMessage(
+      const message = await t.startDiscussionMessage(
         this.config.name,
         this.config.proposalIdPrefix,
         proposal,
@@ -396,7 +395,7 @@ export class DiscordHandler {
       const messageObj = await post.fetchStarterMessage();
       const authorENS = await getENS(proposal.authorAddress);
       const { customDomain } = this.config;
-      const message = await discordTemplates.startDiscussionMessage(
+      const message = await t.startDiscussionMessage(
         this.config.name,
         this.config.proposalIdPrefix,
         proposal,
@@ -414,9 +413,9 @@ export class DiscordHandler {
   async editRollupMessage(proposals: Proposal[], status: string, messageId: string) {
     const messageObj = await this.getAlertChannel().messages.fetch(messageId);
     let message = new EmbedBuilder();
-    if (status === 'temperatureCheck') { message = discordTemplates.temperatureCheckRollUpMessage(this.config.proposalIdPrefix, proposals, this.config.name, new Date()); }
-    if (status === 'vote') {
-      message = discordTemplates.voteRollUpMessage(
+    if (status === "temperatureCheck") { message = t.temperatureCheckRollUpMessage(this.config.proposalIdPrefix, proposals, this.config.name, new Date()); }
+    if (status === "vote") {
+      message = t.voteRollUpMessage(
         `${DEFAULT_DASHBOARD}`,
         this.config.proposalIdPrefix,
         proposals,
@@ -431,15 +430,15 @@ export class DiscordHandler {
   }
 
   async sendPayoutsTable(payouts: SQLPayout[], governanceCycle: number) {
-    const response = discordTemplates.payoutsTable(payouts, governanceCycle, this.config.name, this.config.proposalIdPrefix);
+    const response = t.payoutsTable(payouts, governanceCycle, this.config.name, this.config.proposalIdPrefix);
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 
   async createTransactionThread(nonce: number, operation: string, links: EmbedField[]) {
-    const message = discordTemplates.transactionThread(nonce, operation, links);
+    const message = t.transactionThread(nonce, operation, links);
     const thread = await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] }).then((messageObj) => {
       return messageObj.startThread({
-        name: limitLength(message.data.title ?? 'thread'),
+        name: limitLength(message.data.title ?? "thread"),
         autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek
       });
     });
@@ -449,7 +448,7 @@ export class DiscordHandler {
   async editTransactionMessage(messageId: string, nonce: number, operation: string, links: EmbedField[]) {
     const messageObj = await this.getChannelById(this.config.discord.channelIds.transactions).messages.fetch(messageId);
     const editedMessage = messageObj.embeds[0];
-    const message = discordTemplates.transactionThread(nonce, operation, links);
+    const message = t.transactionThread(nonce, operation, links);
     // only edit description
     message.setTitle(editedMessage.title);
     message.setDescription(editedMessage.description);
@@ -467,7 +466,7 @@ export class DiscordHandler {
     encodeReconfigureFundingCycle?: string,
     viemFormatReconfig?: any,
   ) {
-    const message = discordTemplates.transactionSummary(
+    const message = t.transactionSummary(
       this.config.name,
       deadline,
       this.config.proposalIdPrefix,
@@ -478,11 +477,11 @@ export class DiscordHandler {
     );
     await this.getChannelById(threadId).send(message);
     if (encodeReconfigureFundingCycle) {
-      const attachment = new AttachmentBuilder(Buffer.from(encodeReconfigureFundingCycle, 'utf-8'), { name: `GC${governanceCycle}_hex.txt` });
+      const attachment = new AttachmentBuilder(Buffer.from(encodeReconfigureFundingCycle, "utf-8"), { name: `GC${governanceCycle}_hex.txt` });
       await this.getChannelById(threadId).send({ files: [attachment] });
     }
     if (viemFormatReconfig) {
-      const attachment = new AttachmentBuilder(Buffer.from(viemFormatReconfig, 'utf-8'), { name: `GC${governanceCycle}_viem.txt` });
+      const attachment = new AttachmentBuilder(Buffer.from(viemFormatReconfig, "utf-8"), { name: `GC${governanceCycle}_viem.txt` });
       await this.getChannelById(threadId).send({ files: [attachment] });
     }
   }
@@ -490,20 +489,20 @@ export class DiscordHandler {
   async sendProposalDiff(proposal: Proposal) {
     const { customDomain } = this.config;
     const threadId = getLastSlash(proposal.discussionThreadURL);
-    const message = discordTemplates.proposalDiff(this.config.name, proposal, customDomain);
+    const message = t.proposalDiff(this.config.name, proposal, customDomain);
     await this.getChannelById(threadId).send(message);
   }
 
   async sendProposalArchive(proposal: Proposal) {
     try {
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-      const message = discordTemplates.archiveDiscussionMessage(proposal);
+      const message = t.archiveDiscussionMessage(proposal);
       // keep url the same
       message.setURL(messageObj.embeds[0].url);
       messageObj.edit({ embeds: [message] });
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
       // send alert to thread
-      const archiveMessage = discordTemplates.proposalArchiveAlert();
+      const archiveMessage = t.proposalArchiveAlert();
       await messageObj.thread?.send({ content: archiveMessage });
     } catch (e) {
       const channel = this.getAlertChannel() as unknown as ForumChannel;
@@ -511,10 +510,10 @@ export class DiscordHandler {
       const messageObj = await post.fetchStarterMessage();
       await post.edit({ name: `[ARCHIVED] ${limitLength(proposal.title)}` });
       await messageObj?.edit({
-        embeds: [discordTemplates.archiveDiscussionMessage(proposal)],
+        embeds: [t.archiveDiscussionMessage(proposal)],
         components: []
       });
-      await post.send({ content: discordTemplates.proposalArchiveAlert() });
+      await post.send({ content: t.proposalArchiveAlert() });
     }
   }
 
@@ -523,7 +522,7 @@ export class DiscordHandler {
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const authorENS = await getENS(proposal.authorAddress);
       const { customDomain } = this.config;
-      const message = await discordTemplates.startDiscussionMessage(
+      const message = await t.startDiscussionMessage(
         this.config.name,
         this.config.proposalIdPrefix,
         proposal,
@@ -535,7 +534,7 @@ export class DiscordHandler {
       messageObj.edit({ embeds: [message] });
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
       // send alert to thread
-      const archiveMessage = discordTemplates.proposalUnarchiveAlert();
+      const archiveMessage = t.proposalUnarchiveAlert();
       await messageObj.thread?.send({ content: archiveMessage });
     } catch (e) {
       const channel = this.getAlertChannel() as unknown as ForumChannel;
@@ -545,19 +544,19 @@ export class DiscordHandler {
       await post.edit({ name: limitLength(title) });
       const authorENS = await getENS(proposal.authorAddress);
       const { customDomain } = this.config;
-      const message = await discordTemplates.startDiscussionMessage(
+      const message = await t.startDiscussionMessage(
         this.config.name,
         this.config.proposalIdPrefix,
         proposal,
         authorENS,
         customDomain
       );
-      const pollResults = discordTemplates.blindPollMessage({ yes: 0, no: 0 });
+      const pollResults = t.blindPollMessage({ yes: 0, no: 0 });
       await messageObj?.edit({
         embeds: [message, pollResults],
         components: [pollActionRow]
       });
-      await post.send({ content: discordTemplates.proposalUnarchiveAlert() });
+      await post.send({ content: t.proposalUnarchiveAlert() });
     }
   }
 
@@ -579,11 +578,11 @@ export class DiscordHandler {
   async sendProposalDelete(proposal: Proposal) {
     try {
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
-      const message = discordTemplates.deletedDiscussionMessage(proposal);
+      const message = t.deletedDiscussionMessage(proposal);
       messageObj.edit({ embeds: [message] });
       messageObj.thread?.edit({ name: limitLength(proposal.title) });
       // send alert to thread
-      const deleteMessage = discordTemplates.proposalDeleteAlert();
+      const deleteMessage = t.proposalDeleteAlert();
       // remove all reacts
       await messageObj.reactions.removeAll();
       await messageObj.thread?.send({ content: deleteMessage });
@@ -593,10 +592,10 @@ export class DiscordHandler {
       const messageObj = await post.fetchStarterMessage();
       await post.edit({ name: `[DELETED] ${limitLength(proposal.title)}` });
       await messageObj?.edit({
-        embeds: [discordTemplates.deletedDiscussionMessage(proposal)],
+        embeds: [t.deletedDiscussionMessage(proposal)],
         components: []
       });
-      await post.send({ content: discordTemplates.proposalDeleteAlert() });
+      await post.send({ content: t.proposalDeleteAlert() });
     }
   }
 }

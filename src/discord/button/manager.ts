@@ -1,11 +1,11 @@
 import { ButtonInteraction } from "discord.js";
 import { createHmac } from "crypto";
 import { oneLineTrim } from "common-tags";
-import { getSpaceByDiscordGuildId } from "../../api/helpers/getSpace";
-import { keys } from "../../keys";
-import { DoltHandler } from "../../dolt/doltHandler";
-import { pools } from "../../dolt/pools";
-import { blindPollMessage } from "../discordTemplates";
+import { getSpaceByDiscordGuildId } from "@/api/helpers/getSpace";
+import { keys } from "@/keys";
+import { DoltHandler } from "@/dolt/doltHandler";
+import { pools } from "@/dolt/pools";
+import { blindPollMessage } from "../templates";
 import { ID_KEYWORD, pollActionRow } from "./poll";
 
 export async function buttonManager(interaction: ButtonInteraction) {
