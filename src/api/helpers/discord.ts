@@ -81,8 +81,9 @@ export const discordEditProposal = async (
 
   // send edit alert to discord
   const actionsChanged = !isEqual(proposalInDb.actions, proposal.actions);
-  const diff = !isEqual(proposalInDb.body, proposal.body)
+  const diff = !isEqual(proposalInDb.body, proposal.body);
   if (
+    proposal.status !== "Archived" &&
     proposalInDb.discussionThreadURL &&
     (diff || actionsChanged || proposalInDb.title !== proposal.title)
   ) {
@@ -93,4 +94,4 @@ export const discordEditProposal = async (
   }
   discord.logout();
   return null;
-}
+};

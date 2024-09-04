@@ -43,8 +43,11 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   }
   governanceCycle = currentCycle + 1;
 
+  const title = proposal.title || proposalInDb?.title || "Untitled Proposal";
+
   return {
     ...proposal,
+    title,
     uuid,
     status,
     authorAddress,
