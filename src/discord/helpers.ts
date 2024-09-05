@@ -1,4 +1,4 @@
-import { ThreadChannel } from "discord.js";
+import { ThreadChannel, Message } from "discord.js";
 import { Proposal, SQLPayout } from "@nance/nance-sdk";
 import { EMOJI, DEFAULT_DASHBOARD } from "@/constants";
 
@@ -44,4 +44,10 @@ export const getPayoutHeadline = (payout: SQLPayout) => {
   if (payout.payProject) { return { text: `v2p${payout.payProject}`, link: `https://juicebox.money/v2/p/${payout.payProject}` }; }
   if (payout.payENS) { return { text: `${payout.payENS}`, link: `https://etherscan.com/address/${payout.payAddress}` }; }
   return { text: `${payout.payAddress?.slice(0, 5)}...${payout.payAddress?.slice(38)}`, link: `https://etherscan.com/address/${payout.payAddress}` };
+};
+
+export const removeReacts = async (message: Message) => {
+  message.reactions.cache.forEach((reaction) => {
+    reaction.users.remove(message.client.user.id);
+  });
 };

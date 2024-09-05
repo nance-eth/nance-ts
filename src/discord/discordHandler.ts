@@ -19,7 +19,7 @@ import { Proposal, PollResults, NanceConfig, SQLPayout } from "@nance/nance-sdk"
 import logger from "../logging";
 import { limitLength, getLastSlash, dateToUnixTimeStamp } from "../utils";
 import { DEFAULT_DASHBOARD, EMOJI } from "@/constants";
-import { threadToURL } from "./helpers";
+import { removeReacts, threadToURL } from "./helpers";
 import * as t from "./templates";
 import { getENS } from "@/api/helpers/ens";
 import { pollActionRow } from "./button/poll";
@@ -63,7 +63,7 @@ export class DiscordHandler {
     this.discord.destroy();
   }
 
-  private getAlertChannel(): TextChannel {
+  getAlertChannel(): TextChannel {
     return this.discord.channels.cache.get(this.config.discord.channelIds.proposals) as TextChannel;
   }
 
@@ -585,7 +585,7 @@ export class DiscordHandler {
       // send alert to thread
       const deleteMessage = t.proposalDeleteAlert();
       // remove all reacts
-      await messageObj.reactions.removeAll();
+      removeReacts(messageObj);
       await messageObj.thread?.send({ content: deleteMessage });
     } catch (e) {
       const channel = this.getAlertChannel() as unknown as ForumChannel;
