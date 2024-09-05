@@ -1,12 +1,11 @@
 /* eslint-disable prefer-promise-reject-errors */
-import { SpaceInfoExtended, DateEvent, SQLSpaceConfig } from '@nance/nance-sdk';
+import { SpaceInfoExtended, DateEvent, SQLSpaceConfig } from "@nance/nance-sdk";
 import { sum } from "lodash";
-import { DoltSysHandler } from '../../dolt/doltSysHandler';
-import { pools } from '../../dolt/pools';
-import { getCurrentEvent, getCurrentGovernanceCycleDay, getNextEvents } from '../../calendar/events';
-import { EVENTS } from "../../constants";
+import { DoltSysHandler } from "@/dolt/doltSysHandler";
+import { pools } from "@/dolt/pools";
+import { getCurrentEvent, getCurrentGovernanceCycleDay, getNextEvents } from "@/calendar/events";
 import { getNextEventByName } from "./getNextEventByName";
-import { addDaysToDate } from "../../utils";
+import { addDaysToDate } from "@/utils";
 
 const doltSys = new DoltSysHandler(pools.nance_sys);
 
@@ -20,8 +19,8 @@ export const getSpaceInfo = (spaceConfig: SQLSpaceConfig) => {
   const nextEvents = getNextEvents(cycleStartReference, cycleStageLengths, new Date());
   const currentEvent = getCurrentEvent(cycleStartReference, cycleStageLengths, new Date(), nextEvents);
   const currentCycleDay = getCurrentGovernanceCycleDay(currentEvent, cycleStageLengths, new Date());
-  let cycleStartDate = getNextEventByName(EVENTS.TEMPERATURE_CHECK, spaceConfig)?.start || new Date();
-  // if this the cycle start date is in the past, then we are currently in TEMPERATURE_CHECK and need to add 14 days
+  let cycleStartDate = getNextEventByName("Temperature Check", spaceConfig)?.start || new Date();
+  // if this the cycle start date is in the past, then we are currently in "Temperature Check" and need to add 14 days
   if (cycleStartDate < new Date()) {
     cycleStartDate = addDaysToDate(cycleStartDate, sum(cycleStageLengths));
   }
@@ -37,7 +36,7 @@ export const getSpaceInfo = (spaceConfig: SQLSpaceConfig) => {
     return [...acc, { title: event.title, start: event.start.toISOString(), end: event.end.toISOString() }];
   }, [] as DateEvent[]);
 
-  const cycleTriggerTime = cycleStartReference?.toISOString().split('T')[1] || "00:00:00";
+  const cycleTriggerTime = cycleStartReference?.toISOString().split("T")[1] || "00:00:00";
   return {
     name: spaceConfig.space,
     displayName: spaceConfig.displayName || spaceConfig.space,

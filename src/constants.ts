@@ -1,23 +1,5 @@
 export const DEFAULT_DASHBOARD = "https://nance.app";
 
-export const EVENTS = {
-  TEMPERATURE_CHECK: "Temperature Check",
-  SNAPSHOT_VOTE: "Snapshot Vote",
-  EXECUTION: "Execution",
-  DELAY: "Delay",
-  UNKNOWN: "Unknown",
-} as const;
-
-export const STATUS = {
-  ACTION: {
-    ACTIVE: "active",
-    COMPLETE: "complete",
-    CANCELLED: "cancelled",
-    VOTING: "voting",
-    PAUSED: "paused",
-  }
-};
-
 export const TASKS = {
   sendDailyAlert: "sendDailyAlert",
   temperatureCheckStartAlert: "temperatureCheckStartAlert",
