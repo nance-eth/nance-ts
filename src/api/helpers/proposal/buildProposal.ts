@@ -37,7 +37,7 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   // assign governanceCycle
   let governanceCycle: number;
   if (config.allowCurrentCycleSubmission &&
-    currentEvent.title === "Temperature Check"
+    currentEvent.title !== "Snapshot Vote"
   ) {
     governanceCycle = currentCycle;
   } else {
