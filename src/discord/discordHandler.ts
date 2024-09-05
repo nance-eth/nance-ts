@@ -166,11 +166,12 @@ export class DiscordHandler {
 
   async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
     const message = t.proposalsUnderQuorumMessage(this.spaceURL, this.config.proposalIdPrefix, proposals, this.config.snapshot.minTokenPassingAmount, this.config.name);
-    return this.getAlertChannel().send(
-      {
-        content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
-        embeds: [message]
-      }).then((messageObj) => {
+    return this.getAlertChannel()
+      .send(
+        {
+          content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
+          embeds: [message]
+        }).then((messageObj) => {
         messageObj.crosspost();
         return messageObj.id;
       });
