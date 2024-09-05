@@ -167,12 +167,13 @@ export class DiscordHandler {
   async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
     const message = t.proposalsUnderQuorumMessage(this.spaceURL, this.config.proposalIdPrefix, proposals, this.config.snapshot.minTokenPassingAmount, this.config.name);
     return this.getAlertChannel().send(
-      { content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
+      {
+        content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
         embeds: [message]
       }).then((messageObj) => {
-      messageObj.crosspost();
-      return messageObj.id;
-    });
+        messageObj.crosspost();
+        return messageObj.id;
+      });
   }
 
   async sendVoteResultsRollup(proposals: Proposal[]) {
@@ -597,5 +598,18 @@ export class DiscordHandler {
       });
       await post.send({ content: t.proposalDeleteAlert() });
     }
+  }
+
+  async sendProposalActionPoll(proposal: Proposal) {
+    const thread = await this.getAlertChannel().threads.fetch(getLastSlash(proposal.discussionThreadURL));
+    if (!thread) throw Error("Thread not found");
+    const message = t.proposalActionPoll(proposal, this.config.proposalIdPrefix);
+    const pollId = await thread.send({ embeds: [message] });
+    // add reacts
+    await Promise.all([
+      pollId.react(EMOJI.YES),
+      pollId.react(EMOJI.NO),
+    ]);
+    return pollId.id;
   }
 }

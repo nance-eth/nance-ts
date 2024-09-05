@@ -17,7 +17,7 @@ import { logProposal } from "@/api/helpers/proposal/logProposal";
 const router = Router({ mergeParams: true });
 
 // GET /:space/proposal/:pid
-router.get('/:pid', async (req: Request, res: Response) => {
+router.get("/:pid", async (req: Request, res: Response) => {
   const { space, pid } = req.params;
   const { dolt, config, nextProposalId } = res.locals as Middleware;
   let proposal: Proposal | undefined;
@@ -34,12 +34,12 @@ router.get('/:pid', async (req: Request, res: Response) => {
     const data: ProposalPacket = { ...proposal, proposalInfo };
     res.json({ success: true, data });
   } catch (e: any) {
-    res.send({ success: false, error: e.toString() });
+    res.json({ success: false, error: e.toString() });
   }
 });
 
 // POST /:space/proposal/:pid/discussion
-router.post('/:pid/discussion', async (req: Request, res: Response) => {
+router.post("/:pid/discussion", async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
     const { dolt } = res.locals as Middleware;
@@ -53,12 +53,12 @@ router.post('/:pid/discussion', async (req: Request, res: Response) => {
     clearCache(space);
     res.json({ success: true, discussionThreadURL });
   } catch (e: any) {
-    res.send({ success: false, error: e.toString() });
+    res.json({ success: false, error: e.toString() });
   }
 });
 
 // PUT /:space/proposal/:pid
-router.put('/:pid', async (req: Request, res: Response) => {
+router.put("/:pid", async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
     const { proposal, envelope } = req.body as ProposalUpdateRequest;
@@ -97,7 +97,7 @@ router.put('/:pid', async (req: Request, res: Response) => {
 });
 
 // DELETE /:space/proposal/:pid
-router.delete('/:pid', async (req: Request, res: Response) => {
+router.delete("/:pid", async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
     const { envelope } = req.body as ProposalDeleteRequest;
