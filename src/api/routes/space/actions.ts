@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { ActionStatusNames } from "@nance/nance-sdk";
+import { ActionPacket, ActionStatusNames } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
 import { discordLogin } from "@/api/helpers/discord";
 
@@ -11,12 +11,14 @@ router.get("/", async (req: Request, res: Response) => {
   try {
     const { dolt } = res.locals as Middleware;
     const { proposals } = await dolt.getProposals({ actionTrackingStatus: viableActions });
-    const actionsPacket = proposals.flatMap((proposal) => {
+    const actionsPacket: ActionPacket[] = proposals.flatMap((proposal) => {
       if (!proposal.actions) return [];
       return proposal.actions.map((action) => ({
-        proposalTitle: proposal.title,
-        proposalId: proposal.proposalId,
-        ...action,
+        proposal: {
+          title: proposal.title,
+          id: Number(proposal.proposalId),
+        },
+        action
       }));
     });
     res.json({ success: true, data: actionsPacket });
