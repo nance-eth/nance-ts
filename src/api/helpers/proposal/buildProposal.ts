@@ -40,8 +40,9 @@ export function buildProposal(input: BuildProposalInput): Proposal {
     currentEvent.title === "Temperature Check"
   ) {
     governanceCycle = currentCycle;
+  } else {
+    governanceCycle = currentCycle + 1;
   }
-  governanceCycle = currentCycle + 1;
 
   const title = proposal.title || proposalInDb?.title || "Untitled Proposal";
 
