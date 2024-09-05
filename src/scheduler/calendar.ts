@@ -1,13 +1,13 @@
-import schedule from 'node-schedule';
-import retry from 'promise-retry';
-import { InternalDateEvent, NanceConfig, SQLSpaceConfig } from '@nance/nance-sdk';
-import { EVENTS, ONE_HOUR_SECONDS, TASKS } from '../constants';
-import * as tasks from '../tasks';
-import { addDaysToDate, addSecondsToDate } from '../utils';
-import { getNextEvents } from '../calendar/events';
+import schedule from "node-schedule";
+import retry from "promise-retry";
+import { InternalDateEvent, NanceConfig, SQLSpaceConfig } from "@nance/nance-sdk";
+import { ONE_HOUR_SECONDS, TASKS } from "../constants";
+import * as tasks from "../tasks";
+import { addDaysToDate, addSecondsToDate } from "../utils";
+import { getNextEvents } from "../calendar/events";
 
 // node-schedule uses local time by default
-process.env.TZ = 'UTC';
+process.env.TZ = "UTC";
 
 const isNotScheduled = (jobName: string) => {
   return !schedule.scheduledJobs[jobName];
@@ -28,7 +28,7 @@ const scheduleJob = (jobName: string, date: Date, func: () => void) => {
 
 export const scheduleCalendarTasks = async (space: string, config: NanceConfig, events: InternalDateEvent[]) => {
   events.forEach(async (event) => {
-    if (event.title === EVENTS.TEMPERATURE_CHECK) {
+    if (event.title === "Temperature Check") {
       // Increment Governance Cycle 5 seconds before Temperature Check starts
       const incrementGovernanceCycleDate = addSecondsToDate(event.start, -5);
       scheduleJob(`${space}:${TASKS.incrementGovernanceCycle}`, incrementGovernanceCycleDate, () => {
@@ -38,7 +38,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       // Temperature Check start alert
       const sendTemperatureCheckStartDate = addSecondsToDate(event.start, -ONE_HOUR_SECONDS);
       scheduleJob(`${space}:${TASKS.temperatureCheckStartAlert}`, sendTemperatureCheckStartDate, () => {
-        tasks.sendStartOrEndAlert(space, config, event.start, EVENTS.TEMPERATURE_CHECK, TASKS.temperatureCheckStartAlert, 'start');
+        tasks.sendStartOrEndAlert(space, config, event.start, "Temperature Check", TASKS.temperatureCheckStartAlert, "start");
       });
       // Delete Temperature Check start alert
       scheduleJob(`${space}:${TASKS.deleteTemperatureCheckStartAlert}`, event.start, () => {
@@ -53,7 +53,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       scheduleJob(`${space}:${TASKS.temperatureCheckEndAlert}`, sendTemperatureCheckEndDate, async () => {
         const shouldSendAlert = await tasks.shouldSendAlert(space, config);
         if (!shouldSendAlert) return;
-        tasks.sendStartOrEndAlert(space, config, event.end, EVENTS.TEMPERATURE_CHECK, TASKS.temperatureCheckEndAlert, 'end');
+        tasks.sendStartOrEndAlert(space, config, event.end, "Temperature Check", TASKS.temperatureCheckEndAlert, "end");
       });
       // Delete Temperature Check end alert
       scheduleJob(`${space}:${TASKS.deleteTemperatureCheckEndAlert}`, event.end, () => {
@@ -64,7 +64,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
         tasks.temperatureCheckClose(space, config);
       });
     }
-    if (event.title === EVENTS.SNAPSHOT_VOTE) {
+    if (event.title === "Snapshot Vote") {
       // Vote setup
       const voteSetupDate = addSecondsToDate(event.start, 60);
       scheduleJob(`${space}:${TASKS.voteSetup}`, voteSetupDate, () => {
@@ -82,7 +82,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       scheduleJob(`${space}:${TASKS.voteOneDayEndAlert}`, sendVoteOneDayEndDate, async () => {
         const shouldSendAlert = await tasks.shouldSendAlert(space, config);
         if (!shouldSendAlert) return;
-        tasks.sendStartOrEndAlert(space, config, event.end, EVENTS.SNAPSHOT_VOTE, TASKS.voteOneDayEndAlert, 'end');
+        tasks.sendStartOrEndAlert(space, config, event.end, "Snapshot Vote", TASKS.voteOneDayEndAlert, "end");
       });
       // Send Vote quorum alert
       const sendVoteQuorumAlertDate = addSecondsToDate(event.end, -4 * ONE_HOUR_SECONDS);
@@ -94,7 +94,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       scheduleJob(`${space}:${TASKS.voteEndAlert}`, sendVoteEndDate, async () => {
         const shouldSendAlert = await tasks.shouldSendAlert(space, config);
         if (!shouldSendAlert) return;
-        tasks.sendStartOrEndAlert(space, config, event.end, EVENTS.SNAPSHOT_VOTE, TASKS.voteEndAlert, 'end');
+        tasks.sendStartOrEndAlert(space, config, event.end, "Snapshot Vote", TASKS.voteEndAlert, "end");
       });
       // Delete Vote end alert
       scheduleJob(`${space}:${TASKS.deleteVoteEndAlert}`, event.end, () => {
@@ -109,7 +109,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
         }
       });
     }
-    if (event.title === EVENTS.EXECUTION) {
+    if (event.title === "Execution") {
       // Bookkeeping
       const bookkeepingDate = addSecondsToDate(event.start, 5 * 60);
       scheduleJob(`${space}:${TASKS.sendBookkeeping}`, bookkeepingDate, () => {

@@ -1,4 +1,4 @@
-import { NanceConfig } from '@nance/nance-sdk';
+import { GovernanceEvent, NanceConfig } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
 import { doltSys } from '../dolt/doltSys';
 import logger from '../logging';
@@ -7,7 +7,7 @@ export const sendStartOrEndAlert = async (
   space: string,
   config: NanceConfig,
   startOrEndDate: Date,
-  event: string,
+  event: GovernanceEvent,
   dialogHandlerMessageType: string,
   startOrEnd: 'start' | 'end'
 ) => {
