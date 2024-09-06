@@ -13,6 +13,7 @@ export const discordLogin = async (config: NanceConfig) => {
 };
 
 export const discordInitButtonManager = async () => {
+  if (process.env.LOCAL_DB) return;
   try {
     const discord = new Client({
       intents: [

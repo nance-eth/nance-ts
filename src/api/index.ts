@@ -25,7 +25,7 @@ app.use(cors({
 
 app.set("json spaces", 2);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Started on: http://localhost:${PORT}`);
 });
 
@@ -35,7 +35,7 @@ app.get("/", (_, res) => {
   return res.send(`nance-api commit: ${commit ?? "LOCAL"}`);
 });
 
-const init = async () => {
+export const init = async () => {
   app.use("/docs", await TspecDocsMiddleware(params));
   app.use("/ish", system);
   app.use("/tasks", tasks);
@@ -47,6 +47,11 @@ const init = async () => {
   app.use("/:space/summary", spaceSummary);
   app.use("/:space/actions", spaceActions);
   await discordInitButtonManager();
+};
+
+export const shutdown = async () => {
+  console.log("Shutting down...");
+  server.close();
 };
 
 init();

@@ -25,4 +25,12 @@ export async function fetchPools() {
   return pools;
 }
 
+export async function closePools() {
+  if (pools) {
+    Object.keys(pools).forEach((key) => {
+      pools[key].db.end();
+    });
+  }
+}
+
 fetchPools();

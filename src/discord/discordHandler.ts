@@ -611,6 +611,6 @@ export class DiscordHandler {
       pollId.react(EMOJI.YES),
       pollId.react(EMOJI.NO),
     ]);
-    return pollId.id;
+    return pollId.url;
   }
 }

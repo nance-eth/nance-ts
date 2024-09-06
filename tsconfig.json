@@ -12,15 +12,18 @@
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "baseUrl": "src",
+    "rootDir": ".",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["src/*"],
+      "@test/*": ["test/*"]
     }
   },
   "include": [
     "src/**/*",
     "src/config/**/*.json",
+    "test/**/*",
+    "jest.config.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }

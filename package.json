@@ -7,6 +7,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
+    "test": "export LOCAL_DB=1 && jest",
     "dev": "node dev.js",
     "clean": "rm -rf node_modules && rm -rf dist",
     "freshen": "npm run clean && npm install",
@@ -61,8 +62,10 @@
     "eslint": "^8.14.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^17.0.0",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.4",
     "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
     "tsx": "^4.19.0"
   }
 }

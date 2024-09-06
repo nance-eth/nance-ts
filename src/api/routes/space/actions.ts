@@ -7,7 +7,7 @@ const router = Router({ mergeParams: true });
 const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
 
 // GET /:space/actions
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (_: Request, res: Response) => {
   try {
     const { dolt } = res.locals as Middleware;
     const { proposals } = await dolt.getProposals({ actionTrackingStatus: viableActions });

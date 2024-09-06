@@ -2,7 +2,7 @@ import { stripIndents } from "common-tags";
 import { EmbedBuilder } from "discord.js";
 import { Proposal } from "@nance/nance-sdk";
 import { dateToUnixTimeStamp, numToPrettyString } from "@/utils";
-import { DEFAULT_DASHBOARD } from "@/constants";
+import { DEFAULT_DASHBOARD, EMOJI } from "@/constants";
 import { getProposalURL } from "../helpers";
 
 export const temperatureCheckRollUpMessage = (proposalIdPrefix: string, proposals: Proposal[], space: string, endDate: Date) => {

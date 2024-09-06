@@ -3,6 +3,7 @@ import {
   Proposal,
   ProposalDeleteRequest,
   ProposalPacket,
+  ProposalStatus,
   ProposalUpdateRequest
 } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
@@ -93,6 +94,24 @@ router.put("/:pid", async (req: Request, res: Response) => {
     if (discussionThreadURL) await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
   } catch (e: any) {
     res.json({ success: false, error: e.toString() });
+  }
+});
+
+// PATCH /:space/proposal/:pid/status
+router.patch("/:pid/status", async (req: Request, res: Response) => {
+  try {
+    const { space, pid } = req.params;
+    const { status } = req.body as { status: ProposalStatus };
+    const { dolt, address, spaceOwners } = res.locals as Middleware;
+    const proposalInDb = await dolt.getProposalByAnyId(pid);
+    if (!proposalInDb) throw Error("Proposal not found");
+    if (!address) throw Error("Must supply jwt address to change status");
+    checkPermissions(proposalInDb, proposalInDb, address, spaceOwners, "adminStatusUpdate");
+    const uuid = await dolt.editProposal({ status, uuid: proposalInDb.uuid });
+    res.json({ success: true, data: { uuid } });
+    clearCache(space);
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
   }
 });
 
