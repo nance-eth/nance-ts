@@ -13,6 +13,7 @@ router.get("/:type/:pid", async (req: Request, res: Response) => {
     const summary = await getSummary(space, pid, type);
     const proposal = await dolt.getProposalByAnyId(pid);
     await dolt.updateSummary(proposal.uuid, summary, type);
+    res.json({ success: true, data: summary });
   } catch (e: any) {
     res.json({ success: false, error: e.toString() });
   }
