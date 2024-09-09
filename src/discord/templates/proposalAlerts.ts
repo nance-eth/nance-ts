@@ -3,7 +3,7 @@ import { EmbedBuilder } from "discord.js";
 import { stripIndents } from "common-tags";
 import { getProposalURL } from "../helpers";
 import { dateToUnixTimeStamp, maybePlural, numToPrettyString } from "@/utils";
-import { actionsToMarkdown } from "@/tasks/voteSetup";
+import { actionsToMarkdown } from "./actions";
 import { DEFAULT_DASHBOARD, EMOJI } from "@/constants";
 
 export const startDiscussionMessage = async (

@@ -6,14 +6,19 @@ import { cloneDeepWith, merge } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { NanceConfig } from "@nance/nance-sdk";
+import { Contract } from "ethers";
+import { erc20Abi } from "viem";
 import { keys } from "./keys";
 import { NETWORKS } from "./constants";
 
 const networkToRPC = {
   mainnet: `https://mainnet.infura.io/v3/${keys.INFURA_KEY}`,
+  1: `https://mainnet.infura.io/v3/${keys.INFURA_KEY}`,
   [NETWORKS.GOERLI]: `https://goerli.infura.io/v3/${keys.INFURA_KEY}`,
   [NETWORKS.GNOSIS]: "https://rpc.ankr.com/gnosis",
+  100: "https://rpc.ankr.com/gnosis",
   [NETWORKS.OPTIMISM]: `https://optimism-mainnet.infura.io/v3/${keys.INFURA_KEY}`,
+  10: `https://optimism-mainnet.infura.io/v3/${keys.INFURA_KEY}`,
 };
 
 export const chainIdToExplorer = (chainId: number) => {
@@ -239,6 +244,17 @@ export const getContractName = async (address: string) => {
     return res.data.result[0].ContractName;
   } catch (e) {
     console.log(e);
+    return address;
+  }
+};
+
+export const getTokenSymbol = async (address: string, chainId = 1) => {
+  try {
+    const provider = myProvider(String(chainId));
+    const contract = new Contract(address, erc20Abi, provider);
+    const symbol = await contract.symbol();
+    return symbol;
+  } catch (e) {
     return address;
   }
 };
