@@ -25,7 +25,7 @@ app.use(cors({
 
 app.set("json spaces", 2);
 
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Started on: http://localhost:${PORT}`);
 });
 
@@ -47,11 +47,6 @@ export const init = async () => {
   app.use("/:space/summary", spaceSummary);
   app.use("/:space/actions", spaceActions);
   await discordInitButtonManager();
-};
-
-export const shutdown = async () => {
-  console.log("Shutting down...");
-  server.close();
 };
 
 init();

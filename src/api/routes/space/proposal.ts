@@ -4,6 +4,7 @@ import {
   ProposalDeleteRequest,
   ProposalPacket,
   ProposalStatus,
+  ProposalStatusNames,
   ProposalUpdateRequest
 } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
@@ -98,10 +99,10 @@ router.put("/:pid", async (req: Request, res: Response) => {
 });
 
 // PATCH /:space/proposal/:pid/status
-router.patch("/:pid/status", async (req: Request, res: Response) => {
+router.patch("/:pid/status/:status", async (req: Request, res: Response) => {
   try {
-    const { space, pid } = req.params;
-    const { status } = req.body as { status: ProposalStatus };
+    const { space, pid, status } = req.params as { space: string, pid: string, status: ProposalStatus };
+    if (!ProposalStatusNames.includes(status)) throw Error("Invalid proposal status");
     const { dolt, address, spaceOwners } = res.locals as Middleware;
     const proposalInDb = await dolt.getProposalByAnyId(pid);
     if (!proposalInDb) throw Error("Proposal not found");
