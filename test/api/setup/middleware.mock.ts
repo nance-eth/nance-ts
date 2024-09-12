@@ -25,7 +25,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     // const auth = req?.headers?.authorization;
     // Send author through headers for testing
-    const address = req.headers.authorization
+    const address = req.headers.authorization;
     const { space } = req.params;
     const query = space.toLowerCase();
     if (!Object.keys(pools).includes(query)) {

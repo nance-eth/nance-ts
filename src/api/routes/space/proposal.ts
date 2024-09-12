@@ -36,7 +36,7 @@ router.get("/:pid", async (req: Request, res: Response) => {
     const data: ProposalPacket = { ...proposal, proposalInfo };
     res.json({ success: true, data });
   } catch (e: any) {
-    res.json({ success: false, error: e.toString() });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -55,7 +55,7 @@ router.post("/:pid/discussion", async (req: Request, res: Response) => {
     clearCache(space);
     res.json({ success: true, discussionThreadURL });
   } catch (e: any) {
-    res.json({ success: false, error: e.toString() });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -94,7 +94,7 @@ router.put("/:pid", async (req: Request, res: Response) => {
     const discussionThreadURL = await discordEditProposal(updateProposal, proposalInDb, config);
     if (discussionThreadURL) await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
   } catch (e: any) {
-    res.json({ success: false, error: e.toString() });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -140,7 +140,7 @@ router.delete("/:pid", async (req: Request, res: Response) => {
       } catch (e) { console.error(`[DISCORD] ${e}`); }
     });
   } catch (e: any) {
-    res.json({ success: false, error: e.toString() });
+    res.json({ success: false, error: e.message });
   }
 });
 

@@ -1,4 +1,4 @@
-import { Proposal, ProposalStatus } from "@nance/nance-sdk";
+import { Proposal, ProposalStatus, ProposalStatusNames } from "@nance/nance-sdk";
 import { Middleware } from "@/api/routes/space/middleware";
 import { uuidGen } from "@/utils";
 
@@ -16,6 +16,11 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   // merge old and new values
   const { proposal, proposalInDb, config, currentEvent, currentCycle, nextProposalId } = input;
   const { status, authorAddress, coauthors, snapshotId } = input;
+
+  // validate status input
+  if (status && !ProposalStatusNames.includes(status)) {
+    throw Error(`Invalid proposal status. Must be ${ProposalStatusNames.join(" | ")}`)
+  }
 
   // assign uuid
   const uuid = proposalInDb?.uuid || proposal.uuid || uuidGen();
