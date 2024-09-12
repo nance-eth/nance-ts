@@ -15,6 +15,7 @@ import { canEditProposal } from "@/api/helpers/permissions";
 import { checkPermissions, validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
 import { buildProposal } from "@/api/helpers/proposal/buildProposal";
 import { logProposal } from "@/api/helpers/proposal/logProposal";
+import { getProposalsWithVotes, votePassCheck } from "@/tasks/helpers/voting";
 
 const router = Router({ mergeParams: true });
 
@@ -107,10 +108,36 @@ router.patch("/:pid/status/:status", async (req: Request, res: Response) => {
     const proposalInDb = await dolt.getProposalByAnyId(pid);
     if (!proposalInDb) throw Error("Proposal not found");
     if (!address) throw Error("Must supply jwt address to change status");
-    checkPermissions(proposalInDb, proposalInDb, address, spaceOwners, "adminStatusUpdate");
+    checkPermissions(proposalInDb, proposalInDb, address, spaceOwners, "admin");
     const uuid = await dolt.editProposal({ status, uuid: proposalInDb.uuid });
     res.json({ success: true, data: { uuid } });
     clearCache(space);
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// PATCH /:space/proposal/:pid/sync
+// sync snapshot results, admin only
+router.patch("/:pid/sync", async (req: Request, res: Response) => {
+  try {
+    const { dolt, config, address, spaceOwners } = res.locals as Middleware;
+    if (!address) throw Error("Must supply jwt address to change status");
+    const { pid } = req.params;
+    const proposal = await dolt.getProposalByAnyId(pid);
+    if (!proposal) return;
+    checkPermissions(proposal, proposal, address, spaceOwners, "admin");
+    const [proposalWithVoteResults] = await getProposalsWithVotes(config, [proposal]);
+    if (!proposalWithVoteResults.voteResults) throw Error("Error fetching vote results");
+    const pass = (votePassCheck(config, proposalWithVoteResults.voteResults));
+    const outcomeStatus = pass ? "Approved" : "Cancelled";
+    const updatedProposal: Proposal = {
+      ...proposal,
+      status: outcomeStatus,
+      voteResults: proposalWithVoteResults.voteResults
+    };
+    await dolt.updateVotingClose(updatedProposal);
+    res.json({ success: true });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }

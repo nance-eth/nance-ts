@@ -1,10 +1,11 @@
-import { Router, Request, Response } from "express";
-import { ActionPacket, ActionStatusNames } from "@nance/nance-sdk";
+import { Router, Request, Response, NextFunction } from "express";
+import { ActionPacket, ActionStatusNames, Proposal } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
 import { discordLogin } from "@/api/helpers/discord";
 
 const router = Router({ mergeParams: true });
 const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
+type ActionMiddleware = Middleware & { actionPacket: ActionPacket, proposal: Proposal };
 
 // GET /:space/actions
 router.get("/", async (_: Request, res: Response) => {
@@ -27,19 +28,61 @@ router.get("/", async (_: Request, res: Response) => {
   }
 });
 
-// GET /:space/actions/:pid/:uuid/poll
-router.get("/:pid/:uuid/poll", async (req: Request, res: Response) => {
+// action ID (aid) middleware
+router.use("/:aid", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { dolt, config } = res.locals as Middleware;
-    const { pid, uuid } = req.params;
-    const proposal = await dolt.getProposalByAnyId(pid);
-    if (!proposal) throw new Error("Proposal not found");
-    const action = proposal.actions?.find((a) => a.uuid === uuid);
-    if (!action) throw new Error("Action not found");
-    if (!action.pollRequired) throw new Error("Action does not require a poll");
+    const { aid } = req.params;
+    const { dolt } = res.locals as Middleware;
+    const proposal = await dolt.getProposalByActionId(aid);
+    if (!proposal || !proposal.proposalId) throw Error(`No proposal found containing action id ${aid}`);
+    const action = proposal?.actions?.find((a) => a?.uuid === aid);
+    if (!action) throw Error("Action not found");
+    const actionPacket: ActionPacket = {
+      action,
+      proposal: {
+        title: proposal.title,
+        id: proposal.proposalId
+      }
+    };
+    res.locals.actionPacket = actionPacket;
+    res.locals.proposal = proposal;
+    next();
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// GET /:space/actions/:aid
+router.get("/:aid", async (_: Request, res: Response) => {
+  try {
+    const { actionPacket } = res.locals;
+    res.json({ success: true, data: actionPacket });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// POST /:space/actions/:uuid/poll
+router.get("/:aid/poll", async (req: Request, res: Response) => {
+  try {
+    const { dolt, config, actionPacket, proposal } = res.locals as ActionMiddleware;
+    if (!proposal.actions) throw new Error("Proposal actions are undefined");
+    if (!actionPacket.action.pollRequired) throw new Error("Action does not require a poll");
+    if (actionPacket.action.actionTracking?.some((at) => at.status !== "Poll Required")) {
+      throw new Error("Poll already run");
+    }
+
     const discord = await discordLogin(config);
-    await discord.sendProposalActionPoll(proposal);
-    res.json({ success: true, data: action });
+    const pollId = await discord.sendProposalActionPoll(proposal);
+    const updatedActionTracking = proposal.actions.map((a) => {
+      if (!a.actionTracking) throw new Error("Action tracking is undefined");
+      if (a.uuid === actionPacket.action.uuid) {
+        return a.actionTracking.map((tracking) => ({ ...tracking, pollId }));
+      }
+      return a.actionTracking;
+    });
+    await dolt.updateActionTracking(proposal.uuid, updatedActionTracking);
+    res.json({ success: true, data: pollId });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }

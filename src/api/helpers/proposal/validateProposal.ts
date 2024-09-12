@@ -41,7 +41,7 @@ export function checkPermissions(
   proposalInDb: Proposal,
   address: string,
   spaceOwners: string[],
-  operation: "archive" | "delete" | "adminStatusUpdate"
+  operation: "archive" | "delete" | "admin"
 ) {
   const { authorAddress } = proposalInDb;
   const addressIsAuthor = authorAddress === address;
@@ -58,9 +58,9 @@ export function checkPermissions(
     if (!addressIsAuthor && !permissionElevated && !noAuthorAndAddressIsFirstCoauthor) {
       throw new Error("only author or spaceOwner can delete proposal");
     }
-  } else if (operation === "adminStatusUpdate") {
+  } else if (operation === "admin") {
     if (!permissionElevated) {
-      throw new Error("only spaceOwner can update proposal status");
+      throw new Error("only spaceOwner can do this");
     }
   }
 }

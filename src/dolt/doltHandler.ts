@@ -18,7 +18,6 @@ import { IPFS_GATEWAY, isHexString } from '../utils';
 import { SELECT_ACTIONS } from './queries';
 
 const proposalsTable = 'proposals';
-const payoutsTable = 'payouts';
 const pollsTable = 'polls';
 
 // we are mixing abstracted and direct db queries, use direct mysql2 queries when there are potential NULL values in query
@@ -286,18 +285,6 @@ export class DoltHandler {
     `, [voteChoices, snapshotVotes, proposal.voteResults?.votes, proposal.status, proposal.uuid]);
   }
 
-  async setStalePayouts(currentGovernanceCycle: number): Promise<number> {
-    const results = await this.queryDbResults(`
-      UPDATE ${payoutsTable} SET payStatus = 'complete' WHERE
-      payStatus = 'active' AND
-      governanceCycleStart <= ${currentGovernanceCycle - 1} AND
-      governanceCycleStart + numberOfPayouts <= ${currentGovernanceCycle}
-    `).then((res) => {
-      return res.affectedRows;
-    });
-    return results;
-  }
-
   async updateSummary(uuid: string, summary: string, type: "proposal" | "thread") {
     return this.localDolt.db.query(oneLine`
       UPDATE ${proposalsTable} SET
@@ -442,6 +429,20 @@ export class DoltHandler {
     `).then((res) => {
       return res[0];
     }).catch((e) => { return Promise.reject(e); });
+  }
+
+  async getProposalByActionId(aid: string) {
+    return this.queryProposals(oneLine`
+      SELECT *
+      FROM proposals
+      WHERE body LIKE CONCAT('%uuid: ', ?, '%')
+        AND body LIKE '%\`\`\`nance-actions%'
+      LIMIT 1
+    `, [aid]).then((res) => {
+      return res[0];
+    }).catch((e) => {
+      return Promise.reject(e);
+    });
   }
 
   async insertPoll({ id, uuidOfProposal, answer }: { id: string; uuidOfProposal: string; answer: boolean }) {
