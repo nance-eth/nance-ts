@@ -56,7 +56,7 @@ export type spaceSpec = Tspec.DefineApiSpec<{
       }
     },
     "/{space}/actions/{aid}/poll": {
-      get: {
+      post: {
         summary: "Run milestone poll for a proposal that requires one before being queued",
         description: "Returns Discord poll URL"
         path: { space: string, aid: string },
