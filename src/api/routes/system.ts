@@ -67,8 +67,6 @@ router.post('/config', async (req, res) => {
   const { config, spaceOwners, dryrun } = req.body as ConfigSpaceRequest;
   const space = config.name.replaceAll(' ', '_').toLowerCase();
   const spaceConfig = await getSpaceConfig(space);
-  // let cycleStageLengths = spaceConfig?.cycleStageLengths;
-  // if (governanceCycleForm) ({ calendar, cycleTriggerTime, cycleStageLengths } = createCalendarAndCycleInfo(governanceCycleForm));
   const displayName = config.name;
 
   // get address from jwt (SIWE)
