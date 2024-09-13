@@ -63,7 +63,7 @@ router.get("/:aid", async (_: Request, res: Response) => {
 });
 
 // POST /:space/actions/:uuid/poll
-router.get("/:aid/poll", async (req: Request, res: Response) => {
+router.post("/:aid/poll", async (req: Request, res: Response) => {
   try {
     const { dolt, config, actionPacket, proposal } = res.locals as ActionMiddleware;
     if (!proposal.actions) throw new Error("Proposal actions are undefined");

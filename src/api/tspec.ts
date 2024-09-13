@@ -32,7 +32,7 @@ export type spaceSpec = Tspec.DefineApiSpec<{
         responses: {
           200: SpaceInfoResponse;
           404: APIErrorBase;
-        }
+        },
       }
     },
     "/{space}/actions": {
@@ -51,6 +51,17 @@ export type spaceSpec = Tspec.DefineApiSpec<{
         path: { space: string, aid: string },
         responses: {
           200: APIResponse<ActionPacket>;
+          404: APIErrorBase;
+        }
+      }
+    },
+    "/{space}/actions/{aid}/poll": {
+      get: {
+        summary: "Run milestone poll for a proposal that requires one before being queued",
+        description: "Returns Discord poll URL"
+        path: { space: string, aid: string },
+        responses: {
+          200: APIResponse<string>;
           404: APIErrorBase;
         }
       }
