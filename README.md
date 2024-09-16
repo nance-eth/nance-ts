@@ -34,7 +34,7 @@ We run the nance-api on [Railway](https://railway.app?referralCode=UAqXpP), you 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/DqkfRY?referralCode=UAqXpP)
 
 ### API Usage
-`npm run dev:api` --> launches local instance of API on port 3003
+`npm run dev` --> launches local instance of API on port 3003
 
 `npm run build:api` --> compiles api to javascript and copies required assets into `./dist`
 
@@ -48,6 +48,11 @@ We run the nance-api on [Railway](https://railway.app?referralCode=UAqXpP), you 
 This will load a JSON formatted calendar for each organization from our [nance_sys DoltDB](https://www.dolthub.com/repositories/nance/nance_sys)
 and schedule appropriate tasks.
 
-## Database setup
+## Local Database setup
 
-tbd
+`npm run db:setup`
+
+run local db and launch API in dev mode
+
+`npm run dev:db:local`
+
