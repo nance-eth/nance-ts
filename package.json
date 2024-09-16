@@ -9,6 +9,8 @@
   "scripts": {
     "test": "export LOCAL_DB=1 && jest",
     "dev": "node dev.js",
+    "db:setup": "cd src/dolt/local && ./setup.sh",
+    "dev:db:local": "dolt sql-server --data-dir ./src/dolt/local/databases & export LOCAL_DB=1 && npm run dev",
     "clean": "rm -rf node_modules && rm -rf dist",
     "freshen": "npm run clean && npm install",
     "build:api": "esbuild src/api/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/api/index.js",
