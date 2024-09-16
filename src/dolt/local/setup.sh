@@ -29,6 +29,6 @@ if [ "$selection" != "ALL" ]; then
     dolt sql -q "DELETE FROM nance_sys.config WHERE space != '$selection'"
 fi
 
-dolt sql -q "SELECT CONCAT(JSON_UNQUOTE(JSON_EXTRACT(config, '$.dolt.owner')), '/', JSON_UNQUOTE(JSON_EXTRACT(config, '$.dolt.repo'))) AS repo_url FROM config" -r csv | tail -n +2 | while read repo_url; do
+dolt sql -q "SELECT CONCAT(JSON_UNQUOTE(JSON_EXTRACT(config, '$.dolt.owner')), '/', JSON_UNQUOTE(JSON_EXTRACT(config, '$.dolt.repo'))) AS repo_url FROM nance_sys.config" -r csv | tail -n +2 | while read repo_url; do
   dolt clone "$repo_url"
 done
