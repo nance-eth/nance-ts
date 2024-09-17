@@ -52,6 +52,7 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   const title = proposal.title || proposalInDb?.title || "Untitled Proposal";
 
   return {
+    ...proposalInDb,
     ...proposal,
     title,
     uuid,

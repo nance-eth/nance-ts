@@ -7,10 +7,10 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "test": "export LOCAL_DB=1 && jest",
+    "test": "export LOCAL_DB=1 && jest ./test/api/setup/order.test.ts --verbose",
     "dev": "node dev.js",
     "db:setup": "cd src/dolt/local && ./setup.sh",
-    "dev:db:local": "dolt sql-server --data-dir ./src/dolt/local/databases & export LOCAL_DB=1 && npm run dev",
+    "db:local": "dolt sql-server --data-dir ./src/dolt/local/databases",
     "clean": "rm -rf node_modules && rm -rf dist",
     "freshen": "npm run clean && npm install",
     "build:api": "esbuild src/api/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/api/index.js",
@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@ethersproject/providers": "^5.7.2",
-    "@nance/nance-sdk": "^4.0.5",
+    "@nance/nance-sdk": "^4.0.7",
     "@safe-global/api-kit": "^2.4.5",
     "@snapshot-labs/snapshot.js": "^0.11.41",
     "axios": "^1.7.2",

@@ -51,7 +51,7 @@ export class DoltHandler {
     });
   }
 
-  async queryDbResults(query: string, variables?: (string | number | boolean | undefined)[]) {
+  async queryDbResults(query: string, variables?: (string | number | boolean | undefined | null)[]) {
     return this.localDolt.queryResults(query, variables).then((res) => {
       return res;
     }).catch((e) => {
@@ -295,11 +295,13 @@ export class DoltHandler {
 
   async updateActionTracking(uuid: string, actionTracking: ActionTracking[][] | null) {
     const value = actionTracking ? JSON.stringify(actionTracking) : null;
-    return this.localDolt.db.query(oneLine`
+    return this.queryDbResults(oneLine`
       UPDATE ${proposalsTable} SET
       actionTracking = ?
       WHERE uuid = ?
-    `, [value, uuid]);
+    `, [value, uuid]).then((res) => {
+      return res.affectedRows;
+    })
   }
 
   // ===================================== //

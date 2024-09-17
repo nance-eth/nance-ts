@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { ActionPacket, ActionStatusNames, Proposal } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
 import { discordLogin } from "@/api/helpers/discord";
+import { initActionTrackingStruct } from "@/tasks/helpers/actionTracking";
 
 const router = Router({ mergeParams: true });
 const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
@@ -62,8 +63,21 @@ router.get("/:aid", async (_: Request, res: Response) => {
   }
 });
 
+// POST /:space/actions/init
+// init actionTracking struct and save to database
+router.post("/:aid/init", async (_: Request, res: Response) => {
+  try {
+    const { dolt, proposal, currentCycle } = res.locals as ActionMiddleware;
+    const actionTracking = initActionTrackingStruct(proposal, currentCycle);
+    const data = await dolt.updateActionTracking(proposal.uuid, actionTracking);
+    res.json({ success: true, data });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
 // POST /:space/actions/:uuid/poll
-router.post("/:aid/poll", async (req: Request, res: Response) => {
+router.post("/:aid/poll", async (_: Request, res: Response) => {
   try {
     const { dolt, config, actionPacket, proposal } = res.locals as ActionMiddleware;
     if (!proposal.actions) throw new Error("Proposal actions are undefined");

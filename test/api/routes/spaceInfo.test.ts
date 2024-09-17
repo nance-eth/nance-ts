@@ -11,8 +11,7 @@ describe("Space Info", () => {
   });
 
   it("should handle missing space scenario", async () => {
-    const response = await request(BASE_URL)
-      .get("/nonexistentspace");
+    const response = await request(BASE_URL).get("/nonexistentspace");
 
     expect(response.body.success).toBe(false);
     expect(response.body.error).toBe("space nonexistentspace not found");

@@ -11,3 +11,5 @@ This installs Dolt with `sudo bash -c 'curl -L https://github.com/dolthub/dolt/r
 See Dolt installation docs https://docs.dolthub.com/introduction/installation for other methods.
 
 After installation databases for ALL spaces or specified space will be cloned from https://dolthub.com
+
+## Run

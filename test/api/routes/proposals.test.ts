@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
 import request from "supertest";
-import { ProposalPacket } from "@nance/nance-sdk";
-import { AUTHOR, BASE_URL, COAUTHOR } from "../constants";
-import { sleep } from "@/utils";
+import { Action, ProposalPacket, actionsToYaml, trimActionsFromBody } from "@nance/nance-sdk";
+import { AUTHOR, BASE_URL, COAUTHOR, headers } from "../constants";
+import { sleep, uuidGen } from "@/utils";
 
 const waitForDiscordURL = async (uuid: string, maxAttempts = 20, interval = 1000) => {
   for (let i = 0; i < maxAttempts; i += 1) {
@@ -17,18 +17,43 @@ const waitForDiscordURL = async (uuid: string, maxAttempts = 20, interval = 1000
   throw new Error("Discord URL not set within the expected time");
 };
 
-describe("POST proposal, then GET, then PUT", () => {
-  let uuid: string;
-  const proposal = {
-    title: "Test Proposal",
-    body: "This is a test proposal",
-    status: "Discussion",
-  };
+// export to be used in other test files
+export const uuid = uuidGen();
 
-  const headers = {
-    authorization: AUTHOR
-  };
+const actions: Action[] = [
+  {
+    type: "Transfer",
+    uuid: uuidGen(),
+    governanceCycles: [1, 2, 3],
+    chainId: 1,
+    payload: {
+      contract: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      to: AUTHOR,
+      amount: "1",
+      decimals: 6
+    }
+  },
+  {
+    type: "Payout",
+    uuid: uuidGen(),
+    pollRequired: true,
+    chainId: 1,
+    payload: {
+      project: 1,
+      amount: 1000,
+      currency: "USD"
+    }
+  }
+];
 
+const proposal = {
+  uuid,
+  title: "Test Proposal",
+  body: `This is a test proposal\n\n${actionsToYaml(actions)}`,
+  status: "Discussion",
+};
+
+describe("PROPOSAL", () => {
   // POST
   it("POST proposal", async () => {
     const response = await request(BASE_URL)
@@ -38,7 +63,6 @@ describe("POST proposal, then GET, then PUT", () => {
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(response.body.data).toBeDefined();
-    uuid = response.body.data.uuid;
     expect(response.body.data.uuid).toBeDefined();
     expect(typeof response.body.data.uuid).toBe("string");
   });
@@ -55,10 +79,25 @@ describe("POST proposal, then GET, then PUT", () => {
   // EDIT
   it("edit proposalId 1", async () => {
     await sleep(3000); // discord wait
+    // add another action to it
+    actions.push({
+      type: "Payout",
+      uuid: uuidGen(),
+      chainId: 1,
+      pollRequired: true,
+      payload: {
+        project: 477,
+        amount: 1,
+        currency: "USD"
+      }
+    });
+    const title = "EDITED";
+    const body = `${trimActionsFromBody(proposal.body)}\n\n${actionsToYaml(actions)}`;
+    const updatedProposal = { ...proposal, title, body }
     const response = await request(BASE_URL)
       .put(`/waterbox/proposal/${uuid}`)
       .set(headers)
-      .send({ proposal: { title: "EDITED" } });
+      .send({ proposal: updatedProposal });
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
   }, 10000);
@@ -78,16 +117,5 @@ describe("POST proposal, then GET, then PUT", () => {
       .set(headers)
       .send({ proposal: { status: "Archivwwww" } });
     expect(response.body.success).toBe(false);
-  });
-
-  // DELETE
-  it("delete proposal", async () => {
-    await sleep(2000); // discord wait
-    const response = await request(BASE_URL)
-      .delete(`/waterbox/proposal/${uuid}`)
-      .set(headers);
-
-    expect(response.status).toBe(200);
-    expect(response.body.success).toBe(true);
   });
 });
