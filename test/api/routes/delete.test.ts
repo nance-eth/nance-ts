@@ -11,4 +11,4 @@ describe("DELETE proposal after all other tests", () => {
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
   });
-})
+});

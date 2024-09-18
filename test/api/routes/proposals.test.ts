@@ -93,7 +93,7 @@ describe("PROPOSAL", () => {
     });
     const title = "EDITED";
     const body = `${trimActionsFromBody(proposal.body)}\n\n${actionsToYaml(actions)}`;
-    const updatedProposal = { ...proposal, title, body }
+    const updatedProposal = { ...proposal, title, body };
     const response = await request(BASE_URL)
       .put(`/waterbox/proposal/${uuid}`)
       .set(headers)

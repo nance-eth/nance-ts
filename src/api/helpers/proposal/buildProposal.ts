@@ -19,7 +19,7 @@ export function buildProposal(input: BuildProposalInput): Proposal {
 
   // validate status input
   if (status && !ProposalStatusNames.includes(status)) {
-    throw Error(`Invalid proposal status. Must be ${ProposalStatusNames.join(" | ")}`)
+    throw Error(`Invalid proposal status. Must be ${ProposalStatusNames.join(" | ")}`);
   }
 
   // assign uuid
