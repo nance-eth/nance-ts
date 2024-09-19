@@ -16,7 +16,7 @@ export const startDiscussionMessage = async (
   const proposalAuthor = proposal.authorAddress ?
     `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})` :
     "Sponsor Required!";
-  const preamble = proposal.proposalId ? `${proposalIdPrefix}${proposal.proposalId}: ` : "[DRAFT] ";
+  const preamble = proposal.proposalId ? `${proposalIdPrefix}${proposal.proposalId}: ` : "";
   const m = new EmbedBuilder().setTitle(`${preamble}${proposal.title}`)
     .setURL(getProposalURL(space, proposal, customDomain))
     .addFields([
