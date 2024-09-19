@@ -5,7 +5,8 @@ import {
   Payout,
   Transfer,
   RequestBudget,
-  getPayoutCountAmount
+  getPayoutCountAmount,
+  Cancel
 } from "@nance/nance-sdk";
 import {
   sleep,
@@ -64,7 +65,11 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       const symbolMd = payload.contract === "ETH" ? "ETH" :
         `[${symbol}](${explorerPayload}/address/${payload.contract})`;
       const ens = await getENS(payload.to);
-      results.push(`${index + 1}. **[TRANSFER]** ${numToPrettyString(payload.amount)} ${symbolMd} to [${ens}](${explorerPayload}/address/${payload.to})`);
+      results.push(`${index + 1}. **[TRANSFER]** ${numToPrettyString(payload.amount, 3)} ${symbolMd} to [${ens}](${explorerPayload}/address/${payload.to})`);
+    }
+    if (action.type === "Cancel") {
+      const payload = action.payload as Cancel;
+      results.push(`${index + 1}. **[CANCEL]** ${payload.targetActionDescription}`)
     }
     if (action.type === "Request Budget") {
       const payload = action.payload as RequestBudget;

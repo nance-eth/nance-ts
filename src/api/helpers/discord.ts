@@ -12,8 +12,9 @@ export const discordLogin = async (config: NanceConfig) => {
   return discord;
 };
 
-export const discordInitButtonManager = async () => {
+export const discordInitInteractionManager = async () => {
   if (process.env.LOCAL_DB) return;
+
   try {
     const discord = new Client({
       intents: [
@@ -26,8 +27,7 @@ export const discordInitButtonManager = async () => {
     await discord.login(process.env.DISCORD_KEY_NANCE).then(() => {
       console.log(`logged in as ${discord.user?.tag}`);
       discord.on(Events.InteractionCreate, async (interaction) => {
-        if (!interaction.isButton()) return;
-        await buttonManager(interaction);
+        if (interaction.isButton()) await buttonManager(interaction);
       });
     });
   } catch (e) {

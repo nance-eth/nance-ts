@@ -42,19 +42,23 @@ router.get("/:pid", async (req: Request, res: Response) => {
 });
 
 // POST /:space/proposal/:pid/discussion
-router.post("/:pid/discussion", async (req: Request, res: Response) => {
+router.get("/:pid/discussion", async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
     const { dolt } = res.locals as Middleware;
     const proposal = await dolt.getProposalByAnyId(pid);
     if (!proposal) throw new Error("Proposal not found");
-    if (proposal.discussionThreadURL) throw new Error("Discussion thread already exists");
     const discord = await discordLogin(res.locals.config);
-    const discussionThreadURL = await discord.startDiscussion(proposal);
-    await dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+    let discussionThreadURL;
+    if (!proposal.discussionThreadURL) {
+      discussionThreadURL = await discord.startDiscussion(proposal);
+      await dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
+    }
+    discussionThreadURL = proposal.discussionThreadURL;
+    await discord.editDiscussionMessage(proposal, true);
     discord.logout();
     clearCache(space);
-    res.json({ success: true, discussionThreadURL });
+    res.json({ success: true, data: discussionThreadURL });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }

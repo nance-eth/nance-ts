@@ -217,10 +217,17 @@ export class DiscordHandler {
         event,
         date,
       );
-    return this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
-      messageObj.crosspost();
+    try {
+      return await this.getAlertChannel().send({ content: this.roleTag, embeds: [message] }).then((messageObj) => {
+        messageObj.crosspost();
+        return messageObj.id;
+      });
+    } catch {
+      // for forum based proposal system use daily alert channel
+      const channel = this.getDailyUpdateChannels()[0];
+      const messageObj = await channel.send({ content: this.roleTag, embeds: [message] });
       return messageObj.id;
-    });
+    }
   }
 
   async sendDailyReminder(

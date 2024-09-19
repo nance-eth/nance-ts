@@ -2,7 +2,7 @@ import cors from "cors";
 import express from "express";
 import { TspecDocsMiddleware } from "tspec";
 import { params } from "./tspec";
-import { discordInitButtonManager } from "./helpers/discord";
+import { discordInitInteractionManager } from "./helpers/discord";
 // routes
 import tasks from "./routes/tasks";
 import system from "./routes/system";
@@ -46,7 +46,7 @@ export const init = async () => {
   app.use("/:space/reconfig", spaceReconfig);
   app.use("/:space/summary", spaceSummary);
   app.use("/:space/actions", spaceActions);
-  await discordInitButtonManager();
+  await discordInitInteractionManager();
 };
 
 init();
