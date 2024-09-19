@@ -4,6 +4,7 @@ import {
   Response,
   NextFunction
 } from "express";
+import { merge } from "lodash";
 import { SpaceInfoExtended } from "@nance/nance-sdk";
 import { DoltSysHandler } from "@/dolt/doltSysHandler";
 import { DoltHandler } from "@/dolt/doltHandler";
@@ -40,6 +41,11 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
       console.log(`[CACHE] refreshing ${query}`);
       const spaceConfig = await doltSys.getSpaceConfig(query);
       spaceInfo = getSpaceInfo(spaceConfig);
+      const { "override-space-info": overrideSpaceInfo } = req.headers as { "override-space-info": string };
+      if (overrideSpaceInfo) {
+        const override = JSON.parse(overrideSpaceInfo);
+        if (override) spaceInfo = merge(spaceInfo, override) as SpaceInfoExtended;
+      }
       cache[query] = { spaceInfo };
     }
 

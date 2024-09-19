@@ -4,7 +4,7 @@ import { Action, ProposalPacket, actionsToYaml, trimActionsFromBody } from "@nan
 import { AUTHOR, BASE_URL, COAUTHOR, headers } from "../constants";
 import { sleep, uuidGen } from "@/utils";
 
-const waitForDiscordURL = async (uuid: string, maxAttempts = 20, interval = 1000) => {
+export const waitForDiscordURL = async (uuid: string, maxAttempts = 20, interval = 1000) => {
   for (let i = 0; i < maxAttempts; i += 1) {
     const response = await request(BASE_URL).get(`/waterbox/proposal/${uuid}`);
     const proposalReponse = response.body;
@@ -18,7 +18,7 @@ const waitForDiscordURL = async (uuid: string, maxAttempts = 20, interval = 1000
 };
 
 // export to be used in other test files
-export const uuid = uuidGen();
+const uuid = uuidGen();
 
 const actions: Action[] = [
   {
@@ -50,18 +50,17 @@ const proposal = {
   uuid,
   title: "Test Proposal",
   body: `This is a test proposal\n\n${actionsToYaml(actions)}`,
-  status: "Discussion",
 };
 
 describe("PROPOSAL", () => {
   // POST
-  it("POST proposal", async () => {
+  it("POST Discussion proposal", async () => {
     const response = await request(BASE_URL)
       .post("/waterbox/proposals")
       .set(headers)
-      .send({ proposal });
+      .send({ proposal: { ...proposal, status: "Discussion" } });
     expect(response.status).toBe(200);
-    expect(response.body.success).toBe(true);
+    expect(response.body.error).toBeUndefined();
     expect(response.body.data).toBeDefined();
     expect(response.body.data.uuid).toBeDefined();
     expect(typeof response.body.data.uuid).toBe("string");

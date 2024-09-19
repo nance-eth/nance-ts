@@ -1,14 +1,23 @@
+/* eslint-disable no-await-in-loop */
 import request from "supertest";
+import { Proposal } from "@nance/nance-sdk";
 import { BASE_URL, headers } from "../constants";
-import { uuid } from "./proposals.test";
+import { sleep } from "@/utils";
 
-describe("DELETE proposal after all other tests", () => {
-  it("delete it", async () => {
-    const response = await request(BASE_URL)
-      .delete(`/waterbox/proposal/${uuid}`)
-      .set(headers);
-
-    expect(response.status).toBe(200);
-    expect(response.body.success).toBe(true);
+describe("DELETE all proposals after", () => {
+  it("delete them", async () => {
+    // await sleep(100);
+    const allProposalsResponse = await request(BASE_URL).get("/waterbox/proposals");
+    expect(allProposalsResponse.body.data.proposals.length).toBeGreaterThan(0);
+    const { proposals } = allProposalsResponse.body.data;
+    for (let i = 0; i < proposals.length; i += 1) {
+      const response = await request(BASE_URL)
+        .delete(`/waterbox/proposal/${proposals[i].uuid}`)
+        .set(headers);
+      expect(response.body.error).toBeUndefined();
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      await sleep(200);
+    }
   });
 });

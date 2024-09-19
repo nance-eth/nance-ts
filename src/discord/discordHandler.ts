@@ -95,6 +95,10 @@ export class DiscordHandler {
       customDomain
     );
     try {
+      if (proposal.status === "Draft") {
+        // only support Draft thread creation for MoonDAO who uses forum
+        throw Error();
+      }
       const messageObj = await this.getAlertChannel().send({ embeds: [message] });
       const thread = await messageObj.startThread({
         name: limitLength(proposal.title),
@@ -103,8 +107,11 @@ export class DiscordHandler {
       return threadToURL(thread);
     } catch (e) {
       // if send fails try as forum (kind of a hack could improve later)
-      const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
-      const channel = this.getAlertChannel() as unknown as ForumChannel;
+      const channelId = (proposal.status === "Draft" && this.config.discord.channelIds.ideas) ?
+        this.config.discord.channelIds.ideas :
+        this.config.discord.channelIds.proposals;
+      const title = message.data.title || "Unknown Title";
+      const channel = this.getChannelById(channelId) as unknown as ForumChannel;
       const embeds = [message];
       const messageObj = await channel.threads.create({
         name: limitLength(title),

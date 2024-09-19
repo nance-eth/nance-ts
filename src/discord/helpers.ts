@@ -27,7 +27,7 @@ export const simpleProposalList = (
 };
 
 export const threadToURL = (thread: ThreadChannel) => {
-  return `https://discord.com/channels/${thread.guildId}/${thread.parentId}/${thread.id}`;
+  return `https://discord.com/channels/${thread.guildId}/${thread.id}`;
 };
 
 export const getPreamble = (type: string) => {

@@ -35,13 +35,16 @@ export const discordInitButtonManager = async () => {
   }
 };
 
-const createThreadStatuses: ProposalStatus[] = ["Discussion", "Temperature Check"];
+const createThreadStatuses: ProposalStatus[] = ["Draft", "Discussion", "Temperature Check"];
 export const discordNewProposal = async (proposal: Proposal, config: NanceConfig) => {
   const { status } = proposal;
   if (!createThreadStatuses.includes(status)) return null;
+  if (status === "Draft" && !config.discord.channelIds.ideas) return null;
   const discord = await discordLogin(config);
   const discussionThreadURL = await discord.startDiscussion(proposal);
-  if (proposal.authorAddress) await discord.setupPoll(getLastSlash(discussionThreadURL));
+  if (proposal.authorAddress && status !== "Draft") {
+    await discord.setupPoll(getLastSlash(discussionThreadURL));
+  }
   discord.logout();
   return discussionThreadURL;
 };

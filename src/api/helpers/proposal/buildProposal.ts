@@ -40,7 +40,7 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   }
 
   // assign governanceCycle
-  let governanceCycle: number;
+  let governanceCycle: number | undefined;
   if (config.allowCurrentCycleSubmission &&
     currentEvent.title !== "Snapshot Vote"
   ) {
@@ -48,6 +48,8 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   } else {
     governanceCycle = currentCycle + 1;
   }
+
+  if (status === "Draft") governanceCycle = undefined;
 
   const title = proposal.title || proposalInDb?.title || "Untitled Proposal";
 

@@ -7,7 +7,8 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "test": "export LOCAL_DB=1 && jest ./test/api/setup/order.test.ts --verbose",
+    "spec": "export LOCAL_DB=1 && jest",
+    "test": "export LOCAL_DB=1 && jest ./test/api/setup/order.test.ts",
     "dev": "node dev.js",
     "db:setup": "cd src/dolt/local && ./setup.sh",
     "db:local": "dolt sql-server --data-dir ./src/dolt/local/databases",

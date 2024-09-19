@@ -16,15 +16,21 @@ export const startDiscussionMessage = async (
   const proposalAuthor = proposal.authorAddress ?
     `[${authorENS}](${DEFAULT_DASHBOARD}/u/${authorENS})` :
     "Sponsor Required!";
-  const m = new EmbedBuilder().setTitle(`${proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`)
+  const preamble = proposal.proposalId ? `${proposalIdPrefix}${proposal.proposalId}: ` : "[DRAFT] ";
+  const m = new EmbedBuilder().setTitle(`${preamble}${proposal.title}`)
     .setURL(getProposalURL(space, proposal, customDomain))
-    // "author" field of Discord message is a nice way to display Governance Cycle
-    .setAuthor({ name: `📃 GC#${proposal.governanceCycle}`, url: `${DEFAULT_DASHBOARD}/s/${space}?cycle=${proposal.governanceCycle}` })
     .addFields([
       { name: "author", value: proposalAuthor, inline: true },
     ]);
   if (proposal.authorDiscordId) {
     m.addFields({ name: "discord user", value: `<@${proposal.authorDiscordId}>`, inline: true });
+  }
+  // "author" field of Discord message is a nice way to display Governance Cycle
+  if (proposal.governanceCycle) {
+    m.setAuthor({
+      name: `📃 GC#${proposal.governanceCycle}`,
+      url: `${DEFAULT_DASHBOARD}/s/${space}?cycle=${proposal.governanceCycle}`
+    });
   }
   const actions = getActionsFromBody(proposal.body);
   const actionsMd = actions ? await actionsToMarkdown(actions) : "NONE";
