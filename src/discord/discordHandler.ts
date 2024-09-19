@@ -357,13 +357,14 @@ export class DiscordHandler {
     threadId: string,
     yes: number,
     no: number,
-    pass: boolean
+    pass: boolean,
+    quorum: number,
   ) {
     try {
       const channel = this.getAlertChannel() as unknown as ForumChannel;
       const post = await channel.threads.fetch(threadId) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
-      const results = t.blindPollMessage({ yes, no }, pass);
+      const results = t.blindPollMessage({ yes, no }, pass, quorum);
       await messageObj?.edit({
         embeds: [messageObj.embeds[0], results],
         components: []
@@ -372,10 +373,6 @@ export class DiscordHandler {
     } catch (e) {
       return Promise.reject(e);
     }
-  }
-
-  async setStatus() {
-    this.discord.user?.setActivity(" ");
   }
 
   async editDiscussionMessage(proposal: Proposal, forceEdit = false) {

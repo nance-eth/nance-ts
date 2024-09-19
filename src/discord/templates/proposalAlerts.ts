@@ -59,7 +59,11 @@ export const pollResultsMessage = (
   );
 };
 
-export const blindPollMessage = ({ yes, no }: { yes: number, no: number }, pass?: boolean) => {
+export const blindPollMessage = (
+  { yes, no }: { yes: number, no: number },
+  pass?: boolean,
+  quorum?: number,
+) => {
   const message = new EmbedBuilder().setTitle("Temperature Check")
     .setDescription(`Last updated\n<t:${Math.floor(Date.now() / 1000)}>`)
     .addFields([
@@ -67,14 +71,16 @@ export const blindPollMessage = ({ yes, no }: { yes: number, no: number }, pass?
       { name: EMOJI.NO, value: `${no}`, inline: true },
     ])
     .setColor("#FF0000");
-  if (pass !== undefined) {
+  if (!!pass && !!quorum) {
     const outcome = pass ? EMOJI.YES : EMOJI.NO;
-    const results = pass ? `${yes}/${yes + no}` : `${no}/${yes + no}`;
+    const results = pass ? yes / (yes + no) : no / (yes + no);
+    const quorumMet = results >= quorum;
     message
       .setDescription(`Poll closed\n<t:${Math.floor(Date.now() / 1000)}>`)
-      .addFields([
-        { name: "Outcome", value: `${results} ${outcome}` }
-      ]);
+      .addFields([{
+        name: "Outcome",
+        value: `${outcome}${quorumMet ? "" : ` qourum of ${quorum} not met`}`
+      }]);
   }
   return message;
 };

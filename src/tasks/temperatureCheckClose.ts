@@ -35,7 +35,7 @@ export const temperatureCheckClose = async (space: string, config: NanceConfig) 
       const no = pollResults.voteNoUsers.length;
       const pass = pollPassCheck(config, yes, no);
       const status: ProposalStatus = (pass) ? "Voting" : "Cancelled";
-      if (blind) await dialogHandler.sendBlindPollResults(threadId, yes, no, pass);
+      if (blind) await dialogHandler.sendBlindPollResults(threadId, yes, no, pass, config.discord.poll.minYesVotes);
       if (!blind) {
         await dialogHandler.sendPollResults(pollResults, pass, threadId);
         await dialogHandler.sendPollResultsEmoji(pass, threadId);
