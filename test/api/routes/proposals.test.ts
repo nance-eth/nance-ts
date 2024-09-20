@@ -54,7 +54,7 @@ describe("PROPOSAL", () => {
 
   // GET
   it("fetch proposalId", async () => {
-    const response = await waitForDiscordURL(uuid);
+    const { response } = await waitForDiscordURL(uuid);
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(response.body.data.discussionThreadURL).toBeDefined();

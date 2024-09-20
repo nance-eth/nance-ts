@@ -1,4 +1,5 @@
 import request from "supertest";
+import type { Response } from "supertest";
 import { BASE_URL, headers } from "../constants";
 import { waitForDiscordURL } from "../helpers/discord";
 import { sleep } from "@/utils";
@@ -30,8 +31,9 @@ describe("Draft Proposal", () => {
     uuid = response.body.data.uuid;
     expect(response.body.data.uuid).toBeDefined();
     expect(typeof response.body.data.uuid).toBe("string");
-    firstDiscordURL = await waitForDiscordURL(uuid);
-    expect(firstDiscordURL.length).toBeGreaterThan(1);
+    const { response: firstDiscordURLResponse, url } = await waitForDiscordURL(uuid);
+    firstDiscordURL = url;
+    expect(firstDiscordURLResponse.body.data.disc).toBeGreaterThan(1);
   });
 
   it("edit draft", async () => {
@@ -59,9 +61,9 @@ describe("Draft Proposal", () => {
     expect(response.body.data).toBeDefined();
     // wait for new URL to update
     await sleep(2000);
-    const newDiscordURL = await waitForDiscordURL(uuid);
+    const { url } = await waitForDiscordURL(uuid);
     // make sure discussionURL got updated
-    expect(firstDiscordURL).not.toBe(newDiscordURL);
+    expect(firstDiscordURL).not.toBe(url);
     console.log(`http://localhost:3003/waterbox/proposal/${uuid}`);
   }, 15_000);
 });

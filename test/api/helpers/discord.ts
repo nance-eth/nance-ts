@@ -10,7 +10,7 @@ export const waitForDiscordURL = async (uuid: string, maxAttempts = 20, interval
     const proposalReponse = response.body.data;
     const proposalPacket = proposalReponse as ProposalPacket;
     if (proposalPacket.discussionThreadURL !== "" && proposalPacket.discussionThreadURL != null) {
-      return proposalPacket.discussionThreadURL;
+      return { response, url: proposalPacket.discussionThreadURL };
     }
     await sleep(interval);
   }

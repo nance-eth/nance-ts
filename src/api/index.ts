@@ -4,6 +4,7 @@ import { TspecDocsMiddleware } from "tspec";
 import { params } from "./tspec";
 import { discordInitInteractionManager } from "./helpers/discord";
 import { initializePools } from "@/dolt/pools";
+
 // routes
 import tasks from "./routes/tasks";
 import system from "./routes/system";
