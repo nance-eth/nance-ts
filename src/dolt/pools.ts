@@ -4,12 +4,10 @@ import 'dotenv/config';
 import { dbOptions } from './dbConfig';
 import { DoltSQL } from './doltSQL';
 import { DoltSysHandler } from './doltSysHandler';
-import { sleep } from '@/utils';
 
 export let pools: Record<string, DoltSQL> = {};
 
 export async function fetchPools() {
-  await sleep(1000);
   const sysDolt = new DoltSQL(dbOptions('nance_sys'));
   const sys = new DoltSysHandler(sysDolt);
   pools.nance_sys = sysDolt;
