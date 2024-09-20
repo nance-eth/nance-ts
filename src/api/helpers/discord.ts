@@ -25,7 +25,7 @@ export const discordInitInteractionManager = async () => {
       ]
     });
     await discord.login(process.env.DISCORD_KEY_NANCE).then(() => {
-      console.log(`logged in as ${discord.user?.tag}`);
+      console.log(`[DISCORD] logged in as ${discord.user?.tag}`);
       discord.on(Events.InteractionCreate, async (interaction) => {
         if (!interaction.isButton()) return;
         await buttonManager(interaction);

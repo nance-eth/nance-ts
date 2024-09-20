@@ -1,9 +1,9 @@
-import { NanceConfig, Proposal, DialogHandlerMessageIds } from '@nance/nance-sdk';
-import { discordLogin } from '../api/helpers/discord';
-import { doltSys } from '../dolt/doltSys';
-import { TASKS } from '../constants';
-import { getProposalsWithVotes } from './helpers/voting';
-import logger from '../logging';
+import { NanceConfig, Proposal, DialogHandlerMessageIds } from "@nance/nance-sdk";
+import { discordLogin } from "../api/helpers/discord";
+import { getSysDb } from "@/dolt/pools";
+import { TASKS } from "../constants";
+import { getProposalsWithVotes } from "./helpers/voting";
+import logger from "../logging";
 
 export const voteQuorumAlert = async (space: string, config: NanceConfig, endDate: Date, _proposals?: Proposal[]) => {
   try {
@@ -12,7 +12,11 @@ export const voteQuorumAlert = async (space: string, config: NanceConfig, endDat
     if (proposalsUnderQuorum.length === 0) return;
     const dialogHandler = await discordLogin(config);
     const voteQuorumAlertMessageId = await dialogHandler.sendQuorumRollup(proposalsUnderQuorum, endDate);
-    await doltSys.updateDialogHandlerMessageId(space, TASKS.voteQuorumAlert as keyof DialogHandlerMessageIds, voteQuorumAlertMessageId);
+    await getSysDb().updateDialogHandlerMessageId(
+      space,
+      TASKS.voteQuorumAlert as keyof DialogHandlerMessageIds,
+      voteQuorumAlertMessageId
+    );
   } catch (e) {
     logger.error(`error sending vote quorum alert for ${space}`);
     logger.error(e);

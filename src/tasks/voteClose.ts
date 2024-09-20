@@ -1,12 +1,11 @@
-import { NanceConfig, Proposal, ProposalStatus } from '@nance/nance-sdk';
-import { DoltHandler } from '../dolt/doltHandler';
-import { pools } from '../dolt/pools';
-import logger from '../logging';
-import { getProposalsWithVotes, votePassCheck } from './helpers/voting';
+import { NanceConfig, Proposal, ProposalStatus } from "@nance/nance-sdk";
+import { getDb } from "../dolt/pools";
+import logger from "../logging";
+import { getProposalsWithVotes, votePassCheck } from "./helpers/voting";
 
 export const voteClose = async (space: string, config: NanceConfig, _proposals?: Proposal[], dryrun = false) => {
   try {
-    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
+    const dolt = getDb(space);
     const proposals = await getProposalsWithVotes(config, _proposals);
     if (proposals.length === 0) return [];
     const updatedProposals = await Promise.all(proposals.map(async (proposal) => {

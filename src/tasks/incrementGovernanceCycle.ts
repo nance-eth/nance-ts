@@ -1,10 +1,11 @@
 import { DialogHandlerMessageIds } from '@nance/nance-sdk';
-import { doltSys } from '../dolt/doltSys';
+import { getSysDb } from '@/dolt/pools';
 import logger from '../logging';
 import { TASKS } from '../constants';
 
 export const incrementGovernanceCycle = async (space: string) => {
   try {
+    const doltSys = getSysDb();
     await doltSys.incrementGovernanceCycle(space);
     await doltSys.updateDialogHandlerMessageId(space, TASKS.temperatureCheckRollup as keyof DialogHandlerMessageIds, '');
     await doltSys.updateDialogHandlerMessageId(space, TASKS.voteRollup as keyof DialogHandlerMessageIds, '');

@@ -1,11 +1,7 @@
-// to check if there are any proposals
+import { getDb } from "@/dolt/pools";
 
-import { NanceConfig } from '@nance/nance-sdk';
-import { DoltHandler } from '../dolt/doltHandler';
-import { pools } from '../dolt/pools';
-
-export const shouldSendAlert = async (space: string, config: NanceConfig) => {
-  const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
+export const shouldSendAlert = async (space: string) => {
+  const dolt = getDb(space);
   const temperatureCheckOrVotingProposals = await dolt.getProposals({
     status: ["Temperature Check", "Voting"],
   });

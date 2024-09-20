@@ -1,10 +1,11 @@
-import { Proposal, NanceConfig, DialogHandlerMessageIds } from '@nance/nance-sdk';
-import { discordLogin } from '../api/helpers/discord';
-import { doltSys } from '../dolt/doltSys';
-import { TASKS } from '../constants';
+import { Proposal, NanceConfig, DialogHandlerMessageIds } from "@nance/nance-sdk";
+import { discordLogin } from "../api/helpers/discord";
+import { getSysDb } from "@/dolt/pools";
+import { TASKS } from "../constants";
 
 export const voteResultsRollup = async (space: string, config: NanceConfig, proposals: Proposal[]) => {
   try {
+    const doltSys = getSysDb();
     if (proposals.length === 0) return;
     const discord = await discordLogin(config);
     const voteResultsRollUpMessageId = await discord.sendVoteResultsRollup(proposals);

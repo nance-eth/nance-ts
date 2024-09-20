@@ -4,7 +4,7 @@ import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../calendar/event
 import { discordLogin } from '../api/helpers/discord';
 import logger from '../logging';
 import { DoltHandler } from "../dolt/doltHandler";
-import { pools } from "../dolt/pools";
+import { getDb } from "../dolt/pools";
 
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';
@@ -18,7 +18,7 @@ export async function sendDailyAlert(space: string) {
     const spaceConfig = await getSpaceConfig(space);
     if (!spaceConfig || !spaceConfig.cycleStartReference || !spaceConfig.cycleStageLengths) return false;
     const { config, currentGovernanceCycle } = spaceConfig;
-    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
+    const dolt = getDb(space);
 
     const governanceCycle = `${currentGovernanceCycle}+${currentGovernanceCycle + 1}`;
     const proposalsPacket = await dolt.getProposals({ governanceCycle });

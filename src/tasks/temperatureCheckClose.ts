@@ -1,9 +1,8 @@
-import { NanceConfig, ProposalStatus } from '@nance/nance-sdk';
-import { discordLogin } from '../api/helpers/discord';
-import { DoltHandler } from '../dolt/doltHandler';
-import { pools } from '../dolt/pools';
-import { getLastSlash } from '../utils';
-import logger from '../logging';
+import { NanceConfig, ProposalStatus } from "@nance/nance-sdk";
+import { discordLogin } from "../api/helpers/discord";
+import { getDb } from "@/dolt/pools";
+import { getLastSlash } from "../utils";
+import logger from "../logging";
 
 const pollPassCheck = (config: NanceConfig, yesCount: number, noCount: number) => {
   const ratio = yesCount / (yesCount + noCount);
@@ -16,7 +15,7 @@ const pollPassCheck = (config: NanceConfig, yesCount: number, noCount: number) =
 
 export const temperatureCheckClose = async (space: string, config: NanceConfig) => {
   try {
-    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
+    const dolt = getDb(space);
     const dialogHandler = await discordLogin(config);
     const { proposals } = await dolt.getProposals({ status: ["Temperature Check"] });
     if (proposals.length === 0) return;

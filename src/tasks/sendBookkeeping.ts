@@ -4,14 +4,13 @@ import {
   Proposal,
   Payout,
   getPayoutCountAmount
-} from '@nance/nance-sdk';
-import { discordLogin } from '../api/helpers/discord';
-import { getSpaceConfig } from '../api/helpers/getSpace';
-import { DoltHandler } from '../dolt/doltHandler';
-import { pools } from '../dolt/pools';
-import logger from '../logging';
-import { getProjectHandle } from '../juicebox/api';
-import { getENS } from '../api/helpers/ens';
+} from "@nance/nance-sdk";
+import { discordLogin } from "../api/helpers/discord";
+import { getSpaceConfig } from "../api/helpers/getSpace";
+import { getDb } from "../dolt/pools";
+import logger from "../logging";
+import { getProjectHandle } from "../juicebox/api";
+import { getENS } from "../api/helpers/ens";
 
 const getGovernanceCycles = (currentGovernanceCycle: number) => {
   // return array of previous 20 governance cycles
@@ -39,7 +38,7 @@ const formatPayouts = async (payouts: SQLPayout[]): Promise<SQLPayout[]> => {
 const getSQLPayoutsFromProposal = (proposal: Proposal, currentGovernanceCycle: number): SQLPayout[] | undefined => {
   const sqlPayouts: SQLPayout[] = [];
   proposal.actions?.forEach((action, index) => {
-    if (action.type === 'Payout') {
+    if (action.type === "Payout") {
       const { amount, count } = getPayoutCountAmount(action);
       const gc = proposal?.actions?.[index].actionTracking?.[0].governanceCycle || 0;
       const cancelled = proposal?.actions?.[index].actionTracking?.find((g) => g.governanceCycle === currentGovernanceCycle)?.status === "Cancelled";
@@ -67,7 +66,7 @@ const getSQLPayoutsFromProposal = (proposal: Proposal, currentGovernanceCycle: n
 
 export const gatherPayouts = async (space: string, currentGovernanceCycle: number) => {
   try {
-    const dolt = new DoltHandler(pools[space]);
+    const dolt = getDb(space);
     const payouts: SQLPayout[] = [];
     const previousGovernanceCycles = getGovernanceCycles(currentGovernanceCycle);
     const { proposals } = await dolt.getProposals(

@@ -1,7 +1,7 @@
 import { GovernanceEvent, NanceConfig } from '@nance/nance-sdk';
 import { discordLogin } from '../api/helpers/discord';
-import { doltSys } from '../dolt/doltSys';
 import logger from '../logging';
+import { getSysDb } from '@/dolt/pools';
 
 export const sendStartOrEndAlert = async (
   space: string,
@@ -18,7 +18,7 @@ export const sendStartOrEndAlert = async (
       startOrEndDate,
       startOrEnd
     );
-    await doltSys.updateDialogHandlerMessageId(
+    await getSysDb().updateDialogHandlerMessageId(
       space,
       dialogHandlerMessageType,
       startOrEndReminderMessageId

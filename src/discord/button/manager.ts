@@ -3,12 +3,11 @@ import { createHmac } from "crypto";
 import { oneLineTrim } from "common-tags";
 import { getSpaceByDiscordGuildId } from "@/api/helpers/getSpace";
 import { keys } from "@/keys";
-import { DoltHandler } from "@/dolt/doltHandler";
-import { pools } from "@/dolt/pools";
+import { getDb } from "@/dolt/pools";
 import { blindPollMessage } from "../templates";
 import { ID_KEYWORD, pollActionRow } from "./poll";
 
-console.log(`Will respond to polls containing: "${ID_KEYWORD}"`);
+console.log(`[DISCORD] Will respond to polls containing: "${ID_KEYWORD}"`);
 
 export async function buttonManager(interaction: ButtonInteraction) {
   try {
@@ -26,7 +25,7 @@ export async function buttonManager(interaction: ButtonInteraction) {
     }
 
     // init dolt to fetch proposal add poll
-    const dolt = new DoltHandler(pools[name], config.proposalIdPrefix);
+    const dolt = getDb(name);
     // interaction url is different than we store
     const discussionURL = oneLineTrim`https://discord.com/channels/
       ${config.discord.guildId}/

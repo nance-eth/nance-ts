@@ -5,15 +5,13 @@ import {
   NextFunction
 } from "express";
 import { SpaceInfoExtended } from "@nance/nance-sdk";
-import { DoltSysHandler } from "@/dolt/doltSysHandler";
 import { DoltHandler } from "@/dolt/doltHandler";
-import { pools } from "@/dolt/pools";
+import { getDb, getSysDb } from "@/dolt/pools";
 import { cache } from "@/api/helpers/cache";
 import { getSpaceInfo } from "@/api/helpers/getSpace";
 import { addressFromJWT } from "@/api/helpers/auth";
 
 const router = Router({ mergeParams: true });
-const doltSys = new DoltSysHandler(pools.nance_sys);
 
 export interface Middleware extends SpaceInfoExtended {
   dolt: DoltHandler;
@@ -23,12 +21,11 @@ export interface Middleware extends SpaceInfoExtended {
 
 router.use("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const doltSys = getSysDb();
     const auth = req?.headers?.authorization;
     const { space } = req.params;
     const query = space.toLowerCase();
-    if (!Object.keys(pools).includes(query)) {
-      throw new Error(`space ${query} not found`);
-    }
+    const dolt = getDb(query);
 
     let spaceInfo = cache[query]?.spaceInfo;
     const now = new Date().toISOString();
@@ -41,7 +38,6 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
       cache[query] = { spaceInfo };
     }
 
-    const dolt = new DoltHandler(pools[query], spaceInfo.config.proposalIdPrefix);
     const jwt = auth?.split('Bearer ')[1];
     const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : undefined;
 
