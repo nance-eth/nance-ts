@@ -1,21 +1,8 @@
-/* eslint-disable no-await-in-loop */
 import request from "supertest";
-import { Action, ProposalPacket, actionsToYaml, trimActionsFromBody } from "@nance/nance-sdk";
+import { Action, actionsToYaml, trimActionsFromBody } from "@nance/nance-sdk";
 import { AUTHOR, BASE_URL, COAUTHOR, headers } from "../constants";
 import { sleep, uuidGen } from "@/utils";
-
-export const waitForDiscordURL = async (uuid: string, maxAttempts = 20, interval = 1000) => {
-  for (let i = 0; i < maxAttempts; i += 1) {
-    const response = await request(BASE_URL).get(`/waterbox/proposal/${uuid}`);
-    const proposalReponse = response.body;
-    const proposalPacket = proposalReponse as ProposalPacket;
-    if (proposalPacket.discussionThreadURL !== "" && !proposalPacket.discussionThreadURL) {
-      return response;
-    }
-    await sleep(interval);
-  }
-  throw new Error("Discord URL not set within the expected time");
-};
+import { waitForDiscordURL } from "../helpers/discord";
 
 const uuid = uuidGen();
 

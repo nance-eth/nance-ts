@@ -17,6 +17,7 @@ const config: Config = {
   globalSetup: "<rootDir>/test/api/setup/jest.setup.ts",
   globalTeardown: "<rootDir>/test/api/setup/jest.teardown.ts",
   detectOpenHandles: true,
+  forceExit: true,
 };
 
 export default config;

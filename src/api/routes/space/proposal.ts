@@ -72,8 +72,6 @@ router.put("/:pid", async (req: Request, res: Response) => {
     const { dolt, config, address, spaceOwners, currentCycle, currentEvent, nextProposalId } = res.locals as Middleware;
 
     const proposalInDb = await dolt.getProposalByAnyId(pid);
-    console.log("PROPOSAL IN DB")
-    console.log(proposalInDb)
     if (!canEditProposal(proposalInDb.status)) throw Error("Proposal is no longer editable");
 
     const { uploaderAddress, receipt, snapshotId } = await validateUploaderAddress(address, envelope);
@@ -101,8 +99,9 @@ router.put("/:pid", async (req: Request, res: Response) => {
     try {
       const discussionThreadURL = await discordEditProposal(updateProposal, proposalInDb, config);
       if (discussionThreadURL) await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
-    } catch {
-      console.error("something went wrong with Discord send");
+    } catch (e) {
+      console.error("something went wrong with sql or discord update");
+      console.error(e);
     }
   } catch (e: any) {
     res.json({ success: false, error: e.message });

@@ -415,10 +415,10 @@ export class DiscordHandler {
         authorENS,
         customDomain
       );
-      const title = `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`;
+      const { title } = message.data || { title: messageObj?.embeds[0].data.title };
       const currentEmbeds = messageObj?.embeds || [];
       const embeds = [message, ...currentEmbeds];
-      await post.edit({ name: limitLength(title) });
+      await post.edit({ name: limitLength(title || "ERR") });
       await messageObj?.edit({ embeds });
     }
   }
