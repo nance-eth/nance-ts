@@ -96,8 +96,12 @@ router.put("/:pid", async (req: Request, res: Response) => {
     res.json({ success: true, data: { uuid } });
 
     clearCache(space);
-    const discussionThreadURL = await discordEditProposal(updateProposal, proposalInDb, config);
-    if (discussionThreadURL) await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
+    try {
+      const discussionThreadURL = await discordEditProposal(updateProposal, proposalInDb, config);
+      if (discussionThreadURL) await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
+    } catch {
+      console.error("something went wrong with Discord send")
+    }
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }
