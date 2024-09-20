@@ -8,6 +8,8 @@ import { pools } from "@/dolt/pools";
 import { blindPollMessage } from "../templates";
 import { ID_KEYWORD, pollActionRow } from "./poll";
 
+console.log(`Will respond to polls containing: "${ID_KEYWORD}"`);
+
 export async function buttonManager(interaction: ButtonInteraction) {
   try {
     if (!interaction.guildId) return;

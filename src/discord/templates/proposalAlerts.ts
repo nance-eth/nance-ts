@@ -73,13 +73,12 @@ export const blindPollMessage = (
     .setColor("#FF0000");
   if (!!pass && !!quorum) {
     const outcome = pass ? EMOJI.YES : EMOJI.NO;
-    const results = pass ? yes / (yes + no) : no / (yes + no);
-    const quorumMet = results >= quorum;
+    const quorumMet = (yes + no) >= quorum;
     message
       .setDescription(`Poll closed\n<t:${Math.floor(Date.now() / 1000)}>`)
       .addFields([{
         name: "Outcome",
-        value: `${outcome}${quorumMet ? "" : ` qourum of ${quorum} not met`}`
+        value: `${outcome}${quorumMet ? " vote now!" : ` quorum of ${quorum} not met`}`
       }]);
   }
   return message;
