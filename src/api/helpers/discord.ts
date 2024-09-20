@@ -56,9 +56,12 @@ export const discordEditProposal = async (
   config: NanceConfig
 ) => {
   const { status } = proposal;
+  const ideasChannelExists = !!config.discord.channelIds.ideas;
+  const thread = proposalInDb.discussionThreadURL;
   const shouldCreateDiscussion = (
-    (proposalInDb.status === "Draft")
-    && status === "Discussion" && !proposalInDb.discussionThreadURL
+    proposalInDb.status === "Draft" && status === "Discussion" && !thread
+  ) || (
+    proposalInDb.status === "Draft" && ideasChannelExists && status === "Discussion"
   );
   const discord = await discordLogin(config);
   if (shouldCreateDiscussion) {

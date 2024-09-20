@@ -1,6 +1,5 @@
 /* eslint-disable no-await-in-loop */
 import request from "supertest";
-import { Proposal } from "@nance/nance-sdk";
 import { BASE_URL, headers } from "../constants";
 import { sleep } from "@/utils";
 

@@ -17,7 +17,6 @@ export const waitForDiscordURL = async (uuid: string, maxAttempts = 20, interval
   throw new Error("Discord URL not set within the expected time");
 };
 
-// export to be used in other test files
 const uuid = uuidGen();
 
 const actions: Action[] = [

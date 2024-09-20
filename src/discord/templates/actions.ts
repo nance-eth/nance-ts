@@ -69,7 +69,7 @@ export const actionsToMarkdown = async (actions: Action[]) => {
     }
     if (action.type === "Cancel") {
       const payload = action.payload as Cancel;
-      results.push(`${index + 1}. **[CANCEL]** ${payload.targetActionDescription}`)
+      results.push(`${index + 1}. **[CANCEL]** ${payload.targetActionDescription}`);
     }
     if (action.type === "Request Budget") {
       const payload = action.payload as RequestBudget;
