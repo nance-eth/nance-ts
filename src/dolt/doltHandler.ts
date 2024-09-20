@@ -301,7 +301,7 @@ export class DoltHandler {
       WHERE uuid = ?
     `, [value, uuid]).then((res) => {
       return res.affectedRows;
-    })
+    });
   }
 
   // ===================================== //

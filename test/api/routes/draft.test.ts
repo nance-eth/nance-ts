@@ -62,6 +62,6 @@ describe("Draft Proposal", () => {
     const newDiscordURL = await waitForDiscordURL(uuid);
     // make sure discussionURL got updated
     expect(firstDiscordURL).not.toBe(newDiscordURL);
-    console.log(`http://localhost:3003/waterbox/proposal/${uuid}`)
+    console.log(`http://localhost:3003/waterbox/proposal/${uuid}`);
   }, 15_000);
 });
