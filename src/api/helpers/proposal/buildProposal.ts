@@ -40,13 +40,15 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   }
 
   // assign governanceCycle
-  let governanceCycle: number | undefined;
-  if (config.allowCurrentCycleSubmission &&
-    currentEvent.title !== "Snapshot Vote"
-  ) {
-    governanceCycle = currentCycle;
-  } else {
-    governanceCycle = currentCycle + 1;
+  let governanceCycle = proposalInDb?.governanceCycle;
+  if (!governanceCycle) {
+    if (config.allowCurrentCycleSubmission &&
+      currentEvent.title !== "Snapshot Vote"
+    ) {
+      governanceCycle = currentCycle;
+    } else {
+      governanceCycle = currentCycle + 1;
+    }
   }
 
   if (status === "Draft") governanceCycle = undefined;

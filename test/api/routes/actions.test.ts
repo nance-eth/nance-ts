@@ -7,7 +7,7 @@ describe("Actions tests", () => {
   let action: Action;
 
   it("init actionTracking for first action", async () => {
-    const allProposalsResponse = await request(BASE_URL).get("/waterbox/proposals");
+    const allProposalsResponse = await request(BASE_URL).get("/waterbox/proposals?cycle=1");
     expect(allProposalsResponse.body.data.proposals.length).toBeGreaterThan(0);
     const { proposals } = allProposalsResponse.body.data;
     const [proposal] = proposals;

@@ -63,7 +63,7 @@ describe("PROPOSAL", () => {
 
   // EDIT
   it("edit proposalId 1", async () => {
-    await sleep(3000); // discord wait
+    await sleep(1000); // discord wait
     // add another action to it
     actions.push({
       type: "Payout",
@@ -85,7 +85,7 @@ describe("PROPOSAL", () => {
       .send({ proposal: updatedProposal });
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-  }, 10000);
+  });
 
   // set to archive as non author
   it("non-author archive", async () => {
@@ -100,7 +100,7 @@ describe("PROPOSAL", () => {
     const response = await request(BASE_URL)
       .put(`/waterbox/proposal/${uuid}`)
       .set(headers)
-      .send({ proposal: { status: "Archivwwww" } });
+      .send({ proposal: { status: "invalid" } });
     expect(response.body.success).toBe(false);
   });
 });

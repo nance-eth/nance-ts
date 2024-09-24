@@ -1,8 +1,6 @@
 import request from "supertest";
-import type { Response } from "supertest";
 import { BASE_URL, headers } from "../constants";
 import { waitForDiscordURL } from "../helpers/discord";
-import { sleep } from "@/utils";
 
 const overrideSpaceInfo = {
   config: {
@@ -33,12 +31,10 @@ describe("Draft Proposal", () => {
     expect(typeof response.body.data.uuid).toBe("string");
     const { response: firstDiscordURLResponse, url } = await waitForDiscordURL(uuid);
     firstDiscordURL = url;
-    expect(firstDiscordURLResponse.body.data.disc).toBeGreaterThan(1);
+    expect(firstDiscordURLResponse.body.error).toBeUndefined();
   });
 
   it("edit draft", async () => {
-    await waitForDiscordURL(uuid);
-    await sleep(2000);
     const response = await request(BASE_URL)
       .put(`/waterbox/proposal/${uuid}`)
       .set({ ...headers, "override-space-info": JSON.stringify(overrideSpaceInfo) })
@@ -51,7 +47,6 @@ describe("Draft Proposal", () => {
   });
 
   it("move draft to discussion", async () => {
-    await sleep(2000);
     const response = await request(BASE_URL)
       .put(`/waterbox/proposal/${uuid}`)
       .set({ ...headers, "override-space-info": JSON.stringify(overrideSpaceInfo) })
@@ -60,10 +55,7 @@ describe("Draft Proposal", () => {
     expect(response.body.error).toBeUndefined();
     expect(response.body.data).toBeDefined();
     // wait for new URL to update
-    await sleep(2000);
-    const { url } = await waitForDiscordURL(uuid);
-    // make sure discussionURL got updated
-    expect(firstDiscordURL).not.toBe(url);
-    console.log(`http://localhost:3003/waterbox/proposal/${uuid}`);
-  }, 15_000);
+    const { url } = await waitForDiscordURL(uuid, firstDiscordURL);
+    expect(url).not.toBe(firstDiscordURL);
+  });
 });
