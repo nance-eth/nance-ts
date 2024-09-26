@@ -51,7 +51,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       // Send Temperature Check end alert
       const sendTemperatureCheckEndDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
       scheduleJob(`${space}:${TASKS.temperatureCheckEndAlert}`, sendTemperatureCheckEndDate, async () => {
-        const shouldSendAlert = await tasks.shouldSendAlert(space, config);
+        const shouldSendAlert = await tasks.shouldSendAlert(space);
         if (!shouldSendAlert) return;
         tasks.sendStartOrEndAlert(space, config, event.end, "Temperature Check", TASKS.temperatureCheckEndAlert, "end");
       });
@@ -80,7 +80,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       // Send 24hr vote ending alert
       const sendVoteOneDayEndDate = addDaysToDate(event.end, -1);
       scheduleJob(`${space}:${TASKS.voteOneDayEndAlert}`, sendVoteOneDayEndDate, async () => {
-        const shouldSendAlert = await tasks.shouldSendAlert(space, config);
+        const shouldSendAlert = await tasks.shouldSendAlert(space);
         if (!shouldSendAlert) return;
         tasks.sendStartOrEndAlert(space, config, event.end, "Snapshot Vote", TASKS.voteOneDayEndAlert, "end");
       });
@@ -92,7 +92,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       // Send Vote end alert
       const sendVoteEndDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
       scheduleJob(`${space}:${TASKS.voteEndAlert}`, sendVoteEndDate, async () => {
-        const shouldSendAlert = await tasks.shouldSendAlert(space, config);
+        const shouldSendAlert = await tasks.shouldSendAlert(space);
         if (!shouldSendAlert) return;
         tasks.sendStartOrEndAlert(space, config, event.end, "Snapshot Vote", TASKS.voteEndAlert, "end");
       });

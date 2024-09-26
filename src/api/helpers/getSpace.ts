@@ -1,18 +1,12 @@
 /* eslint-disable prefer-promise-reject-errors */
 import { SpaceInfoExtended, DateEvent, SQLSpaceConfig } from "@nance/nance-sdk";
 import { sum } from "lodash";
-import { DoltSysHandler } from "@/dolt/doltSysHandler";
-import { pools } from "@/dolt/pools";
 import { getCurrentEvent, getCurrentGovernanceCycleDay, getNextEvents } from "@/calendar/events";
 import { getNextEventByName } from "./getNextEventByName";
 import { addDaysToDate } from "@/utils";
-
-const doltSys = new DoltSysHandler(pools.nance_sys);
+import { getSysDb } from "@/dolt/pools";
 
 export const getSpaceInfo = (spaceConfig: SQLSpaceConfig) => {
-  const spaces = Object.keys(pools);
-  if (!spaces.includes(spaceConfig.space)) throw Error(`space ${spaceConfig.space} not found`);
-
   const { cycleStageLengths, cycleStartReference } = spaceConfig;
   const { currentGovernanceCycle } = spaceConfig;
   if (!cycleStageLengths) throw Error(`No cycleStageLengths found for ${spaceConfig.space}`);
@@ -56,7 +50,7 @@ export const getSpaceInfo = (spaceConfig: SQLSpaceConfig) => {
 
 export const getAllSpaceInfo = async (where?: string): Promise<SpaceInfoExtended[]> => {
   try {
-    const spaceConfigs = await doltSys.getAllSpaceConfig(where);
+    const spaceConfigs = await getSysDb().getAllSpaceConfig(where);
     const spaceInfos = await Promise.all(spaceConfigs.map(async (entry) => {
       return getSpaceInfo(entry);
     }));
@@ -69,7 +63,7 @@ export const getAllSpaceInfo = async (where?: string): Promise<SpaceInfoExtended
 
 export const getSpaceConfig = async (space: string): Promise<SQLSpaceConfig> => {
   try {
-    const entry = await doltSys.getSpaceConfig(space);
+    const entry = await getSysDb().getSpaceConfig(space);
     return entry;
   } catch (e) {
     return Promise.reject(e);
@@ -78,7 +72,7 @@ export const getSpaceConfig = async (space: string): Promise<SQLSpaceConfig> => 
 
 export const getAllSpaceConfig = async (where?: string): Promise<SQLSpaceConfig[]> => {
   try {
-    return await doltSys.getAllSpaceConfig(where);
+    return await getSysDb().getAllSpaceConfig(where);
   } catch (e) {
     return Promise.reject(e);
   }
@@ -86,7 +80,7 @@ export const getAllSpaceConfig = async (where?: string): Promise<SQLSpaceConfig[
 
 export const getSpaceByDiscordGuildId = async (discordGuildId: string): Promise<SpaceInfoExtended> => {
   try {
-    const entry = await doltSys.getSpaceByDiscordGuildId(discordGuildId);
+    const entry = await getSysDb().getSpaceByDiscordGuildId(discordGuildId);
     return getSpaceInfo(entry);
   } catch (e) {
     return Promise.reject(e);

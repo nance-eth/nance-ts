@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import { oneLine } from "common-tags";
 import { ProposalPacket, ProposalStatus, SnapshotProposal, SQLSnapshotProposal } from "@nance/nance-sdk";
-import { pools } from "./pools";
+import { getDb } from "./pools";
 import { cleanResultsHeader } from "./doltSQL";
 
 const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): ProposalPacket => {
@@ -38,8 +38,8 @@ const cacheSnapshotProposalToProposal = (cacheProposal: SQLSnapshotProposal): Pr
 };
 
 export const getCacheSnapshotProposal = async (snapshotId: string): Promise<ProposalPacket | undefined> => {
-  const dolt = pools.common;
-  const proposal = await dolt.db.query(oneLine`
+  const dolt = getDb("common");
+  const proposal = await dolt.localDolt.db.query(oneLine`
     SELECT * from proposals
     WHERE snapshotId = ?
     LIMIT 1
@@ -58,7 +58,7 @@ export const setCacheSnapshotProposal = async (
   sProposal: SnapshotProposal,
   proposalSummary?: string
 ): Promise<boolean> => {
-  const dolt = pools.common;
+  const dolt = getDb("common");
   let status = "Voting";
   if (sProposal.state === 'closed') {
     if (sProposal.scores[0] > sProposal.scores[1]) {
@@ -67,7 +67,7 @@ export const setCacheSnapshotProposal = async (
       status = "Cancelled";
     }
   }
-  return dolt.db.query(oneLine`
+  return dolt.localDolt.db.query(oneLine`
     INSERT INTO proposals (
       snapshotSpace,
       snapshotId,

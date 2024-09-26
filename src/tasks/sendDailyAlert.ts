@@ -1,16 +1,15 @@
 import { Proposal } from "@nance/nance-sdk";
-import { getSpaceConfig } from '../api/helpers/getSpace';
-import { getCurrentEvent, getCurrentGovernanceCycleDay } from '../calendar/events';
-import { discordLogin } from '../api/helpers/discord';
-import logger from '../logging';
-import { DoltHandler } from "../dolt/doltHandler";
-import { pools } from "../dolt/pools";
+import { getSpaceConfig } from "../api/helpers/getSpace";
+import { getCurrentEvent, getCurrentGovernanceCycleDay } from "../calendar/events";
+import { discordLogin } from "../api/helpers/discord";
+import logger from "../logging";
+import { getDb } from "../dolt/pools";
 
 // node-schedule uses local time by default
-process.env.TZ = 'UTC';
+process.env.TZ = "UTC";
 
 export async function sendDailyAlert(space: string) {
-  logger.info('===================================================================');
+  logger.info("===================================================================");
   logger.info(`================= sending dailyAlert for ${space} =================`);
   const now = new Date();
   try {
@@ -18,7 +17,7 @@ export async function sendDailyAlert(space: string) {
     const spaceConfig = await getSpaceConfig(space);
     if (!spaceConfig || !spaceConfig.cycleStartReference || !spaceConfig.cycleStageLengths) return false;
     const { config, currentGovernanceCycle } = spaceConfig;
-    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
+    const dolt = getDb(space);
 
     const governanceCycle = `${currentGovernanceCycle}+${currentGovernanceCycle + 1}`;
     const proposalsPacket = await dolt.getProposals({ governanceCycle });
@@ -49,12 +48,12 @@ export async function sendDailyAlert(space: string) {
       currentEvent.end,
       proposals
     );
-    logger.info('===================================================================');
+    logger.info("===================================================================");
     return true;
   } catch (e) {
     logger.error(`error sending dailyAlert for ${space}`);
     logger.error(e);
-    logger.info('===================================================================');
+    logger.info("===================================================================");
     return Promise.reject(e);
   }
 }

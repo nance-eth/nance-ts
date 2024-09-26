@@ -3,6 +3,8 @@ import express from "express";
 import { TspecDocsMiddleware } from "tspec";
 import { params } from "./tspec";
 import { discordInitInteractionManager } from "./helpers/discord";
+import { initializePools } from "@/dolt/pools";
+
 // routes
 import tasks from "./routes/tasks";
 import system from "./routes/system";
@@ -26,7 +28,7 @@ app.use(cors({
 app.set("json spaces", 2);
 
 app.listen(PORT, () => {
-  console.log(`Started on: http://localhost:${PORT}`);
+  console.log(`[API] Started on: http://localhost:${PORT}`);
 });
 
 // show commit information
@@ -36,6 +38,9 @@ app.get("/", (_, res) => {
 });
 
 export const init = async () => {
+  console.log("[API] init...");
+  await initializePools();
+  await discordInitInteractionManager();
   app.use("/docs", await TspecDocsMiddleware(params));
   app.use("/ish", system);
   app.use("/tasks", tasks);
@@ -46,7 +51,7 @@ export const init = async () => {
   app.use("/:space/reconfig", spaceReconfig);
   app.use("/:space/summary", spaceSummary);
   app.use("/:space/actions", spaceActions);
-  await discordInitInteractionManager();
+  console.log("[API] ready!");
 };
 
 init();

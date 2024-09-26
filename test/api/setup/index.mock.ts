@@ -2,6 +2,7 @@
 // allows for middleware injection and to remove some discord dependencies
 import cors from "cors";
 import express from "express";
+import { initializePools } from "@/dolt/pools";
 
 // routes
 import tasks from "@/api/routes/tasks";
@@ -26,10 +27,12 @@ app.use(cors({
 app.set("json spaces", 2);
 
 const server = app.listen(PORT, () => {
-  console.log(`Started on: http://localhost:${PORT}`);
+  console.log(`[API] Started on: http://localhost:${PORT}`);
 });
 
 export const init = async () => {
+  console.log("[API] init...");
+  await initializePools();
   app.use("/ish", system);
   app.use("/tasks", tasks);
   app.use("/~/proposal", snapshotProposal);
@@ -39,11 +42,10 @@ export const init = async () => {
   app.use("/:space/reconfig", spaceReconfig);
   app.use("/:space/summary", spaceSummary);
   app.use("/:space/actions", spaceActions);
+  console.log("[API] ready!");
 };
 
 export const shutdown = async () => {
   console.log("Shutting down...");
   server.close();
 };
-
-init();

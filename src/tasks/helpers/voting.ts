@@ -1,7 +1,6 @@
-import { NanceConfig, VoteResults, Proposal } from '@nance/nance-sdk';
-import { pools } from '../../dolt/pools';
-import { DoltHandler } from '../../dolt/doltHandler';
-import { SnapshotHandler } from '../../snapshot/snapshotHandler';
+import { NanceConfig, VoteResults, Proposal } from "@nance/nance-sdk";
+import { getDb } from "@/dolt/pools";
+import { SnapshotHandler } from "@/snapshot/snapshotHandler";
 
 export const getVotePercentages = (config: NanceConfig, voteResults: VoteResults) => {
   const yes = voteResults.scores[0];
@@ -29,11 +28,11 @@ export const quorumMet = (scoresTotal: number, quorum: number): boolean => {
 export const getProposalsWithVotes = async (config: NanceConfig, _proposals?: Proposal[]): Promise<Proposal[]> => {
   let proposals = _proposals;
   if (!proposals) {
-    const dolt = new DoltHandler(pools[config.name], config.proposalIdPrefix);
-    const result = await dolt.getProposals({ status: ['Voting'] });
+    const dolt = getDb(config.name);
+    const result = await dolt.getProposals({ status: ["Voting"] });
     proposals = result.proposals;
   }
-  const snapshot = new SnapshotHandler('', config); // dont need private key for this call
+  const snapshot = new SnapshotHandler("", config); // dont need private key for this call
   const proposalSnapshotIdStrings = proposals.map((proposal) => { return `"${proposal.voteURL}"`; });
   const voteResults = await snapshot.getProposalVotes(proposalSnapshotIdStrings);
   const proposalsWithVotes = proposals.map((proposal) => {

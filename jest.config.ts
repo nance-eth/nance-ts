@@ -18,6 +18,7 @@ const config: Config = {
   globalTeardown: "<rootDir>/test/api/setup/jest.teardown.ts",
   detectOpenHandles: true,
   forceExit: true,
+  testTimeout: 10_000,
 };
 
 export default config;

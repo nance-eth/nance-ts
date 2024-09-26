@@ -148,6 +148,7 @@ export class DoltSysHandler {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
       ${(where) ? `WHERE ${where}` : ''}
+      ORDER BY space ASC
     `).then((res) => {
       return res as unknown as SQLSpaceConfig[];
     }).catch((e) => { return Promise.reject(e); });

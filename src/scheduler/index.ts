@@ -6,11 +6,13 @@ import { getNextEvents } from '../calendar/events';
 import { scheduleCalendarTasks } from './calendar';
 import { listScheduledJobs } from './list';
 import { scheduleCleanup, scheduleReschedule } from './maintenance';
+import { initializePools } from '@/dolt/pools';
 
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';
 
 async function main() {
+  await initializePools();
   const autoSpaces = await getAllSpaceConfig('autoEnable=1');
   autoSpaces.forEach((spaceConfig, index) => {
     const { space, cycleStartReference, cycleStageLengths, config } = spaceConfig;

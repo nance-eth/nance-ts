@@ -2,7 +2,7 @@ import { sleep } from "../../utils";
 import { getSpaceConfig } from "../../api/helpers/getSpace";
 import { temperatureCheckClose } from "../temperatureCheckClose";
 
-const space = 'waterbox';
+const space = 'moondao';
 
 async function main() {
   await sleep(1000);

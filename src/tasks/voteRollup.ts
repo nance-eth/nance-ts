@@ -1,16 +1,14 @@
-import { NanceConfig, Proposal, DialogHandlerMessageIds } from '@nance/nance-sdk';
-import { discordLogin } from '../api/helpers/discord';
-import { DoltHandler } from '../dolt/doltHandler';
-import { pools } from '../dolt/pools';
-import { doltSys } from '../dolt/doltSys';
-import { TASKS } from '../constants';
-import logger from '../logging';
+import { NanceConfig, Proposal, DialogHandlerMessageIds } from "@nance/nance-sdk";
+import { discordLogin } from "../api/helpers/discord";
+import { getDb, getSysDb } from "../dolt/pools";
+import { TASKS } from "../constants";
+import logger from "../logging";
 
 export const voteRollup = async (space: string, config: NanceConfig, endDate: Date, _proposals?: Proposal[]) => {
   try {
     let proposals = _proposals;
     if (!proposals) {
-      const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
+      const dolt = getDb(space);
       proposals = await dolt.getProposals({ status: ["Voting"] }).then((res) => res.proposals);
     }
     const dialogHandler = await discordLogin(config);
@@ -19,7 +17,7 @@ export const voteRollup = async (space: string, config: NanceConfig, endDate: Da
       proposals,
       endDate,
     );
-    await doltSys.updateDialogHandlerMessageId(space, TASKS.voteRollup as keyof DialogHandlerMessageIds, votingRollup);
+    await getSysDb().updateDialogHandlerMessageId(space, TASKS.voteRollup as keyof DialogHandlerMessageIds, votingRollup);
     dialogHandler.logout();
   } catch (e) {
     logger.error(`error rolling up vote for ${space}`);

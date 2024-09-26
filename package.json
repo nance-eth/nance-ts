@@ -15,14 +15,14 @@
     "clean": "rm -rf node_modules && rm -rf dist",
     "freshen": "npm run clean && npm install",
     "build:api": "esbuild src/api/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/api/index.js",
-    "build:scheduler": "esbuild src/scheduler/schedule.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/scheduler/index.js",
+    "build:scheduler": "esbuild src/scheduler/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/scheduler/index.js",
     "start:api": "node ./dist/api/index.js",
     "start:scheduler": "node ./dist/scheduler/index.js",
     "dolt-client": "source .env && mysql -h$DOLT_HOST -u$DOLT_USER -p$DOLT_PASSWORD"
   },
   "dependencies": {
     "@ethersproject/providers": "^5.7.2",
-    "@nance/nance-sdk": "^4.0.7",
+    "@nance/nance-sdk": "^4.0.8",
     "@safe-global/api-kit": "^2.4.5",
     "@snapshot-labs/snapshot.js": "^0.11.41",
     "axios": "^1.7.2",

@@ -1,11 +1,10 @@
 import { ActionTracking } from "@nance/nance-sdk";
-import { DoltHandler } from "@/dolt/doltHandler";
-import { pools } from "@/dolt/pools";
+import { getDb } from "@/dolt/pools";
 import { initActionTrackingStruct } from "./helpers/actionTracking";
 
 export const updateActionTracking = async (space: string, governanceCycle: number) => {
   try {
-    const dolt = new DoltHandler(pools[space]);
+    const dolt = getDb(space);
 
     // initActionTracking for each proposal that was approved this cycle
     const { proposals: newProposals } = await dolt.getProposals({ status: ["Approved"], governanceCycle });

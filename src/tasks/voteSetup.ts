@@ -1,20 +1,19 @@
 import {
   NanceConfig,
   Proposal,
-} from '@nance/nance-sdk';
-import { SnapshotHandler } from '../snapshot/snapshotHandler';
-import { DoltHandler } from '../dolt/doltHandler';
-import { pools } from '../dolt/pools';
-import { keys } from '../keys';
-import { dotPin } from '../storage/storageHandler';
-import logger from '../logging';
+} from "@nance/nance-sdk";
+import { SnapshotHandler } from "../snapshot/snapshotHandler";
+import { getDb } from "../dolt/pools";
+import { keys } from "../keys";
+import { dotPin } from "../storage/storageHandler";
+import logger from "../logging";
 import {
   addSecondsToDate,
-} from '../utils';
+} from "../utils";
 
 export const voteSetup = async (space: string, config: NanceConfig, endDate: Date, proposals?: Proposal[]) => {
   try {
-    const dolt = new DoltHandler(pools[space], config.proposalIdPrefix);
+    const dolt = getDb(space);
     const voteProposals = proposals || await dolt.getProposals({ status: ["Voting"] }).then((res) => res.proposals);
     if (!voteProposals || voteProposals.length === 0) return [];
     const snapshot = new SnapshotHandler(keys.PRIVATE_KEY, config);
@@ -26,7 +25,7 @@ export const voteSetup = async (space: string, config: NanceConfig, endDate: Dat
       return undefined;
     });
 
-    // used to pick a more random previous block to take snapshot of token balances per DrGorilla.eth's recommendation
+    // used to pick a more random previous block to take snapshot of token balances per DrGorilla.eth"s recommendation
     const blockJitter = Math.floor(Math.random() * 100);
 
     const updatedProposals = await Promise.all(voteProposals.map(async (proposal) => {
@@ -39,7 +38,7 @@ export const voteSetup = async (space: string, config: NanceConfig, endDate: Dat
       const { body } = proposal;
       const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${body}`;
       const ipfsURL = await dotPin(proposalWithHeading);
-      const type = (proposal.voteSetup) ? proposal.voteSetup.type : (snapshotVoteSettings?.type || 'basic');
+      const type = (proposal.voteSetup) ? proposal.voteSetup.type : (snapshotVoteSettings?.type || "basic");
       const voteURL = await snapshot.createProposal(
         proposal,
         start,
