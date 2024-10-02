@@ -580,11 +580,19 @@ export class DiscordHandler {
       logger.info(`Deleted message ${messageId} with result ${res}`);
       return res;
     } catch { // delete thread
-      const channel = this.getAlertChannel() as unknown as ForumChannel;
-      const post = await channel.threads.fetch(messageId) as ThreadChannel;
-      const res = await post.delete();
-      logger.info(`Deleted forum post ${messageId} with result ${res}`);
-      return res;
+      try {
+        const channel = this.getAlertChannel() as unknown as ForumChannel;
+        const post = await channel.threads.fetch(messageId) as ThreadChannel;
+        const res = await post.delete();
+        logger.info(`Deleted forum post ${messageId} with result ${res}`);
+        return res;
+      } catch { // delete alert message
+        const channel = this.getDailyUpdateChannels()[0];
+        const messageObj = await channel.messages.fetch(messageId);
+        const res = await messageObj.delete();
+        logger.info(`Deleted message ${messageId} with result ${res}`);
+        return res;
+      }
     }
   }
 
