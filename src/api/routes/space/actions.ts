@@ -5,7 +5,7 @@ import { discordLogin } from "@/api/helpers/discord";
 import { initActionTrackingStruct } from "@/tasks/helpers/actionTracking";
 
 const router = Router({ mergeParams: true });
-const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
+export const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
 type ActionMiddleware = Middleware & { actionPacket: ActionPacket, proposal: Proposal };
 
 // GET /:space/actions
@@ -65,7 +65,7 @@ router.get("/:aid", async (_: Request, res: Response) => {
 
 // POST /:space/actions/init
 // init actionTracking struct and save to database
-router.post("/:aid/init", async (_: Request, res: Response) => {
+router.get("/:aid/init", async (_: Request, res: Response) => {
   try {
     const { dolt, proposal, currentCycle } = res.locals as ActionMiddleware;
     const actionTracking = initActionTrackingStruct(proposal, currentCycle);

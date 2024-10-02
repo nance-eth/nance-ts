@@ -2,7 +2,6 @@ import {
   getActionsFromBody,
   ActionStatus,
   ActionTracking,
-  PayoutV1,
   Proposal
 } from "@nance/nance-sdk";
 
@@ -13,22 +12,6 @@ export function initActionTrackingStruct(proposal: Proposal, currentGovernanceCy
   if (!actions) actions = proposal.actions || [];
   if (actions.length === 0) return null;
   const actionTracking: ActionTracking[][] = actions.map((action) => {
-    const oldActionTracking: ActionTracking[] = [];
-    if (action.type) {
-      const payout = action.payload as PayoutV1;
-      for (let i = 0; i < payout.count || i < 1; i += 1) {
-        const governanceCycle = Number(proposal.governanceCycle) + i;
-        let status: ActionStatus = "Future";
-        if (governanceCycle < currentGovernanceCycle) status = "Executed";
-        if (governanceCycle === currentGovernanceCycle) status = "Active";
-        const a: ActionTracking = {
-          governanceCycle,
-          status,
-        };
-        oldActionTracking.push(a);
-      }
-    }
-    if (oldActionTracking.length > 0) return oldActionTracking;
     if (action.pollRequired) {
       const a: ActionTracking = {
         governanceCycle: 0, // initialize to 0, update with correct value when poll is approved
