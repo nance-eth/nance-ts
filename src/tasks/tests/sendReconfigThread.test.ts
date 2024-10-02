@@ -1,10 +1,12 @@
+import { initializePools } from '@/dolt/pools';
 import { getSpaceConfig } from '../../api/helpers/getSpace';
-import { sendTransactionThread } from "../sendTransactionsThread";
+import { sendReconfigThread } from "../sendReconfigThread";
 
 async function main() {
+  await initializePools();
   const { config: juiceboxConfig } = await getSpaceConfig('juicebox');
   const { config: waterboxConfig } = await getSpaceConfig('waterbox');
-  await sendTransactionThread('juicebox', juiceboxConfig);
+  await sendReconfigThread('juicebox', juiceboxConfig);
 }
 
 main();

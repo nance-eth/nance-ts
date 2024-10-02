@@ -22,7 +22,7 @@ import {
 
 const JUICEBOX_TRIGGER_TIME = "19:19:33";
 
-export const sendTransactionThread = async (space: string, config: NanceConfig, testConfig?: NanceConfig) => {
+export const sendReconfigThread = async (space: string, config: NanceConfig, testConfig?: NanceConfig) => {
   try {
     const spaceConfig = await getSpaceConfig(space);
     const spaceInfo = getSpaceInfo(spaceConfig);
@@ -86,7 +86,12 @@ export const sendTransactionThread = async (space: string, config: NanceConfig, 
     const publicForkURL = tenderly.getForkURL();
     const links = [
       { name: "🧱 Tenderly Simulation", value: publicForkURL, inline: true },
-      { name: "🗃 Juicebox Safe Diff", value: "https://juicebox.money/@juicebox/safe", inline: true }
+      { name: "🗃 Juicebox Safe Diff", value: "https://juicebox.money/@juicebox/safe", inline: true },
+      // {
+      //   name: "✍️ Safe Transaction",
+      //   value: "https://app.safe.global/transactions/tx?safe=eth:0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e&id=multisig_0xAF28bcB48C40dBC86f52D459A6562F658fc94B1e_0x828e955bfadf31863162a14a112be693669801f8bc5c6f31606dc415ad475eb9",
+      //   inline: true
+      // }
     ];
 
     // get next Safe nonce
@@ -96,7 +101,7 @@ export const sendTransactionThread = async (space: string, config: NanceConfig, 
 
     // discord
     const discord = await discordLogin(testConfig || config);
-    const threadId = await discord.createTransactionThread(nonce, "Queue Cycle", links);
+    const threadId = await discord.createReconfigThread(nonce, "Queue Cycle", links);
     let governanceCycleExecution;
     if (spaceInfo.currentEvent.title === "Execution") {
       governanceCycleExecution = spaceInfo.currentEvent.end;
@@ -104,7 +109,7 @@ export const sendTransactionThread = async (space: string, config: NanceConfig, 
       governanceCycleExecution = spaceInfo.nextEvents.find((e) => e.title === "Execution")?.end || spaceInfo.currentEvent.end;
     }
     const deadline = dateAtTime(new Date(governanceCycleExecution), JUICEBOX_TRIGGER_TIME);
-    await discord.sendTransactionSummary(currentGovernanceCycle, threadId, deadline, lastTotalUSD, totalUSD, addedPayouts, removedPayouts, encodedReconfigureFundingCycle, viemFormat);
+    await discord.sendReconfigSummary(currentGovernanceCycle, threadId, deadline, lastTotalUSD, totalUSD, addedPayouts, removedPayouts, encodedReconfigureFundingCycle, viemFormat);
     return payouts;
   } catch (e) {
     return Promise.reject(e);

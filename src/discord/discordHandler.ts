@@ -447,7 +447,7 @@ export class DiscordHandler {
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 
-  async createTransactionThread(nonce: number, operation: string, links: EmbedField[]) {
+  async createReconfigThread(nonce: number, operation: string, links: EmbedField[]) {
     const message = t.transactionThread(nonce, operation, links);
     const thread = await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] }).then((messageObj) => {
       return messageObj.startThread({
@@ -468,7 +468,7 @@ export class DiscordHandler {
     messageObj.edit({ embeds: [editedMessage] });
   }
 
-  async sendTransactionSummary(
+  async sendReconfigSummary(
     governanceCycle: number,
     threadId: string,
     deadline: Date,
@@ -479,7 +479,7 @@ export class DiscordHandler {
     encodeReconfigureFundingCycle?: string,
     viemFormatReconfig?: any,
   ) {
-    const message = t.transactionSummary(
+    const message = t.reconfigSummary(
       this.config.name,
       deadline,
       this.config.proposalIdPrefix,

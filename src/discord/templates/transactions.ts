@@ -33,7 +33,7 @@ export const transactionThread = (nonce: number, operation: string, links: Embed
   return message;
 };
 
-export const transactionSummary = (
+export const reconfigSummary = (
   space: string,
   deadline: Date,
   proposalIdPrefix: string,
