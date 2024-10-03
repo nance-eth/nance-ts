@@ -35,11 +35,12 @@ export const actionsToMarkdown = async (actions: Action[]) => {
     const { chainId } = action;
     const explorer = chainIdToExplorer(chainId);
 
+    const milestoneText = action.pollRequired ? " **[MILESTONE]**" : "";
     if (action.type === "Custom Transaction") {
       const payload = action.payload as CustomTransaction;
       const contractName = await getContractName(payload.contract);
       await sleep(500); // avoid rate limiting
-      results.push(`${index + 1}. **[TXN]** [${contractName}](${explorer}/address/${payload.contract}).${formatCustomTransaction(payload)}`);
+      results.push(`${index + 1}. **[TXN]** [${contractName}](${explorer}/address/${payload.contract}).${formatCustomTransaction(payload)}${milestoneText}`);
     }
     if (action.type === "Payout") {
       const { amount, count } = getPayoutCountAmount(action);
@@ -50,7 +51,7 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       const toWithLink = (payout.project)
         ? projectLinkText
         : `[${ens}](${explorer}/address/${payout.address})`;
-      results.push(`${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(amount)} for ${count} ${maybePlural("cycle", count)} ($${numberWithCommas(amount * count)})`);
+      results.push(`${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(amount)} for ${count} ${maybePlural("cycle", count)} ($${numberWithCommas(amount * count)})${milestoneText}`);
     }
     if (action.type === "Transfer") {
       const payload = action.payload as Transfer;
@@ -65,11 +66,11 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       const symbolMd = payload.contract === "ETH" ? "ETH" :
         `[${symbol}](${explorerPayload}/address/${payload.contract})`;
       const ens = await getENS(payload.to);
-      results.push(`${index + 1}. **[TRANSFER]** ${numToPrettyString(payload.amount, 3)} ${symbolMd} to [${ens}](${explorerPayload}/address/${payload.to})`);
+      results.push(`${index + 1}. **[TRANSFER]** ${numToPrettyString(payload.amount, 3)} ${symbolMd} to [${ens}](${explorerPayload}/address/${payload.to})${milestoneText}`);
     }
     if (action.type === "Cancel") {
       const payload = action.payload as Cancel;
-      results.push(`${index + 1}. **[CANCEL]** ${payload.targetActionDescription}`);
+      results.push(`${index + 1}. **[CANCEL]** ${payload.targetActionDescription}${milestoneText}`);
     }
     if (action.type === "Request Budget") {
       const payload = action.payload as RequestBudget;

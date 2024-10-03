@@ -91,7 +91,8 @@ router.post("/:aid/poll", async (_: Request, res: Response) => {
     const updatedActionTracking = proposal.actions.map((a) => {
       if (!a.actionTracking) throw new Error("Action tracking is undefined");
       if (a.uuid === actionPacket.action.uuid) {
-        return a.actionTracking.map((tracking) => ({ ...tracking, pollId }));
+        const status = ActionStatusNames[2]; // "Polling", works better for type checking
+        return a.actionTracking.map((tracking) => ({ ...tracking, pollId, status }));
       }
       return a.actionTracking;
     });
