@@ -44,8 +44,8 @@ export const temperatureCheckClose = async (space: string, config: NanceConfig) 
     })).catch((e) => {
       return Promise.reject(e);
     });
-  } catch (e) {
+  } catch (e: any) {
     logger.error(`error closing temperatureCheck for ${space}`);
-    logger.error(e);
+    throw new Error(e);
   }
 };

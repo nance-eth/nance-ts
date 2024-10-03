@@ -6,11 +6,11 @@ import { discordInitInteractionManager } from "./helpers/discord";
 import { initializePools } from "@/dolt/pools";
 
 // routes
-import tasks from "./routes/tasks";
 import system from "./routes/system";
 import snapshotProposal from "./routes/snapshot";
 import spaceMiddleware from "./routes/space/middleware";
 import spaceInfo from "./routes/space/info";
+import tasks from "./routes/space/tasks";
 import spaceProposal from "./routes/space/proposal";
 import spaceProposals from "./routes/space/proposals";
 import spaceReconfig from "./routes/space/reconfig";
@@ -43,9 +43,9 @@ export const init = async () => {
   await discordInitInteractionManager();
   app.use("/docs", await TspecDocsMiddleware(params));
   app.use("/ish", system);
-  app.use("/tasks", tasks);
   app.use("/~/proposal", snapshotProposal);
   app.use("/:space", spaceMiddleware, spaceInfo);
+  app.use("/:space/tasks", tasks)
   app.use("/:space/proposal", spaceProposal);
   app.use("/:space/proposals", spaceProposals);
   app.use("/:space/reconfig", spaceReconfig);

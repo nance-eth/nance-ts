@@ -14,7 +14,7 @@ export const getSpaceInfo = (spaceConfig: SQLSpaceConfig) => {
   const currentEvent = getCurrentEvent(cycleStartReference, cycleStageLengths, new Date(), nextEvents);
   const currentCycleDay = getCurrentGovernanceCycleDay(currentEvent, cycleStageLengths, new Date());
   let cycleStartDate = getNextEventByName("Temperature Check", spaceConfig)?.start || new Date();
-  // if this the cycle start date is in the past, then we are currently in "Temperature Check" and need to add 14 days
+  // if this the cycle start date is in the past, then we are currently in "Temperature Check" and need to add cycle days
   if (cycleStartDate < new Date()) {
     cycleStartDate = addDaysToDate(cycleStartDate, sum(cycleStageLengths));
   }

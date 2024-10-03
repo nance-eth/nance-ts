@@ -39,12 +39,6 @@ export const getFundingCyclePayoutData = (payouts: SQLPayout[]): FundingCyclePay
     };
   });
   const distributionLimit = parseUnits(distributionLimitGwei.toString(), 9);
-  console.log("distributionLimit", distributionLimit);
-  console.log("percentageRemainder", percentageRemainder);
   const splits = saltBaeSprinkle(_splits, percentageRemainder);
-  // confirm that the sum of the percentages is 1
-  console.log("sum of percentages", sum(_splits.map((s) => s.percent)));
-  // confirm that the sum of the percentages is 1
-  console.log("sum of percentages", sum(splits.map((s) => s.percent)));
   return { splits, distributionLimit, totalUSD };
 };
