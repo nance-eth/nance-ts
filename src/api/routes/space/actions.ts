@@ -3,6 +3,7 @@ import { ActionPacket, ActionStatusNames, Proposal } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
 import { discordLogin } from "@/api/helpers/discord";
 import { initActionTrackingStruct } from "@/tasks/helpers/actionTracking";
+import { clearCache } from "@/api/helpers/cache";
 
 const router = Router({ mergeParams: true });
 export const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
@@ -65,11 +66,13 @@ router.get("/:aid", async (_: Request, res: Response) => {
 
 // POST /:space/actions/init
 // init actionTracking struct and save to database
-router.get("/:aid/init", async (_: Request, res: Response) => {
+router.get("/:aid/init", async (req: Request, res: Response) => {
   try {
+    const { space } = req.params;
     const { dolt, proposal, currentCycle } = res.locals as ActionMiddleware;
     const actionTracking = initActionTrackingStruct(proposal, currentCycle);
     const data = await dolt.updateActionTracking(proposal.uuid, actionTracking);
+    clearCache(space);
     res.json({ success: true, data });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
@@ -77,8 +80,9 @@ router.get("/:aid/init", async (_: Request, res: Response) => {
 });
 
 // POST /:space/actions/:uuid/poll
-router.post("/:aid/poll", async (_: Request, res: Response) => {
+router.post("/:aid/poll", async (req: Request, res: Response) => {
   try {
+    const { space } = req.params;
     const { dolt, config, actionPacket, proposal } = res.locals as ActionMiddleware;
     if (!proposal.actions) throw new Error("Proposal actions are undefined");
     if (!actionPacket.action.pollRequired) throw new Error("Action does not require a poll");
@@ -97,6 +101,7 @@ router.post("/:aid/poll", async (_: Request, res: Response) => {
       return a.actionTracking;
     });
     await dolt.updateActionTracking(proposal.uuid, updatedActionTracking);
+    clearCache(space);
     res.json({ success: true, data: pollId });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
