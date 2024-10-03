@@ -27,7 +27,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
 router.get("/dailyAlert", async (req: Request, res: Response) => {
   try {
     const { space } = req.params;
-    await tasks.sendDailyAlert(space)
+    await tasks.sendDailyAlert(space);
     res.json({ success: true });
   } catch (e) {
     res.json({ success: false, error: e });
@@ -52,7 +52,7 @@ router.get("/temperatureCheckStart", async (req: Request, res: Response) => {
     const _temperatureCheckEndDate = endDate
       || nextEvents.find((e) => e.title === "Temperature Check")?.end
       || addSecondsToDate(new Date(), 3600);
-    const temperatureCheckEndDate = new Date(_temperatureCheckEndDate)
+    const temperatureCheckEndDate = new Date(_temperatureCheckEndDate);
     await tasks.temperatureCheckRollup(space, config, temperatureCheckEndDate);
     res.json({ success: true });
   } catch (e) {
@@ -106,6 +106,19 @@ router.get("/thread/reconfig", async (req: Request, res: Response) => {
     const { space } = req.params;
     const payouts = await tasks.sendReconfigThread(space, config);
     res.json({ success: true, data: payouts });
+  } catch (e) {
+    res.json({ success: false, error: e });
+  }
+});
+
+router.post("/thread/transactions", async (req: Request, res: Response) => {
+  try {
+    const { dolt } = res.locals as Middleware;
+    const { actions } = req.body as { actions: string[] } // actions as a list of uuids
+    const proposals = actions.flatMap(async (aid) => {
+      return await dolt.getProposalByActionId(aid);
+    });
+    res.json({ success: true, data: proposals });
   } catch (e) {
     res.json({ success: false, error: e });
   }

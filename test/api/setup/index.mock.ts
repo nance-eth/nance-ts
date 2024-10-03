@@ -5,10 +5,10 @@ import express from "express";
 import { initializePools } from "@/dolt/pools";
 
 // routes
-import tasks from "@/api/routes/tasks";
 import system from "@/api/routes/system";
 import snapshotProposal from "@/api/routes/snapshot";
 import spaceInfo from "@/api/routes/space/info";
+import tasks from "@/api/routes/space/tasks";
 import spaceProposal from "@/api/routes/space/proposal";
 import spaceProposals from "@/api/routes/space/proposals";
 import spaceReconfig from "@/api/routes/space/reconfig";
@@ -34,9 +34,9 @@ export const init = async () => {
   console.log("[API] init...");
   await initializePools();
   app.use("/ish", system);
-  app.use("/tasks", tasks);
   app.use("/~/proposal", snapshotProposal);
   app.use("/:space", mockSpaceMiddleware, spaceInfo);
+  app.use("/:space/tasks", tasks)
   app.use("/:space/proposal", spaceProposal);
   app.use("/:space/proposals", spaceProposals);
   app.use("/:space/reconfig", spaceReconfig);

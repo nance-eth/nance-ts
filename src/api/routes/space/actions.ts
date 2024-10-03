@@ -64,7 +64,7 @@ router.get("/:aid", async (_: Request, res: Response) => {
   }
 });
 
-// POST /:space/actions/init
+// GET /:space/actions/init
 // init actionTracking struct and save to database
 router.get("/:aid/init", async (req: Request, res: Response) => {
   try {
