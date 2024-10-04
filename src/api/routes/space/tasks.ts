@@ -4,6 +4,8 @@ import { addSecondsToDate } from "@/utils";
 import * as tasks from "@/tasks";
 import { clearCache } from "@/api/helpers/cache";
 import { Middleware } from "./middleware";
+import { ActionPacket, Action } from "@nance/nance-sdk";
+import { getActionPacket } from "@/api/helpers/proposal/actions";
 
 const router = Router({ mergeParams: true });
 
@@ -14,12 +16,11 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
     const { address, spaceOwners } = res.locals as Middleware;
     if (!address) { res.json({ success: false, error: "no SIWE address found" }); return; }
     if (!isNanceSpaceOwner(spaceOwners, address)) {
-      res.json({ success: false, error: `address ${address} is not a spaceOwner of ${space}` });
-      return;
+      throw new Error(`address ${address} is not a spaceOwner of ${space}`);
     }
     clearCache(space);
     next();
-  } catch (e) {
+  } catch (e: any) {
     res.json({ success: false, error: e });
   }
 });
@@ -29,8 +30,8 @@ router.get("/dailyAlert", async (req: Request, res: Response) => {
     const { space } = req.params;
     await tasks.sendDailyAlert(space);
     res.json({ success: true });
-  } catch (e) {
-    res.json({ success: false, error: e });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -39,7 +40,7 @@ router.get("/incrementGovernanceCycle", async (req: Request, res: Response) => {
     const { space } = req.params;
     await tasks.incrementGovernanceCycle(space);
     res.json({ success: true });
-  } catch (e) {
+  } catch (e: any) {
     res.json({ success: false, error: e });
   }
 });
@@ -55,7 +56,7 @@ router.get("/temperatureCheckStart", async (req: Request, res: Response) => {
     const temperatureCheckEndDate = new Date(_temperatureCheckEndDate);
     await tasks.temperatureCheckRollup(space, config, temperatureCheckEndDate);
     res.json({ success: true });
-  } catch (e) {
+  } catch (e: any) {
     res.json({ success: false, error: e });
   }
 });
@@ -66,7 +67,7 @@ router.get("/temperatureCheckClose", async (req: Request, res: Response) => {
     const { space } = req.params;
     await tasks.temperatureCheckClose(space, config);
     res.json({ success: true });
-  } catch (e) {
+  } catch (e: any) {
     res.json({ success: false, error: e });
   }
 });
@@ -83,7 +84,7 @@ router.get("/voteSetup", async (req: Request, res: Response) => {
     const proposals = await tasks.voteSetup(space, config, voteEndDate);
     await tasks.voteRollup(space, config, voteEndDate, proposals);
     res.json({ success: true });
-  } catch (e) {
+  } catch (e: any) {
     res.json({ success: false, error: e });
   }
 });
@@ -95,7 +96,7 @@ router.get("/voteClose", async (req: Request, res: Response) => {
     const proposals = await tasks.voteClose(space, config);
     await tasks.voteResultsRollup(space, config, proposals);
     res.json({ success: true });
-  } catch (e) {
+  } catch (e: any) {
     res.json({ success: false, error: e });
   }
 });
@@ -106,21 +107,32 @@ router.get("/thread/reconfig", async (req: Request, res: Response) => {
     const { space } = req.params;
     const payouts = await tasks.sendReconfigThread(space, config);
     res.json({ success: true, data: payouts });
-  } catch (e) {
+  } catch (e: any) {
     res.json({ success: false, error: e });
   }
 });
 
+const validTransactionTypes: Action["type"][] = ["Custom Transaction", "Transfer"];
 router.post("/thread/transactions", async (req: Request, res: Response) => {
   try {
     const { dolt } = res.locals as Middleware;
     const { actions } = req.body as { actions: string[] } // actions as a list of uuids
-    const proposals = actions.flatMap(async (aid) => {
-      return await dolt.getProposalByActionId(aid);
-    });
-    res.json({ success: true, data: proposals });
-  } catch (e) {
-    res.json({ success: false, error: e });
+    if (!actions) throw new Error("Must provide action uuids as body");
+    console.log(`got actions ${actions}`)
+    const actionPackets: ActionPacket[] = [];
+    for (let i = 0; i < actions.length; i += 1) {
+      const aid = actions[i];
+      const proposal = await dolt.getProposalByActionId(aid);
+      const actionPacket = getActionPacket(proposal, aid)
+      if (!actionPacket.action.actionTracking) throw new Error("Action not initialized");
+      if (proposal != null &&
+        validTransactionTypes.includes(actionPacket.action.type)
+      ) actionPackets.push(actionPacket);
+    }
+    if (actionPackets.length === 0) throw new Error("No valid proposals found");
+    res.json({ success: true, data: actionPackets });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
   }
 });
 

@@ -7,12 +7,12 @@ describe("Actions tests", () => {
   let action: Action;
 
   it("init actionTracking for first action", async () => {
-    const allProposalsResponse = await request(BASE_URL).get("/waterbox/proposals?cycle=1");
+    const allProposalsResponse = await request(BASE_URL).get("/waterbox/proposals?cycle=0,1");
     expect(allProposalsResponse.body.data.proposals.length).toBeGreaterThan(0);
     const { proposals } = allProposalsResponse.body.data;
     const [proposal] = proposals;
     const aid = proposal.actions[0].uuid;
-    const actionInitResponse = await request(BASE_URL).post(`/waterbox/actions/${aid}/init`);
+    const actionInitResponse = await request(BASE_URL).get(`/waterbox/actions/${aid}/init`);
     expect(actionInitResponse.body.success).toBe(true);
   });
 

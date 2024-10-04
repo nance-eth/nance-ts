@@ -5,7 +5,7 @@ import { sleep } from "@/utils";
 
 describe("DELETE all proposals after", () => {
   it("delete them", async () => {
-    const allProposalsResponse = await request(BASE_URL).get("/waterbox/proposals?cycle=1");
+    const allProposalsResponse = await request(BASE_URL).get("/waterbox/proposals?cycle=0,1");
     expect(allProposalsResponse.body.data.proposals.length).toBeGreaterThan(0);
     const { proposals } = allProposalsResponse.body.data;
     for (let i = 0; i < proposals.length; i += 1) {

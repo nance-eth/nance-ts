@@ -4,6 +4,7 @@ import { Middleware } from "./middleware";
 import { discordLogin } from "@/api/helpers/discord";
 import { initActionTrackingStruct } from "@/tasks/helpers/actionTracking";
 import { clearCache } from "@/api/helpers/cache";
+import { getActionPacket } from "@/api/helpers/proposal/actions";
 
 const router = Router({ mergeParams: true });
 export const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
@@ -36,16 +37,7 @@ router.use("/:aid", async (req: Request, res: Response, next: NextFunction) => {
     const { aid } = req.params;
     const { dolt } = res.locals as Middleware;
     const proposal = await dolt.getProposalByActionId(aid);
-    if (!proposal || !proposal.proposalId) throw Error(`No proposal found containing action id ${aid}`);
-    const action = proposal?.actions?.find((a) => a?.uuid === aid);
-    if (!action) throw Error("Action not found");
-    const actionPacket: ActionPacket = {
-      action,
-      proposal: {
-        title: proposal.title,
-        id: proposal.proposalId
-      }
-    };
+    const actionPacket = getActionPacket(proposal, aid)
     res.locals.actionPacket = actionPacket;
     res.locals.proposal = proposal;
     next();
