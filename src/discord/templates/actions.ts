@@ -66,7 +66,8 @@ export const actionsToMarkdown = async (actions: Action[]) => {
 
     const milestoneText = action.pollRequired ? " **[MILESTONE]**" : "";
     if (action.type === "Custom Transaction") {
-      results.push(`${index + 1}. **[TXN]** `);
+      const txn = await formatCustomTransaction(action);
+      results.push(`${index + 1}. **[TXN]** ${txn}`);
     }
     if (action.type === "Payout") {
       const { amount, count } = getPayoutCountAmount(action);

@@ -81,9 +81,9 @@ export const transactionsSummary = async (
     const header = `## __Summary__\n`;
     const actionsMdList: string[] = [];
     for (let i = 0; i < actions.length; i += 1) {
-      const { action, proposal } = actions[i]
+      const { action, proposal } = actions[i];
       const proposalURL = getProposalURL(space, { proposalId: proposal.id } as Proposal);
-      actionsMdList.push(`${i + 1}. [[${proposalIdPrefix}${proposal.id}]](${proposalURL}) `)
+      actionsMdList.push(`${i + 1}. [[${proposalIdPrefix}${proposal.id}]](${proposalURL}) `);
       if (action.type === "Transfer") {
         const { amount, symbolMd, toMd } = await formatTransfer(action);
         actionsMdList[i] += `**[TRANSFER]** ${amount} ${symbolMd} to ${toMd}`;
@@ -97,4 +97,4 @@ export const transactionsSummary = async (
   } catch (e: any) {
     throw new Error(e);
   }
-}
+};
