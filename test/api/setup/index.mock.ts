@@ -36,7 +36,7 @@ export const init = async () => {
   app.use("/ish", system);
   app.use("/~/proposal", snapshotProposal);
   app.use("/:space", mockSpaceMiddleware, spaceInfo);
-  app.use("/:space/tasks", tasks)
+  app.use("/:space/tasks", tasks);
   app.use("/:space/proposal", spaceProposal);
   app.use("/:space/proposals", spaceProposals);
   app.use("/:space/reconfig", spaceReconfig);

@@ -15,7 +15,7 @@ import {
   ThreadChannel,
 } from "discord.js";
 import { isEqual } from "lodash";
-import { Proposal, PollResults, NanceConfig, SQLPayout } from "@nance/nance-sdk";
+import { Proposal, PollResults, NanceConfig, SQLPayout, ActionPacket } from "@nance/nance-sdk";
 import logger from "../logging";
 import { limitLength, getLastSlash, dateToUnixTimeStamp } from "../utils";
 import { DEFAULT_DASHBOARD, EMOJI } from "@/constants";
@@ -447,7 +447,7 @@ export class DiscordHandler {
     await this.getChannelById(this.config.discord.channelIds.bookkeeping).send({ embeds: [response.message] });
   }
 
-  async createReconfigThread(nonce: number, operation: string, links: EmbedField[]) {
+  async createLinkThread(nonce: number, operation: string, links: EmbedField[]) {
     const message = t.transactionThread(nonce, operation, links);
     const thread = await this.getChannelById(this.config.discord.channelIds.transactions).send({ embeds: [message] }).then((messageObj) => {
       return messageObj.startThread({
@@ -477,7 +477,7 @@ export class DiscordHandler {
     addPayouts: SQLPayout[],
     removePayouts: SQLPayout[],
     encodeReconfigureFundingCycle?: string,
-    viemFormatReconfig?: any,
+    viemFormatReconfig?: string,
   ) {
     const message = t.reconfigSummary(
       this.config.name,
@@ -496,6 +496,23 @@ export class DiscordHandler {
     if (viemFormatReconfig) {
       const attachment = new AttachmentBuilder(Buffer.from(viemFormatReconfig, "utf-8"), { name: `GC${governanceCycle}_viem.txt` });
       await this.getChannelById(threadId).send({ files: [attachment] });
+    }
+  }
+
+  async sendTransactionsSummary(
+    threadId: string,
+    actions: ActionPacket[]
+  ) {
+    try {
+      const message = await t.transactionsSummary(
+        this.config.name,
+        this.config.proposalIdPrefix,
+        actions
+      );
+      const res = await this.getChannelById(threadId).send(message);
+      return res.url;
+    } catch (e: any) {
+      throw new Error(e);
     }
   }
 

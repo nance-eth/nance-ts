@@ -22,15 +22,19 @@ const networkToRPC = {
 };
 
 export const chainIdToExplorer = (chainId: number) => {
-  if (chainId === 5) return "https://goerli.etherscan.io";
   if (chainId === 100) return "https://gnosisscan.io";
   if (chainId === 10) return "https://optimistic.etherscan.io";
   return "https://etherscan.io";
 };
 
+export const chainIdToExplorerApi = (chainId: number) => {
+  if (chainId === 100) return "https://api.gnosisscan.io";
+  if (chainId === 10) return "https://api-optimistic.etherscan.io";
+  return "https://api.etherscan.io";
+};
+
 export const networkNameToChainId = (network: string) => {
   if (network === "mainnet") return 1;
-  if (network === "goerli") return 5;
   if (network === "gnosis") return 100;
   if (network === "optimism") return 10;
   return 1;
@@ -234,9 +238,10 @@ export function deepStringify(obj: object): object {
   });
 }
 
-export const getContractName = async (address: string) => {
+export const getContractName = async (address: string, chainId = 1) => {
+  const api = chainIdToExplorerApi(chainId);
   try {
-    const res = await axios.get(`https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=${keys.ETHERSCAN_KEY}`);
+    const res = await axios.get(`${api}/api?module=contract&action=getsourcecode&address=${address}&apikey=${keys.ETHERSCAN_KEY}`);
     if (res.data.message === "NOTOK") {
       console.log(res.data.result);
       return address;

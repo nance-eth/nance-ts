@@ -1,8 +1,10 @@
+/* eslint-disable no-await-in-loop */
 import { stripIndents } from "common-tags";
 import { EmbedBuilder, EmbedField } from "discord.js";
-import { Proposal, SQLPayout } from "@nance/nance-sdk";
+import { ActionPacket, Proposal, SQLPayout } from "@nance/nance-sdk";
 import { numberWithCommas } from "@/utils";
 import { getPayoutHeadline, getProposalURL } from "../helpers";
+import { formatCustomTransaction, formatTransfer } from "./actions";
 
 export const payoutsTable = (payouts: SQLPayout[], governanceCycle: number, space: string, proposalIdPrefix: string) => {
   const message = new EmbedBuilder();
@@ -69,3 +71,30 @@ export const reconfigSummary = (
   message += `### New Distribution Limit\n$${numberWithCommas(newDistributionLimit)}\n`;
   return message;
 };
+
+export const transactionsSummary = async (
+  space: string,
+  proposalIdPrefix: string,
+  actions: ActionPacket[]
+) => {
+  try {
+    const header = `## __Summary__\n`;
+    const actionsMdList: string[] = [];
+    for (let i = 0; i < actions.length; i += 1) {
+      const { action, proposal } = actions[i]
+      const proposalURL = getProposalURL(space, { proposalId: proposal.id } as Proposal);
+      actionsMdList.push(`${i + 1}. [[${proposalIdPrefix}${proposal.id}]](${proposalURL}) `)
+      if (action.type === "Transfer") {
+        const { amount, symbolMd, toMd } = await formatTransfer(action);
+        actionsMdList[i] += `**[TRANSFER]** ${amount} ${symbolMd} to ${toMd}`;
+      }
+      if (action.type === "Custom Transaction") {
+        const out = await formatCustomTransaction(action);
+        actionsMdList[i] += `**[TXN]** ${out}`;
+      }
+    }
+    return `${header}${actionsMdList.join('\n')}`;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+}

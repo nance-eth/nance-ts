@@ -101,7 +101,7 @@ export const sendReconfigThread = async (space: string, config: NanceConfig, tes
 
     // discord
     const discord = await discordLogin(testConfig || config);
-    const threadId = await discord.createReconfigThread(nonce, "Queue Cycle", links);
+    const threadId = await discord.createLinkThread(nonce, `Queue GC#${currentGovernanceCycle}`, links);
     let governanceCycleExecution;
     if (spaceInfo.currentEvent.title === "Execution") {
       governanceCycleExecution = spaceInfo.currentEvent.end;

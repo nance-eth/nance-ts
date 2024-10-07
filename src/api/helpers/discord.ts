@@ -1,8 +1,9 @@
+import SafeApiKit from "@safe-global/api-kit";
 import { isEqual } from "lodash";
-import { NanceConfig, Proposal, ProposalStatus } from "@nance/nance-sdk";
+import { ActionPacket, NanceConfig, Proposal, ProposalStatus } from "@nance/nance-sdk";
 import { Client, Events, GatewayIntentBits } from "discord.js";
 import { DiscordHandler } from "@/discord/discordHandler";
-import { getLastSlash, sleep } from "@/utils";
+import { getLastSlash, networkNameToChainId, sleep } from "@/utils";
 import { buttonManager } from "@/discord/button/manager";
 
 export const discordLogin = async (config: NanceConfig) => {
@@ -13,8 +14,6 @@ export const discordLogin = async (config: NanceConfig) => {
 };
 
 export const discordInitInteractionManager = async () => {
-  if (process.env.LOCAL_DB) return;
-
   try {
     const discord = new Client({
       intents: [
@@ -102,4 +101,27 @@ export const discordEditProposal = async (
   }
   discord.logout();
   return null;
+};
+
+export const discordTransactionThread = async (
+  config: NanceConfig,
+  currentGovernanceCycle: number,
+  safeTxnUrl: string,
+  actions: ActionPacket[],
+) => {
+  // get next Safe nonce
+  try {
+    const networkId = networkNameToChainId(config.juicebox.network);
+    const safe = new SafeApiKit({ chainId: BigInt(networkId) });
+    const nonce = await safe.getNextNonce(config.juicebox.gnosisSafeAddress);
+    const links = [
+      { name: "✍️ Safe Transaction", value: safeTxnUrl, inline: true },
+    ];
+    const discord = await discordLogin(config);
+    const threadId = await discord.createLinkThread(nonce, `Transactions GC#${currentGovernanceCycle}`, links);
+    const summaryThread = await discord.sendTransactionsSummary(threadId, actions);
+    return summaryThread;
+  } catch (e: any) {
+    throw new Error(e);
+  }
 };

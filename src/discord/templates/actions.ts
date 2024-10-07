@@ -20,12 +20,41 @@ import {
 import { getProjectHandle } from "@/juicebox/api";
 import { getENS } from "@/api/helpers/ens";
 
-export const formatCustomTransaction = (action: CustomTransaction) => {
-  const functionNameOnly = action.functionName.split("function ")[1].split("(")[0];
-  const prettyOutput = action.args.map((arg) => {
-    return `*${arg.name}:* ${arg.value}`;
-  });
-  return `${functionNameOnly}(${prettyOutput.join(", ")})`;
+export const formatCustomTransaction = async (action: Action) => {
+  try {
+    const payload = action.payload as CustomTransaction;
+    // hotfix for chainId not being set properly
+    const { chainId } = action || { chainId: (payload as any).chainId } || { chainId: 1 };
+    const explorer = chainIdToExplorer(chainId);
+    const contractName = await getContractName(payload.contract);
+    await sleep(500); // avoid rate limiting
+    const functionName = payload.functionName.split("function ")[1].split("(")[0];
+    const prettyArgs = payload.args.map((arg) => {
+      return `*${arg.name}:* ${arg.value}`;
+    }).join(", ");
+    const contractMd = `[${contractName}](<${explorer}/address/${payload.contract}>)`;
+    return `${contractMd}.${functionName}(${prettyArgs})`;
+  } catch (e: any) {
+    throw new Error(e);
+  }
+};
+
+export const formatTransfer = async (action: Action) => {
+  const payload = action.payload as Transfer;
+
+  // hotfix for chainId not being set properly
+  const { chainId: chainIdPayload } = payload as any;
+  const explorerPayload = chainIdToExplorer(chainIdPayload);
+  let symbol = "ETH";
+  if (payload.contract !== "ETH") {
+    symbol = await getTokenSymbol(payload.contract, action.chainId);
+  }
+  const symbolMd = payload.contract === "ETH" ? "ETH" :
+    `[${symbol}](<${explorerPayload}/address/${payload.contract}>)`;
+  const ens = await getENS(payload.to);
+  const toMd = `[${ens}](<${explorerPayload}/address/${payload.to}>)`;
+  const amount = numToPrettyString(payload.amount, 3);
+  return { amount, symbolMd, toMd };
 };
 
 export const actionsToMarkdown = async (actions: Action[]) => {
@@ -37,10 +66,7 @@ export const actionsToMarkdown = async (actions: Action[]) => {
 
     const milestoneText = action.pollRequired ? " **[MILESTONE]**" : "";
     if (action.type === "Custom Transaction") {
-      const payload = action.payload as CustomTransaction;
-      const contractName = await getContractName(payload.contract);
-      await sleep(500); // avoid rate limiting
-      results.push(`${index + 1}. **[TXN]** [${contractName}](${explorer}/address/${payload.contract}).${formatCustomTransaction(payload)}${milestoneText}`);
+      results.push(`${index + 1}. **[TXN]** `);
     }
     if (action.type === "Payout") {
       const { amount, count } = getPayoutCountAmount(action);
@@ -54,19 +80,8 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       results.push(`${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(amount)} for ${count} ${maybePlural("cycle", count)} ($${numberWithCommas(amount * count)})${milestoneText}`);
     }
     if (action.type === "Transfer") {
-      const payload = action.payload as Transfer;
-
-      // hotfix for chainId not being set properly
-      const { chainId: chainIdPayload } = payload as any;
-      const explorerPayload = chainIdToExplorer(chainIdPayload);
-      let symbol = "ETH";
-      if (payload.contract !== "ETH") {
-        symbol = await getTokenSymbol(payload.contract, action.chainId);
-      }
-      const symbolMd = payload.contract === "ETH" ? "ETH" :
-        `[${symbol}](${explorerPayload}/address/${payload.contract})`;
-      const ens = await getENS(payload.to);
-      results.push(`${index + 1}. **[TRANSFER]** ${numToPrettyString(payload.amount, 3)} ${symbolMd} to [${ens}](${explorerPayload}/address/${payload.to})${milestoneText}`);
+      const { amount, symbolMd, toMd } = await formatTransfer(action);
+      results.push(`${index + 1}. **[TRANSFER]** ${amount} ${symbolMd} to ${toMd}${milestoneText}`);
     }
     if (action.type === "Cancel") {
       const payload = action.payload as Cancel;

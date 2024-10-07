@@ -1,11 +1,13 @@
+/* eslint-disable no-await-in-loop */
 import { Router, Request, Response, NextFunction } from "express";
+import { ActionPacket, Action } from "@nance/nance-sdk";
 import { isNanceSpaceOwner } from "@/api/helpers/permissions";
 import { addSecondsToDate } from "@/utils";
 import * as tasks from "@/tasks";
 import { clearCache } from "@/api/helpers/cache";
 import { Middleware } from "./middleware";
-import { ActionPacket, Action } from "@nance/nance-sdk";
 import { getActionPacket } from "@/api/helpers/proposal/actions";
+import { discordTransactionThread } from "@/api/helpers/discord";
 
 const router = Router({ mergeParams: true });
 
@@ -115,22 +117,23 @@ router.get("/thread/reconfig", async (req: Request, res: Response) => {
 const validTransactionTypes: Action["type"][] = ["Custom Transaction", "Transfer"];
 router.post("/thread/transactions", async (req: Request, res: Response) => {
   try {
-    const { dolt } = res.locals as Middleware;
-    const { actions } = req.body as { actions: string[] } // actions as a list of uuids
+    const { dolt, config, currentCycle } = res.locals as Middleware;
+    const { actions, safeTxnUrl } = req.body as { actions: string[], safeTxnUrl: string };
     if (!actions) throw new Error("Must provide action uuids as body");
-    console.log(`got actions ${actions}`)
     const actionPackets: ActionPacket[] = [];
     for (let i = 0; i < actions.length; i += 1) {
       const aid = actions[i];
       const proposal = await dolt.getProposalByActionId(aid);
-      const actionPacket = getActionPacket(proposal, aid)
+      const actionPacket = getActionPacket(proposal, aid);
       if (!actionPacket.action.actionTracking) throw new Error("Action not initialized");
       if (proposal != null &&
         validTransactionTypes.includes(actionPacket.action.type)
       ) actionPackets.push(actionPacket);
     }
     if (actionPackets.length === 0) throw new Error("No valid proposals found");
-    res.json({ success: true, data: actionPackets });
+    const safeUrl = safeTxnUrl || `https://app.safe.global/home?safe=eth:${config.juicebox.gnosisSafeAddress}`;
+    const data = await discordTransactionThread(config, currentCycle, safeUrl, actionPackets);
+    res.json({ success: true, data });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }
