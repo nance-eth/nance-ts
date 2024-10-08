@@ -12,8 +12,8 @@ type ValidateProposalByVp = {
 
 export async function validateUploaderVp(input: ValidateProposalByVp) {
   const { proposal, proposalInDb, uploaderAddress, config } = input;
-  const { status: _status, coauthors: _coauthors } = proposal;
-  const { authorAddress: _authorAddress } = proposalInDb || { authorAddress: undefined };
+  const { status: _status } = proposal;
+  const { authorAddress: _authorAddress, coauthors: _coauthors } = proposalInDb || { authorAddress: undefined };
   const { proposalSubmissionValidation } = config;
 
   if (!proposalSubmissionValidation || !uploaderAddress) {
@@ -43,10 +43,10 @@ export function checkPermissions(
   spaceOwners: string[],
   operation: "archive" | "delete" | "admin"
 ) {
-  const { authorAddress } = proposalInDb;
+  const { authorAddress, coauthors } = proposalInDb;
   const addressIsAuthor = authorAddress === address;
   const permissionElevated = isNanceSpaceOwner(spaceOwners, address);
-  const addressIsFirstCoauthor = address === proposal?.coauthors?.[0];
+  const addressIsFirstCoauthor = address === coauthors?.[0];
   const noAuthorAndAddressIsFirstCoauthor = !authorAddress && addressIsFirstCoauthor;
   if (operation === "archive") {
     if (

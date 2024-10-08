@@ -73,6 +73,7 @@ export const discordEditProposal = async (
   // if proposal got sponsored by a valid author,
   // add Temperature Check embed and setup poll buttons
   if (proposalInDb.status === "Discussion" && status === "Temperature Check") {
+    if (!proposalInDb.discussionThreadURL) throw Error("Proposal has no Discord thread");
     await discord.editDiscussionMessage(proposal);
     await discord.setupPoll(getLastSlash(proposalInDb.discussionThreadURL));
   }

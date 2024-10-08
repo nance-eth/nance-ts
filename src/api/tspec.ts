@@ -13,6 +13,14 @@ import {
   ProposalUploadRequest,
 } from "@nance/nance-sdk";
 
+const exampleProposalUpload: ProposalUploadRequest = {
+  proposal: {
+    title: "This is the Title",
+    body: "##Summary\n\nThis is the markdown body",
+    status: "Discussion"
+  }
+};
+
 interface APIErrorBase {
   success: false;
   error: string;
@@ -101,7 +109,7 @@ export type spaceSpec = Tspec.DefineApiSpec<{
         summary: "Create a proposal in a space (requires SIWE JWT authentication or signed Proposal)",
         path: { space: string },
         security: "jwt",
-        body: ProposalUploadRequest,
+        body: typeof exampleProposalUpload,
         responses: {
           200: ProposalUploadResponse;
           404: APIErrorBase;

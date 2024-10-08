@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS proposals (
   ipfsCID VARCHAR(60),
   proposalSummary TEXT,
   threadSummary TEXT,
-  signature VARCHAR(42),
+  signature VARCHAR(255),
   PRIMARY KEY (uuid)
 );
 
