@@ -1,7 +1,7 @@
-import { Proposal } from "@nance/nance-sdk";
+import { NewProposal, UpdateProposal } from "@nance/nance-sdk";
 
 export function logProposal(
-  proposal: Proposal,
+  proposal: NewProposal | UpdateProposal,
   space: string,
   uploaderAddress: string,
   operation: string

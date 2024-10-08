@@ -83,7 +83,7 @@ export class DoltHandler {
       body,
       status: proposal.proposalStatus as ProposalStatus,
       proposalId: proposal.proposalId,
-      discussionThreadURL: proposal.discussionURL ?? '',
+      discussionThreadURL: proposal.discussionURL,
       ipfsURL: proposal.ipfsCID ? `${IPFS_GATEWAY}/ipfs/${proposal.ipfsCID}` : undefined,
       voteURL: proposal.snapshotId ? proposal.snapshotId : undefined,
       createdTime: proposal.createdTime.toISOString(),
@@ -159,7 +159,6 @@ export class DoltHandler {
   // ===================================== //
 
   async addProposalToDb(proposal: Proposal, receipt?: string) {
-    const now = new Date().toISOString();
     await this.localDolt.db.query(oneLine`
       INSERT INTO ${proposalsTable} (
         uuid,
@@ -183,8 +182,8 @@ export class DoltHandler {
       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       proposal.uuid,
-      proposal.createdTime || now,
-      now,
+      proposal.createdTime,
+      proposal.lastEditedTime,
       proposal.title,
       proposal.body,
       proposal.authorAddress,

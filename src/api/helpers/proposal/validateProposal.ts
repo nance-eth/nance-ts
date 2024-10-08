@@ -1,10 +1,10 @@
 import { uniq } from "lodash";
-import { NanceConfig, Proposal } from "@nance/nance-sdk";
+import { NanceConfig, NewProposal, Proposal, UpdateProposal } from "@nance/nance-sdk";
 import { getAddressVotingPower } from "@/snapshot/snapshotVotingPower";
 import { isNanceSpaceOwner } from "../permissions";
 
 type ValidateProposalByVp = {
-  proposal: Proposal,
+  proposal: NewProposal | UpdateProposal,
   proposalInDb?: Proposal,
   uploaderAddress?: string,
   config: NanceConfig
@@ -37,7 +37,7 @@ export async function validateUploaderVp(input: ValidateProposalByVp) {
 }
 
 export function checkPermissions(
-  proposal: Proposal,
+  proposal: UpdateProposal,
   proposalInDb: Proposal,
   address: string,
   spaceOwners: string[],

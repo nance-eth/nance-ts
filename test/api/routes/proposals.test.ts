@@ -4,8 +4,6 @@ import { AUTHOR, BASE_URL, COAUTHOR, headers } from "../constants";
 import { sleep, uuidGen } from "@/utils";
 import { waitForDiscordURL } from "../helpers/discord";
 
-const uuid = uuidGen();
-
 const actions: Action[] = [
   {
     type: "Transfer",
@@ -33,12 +31,12 @@ const actions: Action[] = [
 ];
 
 const proposal = {
-  uuid,
   title: "Test Proposal",
   body: `This is a test proposal\n\n${actionsToYaml(actions)}`,
 };
 
 describe("PROPOSAL", () => {
+  let uuid: string;
   // POST
   it("POST Discussion proposal", async () => {
     const response = await request(BASE_URL)
@@ -50,6 +48,7 @@ describe("PROPOSAL", () => {
     expect(response.body.data).toBeDefined();
     expect(response.body.data.uuid).toBeDefined();
     expect(typeof response.body.data.uuid).toBe("string");
+    uuid = response.body.data.uuid;
   });
 
   // GET

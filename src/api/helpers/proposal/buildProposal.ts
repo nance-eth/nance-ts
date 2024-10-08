@@ -1,10 +1,10 @@
-import { Proposal, ProposalStatus, ProposalStatusNames } from "@nance/nance-sdk";
+import { NewProposal, Proposal, ProposalStatus, ProposalStatusNames, UpdateProposal } from "@nance/nance-sdk";
 import { Middleware } from "@/api/routes/space/middleware";
 import { uuidGen } from "@/utils";
 
 type PickFromMiddleware = "config" | "currentCycle" | "currentEvent" | "nextProposalId";
 type BuildProposalInput = Pick<Middleware, PickFromMiddleware> & {
-  proposal: Proposal;
+  proposal: NewProposal | UpdateProposal;
   proposalInDb?: Proposal;
   status: ProposalStatus;
   authorAddress?: string;
@@ -23,7 +23,7 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   }
 
   // assign uuid
-  const uuid = proposalInDb?.uuid || proposal.uuid || uuidGen();
+  const uuid = proposalInDb?.uuid || uuidGen();
 
   // assign voteSetup
   const voteSetup = proposal.voteSetup || {
@@ -54,12 +54,18 @@ export function buildProposal(input: BuildProposalInput): Proposal {
   if (status === "Draft") governanceCycle = undefined;
 
   const title = proposal.title || proposalInDb?.title || "Untitled Proposal";
-
+  const body = proposal.body || proposalInDb?.body || "Unknown Body";
+  const now = new Date().toISOString();
+  const createdTime = proposalInDb?.createdTime || now;
+  const lastEditedTime = proposalInDb?.lastEditedTime || now;
   return {
     ...proposalInDb,
     ...proposal,
+    body,
     title,
     uuid,
+    createdTime,
+    lastEditedTime,
     status,
     authorAddress,
     coauthors,

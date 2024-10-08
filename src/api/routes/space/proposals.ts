@@ -92,7 +92,6 @@ router.post('/', async (req: Request, res) => {
     logProposal(proposal, space, uploaderAddress, "new");
     dolt.addProposalToDb(newProposal, receipt).then(async (proposalRes) => {
       const { uuid } = proposalRes;
-      proposal.uuid = uuid;
 
       // return uuid to client, then continue doing things
       res.json({ success: true, data: { uuid } });

@@ -37,7 +37,7 @@ router.use("/:aid", async (req: Request, res: Response, next: NextFunction) => {
     const { aid } = req.params;
     const { dolt } = res.locals as Middleware;
     const proposal = await dolt.getProposalByActionId(aid);
-    const actionPacket = getActionPacket(proposal, aid)
+    const actionPacket = getActionPacket(proposal, aid);
     res.locals.actionPacket = actionPacket;
     res.locals.proposal = proposal;
     next();

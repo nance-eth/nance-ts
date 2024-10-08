@@ -20,6 +20,7 @@ export const temperatureCheckClose = async (space: string, config: NanceConfig) 
     const { proposals } = await dolt.getProposals({ status: ["Temperature Check"] });
     if (proposals.length === 0) return;
     await Promise.all(proposals.map(async (proposal) => {
+      if (!proposal.discussionThreadURL) throw new Error("Missing discussionThreadURL");
       const threadId = getLastSlash(proposal.discussionThreadURL);
       let pollResults;
       let blind = false;
