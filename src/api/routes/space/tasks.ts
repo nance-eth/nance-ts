@@ -23,7 +23,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
     clearCache(space);
     next();
   } catch (e: any) {
-    res.json({ success: false, error: e });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -43,7 +43,7 @@ router.get("/incrementGovernanceCycle", async (req: Request, res: Response) => {
     await tasks.incrementGovernanceCycle(space);
     res.json({ success: true });
   } catch (e: any) {
-    res.json({ success: false, error: e });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -59,7 +59,7 @@ router.get("/temperatureCheckStart", async (req: Request, res: Response) => {
     await tasks.temperatureCheckRollup(space, config, temperatureCheckEndDate);
     res.json({ success: true });
   } catch (e: any) {
-    res.json({ success: false, error: e });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -70,7 +70,7 @@ router.get("/temperatureCheckClose", async (req: Request, res: Response) => {
     await tasks.temperatureCheckClose(space, config);
     res.json({ success: true });
   } catch (e: any) {
-    res.json({ success: false, error: e });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -87,7 +87,7 @@ router.get("/voteSetup", async (req: Request, res: Response) => {
     await tasks.voteRollup(space, config, voteEndDate, proposals);
     res.json({ success: true });
   } catch (e: any) {
-    res.json({ success: false, error: e });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -99,7 +99,7 @@ router.get("/voteClose", async (req: Request, res: Response) => {
     await tasks.voteResultsRollup(space, config, proposals);
     res.json({ success: true });
   } catch (e: any) {
-    res.json({ success: false, error: e });
+    res.json({ success: false, error: e.message });
   }
 });
 
@@ -110,7 +110,7 @@ router.get("/thread/reconfig", async (req: Request, res: Response) => {
     const payouts = await tasks.sendReconfigThread(space, config);
     res.json({ success: true, data: payouts });
   } catch (e: any) {
-    res.json({ success: false, error: e });
+    res.json({ success: false, error: e.message });
   }
 });
 

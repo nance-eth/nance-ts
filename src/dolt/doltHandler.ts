@@ -257,8 +257,7 @@ export class DoltHandler {
     const query = `
       UPDATE ${proposalsTable} SET
       temperatureCheckVotes = '[${proposal.temperatureCheckVotes}]',
-      proposalStatus = '${proposal.status}',
-      title = '${proposal.title}'
+      proposalStatus = '${proposal.status}'
       WHERE uuid = '${proposal.uuid}'
     `;
     return this.queryDb(query);

@@ -42,7 +42,7 @@ export const temperatureCheckClose = async (space: string, config: NanceConfig) 
       const updatedProposal = { ...proposal, status, temperatureCheckVotes: [yes, no] };
       await dolt.updateTemperatureCheckClose(updatedProposal);
     })).catch((e) => {
-      return Promise.reject(e);
+      throw Error(e);
     });
   } catch (e: any) {
     logger.error(`error closing temperatureCheck for ${space}`);
