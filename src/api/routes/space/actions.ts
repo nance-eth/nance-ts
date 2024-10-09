@@ -15,17 +15,22 @@ router.get("/", async (_: Request, res: Response) => {
   try {
     const { dolt } = res.locals as Middleware;
     const { proposals } = await dolt.getProposals({ actionTrackingStatus: viableActions });
-    const actionsPacket: ActionPacket[] = proposals.flatMap((proposal) => {
+    const actionPackets: ActionPacket[] = proposals.flatMap((proposal) => {
       if (!proposal.actions) return [];
-      return proposal.actions.map((action) => ({
-        proposal: {
-          title: proposal.title,
-          id: Number(proposal.proposalId),
-        },
-        action
-      }));
+      return proposal.actions
+        .filter((action) => !( // filter out single Executed actions
+          action?.actionTracking?.length === 1 &&
+          action?.actionTracking[0]?.status === "Executed"
+        ))
+        .map((action) => ({
+          proposal: {
+            title: proposal.title,
+            id: Number(proposal.proposalId),
+          },
+          action
+        }));
     });
-    res.json({ success: true, data: actionsPacket });
+    res.json({ success: true, data: actionPackets });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }
