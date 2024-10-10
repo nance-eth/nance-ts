@@ -309,6 +309,7 @@ export type aiSummarySpec = Tspec.DefineApiSpec<{
 export type tasksSpec = Tspec.DefineApiSpec<{
   basePath: "/{space}/tasks",
   tags: ["Space Tasks"],
+  security: "jwt",
   paths: {
     "/dailyAlert": {
       get: {
