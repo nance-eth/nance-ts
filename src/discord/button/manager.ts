@@ -29,7 +29,6 @@ export async function buttonManager(interaction: ButtonInteraction) {
     // interaction url is different than we store
     const discussionURL = oneLineTrim`https://discord.com/channels/
       ${config.discord.guildId}/
-      ${config.discord.channelIds.proposals}/
       ${interaction.message.id}
     `;
     const proposal = await dolt.getProposalByThreadURL(discussionURL);
