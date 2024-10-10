@@ -5,7 +5,6 @@ import {
   Proposal,
   SpaceInfoResponse,
   ProposalsQueryResponse,
-  ProposalQueryResponse,
   ProposalUploadResponse,
   ProposalDeleteResponse,
   SpaceInfo,
@@ -65,12 +64,21 @@ interface APIErrorBase {
   error: string;
 }
 
+interface ProposalQueryResponseOverride extends Proposal {
+  proposalInfo: {
+    snapshotSpace: string;
+    proposalIdPrefix: string;
+    minTokenPassingAmount: number;
+    nextProposalId: number;
+  }
+}
+
 export const params: Tspec.GenerateParams = {
   openapi: {
     title: "Nance API",
     version: "1.0.0",
     description: "API service for Nance. Governance Automated.",
-    servers:[
+    servers: [
       { url: "https://api.nance.app", description: "production" },
       { url: "http://localhost:3003", description: "local" }
     ],
@@ -135,7 +143,7 @@ export type spaceSpec = Tspec.DefineApiSpec<{
       get: {
         tags: ["Space Info"],
         summary: "Get Juicebox reconfig",
-        description: "Gathers all active `Payout` actions, encodes them into a single Juicebox [`reconfigureFundingCyclesOf`](https://docs.juicebox.money/dev/api/contracts/or-controllers/jbcontroller3_1/#reconfigurefundingcyclesof), and returns encoded and decoded data."
+        description: "**Only enabled for `juicebox` space.** Gathers all active `Payout` actions, encodes them into a single Juicebox [`reconfigureFundingCyclesOf`](https://docs.juicebox.money/dev/api/contracts/or-controllers/jbcontroller3_1/#reconfigurefundingcyclesof), and returns encoded and decoded data."
         path: { space: string },
         responses: {
           200: {
@@ -230,7 +238,7 @@ export type spaceSpec = Tspec.DefineApiSpec<{
         summary: "Get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #",
         path: { space: string, proposalId: string },
         responses: {
-          200: ProposalQueryResponse;
+          200: APIResponse<ProposalQueryResponseOverride>;
           404: APIErrorBase;
         }
       },
@@ -241,7 +249,7 @@ export type spaceSpec = Tspec.DefineApiSpec<{
         security: "jwt",
         body: Proposal,
         responses: {
-          200: ProposalQueryResponse;
+          200: ProposalUploadResponse;
           404: APIErrorBase;
         }
       },
@@ -330,7 +338,7 @@ export type tasksSpec = Tspec.DefineApiSpec<{
         summary: "Increment governance cycle",
         description: "Adds one to the currentCycle and saves it to the Nance database",
         path: { space: string },
-        response: {
+        responses: {
           200: { success: true }
         }
       }
@@ -340,7 +348,7 @@ export type tasksSpec = Tspec.DefineApiSpec<{
         summary: "Start Temperature Check",
         description: "Gathers all `Discussion` proposals. Uses the next `Temperature Check` time according to the schedule. Sends rollup message to Discord.",
         path: { space: string },
-        response: {
+        responses: {
           200: { success: true }
         }
       }
@@ -350,7 +358,7 @@ export type tasksSpec = Tspec.DefineApiSpec<{
         summary: "Close Temperature Check",
         description: "Closes the `Temperature Check`. Counts all polls and records results in Nance database. Passing proposals are set to `Voting`, failing to `Cancelled`.",
         path: { space: string },
-        response: {
+        responses: {
           200: { success: true }
         }
       }
@@ -360,7 +368,7 @@ export type tasksSpec = Tspec.DefineApiSpec<{
         summary: "Setup Voting",
         description: "Gathers all `Voting` proposals that passed `Temperature Check` and uploads them to the space Snapshot. Record poll results and send rollup message to Discord.",
         path: { space: string },
-        response: {
+        responses: {
           200: { success: true }
         }
       }
@@ -370,17 +378,18 @@ export type tasksSpec = Tspec.DefineApiSpec<{
         summary: "Close Voting",
         description: "Checks Snapshot API results, passing proposals are set to `Approved`, failing are set to `Cancelled`. Record results in Nance database and send rollup to Discord.",
         path: { space: string },
-        response: {
+        responses: {
           200: { success: true }
         }
       }
     },
     "/thread/reconfig": {
-      get: {
+      post: {
         summary: "Send Juicebox project reconfiguration summary to Discord",
         description: "Gathers all active `Payout` actions, encodes them into a single Juicebox [`reconfigureFundingCyclesOf`](https://docs.juicebox.money/dev/api/contracts/or-controllers/jbcontroller3_1/#reconfigurefundingcyclesof), creates a Discord thread and sends a summary of the `Payout`'s that were added and removed since last cycle",
         path: { space: string },
-        response: {
+        body: { safeTxnUrl?: string },
+        responses: {
           200: { success: true }
         }
       }
@@ -390,11 +399,27 @@ export type tasksSpec = Tspec.DefineApiSpec<{
         summary: "Send Transactions summary to Discord",
         description: "Accepts `actions` as list of action uuids. Gathers the proposals associated with those actions, creates a thread in Discord and sends a summary of each transaction.",
         path: { space: string },
-        body: { actions: string[], safeTxnUrl?: string }
-        response: {
+        body: { actions: string[], safeTxnUrl?: string },
+        responses: {
           200: { success: true }
         }
       }
     },
+  }
+}>;
+
+export type commonSnapshotProposalSpec = Tspec.DefineApiSpec<{
+  paths: {
+    tags: ["Other"],
+    "/~/{snapshotId}": {
+      get: {
+        summary: "Fetch a proposal from Snapshot",
+        description: "This queries the Snapshot API for the specified proposal, creates an AI summary for it and stores it in the `common` Nance database so it can be viewed by others without querying from Snapshot API again.",
+        path: { snapshotId: string },
+        responses: {
+          200: APIResponse<ProposalQueryResponseOverride>
+        }
+      }
+    }
   }
 }>;

@@ -103,11 +103,12 @@ router.get("/voteClose", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/thread/reconfig", async (req: Request, res: Response) => {
+router.post("/thread/reconfig", async (req: Request, res: Response) => {
   try {
     const { config } = res.locals as Middleware;
     const { space } = req.params;
-    const payouts = await tasks.sendReconfigThread(space, config);
+    const { safeTxnUrl } = req.body as { safeTxnUrl?: string };
+    const payouts = await tasks.sendReconfigThread({ space, config, safeTxnUrl });
     res.json({ success: true, data: payouts });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
