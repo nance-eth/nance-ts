@@ -31,6 +31,7 @@ export async function buttonManager(interaction: ButtonInteraction) {
       ${config.discord.guildId}/
       ${interaction.message.id}
     `;
+    console.log(`getting ${discussionURL}`)
     const proposal = await dolt.getProposalByThreadURL(discussionURL);
     if (!proposal) {
       await interaction.reply({ content: "Proposal not found 😔", ephemeral: true });
@@ -67,6 +68,7 @@ export async function buttonManager(interaction: ButtonInteraction) {
     });
     await interaction.reply({ content: "Your vote has been recorded", ephemeral: true });
   } catch (error) {
+    console.log(error);
     console.error("Hosted bot most likely handled interaction");
   }
 }
