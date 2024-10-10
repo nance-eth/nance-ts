@@ -31,7 +31,6 @@ export async function buttonManager(interaction: ButtonInteraction) {
       ${config.discord.guildId}/
       ${interaction.message.id}
     `;
-    console.log(`getting ${discussionURL}`)
     const proposal = await dolt.getProposalByThreadURL(discussionURL);
     if (!proposal) {
       await interaction.reply({ content: "Proposal not found 😔", ephemeral: true });
