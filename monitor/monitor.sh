@@ -1,4 +1,5 @@
 #!/bin/bash
+
 SCRIPT_DIR="$(dirname "$0")"
 
 API_URL=$(cat "$SCRIPT_DIR/API_URL")
@@ -32,35 +33,34 @@ check_and_send_recovery_message() {
               }
             ]
           }')
-
         send_discord_message "$payload"
         rm "$ERROR_FLAG_FILE" "$ERROR_START_TIME_FILE"
     fi
 }
 
-response=$(curl -s $API_URL)
+response=$(curl -s -w "\n%{http_code}" $API_URL)
+http_code=$(echo "$response" | tail -n1)
+body=$(echo "$response" | sed '$d')
 
-if echo "$response" | jq -e '.success == false' >/dev/null; then
+if [ "$http_code" != "200" ] || echo "$body" | jq -e '.success == false' >/dev/null; then
     if [ ! -f "$ERROR_FLAG_FILE" ]; then
         touch "$ERROR_FLAG_FILE"
         date +%s > "$ERROR_START_TIME_FILE"
-
+        error_description="HTTP Status Code: $http_code\n\nResponse Body:\n$body"
         payload=$(jq -n \
           --arg content "🚨" \
           --arg title "API Error received at <t:$(date +%s):F>" \
-          --arg description "$response" \
+          --arg description "$error_description" \
           '{
             "content": $content,
             "embeds": [
               {
                 "title": $title,
                 "description": "```json\n\($description)\n```",
-
                 "color": 15158332
               }
             ]
           }')
-
         send_discord_message "$payload"
     fi
 else

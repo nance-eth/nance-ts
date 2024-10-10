@@ -7,14 +7,18 @@ import { clearCache } from "@/api/helpers/cache";
 import { getActionPacket } from "@/api/helpers/proposal/actions";
 
 const router = Router({ mergeParams: true });
+
 export const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
+const allActions = [...ActionStatusNames];
 type ActionMiddleware = Middleware & { actionPacket: ActionPacket, proposal: Proposal };
 
 // GET /:space/actions
-router.get("/", async (_: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     const { dolt } = res.locals as Middleware;
-    const { proposals } = await dolt.getProposals({ actionTrackingStatus: viableActions });
+    const { all } = req.query as { all: string };
+    const filterActions = all === "true" ? allActions : viableActions;
+    const { proposals } = await dolt.getProposals({ actionTrackingStatus: filterActions });
     const actionPackets: ActionPacket[] = proposals.flatMap((proposal) => {
       if (!proposal.actions) return [];
       return proposal.actions
