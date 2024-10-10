@@ -69,6 +69,11 @@ export const params: Tspec.GenerateParams = {
   openapi: {
     title: "Nance API",
     version: "1.0.0",
+    description: "API service for Nance. Governance Automated.",
+    servers:[
+      { url: "https://api.nance.app", description: "production" },
+      { url: "http://localhost:3003", description: "local" }
+    ],
     securityDefinitions: {
       jwt: {
         type: "http",
