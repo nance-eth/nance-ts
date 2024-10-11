@@ -384,7 +384,7 @@ export class DiscordHandler {
 
   async editDiscussionMessage(proposal: Proposal, forceEdit = false) {
     try {
-      if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+      if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const authorENS = await getENS(proposal.authorAddress);
       const { customDomain } = this.config;
@@ -404,7 +404,7 @@ export class DiscordHandler {
         messageObj.thread?.edit({ name: limitLength(proposal.title) });
       }
     } catch (e) {
-      if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+      if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const channel = this.getAlertChannel() as unknown as ForumChannel;
       const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
@@ -519,7 +519,7 @@ export class DiscordHandler {
   }
 
   async sendProposalDiff(proposal: Proposal) {
-    if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+    if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
     const { customDomain } = this.config;
     const threadId = getLastSlash(proposal.discussionThreadURL);
     const message = t.proposalDiff(this.config.name, proposal, customDomain);
@@ -528,7 +528,7 @@ export class DiscordHandler {
 
   async sendProposalArchive(proposal: Proposal) {
     try {
-      if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+      if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const message = t.archiveDiscussionMessage(proposal);
       // keep url the same
@@ -540,7 +540,7 @@ export class DiscordHandler {
       await messageObj.thread?.send({ content: archiveMessage });
     } catch (e) {
       const channel = this.getAlertChannel() as unknown as ForumChannel;
-      if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+      if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
       await post.edit({ name: `[ARCHIVED] ${limitLength(proposal.title)}` });
@@ -554,7 +554,7 @@ export class DiscordHandler {
 
   async sendProposalUnarchive(proposal: Proposal) {
     try {
-      if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+      if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const authorENS = await getENS(proposal.authorAddress);
       const { customDomain } = this.config;
@@ -573,7 +573,7 @@ export class DiscordHandler {
       const archiveMessage = t.proposalUnarchiveAlert();
       await messageObj.thread?.send({ content: archiveMessage });
     } catch (e) {
-      if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+      if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const channel = this.getAlertChannel() as unknown as ForumChannel;
       const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
@@ -622,7 +622,7 @@ export class DiscordHandler {
 
   async sendProposalDelete(proposal: Proposal) {
     try {
-      if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+      if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
       const message = t.deletedDiscussionMessage(proposal);
       messageObj.edit({ embeds: [message] });
@@ -633,7 +633,7 @@ export class DiscordHandler {
       removeReacts(messageObj);
       await messageObj.thread?.send({ content: deleteMessage });
     } catch (e) {
-      if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
+      if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const channel = this.getAlertChannel() as unknown as ForumChannel;
       const post = await channel.threads.fetch(getLastSlash(proposal.discussionThreadURL)) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
@@ -646,11 +646,10 @@ export class DiscordHandler {
     }
   }
 
-  async sendProposalActionPoll(proposal: Proposal) {
-    if (!proposal.discussionThreadURL) throw new Error("Proposal has no Discord thread");
-    const thread = await this.getAlertChannel().threads.fetch(getLastSlash(proposal.discussionThreadURL));
+  async sendProposalActionPoll(actionPacket: ActionPacket, discussionThreadURL: string) {
+    const thread = await this.getAlertChannel().threads.fetch(getLastSlash(discussionThreadURL));
     if (!thread) throw Error("Thread not found");
-    const message = t.proposalActionPoll(proposal, this.config.proposalIdPrefix);
+    const message = await t.proposalActionPoll(actionPacket);
     const pollId = await thread.send({ embeds: [message] });
     // add reacts
     await Promise.all([

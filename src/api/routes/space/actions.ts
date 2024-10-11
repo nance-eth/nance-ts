@@ -71,6 +71,8 @@ router.get("/:aid/init", async (req: Request, res: Response) => {
   try {
     const { space } = req.params;
     const { dolt, proposal, currentCycle } = res.locals as ActionMiddleware;
+    if (proposal.actions?.some((a) => a.actionTracking)) throw new Error("Proposal already has actionTracking");
+    if (proposal.status !== "Approved") throw new Error("Proposal must be approved to initialize actionTracking");
     const actionTracking = initActionTrackingStruct(proposal, currentCycle);
     const data = await dolt.updateActionTracking(proposal.uuid, actionTracking);
     clearCache(space);
@@ -90,9 +92,9 @@ router.post("/:aid/poll", async (req: Request, res: Response) => {
     if (actionPacket.action.actionTracking?.some((at) => at.status !== "Poll Required")) {
       throw new Error("Poll already run");
     }
-
+    if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
     const discord = await discordLogin(config);
-    const pollId = await discord.sendProposalActionPoll(proposal);
+    const pollId = await discord.sendProposalActionPoll(actionPacket, proposal.discussionThreadURL);
     const updatedActionTracking = proposal.actions.map((a) => {
       if (!a.actionTracking) throw new Error("Action tracking is undefined");
       if (a.uuid === actionPacket.action.uuid) {

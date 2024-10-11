@@ -1,6 +1,6 @@
 import request from "supertest";
 import { Action, ActionPacket } from "@nance/nance-sdk";
-import { BASE_URL } from "../constants";
+import { ADMIN, BASE_URL } from "../constants";
 
 describe("Actions tests", () => {
   let actionPackets: ActionPacket[];
@@ -12,8 +12,17 @@ describe("Actions tests", () => {
     const { proposals } = allProposalsResponse.body.data;
     const [proposal] = proposals;
     const aid = proposal.actions[0].uuid;
-    const actionInitResponse = await request(BASE_URL).get(`/waterbox/actions/${aid}/init`);
-    expect(actionInitResponse.body.success).toBe(true);
+    // const actionInitResponse = await request(BASE_URL).get(`/waterbox/actions/${aid}/init`);
+    // expect(actionInitResponse.body.success).toBe(false);
+
+    const setStatusApprovedResponse = await request(BASE_URL)
+      .patch(`/waterbox/proposal/${proposal.uuid}/status/Approved`)
+      .set({ authorization: ADMIN })
+      .send();
+    expect(setStatusApprovedResponse.body.success).toBe(true);
+
+    const actionInitResponse2 = await request(BASE_URL).get(`/waterbox/actions/${aid}/init`);
+    expect(actionInitResponse2.body.success).toBe(true);
   });
 
   it("GET all actions", async () => {
@@ -38,5 +47,15 @@ describe("Actions tests", () => {
       .post(`/waterbox/actions/${nonPollAP.action.uuid}/poll`);
     expect(response.body.success).toBe(false);
     expect(response.body.error).toEqual("Action does not require a poll");
+  });
+
+  it("start poll for action that does require one", async () => {
+    // get first action that doesn't require poll
+    const pollAP = actionPackets.find((ap) => ap.action.pollRequired);
+    if (!pollAP) throw new Error("No pollAction found");
+    const response = await request(BASE_URL)
+      .post(`/waterbox/actions/${pollAP.action.uuid}/poll`);
+    expect(response.body.error).toBeUndefined();
+    expect(response.body.data).toBeDefined();
   });
 });
