@@ -35,7 +35,7 @@ export class SnapshotHandler {
       type: options.type as ProposalType,
       title: `${this.config.proposalIdPrefix}${proposal.proposalId}: ${proposal.title}`,
       body: limitLength(proposal.body, 10_000),
-      discussion: proposal.discussionThreadURL,
+      discussion: proposal.discussionThreadURL || "",
       choices: options.choices,
       start: startTimeStamp,
       end: endTimeStamp,

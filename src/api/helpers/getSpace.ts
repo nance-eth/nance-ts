@@ -3,10 +3,10 @@ import { SpaceInfoExtended, DateEvent, SQLSpaceConfig } from "@nance/nance-sdk";
 import { sum } from "lodash";
 import { getCurrentEvent, getCurrentGovernanceCycleDay, getNextEvents } from "@/calendar/events";
 import { getNextEventByName } from "./getNextEventByName";
-import { addDaysToDate } from "@/utils";
+import { addDaysToDate, DEFAULT_SPACE_AVATAR, IPFS_GATEWAY } from "@/utils";
 import { getSysDb } from "@/dolt/pools";
 
-export const getSpaceInfo = (spaceConfig: SQLSpaceConfig) => {
+export const getSpaceInfo = (spaceConfig: SQLSpaceConfig): SpaceInfoExtended => {
   const { cycleStageLengths, cycleStartReference } = spaceConfig;
   const { currentGovernanceCycle } = spaceConfig;
   if (!cycleStageLengths) throw Error(`No cycleStageLengths found for ${spaceConfig.space}`);
@@ -30,10 +30,13 @@ export const getSpaceInfo = (spaceConfig: SQLSpaceConfig) => {
     return [...acc, { title: event.title, start: event.start.toISOString(), end: event.end.toISOString() }];
   }, [] as DateEvent[]);
 
+  const avatar = spaceConfig.avatar || DEFAULT_SPACE_AVATAR;
+
   const cycleTriggerTime = cycleStartReference?.toISOString().split("T")[1] || "00:00:00";
   return {
     name: spaceConfig.space,
     displayName: spaceConfig.displayName || spaceConfig.space,
+    avatarURL: `${IPFS_GATEWAY}/ipfs/${avatar}`,
     currentCycle: currentGovernanceCycle,
     cycleStartDate: cycleStartDate.toISOString(),
     currentEvent: stringCurrentEvent,

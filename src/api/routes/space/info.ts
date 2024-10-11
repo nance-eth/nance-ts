@@ -11,6 +11,7 @@ router.get('/', async (_, res: Response) => {
     const {
       name,
       displayName,
+      avatarURL,
       config,
       currentCycle,
       currentCycleDay,
@@ -24,6 +25,7 @@ router.get('/', async (_, res: Response) => {
     const spaceInfo: SpaceInfo = {
       name,
       displayName,
+      avatarURL,
       currentCycle,
       currentCycleDay,
       currentEvent,

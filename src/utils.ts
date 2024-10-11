@@ -46,6 +46,7 @@ export const myProvider = (network = "mainnet") => {
 };
 
 export const IPFS_GATEWAY = "https://nance.infura-ipfs.io";
+export const DEFAULT_SPACE_AVATAR = "QmahthKcytRxATnMyrUWyAmnDaBqpFcXkyJabWeEFae5Xs";
 
 export const sleep = (milliseconds: number) => {
   return new Promise((resolve) => { setTimeout(resolve, milliseconds); });
