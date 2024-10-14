@@ -1,0 +1,3260 @@
+{
+  "info": {
+    "title": "Nance API",
+    "version": "1.0.0",
+    "description": "API service for Nance. Governance Automated."
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/ish/all": {
+      "get": {
+        "operationId": "nanceSpec_get_/ish/all",
+        "tags": [
+          "Nance System Info"
+        ],
+        "summary": "Get SpaceInfo for all spaces",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "avatarURL": {
+                            "type": "string"
+                          },
+                          "currentCycle": {
+                            "type": "number"
+                          },
+                          "currentCycleDay": {
+                            "type": "number"
+                          },
+                          "cycleStartDate": {
+                            "type": "string"
+                          },
+                          "currentEvent": {
+                            "$ref": "#/components/schemas/DateEvent"
+                          },
+                          "nextEvents": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/DateEvent"
+                            }
+                          },
+                          "spaceOwners": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "snapshotSpace": {
+                            "type": "string"
+                          },
+                          "juiceboxProjectId": {
+                            "type": "string"
+                          },
+                          "transactorAddress": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "governor",
+                                  "safe"
+                                ],
+                                "type": "string"
+                              },
+                              "network": {
+                                "type": "string"
+                              },
+                              "address": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "address",
+                              "network",
+                              "type"
+                            ]
+                          },
+                          "dolthubLink": {
+                            "type": "string"
+                          },
+                          "nextProposalId": {
+                            "type": "number"
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "avatarURL",
+                          "currentCycle",
+                          "currentCycleDay",
+                          "currentEvent",
+                          "cycleStartDate",
+                          "displayName",
+                          "dolthubLink",
+                          "juiceboxProjectId",
+                          "name",
+                          "nextEvents",
+                          "nextProposalId",
+                          "snapshotSpace",
+                          "spaceOwners"
+                        ]
+                      }
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ish/uuid": {
+      "get": {
+        "operationId": "nanceSpec_get_/ish/uuid",
+        "tags": [
+          "Nance System Info"
+        ],
+        "summary": "Get a v4 uuid",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}",
+        "tags": [
+          "Space Info"
+        ],
+        "summary": "Get information about a space",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceInfoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/cache/clear": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}/cache/clear",
+        "tags": [
+          "Space Info"
+        ],
+        "description": "Clear in memory cache for space",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/reconfig": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}/reconfig",
+        "tags": [
+          "Space Info"
+        ],
+        "summary": "Get Juicebox reconfig",
+        "description": "**Only enabled for `juicebox` space.** Gathers all active `Payout` actions, encodes them into a single Juicebox [`reconfigureFundingCyclesOf`](https://docs.juicebox.money/dev/api/contracts/or-controllers/jbcontroller3_1/#reconfigurefundingcyclesof), and returns encoded and decoded data.",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "encoded": {
+                          "type": "string"
+                        },
+                        "decoded": {
+                          "type": "object",
+                          "properties": {
+                            "projectId": {
+                              "type": "string"
+                            },
+                            "data": {
+                              "type": "object",
+                              "properties": {
+                                "duration": {
+                                  "type": "string"
+                                },
+                                "weight": {
+                                  "type": "string"
+                                },
+                                "discountRate": {
+                                  "type": "string"
+                                },
+                                "ballot": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false,
+                              "required": [
+                                "ballot",
+                                "discountRate",
+                                "duration",
+                                "weight"
+                              ]
+                            },
+                            "metadata": {
+                              "type": "object",
+                              "properties": {
+                                "global": {
+                                  "type": "object",
+                                  "properties": {
+                                    "allowSetTerminals": {
+                                      "type": "boolean"
+                                    },
+                                    "allowSetController": {
+                                      "type": "boolean"
+                                    },
+                                    "pauseTransfers": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "allowSetController",
+                                    "allowSetTerminals",
+                                    "pauseTransfers"
+                                  ]
+                                },
+                                "reservedRate": {
+                                  "type": "string"
+                                },
+                                "redemptionRate": {
+                                  "type": "string"
+                                },
+                                "ballotRedemptionRate": {
+                                  "type": "string"
+                                },
+                                "pausePay": {
+                                  "type": "boolean"
+                                },
+                                "pauseDistributions": {
+                                  "type": "boolean"
+                                },
+                                "pauseRedeem": {
+                                  "type": "boolean"
+                                },
+                                "pauseBurn": {
+                                  "type": "boolean"
+                                },
+                                "allowMinting": {
+                                  "type": "boolean"
+                                },
+                                "allowTerminalMigration": {
+                                  "type": "boolean"
+                                },
+                                "allowControllerMigration": {
+                                  "type": "boolean"
+                                },
+                                "holdFees": {
+                                  "type": "boolean"
+                                },
+                                "preferClaimedTokenOverride": {
+                                  "type": "boolean"
+                                },
+                                "useTotalOverflowForRedemptions": {
+                                  "type": "boolean"
+                                },
+                                "useDataSourceForPay": {
+                                  "type": "boolean"
+                                },
+                                "useDataSourceForRedeem": {
+                                  "type": "boolean"
+                                },
+                                "dataSource": {
+                                  "type": "string"
+                                },
+                                "metadata": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false,
+                              "required": [
+                                "allowControllerMigration",
+                                "allowMinting",
+                                "allowTerminalMigration",
+                                "ballotRedemptionRate",
+                                "dataSource",
+                                "global",
+                                "holdFees",
+                                "metadata",
+                                "pauseBurn",
+                                "pauseDistributions",
+                                "pausePay",
+                                "pauseRedeem",
+                                "preferClaimedTokenOverride",
+                                "redemptionRate",
+                                "reservedRate",
+                                "useDataSourceForPay",
+                                "useDataSourceForRedeem",
+                                "useTotalOverflowForRedemptions"
+                              ]
+                            },
+                            "mustStartOnOrAfter": {
+                              "type": "string"
+                            },
+                            "groupedSplits": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "fundAccessConstraints": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "terminal": {
+                                    "type": "string"
+                                  },
+                                  "token": {
+                                    "type": "string"
+                                  },
+                                  "distributionLimit": {
+                                    "type": "string"
+                                  },
+                                  "distributionLimitCurrency": {
+                                    "type": "string"
+                                  },
+                                  "overflowAllowance": {
+                                    "type": "string"
+                                  },
+                                  "overflowAllowanceCurrency": {
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false,
+                                "required": [
+                                  "distributionLimit",
+                                  "distributionLimitCurrency",
+                                  "overflowAllowance",
+                                  "overflowAllowanceCurrency",
+                                  "terminal",
+                                  "token"
+                                ]
+                              }
+                            },
+                            "memo": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "required": [
+                            "data",
+                            "fundAccessConstraints",
+                            "groupedSplits",
+                            "memo",
+                            "metadata",
+                            "mustStartOnOrAfter",
+                            "projectId"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "decoded",
+                        "encoded"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/actions": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}/actions",
+        "tags": [
+          "Space Actions"
+        ],
+        "description": "Get all actions that are NOT `Cancelled` or `Executed`. Query `?all=true` to get all actions.",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": true,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_ActionPacket___"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/actions/{aid}": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}/actions/{aid}",
+        "tags": [
+          "Space Actions"
+        ],
+        "summary": "Get a specific action by action uuid (aid)",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_ActionPacket_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/actions/{aid}/init": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}/actions/{aid}/init",
+        "tags": [
+          "Space Actions"
+        ],
+        "summary": "Initialize actionTracking for a specific action ID",
+        "description": "Initializes the `actionTracking` data structure for a specific action ID. Single `actionTracking` accounts for all actions within a proposal, all actions are intialized, not just the one specified. Results are saved to Nance database.",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_string_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/actions/{aid}/poll": {
+      "post": {
+        "operationId": "spaceSpec_post_/{space}/actions/{aid}/poll",
+        "tags": [
+          "Space Actions"
+        ],
+        "summary": "Run milestone poll for a proposal that requires one before being queued",
+        "description": "Stores and returns Discord poll URL in database",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_string_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/proposals": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}/proposals",
+        "tags": [
+          "Space Proposals"
+        ],
+        "summary": "Get proposals for a space (defaults to current Governance Cycle)",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cycle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalsQueryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "spaceSpec_post_/{space}/proposals",
+        "tags": [
+          "Space Proposals"
+        ],
+        "summary": "Create a proposal in a space (requires SIWE JWT authentication or signed Proposal)",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "proposal": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      },
+                      "body": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "$ref": "#/components/schemas/ProposalStatus"
+                      },
+                      "voteSetup": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "choices": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "additionalProperties": false,
+                        "required": [
+                          "choices",
+                          "type"
+                        ]
+                      },
+                      "authorDiscordId": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "body",
+                      "status",
+                      "title"
+                    ]
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "$ref": "#/components/schemas/NanceSignatureNames"
+                      },
+                      "signature": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/Proposal_1"
+                          },
+                          {
+                            "$ref": "#/components/schemas/CancelProposal"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "from": {
+                                "type": "string"
+                              },
+                              "space": {
+                                "type": "string"
+                              },
+                              "timestamp": {
+                                "type": "number"
+                              },
+                              "proposal": {
+                                "type": "string"
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "from",
+                              "proposal",
+                              "space",
+                              "timestamp"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "address",
+                      "message",
+                      "signature",
+                      "type"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "proposal"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalUploadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/proposal/{proposalId}": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}/proposal/{proposalId}",
+        "tags": [
+          "Space Single Proposal"
+        ],
+        "summary": "Get specific proposal by uuid, snapshotId, proposalId-#, or just proposalId #",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_ProposalQueryResponseOverride_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "spaceSpec_put_/{space}/proposal/{proposalId}",
+        "tags": [
+          "Space Single Proposal"
+        ],
+        "summary": "Update a proposal in a space",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uuid": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  },
+                  "governanceCycle": {
+                    "type": "number"
+                  },
+                  "createdTime": {
+                    "type": "string"
+                  },
+                  "lastEditedTime": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/ProposalStatus"
+                  },
+                  "proposalId": {
+                    "type": "number"
+                  },
+                  "coauthors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "discussionThreadURL": {
+                    "type": "string"
+                  },
+                  "ipfsURL": {
+                    "type": "string"
+                  },
+                  "voteURL": {
+                    "type": "string"
+                  },
+                  "voteSetup": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "choices": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "choices",
+                      "type"
+                    ]
+                  },
+                  "voteResults": {
+                    "type": "object",
+                    "properties": {
+                      "choices": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "scores": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        }
+                      },
+                      "votes": {
+                        "type": "number"
+                      },
+                      "scoresState": {
+                        "type": "string"
+                      },
+                      "scoresTotal": {
+                        "type": "number"
+                      },
+                      "quorumMet": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "choices",
+                      "scores",
+                      "votes"
+                    ]
+                  },
+                  "authorAddress": {
+                    "type": "string"
+                  },
+                  "authorDiscordId": {
+                    "type": "string"
+                  },
+                  "temperatureCheckVotes": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    }
+                  },
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Action"
+                    }
+                  },
+                  "proposalSummary": {
+                    "type": "string"
+                  },
+                  "threadSummary": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "body",
+                  "createdTime",
+                  "status",
+                  "title",
+                  "uuid"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalUploadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "spaceSpec_delete_/{space}/proposal/{proposalId}",
+        "tags": [
+          "Space Single Proposal"
+        ],
+        "summary": "Delete a proposal in a space (most be spaceOwner, or proposal author)",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDeleteResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/proposal/{proposalId}/status/{status}": {
+      "patch": {
+        "operationId": "spaceSpec_patch_/{space}/proposal/{proposalId}/status/{status}",
+        "tags": [
+          "Space Single Proposal"
+        ],
+        "summary": "Admin route to update the status of a Space Single Proposal",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ProposalStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalUploadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/proposal/{proposalId}/sync": {
+      "patch": {
+        "operationId": "spaceSpec_patch_/{space}/proposal/{proposalId}/sync",
+        "tags": [
+          "Space Single Proposal"
+        ],
+        "summary": "Admin route to sync Snapshot results",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ProposalStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalUploadResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/proposal/{proposalId}/discussion": {
+      "get": {
+        "operationId": "spaceSpec_get_/{space}/proposal/{proposalId}/discussion",
+        "tags": [
+          "Space Single Proposal"
+        ],
+        "summary": "create discussion and poll (used if it failed to automatically create)",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "success"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorBase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/{type}/{proposalId}/": {
+      "get": {
+        "operationId": "aiSummarySpec_get_/",
+        "tags": [
+          "Space Proposal AI Summary"
+        ],
+        "summary": "AI summary of a specified proposal or discussion",
+        "description": "Uses [nancearizer](https://github.com/nance-eth/nancearizer) microservice. Fetches a summary of the proposal body when `proposal` type is specified or the Discord discussion thread if `thread` is specified. Summaries are saved in Nance database.",
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "proposal",
+                "thread"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/tasks/dailyAlert": {
+      "get": {
+        "operationId": "tasksSpec_get_/dailyAlert",
+        "tags": [
+          "Space Tasks"
+        ],
+        "summary": "Send Discord dailyAlert message",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/tasks/incrementGovernanceCycle": {
+      "get": {
+        "operationId": "tasksSpec_get_/incrementGovernanceCycle",
+        "tags": [
+          "Space Tasks"
+        ],
+        "summary": "Increment governance cycle",
+        "description": "Adds one to the currentCycle and saves it to the Nance database",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/tasks/temperatureCheckStart": {
+      "get": {
+        "operationId": "tasksSpec_get_/temperatureCheckStart",
+        "tags": [
+          "Space Tasks"
+        ],
+        "summary": "Start Temperature Check",
+        "description": "Gathers all `Discussion` proposals. Uses the next `Temperature Check` time according to the schedule. Sends rollup message to Discord.",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/tasks/temperatureCheckClose": {
+      "get": {
+        "operationId": "tasksSpec_get_/temperatureCheckClose",
+        "tags": [
+          "Space Tasks"
+        ],
+        "summary": "Close Temperature Check",
+        "description": "Closes the `Temperature Check`. Counts all polls and records results in Nance database. Passing proposals are set to `Voting`, failing to `Cancelled`.",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/tasks/voteSetup": {
+      "get": {
+        "operationId": "tasksSpec_get_/voteSetup",
+        "tags": [
+          "Space Tasks"
+        ],
+        "summary": "Setup Voting",
+        "description": "Gathers all `Voting` proposals that passed `Temperature Check` and uploads them to the space Snapshot. Record poll results and send rollup message to Discord.",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/tasks/voteClose": {
+      "get": {
+        "operationId": "tasksSpec_get_/voteClose",
+        "tags": [
+          "Space Tasks"
+        ],
+        "summary": "Close Voting",
+        "description": "Checks Snapshot API results, passing proposals are set to `Approved`, failing are set to `Cancelled`. Record results in Nance database and send rollup to Discord.",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/tasks/thread/reconfig": {
+      "post": {
+        "operationId": "tasksSpec_post_/thread/reconfig",
+        "tags": [
+          "Space Tasks"
+        ],
+        "summary": "Send Juicebox project reconfiguration summary to Discord",
+        "description": "Gathers all active `Payout` actions, encodes them into a single Juicebox [`reconfigureFundingCyclesOf`](https://docs.juicebox.money/dev/api/contracts/or-controllers/jbcontroller3_1/#reconfigurefundingcyclesof), creates a Discord thread and sends a summary of the `Payout`'s that were added and removed since last cycle",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "safeTxnUrl": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{space}/tasks/thread/transactions": {
+      "post": {
+        "operationId": "tasksSpec_post_/thread/transactions",
+        "tags": [
+          "Space Tasks"
+        ],
+        "summary": "Send Transactions summary to Discord",
+        "description": "Accepts `actions` as list of action uuids. Gathers the proposals associated with those actions, creates a thread in Discord and sends a summary of each transaction.",
+        "security": [
+          {
+            "jwt": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "safeTxnUrl": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "actions"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/~/{snapshotId}": {
+      "get": {
+        "operationId": "commonSnapshotProposalSpec_get_/~/{snapshotId}",
+        "tags": [],
+        "summary": "Fetch a proposal from Snapshot",
+        "description": "This queries the Snapshot API for the specified proposal, creates an AI summary for it and stores it in the `common` Nance database so it can be viewed by others without querying from Snapshot API again.",
+        "parameters": [
+          {
+            "name": "snapshotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse_ProposalQueryResponseOverride_"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DateEvent": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "$ref": "#/components/schemas/GovernanceEvent"
+          },
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "end",
+          "start",
+          "title"
+        ]
+      },
+      "GovernanceEvent": {
+        "enum": [
+          "Delay",
+          "Execution",
+          "Snapshot Vote",
+          "Temperature Check",
+          "Unknown"
+        ],
+        "type": "string"
+      },
+      "SpaceInfoResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "avatarURL": {
+                "type": "string"
+              },
+              "currentCycle": {
+                "type": "number"
+              },
+              "currentCycleDay": {
+                "type": "number"
+              },
+              "cycleStartDate": {
+                "type": "string"
+              },
+              "currentEvent": {
+                "$ref": "#/components/schemas/DateEvent"
+              },
+              "nextEvents": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DateEvent"
+                }
+              },
+              "spaceOwners": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "snapshotSpace": {
+                "type": "string"
+              },
+              "juiceboxProjectId": {
+                "type": "string"
+              },
+              "transactorAddress": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "governor",
+                      "safe"
+                    ],
+                    "type": "string"
+                  },
+                  "network": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "address",
+                  "network",
+                  "type"
+                ]
+              },
+              "dolthubLink": {
+                "type": "string"
+              },
+              "nextProposalId": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "avatarURL",
+              "currentCycle",
+              "currentCycleDay",
+              "currentEvent",
+              "cycleStartDate",
+              "displayName",
+              "dolthubLink",
+              "juiceboxProjectId",
+              "name",
+              "nextEvents",
+              "nextProposalId",
+              "snapshotSpace",
+              "spaceOwners"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "success"
+        ]
+      },
+      "APIErrorBase": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "error",
+          "success"
+        ]
+      },
+      "APIResponse_ActionPacket___": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "$ref": "#/components/schemas/Action"
+                },
+                "proposal": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "title"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "action",
+                "proposal"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "success"
+        ]
+      },
+      "Action": {
+        "additionalProperties": false,
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "Cancel",
+              "Custom Transaction",
+              "Payout",
+              "Request Budget",
+              "Reserve",
+              "Transfer"
+            ],
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "governanceCycles": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "pollRequired": {
+            "type": "boolean"
+          },
+          "chainId": {
+            "type": "number"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string"
+                  },
+                  "allocator": {
+                    "type": "string"
+                  },
+                  "project": {
+                    "type": "number"
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "amount",
+                  "currency"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string"
+                  },
+                  "allocator": {
+                    "type": "string"
+                  },
+                  "project": {
+                    "type": "number"
+                  },
+                  "governanceCycleStart": {
+                    "type": "number"
+                  },
+                  "count": {
+                    "type": "number"
+                  },
+                  "amountUSD": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "amountUSD",
+                  "count",
+                  "governanceCycleStart"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "splits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "preferClaimed": {
+                          "type": "boolean"
+                        },
+                        "preferAddToBalance": {
+                          "type": "boolean"
+                        },
+                        "percent": {
+                          "type": "string"
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "beneficiary": {
+                          "type": "string"
+                        },
+                        "lockedUntil": {
+                          "type": "string"
+                        },
+                        "allocator": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "allocator",
+                        "beneficiary",
+                        "lockedUntil",
+                        "percent",
+                        "preferAddToBalance",
+                        "preferClaimed",
+                        "projectId"
+                      ]
+                    }
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "splits"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "contract": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  },
+                  "decimals": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "amount",
+                  "contract",
+                  "decimals",
+                  "to"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "contract": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "functionName": {
+                    "type": "string"
+                  },
+                  "args": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "name",
+                        "type",
+                        "value"
+                      ]
+                    }
+                  },
+                  "tenderlyId": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "args",
+                  "contract",
+                  "functionName",
+                  "tenderlyId",
+                  "value"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "projectTeam": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "discordUserId": {
+                          "type": "string"
+                        },
+                        "discordUsername": {
+                          "type": "string"
+                        },
+                        "payoutAddress": {
+                          "type": "string"
+                        },
+                        "votingAddress": {
+                          "type": "string"
+                        },
+                        "isRocketeer": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "discordUserId",
+                        "discordUsername",
+                        "isRocketeer",
+                        "payoutAddress",
+                        "votingAddress"
+                      ]
+                    }
+                  },
+                  "multisigTeam": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "discordUserId": {
+                          "type": "string"
+                        },
+                        "discordUsername": {
+                          "type": "string"
+                        },
+                        "address": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "address",
+                        "discordUserId",
+                        "discordUsername"
+                      ]
+                    }
+                  },
+                  "budget": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        },
+                        "justification": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "amount",
+                        "justification",
+                        "token"
+                      ]
+                    }
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "budget",
+                  "multisigTeam",
+                  "projectTeam"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "targetActionUuid": {
+                    "type": "string"
+                  },
+                  "targetActionDescription": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "targetActionDescription",
+                  "targetActionUuid"
+                ]
+              }
+            ]
+          },
+          "actionTracking": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "governanceCycle": {
+                  "type": "number"
+                },
+                "status": {
+                  "$ref": "#/components/schemas/ActionStatus"
+                },
+                "pollId": {
+                  "type": "string"
+                },
+                "pollResults": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                "transactionHash": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "governanceCycle",
+                "status"
+              ]
+            }
+          }
+        },
+        "required": [
+          "chainId",
+          "payload",
+          "type",
+          "uuid"
+        ]
+      },
+      "ActionStatus": {
+        "enum": [
+          "Active",
+          "Cancelled",
+          "Executed",
+          "Future",
+          "Poll Required",
+          "Polling",
+          "Queued"
+        ],
+        "type": "string"
+      },
+      "APIResponse_ActionPacket_": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "$ref": "#/components/schemas/Action"
+              },
+              "proposal": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "number"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "title"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "action",
+              "proposal"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "success"
+        ]
+      },
+      "APIResponse_string_": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "success"
+        ]
+      },
+      "ProposalsQueryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "proposalInfo": {
+                "type": "object",
+                "properties": {
+                  "snapshotSpace": {
+                    "type": "string"
+                  },
+                  "proposalIdPrefix": {
+                    "type": "string"
+                  },
+                  "minTokenPassingAmount": {
+                    "type": "number"
+                  },
+                  "nextProposalId": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "minTokenPassingAmount",
+                  "nextProposalId",
+                  "proposalIdPrefix",
+                  "snapshotSpace"
+                ]
+              },
+              "proposals": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Proposal"
+                }
+              },
+              "hasMore": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "hasMore",
+              "proposalInfo",
+              "proposals"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "success"
+        ]
+      },
+      "Proposal": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "governanceCycle": {
+            "type": "number"
+          },
+          "createdTime": {
+            "type": "string"
+          },
+          "lastEditedTime": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProposalStatus"
+          },
+          "proposalId": {
+            "type": "number"
+          },
+          "coauthors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "discussionThreadURL": {
+            "type": "string"
+          },
+          "ipfsURL": {
+            "type": "string"
+          },
+          "voteURL": {
+            "type": "string"
+          },
+          "voteSetup": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "choices",
+              "type"
+            ]
+          },
+          "voteResults": {
+            "type": "object",
+            "properties": {
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "scores": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "votes": {
+                "type": "number"
+              },
+              "scoresState": {
+                "type": "string"
+              },
+              "scoresTotal": {
+                "type": "number"
+              },
+              "quorumMet": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "choices",
+              "scores",
+              "votes"
+            ]
+          },
+          "authorAddress": {
+            "type": "string"
+          },
+          "authorDiscordId": {
+            "type": "string"
+          },
+          "temperatureCheckVotes": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Action"
+            }
+          },
+          "proposalSummary": {
+            "type": "string"
+          },
+          "threadSummary": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "createdTime",
+          "status",
+          "title",
+          "uuid"
+        ]
+      },
+      "ProposalStatus": {
+        "enum": [
+          "Approved",
+          "Archived",
+          "Cancelled",
+          "Discussion",
+          "Draft",
+          "Temperature Check",
+          "Voting"
+        ],
+        "type": "string"
+      },
+      "ProposalUploadRequest": {
+        "type": "object",
+        "properties": {
+          "proposal": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "body": {
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/components/schemas/ProposalStatus"
+              },
+              "voteSetup": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "choices": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "choices",
+                  "type"
+                ]
+              },
+              "authorDiscordId": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "body",
+              "status",
+              "title"
+            ]
+          },
+          "envelope": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string"
+              },
+              "type": {
+                "$ref": "#/components/schemas/NanceSignatureNames"
+              },
+              "signature": {
+                "type": "string"
+              },
+              "message": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Proposal_1"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CancelProposal"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string"
+                      },
+                      "space": {
+                        "type": "string"
+                      },
+                      "timestamp": {
+                        "type": "number"
+                      },
+                      "proposal": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "from",
+                      "proposal",
+                      "space",
+                      "timestamp"
+                    ]
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "address",
+              "message",
+              "signature",
+              "type"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "proposal"
+        ]
+      },
+      "NanceSignatureNames": {
+        "enum": [
+          "NanceArchiveProposal",
+          "SnapshotCancelProposal",
+          "SnapshotSubmitProposal"
+        ],
+        "type": "string"
+      },
+      "Proposal_1": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "space": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ProposalType"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "discussion": {
+            "type": "string"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "start": {
+            "type": "number"
+          },
+          "end": {
+            "type": "number"
+          },
+          "snapshot": {
+            "type": "number"
+          },
+          "plugins": {
+            "type": "string"
+          },
+          "app": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "choices",
+          "discussion",
+          "end",
+          "plugins",
+          "snapshot",
+          "space",
+          "start",
+          "title",
+          "type"
+        ]
+      },
+      "ProposalType": {
+        "enum": [
+          "approval",
+          "basic",
+          "quadratic",
+          "ranked-choice",
+          "single-choice",
+          "weighted"
+        ],
+        "type": "string"
+      },
+      "CancelProposal": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "space": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "proposal": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "proposal",
+          "space"
+        ]
+      },
+      "ProposalUploadResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "uuid": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "uuid"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "success"
+        ]
+      },
+      "APIResponse_ProposalQueryResponseOverride_": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProposalQueryResponseOverride"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "success"
+        ]
+      },
+      "ProposalQueryResponseOverride": {
+        "type": "object",
+        "properties": {
+          "proposalInfo": {
+            "type": "object",
+            "properties": {
+              "snapshotSpace": {
+                "type": "string"
+              },
+              "proposalIdPrefix": {
+                "type": "string"
+              },
+              "minTokenPassingAmount": {
+                "type": "number"
+              },
+              "nextProposalId": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "minTokenPassingAmount",
+              "nextProposalId",
+              "proposalIdPrefix",
+              "snapshotSpace"
+            ]
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "governanceCycle": {
+            "type": "number"
+          },
+          "createdTime": {
+            "type": "string"
+          },
+          "lastEditedTime": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProposalStatus"
+          },
+          "proposalId": {
+            "type": "number"
+          },
+          "coauthors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "discussionThreadURL": {
+            "type": "string"
+          },
+          "ipfsURL": {
+            "type": "string"
+          },
+          "voteURL": {
+            "type": "string"
+          },
+          "voteSetup": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "choices",
+              "type"
+            ]
+          },
+          "voteResults": {
+            "type": "object",
+            "properties": {
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "scores": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "votes": {
+                "type": "number"
+              },
+              "scoresState": {
+                "type": "string"
+              },
+              "scoresTotal": {
+                "type": "number"
+              },
+              "quorumMet": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "choices",
+              "scores",
+              "votes"
+            ]
+          },
+          "authorAddress": {
+            "type": "string"
+          },
+          "authorDiscordId": {
+            "type": "string"
+          },
+          "temperatureCheckVotes": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Action"
+            }
+          },
+          "proposalSummary": {
+            "type": "string"
+          },
+          "threadSummary": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "body",
+          "createdTime",
+          "proposalInfo",
+          "status",
+          "title",
+          "uuid"
+        ]
+      },
+      "ProposalDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "affectedRows": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "affectedRows"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "success"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "jwt": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "jwt"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.nance.app",
+      "description": "production"
+    },
+    {
+      "url": "http://localhost:3003",
+      "description": "local"
+    }
+  ]
+}
