@@ -4,8 +4,8 @@ const path = require('path');
 
 // Define an object that maps module names to their paths
 const localLibraries = {
-  "@nance/nance-editor": "../nance-sdk/packages/editor",
-  "@nance/nance-sdk": "../nance-sdk/packages/core",
+  "@nance/nance-editor": "../../nance-sdk/packages/editor",
+  "@nance/nance-sdk": "../../nance-sdk/packages/core",
 };
 
 // Function to find the module path

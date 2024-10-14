@@ -11,7 +11,7 @@ import { initializePools } from '@/dolt/pools';
 // node-schedule uses local time by default
 process.env.TZ = 'UTC';
 
-async function main() {
+export async function scheduler() {
   await initializePools();
   const autoSpaces = await getAllSpaceConfig('autoEnable=1');
   autoSpaces.forEach((spaceConfig, index) => {
@@ -42,4 +42,4 @@ async function main() {
   listScheduledJobs();
 }
 
-main();
+// main();

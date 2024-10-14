@@ -462,12 +462,13 @@ export class DiscordHandler {
 
   async editTransactionMessage(messageId: string, nonce: number, operation: string, links: EmbedField[]) {
     const messageObj = await this.getChannelById(this.config.discord.channelIds.transactions).messages.fetch(messageId);
-    const editedMessage = messageObj.embeds[0];
+    // const editedMessage = messageObj.embeds[0];
     const message = t.transactionThread(nonce, operation, links);
+    messageObj.thread?.edit({ name: message.data.title })
     // only edit description
-    message.setTitle(editedMessage.title);
-    message.setDescription(editedMessage.description);
-    messageObj.edit({ embeds: [editedMessage] });
+    // message.setTitle(editedMessage.title);
+    // message.setDescription(editedMessage.description);
+    // messageObj.edit({ embeds: [message] });
   }
 
   async sendReconfigSummary(

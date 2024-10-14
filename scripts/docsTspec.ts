@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-len */
 import { Tspec } from "tspec";
 import {
   Proposal,
@@ -72,25 +70,6 @@ interface ProposalQueryResponseOverride extends Proposal {
     nextProposalId: number;
   }
 }
-
-export const params: Tspec.GenerateParams = {
-  openapi: {
-    title: "Nance API",
-    version: "1.0.0",
-    description: "API service for Nance. Governance Automated.",
-    servers: [
-      { url: "https://api.nance.app", description: "production" },
-      { url: "http://localhost:3003", description: "local" }
-    ],
-    securityDefinitions: {
-      jwt: {
-        type: "http",
-        scheme: "bearer",
-        bearerFormat: "jwt",
-      },
-    }
-  }
-};
 
 export type nanceSpec = Tspec.DefineApiSpec<{
   paths: {
@@ -410,7 +389,7 @@ export type tasksSpec = Tspec.DefineApiSpec<{
 
 export type commonSnapshotProposalSpec = Tspec.DefineApiSpec<{
   paths: {
-    tags: ["Other"],
+    tags: ["Other2"],
     "/~/{snapshotId}": {
       get: {
         summary: "Fetch a proposal from Snapshot",
