@@ -14,7 +14,7 @@
     "db:local": "dolt sql-server --data-dir ./src/dolt/local/databases",
     "clean": "rm -rf node_modules && rm -rf dist",
     "freshen": "npm run clean && npm install",
-    "build:api": "esbuild src/api/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/api/index.js",
+    "build:api": "node scripts/build.js",
     "build:docs": "tsx scripts/docs.js",
     "build:scheduler": "esbuild src/scheduler/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/scheduler/index.js",
     "start:api": "node ./dist/index.js",
