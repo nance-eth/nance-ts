@@ -42,4 +42,4 @@ export async function scheduler() {
   listScheduledJobs();
 }
 
-main();
+scheduler();
