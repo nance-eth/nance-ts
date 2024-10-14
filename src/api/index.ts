@@ -1,7 +1,5 @@
 import cors from "cors";
 import express from "express";
-import { TspecDocsMiddleware } from "tspec";
-import { params } from "./tspec";
 import { discordInitInteractionManager } from "./helpers/discord";
 import { initializePools } from "@/dolt/pools";
 
@@ -16,6 +14,8 @@ import spaceProposals from "./routes/space/proposals";
 import spaceReconfig from "./routes/space/reconfig";
 import spaceSummary from "./routes/space/summary";
 import spaceActions from "./routes/space/actions";
+import { swagger } from "./routes/docs/docs";
+import spec from "./routes/docs/spec.json";
 
 const PORT = process.env.PORT || 3003;
 const app = express();
@@ -37,11 +37,13 @@ app.get("/", (_, res) => {
   return res.send(`nance-api commit: ${commit ?? "LOCAL"}`);
 });
 
+app.get("/docs", (_, res) => res.send(swagger));
+app.get("/spec.json", (_, res) => res.json(spec));
+
 export const init = async () => {
   console.log("[API] init...");
   await initializePools();
   await discordInitInteractionManager();
-  app.use("/docs", await TspecDocsMiddleware(params));
   app.use("/ish", system);
   app.use("/~/proposal", snapshotProposal);
   app.use("/:space", spaceMiddleware, spaceInfo);

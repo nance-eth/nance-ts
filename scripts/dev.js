@@ -31,7 +31,6 @@ async function watch() {
     minify: false,
     outfile: "./dist/api/index.js",
     packages: "external",
-    external: ["./transpilers/swc.js"],
     bundle: true,
     loader: { ".ts": "ts" },
     plugins: [
