@@ -14,7 +14,7 @@ import spaceProposals from "./routes/space/proposals";
 import spaceReconfig from "./routes/space/reconfig";
 import spaceSummary from "./routes/space/summary";
 import spaceActions from "./routes/space/actions";
-import { swagger } from "./routes/docs/docs";
+import { swagger } from "./routes/docs/docs.html";
 import spec from "./routes/docs/spec.json";
 
 const PORT = process.env.PORT || 3003;

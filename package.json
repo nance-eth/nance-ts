@@ -9,7 +9,7 @@
   "scripts": {
     "spec": "export LOCAL_DB=1 && jest",
     "test": "export LOCAL_DB=1 && jest ./test/api/setup/order.test.ts",
-    "dev": "node dev.js",
+    "dev": "node scripts/dev.js",
     "db:setup": "cd src/dolt/local && ./setup.sh",
     "db:local": "dolt sql-server --data-dir ./src/dolt/local/databases",
     "clean": "rm -rf node_modules && rm -rf dist",
@@ -41,7 +41,6 @@
     "next-auth": "^4.24.7",
     "node-schedule": "^2.1.1",
     "promise-retry": "^2.0.1",
-    "tspec": "^0.1.116",
     "typescript": "^5.2.2",
     "uuid": "^9.0.0",
     "viem": "^2.9.19",
@@ -71,6 +70,7 @@
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "tsconfig-paths": "^4.2.0",
+    "tspec": "^0.1.116",
     "tsx": "^4.19.0"
   }
 }

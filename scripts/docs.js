@@ -1,7 +1,7 @@
-import { generateTspec, Tspec } from "tspec";
+import * as tspec from "tspec";
 
 export const options = {
-  specPathGlobs: ["./src/api/**/tspec.ts"],
+  specPathGlobs: ["./scripts/*.ts"],
   tsconfigPath: "./tsconfig.json",
   outputPath: "./src/api/routes/docs/spec.json",
   specVersion: 3,
@@ -26,7 +26,7 @@ export const options = {
 };
 
 async function generate() {
-  const openApiSpec = await generateTspec(options);
+  const openApiSpec = await tspec.generateTspec(options);
   console.log(openApiSpec)
 }
 
