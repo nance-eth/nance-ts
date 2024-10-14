@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /usr/src/app
 
@@ -10,4 +10,4 @@ COPY . .
 
 RUN npm run build:api
 
-CMD ["node", "./dist/api/index.js"]
+CMD ["node", "./dist/index.js"]
