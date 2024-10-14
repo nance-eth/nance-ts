@@ -14,10 +14,10 @@
     "db:local": "dolt sql-server --data-dir ./src/dolt/local/databases",
     "clean": "rm -rf node_modules && rm -rf dist",
     "freshen": "npm run clean && npm install",
-    "build:api": "npm run build:docs && node scripts/build.js",
+    "build:api": "esbuild src/api/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/api/index.js",
     "build:docs": "tsx scripts/docs.js",
     "build:scheduler": "esbuild src/scheduler/index.ts --platform=node --bundle --minify --packages=external --target=node20 --outfile=dist/scheduler/index.js",
-    "start:api": "node ./dist/api/index.js",
+    "start:api": "node ./dist/index.js",
     "start:scheduler": "node ./dist/scheduler/index.js",
     "dolt-client": "source .env && mysql -h$DOLT_HOST -u$DOLT_USER -p$DOLT_PASSWORD"
   },
@@ -27,7 +27,6 @@
     "@safe-global/api-kit": "^2.4.5",
     "@snapshot-labs/snapshot.js": "^0.11.41",
     "axios": "^1.7.2",
-    "better-sqlite3": "^11.1.2",
     "common-tags": "^1.8.2",
     "cors": "^2.8.5",
     "discord.js": "^14.15.3",
@@ -41,13 +40,11 @@
     "next-auth": "^4.24.7",
     "node-schedule": "^2.1.1",
     "promise-retry": "^2.0.1",
-    "typescript": "^5.2.2",
     "uuid": "^9.0.0",
     "viem": "^2.9.19",
     "winston": "^3.13.1"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.9",
     "@types/common-tags": "^1.8.1",
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.14",
@@ -55,7 +52,6 @@
     "@types/lodash": "^4.14.198",
     "@types/node": "^17.0.26",
     "@types/node-schedule": "^2.1.7",
-    "@types/object-hash": "^3.0.0",
     "@types/promise-retry": "^1.1.4",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^8.3.4",
@@ -71,6 +67,7 @@
     "ts-jest": "^29.2.5",
     "tsconfig-paths": "^4.2.0",
     "tspec": "^0.1.116",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3"
   }
 }

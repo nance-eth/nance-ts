@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-/* eslint-disable max-len */
 import { Tspec } from "tspec";
 import {
   Proposal,

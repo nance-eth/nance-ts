@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import path from "path";
 import { discordInitInteractionManager } from "./helpers/discord";
 import { initializePools } from "@/dolt/pools";
 
@@ -14,8 +15,6 @@ import spaceProposals from "./routes/space/proposals";
 import spaceReconfig from "./routes/space/reconfig";
 import spaceSummary from "./routes/space/summary";
 import spaceActions from "./routes/space/actions";
-import { swagger } from "./routes/docs/docs.html";
-import spec from "./routes/docs/spec.json";
 
 const PORT = process.env.PORT || 3003;
 const app = express();
@@ -37,8 +36,8 @@ app.get("/", (_, res) => {
   return res.send(`nance-api commit: ${commit ?? "LOCAL"}`);
 });
 
-app.get("/docs", (_, res) => res.send(swagger));
-app.get("/spec.json", (_, res) => res.json(spec));
+app.get("/docs", (_, res) => res.sendFile(path.join(__dirname, "docs.html")));
+app.get("/spec.json", (_, res) => res.sendFile(path.join(__dirname, "spec.json")));
 
 export const init = async () => {
   console.log("[API] init...");
@@ -47,7 +46,7 @@ export const init = async () => {
   app.use("/ish", system);
   app.use("/~/proposal", snapshotProposal);
   app.use("/:space", spaceMiddleware, spaceInfo);
-  app.use("/:space/tasks", tasks)
+  app.use("/:space/tasks", tasks);
   app.use("/:space/proposal", spaceProposal);
   app.use("/:space/proposals", spaceProposals);
   app.use("/:space/reconfig", spaceReconfig);
