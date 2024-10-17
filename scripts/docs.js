@@ -1,7 +1,7 @@
-import { generateTspec } from "tspec";
+const { generateTspec } = require("tspec");
 
-export const options = {
-  specPathGlobs: ["./scripts/docsTspec.ts"],
+const options = {
+  specPathGlobs: ["./src/**/tspec.ts"],
   tsconfigPath: "./tsconfig.json",
   outputPath: "./src/api/routes/docs/spec.json",
   specVersion: 3,

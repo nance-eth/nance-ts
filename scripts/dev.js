@@ -15,7 +15,7 @@ function startNodeProcess() {
     nodeProcess.kill();
   }
 
-  nodeProcess = spawn("node", ["dist/api/index.js"], { stdio: "inherit" });
+  nodeProcess = spawn("node", ["dist/index.js"], { stdio: "inherit" });
 
   nodeProcess.on("close", (code) => {
     if (code !== null) {
@@ -29,7 +29,7 @@ async function watch() {
     entryPoints: ["./src/api/index.ts"],
     platform: "node",
     minify: false,
-    outfile: "./dist/api/index.js",
+    outfile: "./dist/index.js",
     packages: "external",
     bundle: true,
     loader: { ".ts": "ts" },

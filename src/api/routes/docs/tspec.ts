@@ -388,9 +388,9 @@ export type tasksSpec = Tspec.DefineApiSpec<{
 }>;
 
 export type commonSnapshotProposalSpec = Tspec.DefineApiSpec<{
+  tags: ["Other"],
   paths: {
-    tags: ["Other2"],
-    "/~/{snapshotId}": {
+    "/snapshot/{snapshotId}": {
       get: {
         summary: "Fetch a proposal from Snapshot",
         description: "This queries the Snapshot API for the specified proposal, creates an AI summary for it and stores it in the `common` Nance database so it can be viewed by others without querying from Snapshot API again.",
