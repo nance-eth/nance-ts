@@ -81,10 +81,13 @@ export const getAllSpaceConfig = async (where?: string): Promise<SQLSpaceConfig[
   }
 };
 
-export const getSpaceByDiscordGuildId = async (discordGuildId: string): Promise<SpaceInfoExtended> => {
+// subkeys of NanceConfig we want to query by
+export type GetSpaceByConfigKeyName =
+  | "discord.guildId"
+  | "snapshot.space";
+export const getSpaceByConfigValue = async (key: GetSpaceByConfigKeyName, value: any): Promise<SQLSpaceConfig> => {
   try {
-    const entry = await getSysDb().getSpaceByDiscordGuildId(discordGuildId);
-    return getSpaceInfo(entry);
+    return await getSysDb().getSpaceByConfigValue(key, value);
   } catch (e) {
     return Promise.reject(e);
   }

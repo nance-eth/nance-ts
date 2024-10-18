@@ -1,7 +1,7 @@
 import { ButtonInteraction } from "discord.js";
 import { createHmac } from "crypto";
 import { oneLineTrim } from "common-tags";
-import { getSpaceByDiscordGuildId } from "@/api/helpers/getSpace";
+import { getSpaceByConfigValue } from "@/api/helpers/getSpace";
 import { keys } from "@/keys";
 import { getDb } from "@/dolt/pools";
 import { blindPollMessage } from "../templates";
@@ -12,7 +12,7 @@ console.log(`[DISCORD] Will respond to polls containing: "${ID_KEYWORD}"`);
 export async function buttonManager(interaction: ButtonInteraction) {
   try {
     if (!interaction.guildId) return;
-    const { name, config } = await getSpaceByDiscordGuildId(interaction.guildId);
+    const { space, config } = await getSpaceByConfigValue("discord.guildId", interaction.guildId);
 
     // check user has verifyRole
     const member = await interaction.guild?.members.fetch(interaction.user.id);
@@ -25,7 +25,7 @@ export async function buttonManager(interaction: ButtonInteraction) {
     }
 
     // init dolt to fetch proposal add poll
-    const dolt = getDb(name);
+    const dolt = getDb(space);
     // interaction url is different than we store
     const discussionURL = oneLineTrim`https://discord.com/channels/
       ${config.discord.guildId}/

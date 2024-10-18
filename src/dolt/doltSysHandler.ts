@@ -163,12 +163,12 @@ export class DoltSysHandler {
     }).catch((e) => { return Promise.reject(e); });
   }
 
-  async getSpaceByDiscordGuildId(discordGuildId: string): Promise<SQLSpaceConfig> {
+  async getSpaceByConfigValue(key: string, value: any): Promise<SQLSpaceConfig> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
-      WHERE JSON_EXTRACT(config, '$.discord.guildId') = ?
+      WHERE JSON_EXTRACT(config, ?) = ?
       LIMIT 1
-    `, [discordGuildId]).then((res) => {
+    `, [`$.${key}`, value]).then((res) => {
       return res[0] as unknown as SQLSpaceConfig;
     }).catch((e) => { return Promise.reject(e); });
   }

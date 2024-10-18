@@ -44,7 +44,7 @@ export const init = async () => {
   await initializePools();
   await discordInitInteractionManager();
   app.use("/ish", system);
-  app.use("/~/proposal", snapshotProposal);
+  app.use("/snapshot/proposal", snapshotProposal);
   app.use("/:space", spaceMiddleware, spaceInfo);
   app.use("/:space/tasks", tasks);
   app.use("/:space/proposal", spaceProposal);

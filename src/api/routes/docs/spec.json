@@ -1933,10 +1933,12 @@
         }
       }
     },
-    "/~/{snapshotId}": {
+    "/snapshot/{snapshotId}": {
       "get": {
-        "operationId": "commonSnapshotProposalSpec_get_/~/{snapshotId}",
-        "tags": [],
+        "operationId": "commonSnapshotProposalSpec_get_/snapshot/{snapshotId}",
+        "tags": [
+          "Other"
+        ],
         "summary": "Fetch a proposal from Snapshot",
         "description": "This queries the Snapshot API for the specified proposal, creates an AI summary for it and stores it in the `common` Nance database so it can be viewed by others without querying from Snapshot API again.",
         "parameters": [
