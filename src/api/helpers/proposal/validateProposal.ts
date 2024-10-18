@@ -25,7 +25,8 @@ export async function validateUploaderVp(input: ValidateProposalByVp) {
 
   if (balance < minBalance) {
     const coauthors = uniq([..._coauthors || [], uploaderAddress]);
-    return { coauthors, status: proposalSubmissionValidation.notMetStatus };
+    const status = _status === "Draft" ? _status : proposalSubmissionValidation.notMetStatus;
+    return { coauthors, status };
   }
   const status = (_status === "Discussion") ? proposalSubmissionValidation.metStatus : _status;
   const authorAddress = _authorAddress || uploaderAddress;
