@@ -89,16 +89,17 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       scheduleJob(`${space}:${TASKS.voteQuorumAlert}`, sendVoteQuorumAlertDate, () => {
         tasks.voteQuorumAlert(space, config, event.end);
       });
-      // Send Vote end alert
+      // Send Vote end alert, delete one day end alert
       const sendVoteEndDate = addSecondsToDate(event.end, -ONE_HOUR_SECONDS);
       scheduleJob(`${space}:${TASKS.voteEndAlert}`, sendVoteEndDate, async () => {
         const shouldSendAlert = await tasks.shouldSendAlert(space);
         if (!shouldSendAlert) return;
+        tasks.deleteStartOrEndAlert(space, config, "voteOneDayEndAlert");
         tasks.sendStartOrEndAlert(space, config, event.end, "Snapshot Vote", TASKS.voteEndAlert, "end");
       });
       // Delete Vote end alert
       scheduleJob(`${space}:${TASKS.deleteVoteEndAlert}`, event.end, () => {
-        tasks.deleteStartOrEndAlert(space, config, TASKS.voteEndAlert);
+        tasks.deleteStartOrEndAlert(space, config, "voteEndAlert");
       });
       // Vote close
       const voteCloseDate = addSecondsToDate(event.end, 60); // some time for Snapshot results to settle

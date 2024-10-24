@@ -10,13 +10,6 @@ else
     echo "dolt is already installed."
 fi
 
-# Check if curl is installed
-if ! command -v curl &> /dev/null
-then
-    echo "curl not found. Please install curl and try again."
-    exit 1
-fi
-
 # Create databases folder if it doesn't exist
 if [ ! -d "databases" ]; then
     mkdir databases

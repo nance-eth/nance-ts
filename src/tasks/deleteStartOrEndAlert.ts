@@ -5,14 +5,14 @@ import { getSysDb } from "@/dolt/pools";
 export const deleteStartOrEndAlert = async (
   space: string,
   config: NanceConfig,
-  dialogHandlerMessageType: string,
+  dialogHandlerMessageType: keyof DialogHandlerMessageIds,
 ) => {
   try {
     const doltSys = getSysDb();
     const messageId = await doltSys.getDialogHandlerMessageIds(space);
-    if (messageId[dialogHandlerMessageType as keyof DialogHandlerMessageIds] === "") return;
+    // if (messageId[dialogHandlerMessageType] === "") return;
     const dialogHandler = await discordLogin(config);
-    await dialogHandler.deleteMessage(messageId[dialogHandlerMessageType as keyof DialogHandlerMessageIds]);
+    await dialogHandler.deleteMessage(messageId[dialogHandlerMessageType]);
     await doltSys.updateDialogHandlerMessageId(space, dialogHandlerMessageType, "");
     dialogHandler.logout();
   } catch (e) {
