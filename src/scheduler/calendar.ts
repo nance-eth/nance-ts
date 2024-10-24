@@ -42,7 +42,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       });
       // Delete Temperature Check start alert
       scheduleJob(`${space}:${TASKS.deleteTemperatureCheckStartAlert}`, event.start, () => {
-        tasks.deleteStartOrEndAlert(space, config, TASKS.temperatureCheckStartAlert);
+        tasks.deleteStartOrEndAlert(space, config, "temperatureCheckStartAlert");
       });
       // Send Temperature Check rollup
       scheduleJob(`${space}:${TASKS.temperatureCheckRollup}`, event.start, () => {
@@ -57,7 +57,7 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       });
       // Delete Temperature Check end alert
       scheduleJob(`${space}:${TASKS.deleteTemperatureCheckEndAlert}`, event.end, () => {
-        tasks.deleteStartOrEndAlert(space, config, TASKS.temperatureCheckEndAlert);
+        tasks.deleteStartOrEndAlert(space, config, "temperatureCheckEndAlert");
       });
       // Temperature Check close
       scheduleJob(`${space}:${TASKS.temperatureCheckClose}`, event.end, () => {
