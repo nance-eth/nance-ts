@@ -1,4 +1,6 @@
 const { generateTspec } = require("tspec");
+const fs = require("fs");
+const path = require("path");
 
 const options = {
   specPathGlobs: ["./src/**/tspec.ts"],
@@ -28,6 +30,14 @@ const options = {
 async function generate() {
   const openApiSpec = await generateTspec(options);
   console.log(openApiSpec)
+  // Copy docs.html to dist folder
+  fs.copyFileSync("src/api/routes/docs/docs.html", path.join("dist", "docs.html"));
+  console.log("docs.html copied to dist folder");
+
+  // Copy spec.json to dist folder
+  fs.copyFileSync("src/api/routes/docs/spec.json", path.join("dist", "spec.json"));
+  console.log("spec.json copied to dist folder");
+  console.log("Done.")
 }
 
 generate();

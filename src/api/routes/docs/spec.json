@@ -1933,9 +1933,9 @@
         }
       }
     },
-    "/snapshot/{snapshotId}": {
+    "/snapshot/proposal/{snapshotId}": {
       "get": {
-        "operationId": "commonSnapshotProposalSpec_get_/snapshot/{snapshotId}",
+        "operationId": "commonSnapshotProposalSpec_get_/snapshot/proposal/{snapshotId}",
         "tags": [
           "Other"
         ],

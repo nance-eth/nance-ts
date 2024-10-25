@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+/* eslint-disable max-len */
 import { Tspec } from "tspec";
 import {
   Proposal,
@@ -390,7 +392,7 @@ export type tasksSpec = Tspec.DefineApiSpec<{
 export type commonSnapshotProposalSpec = Tspec.DefineApiSpec<{
   tags: ["Other"],
   paths: {
-    "/snapshot/{snapshotId}": {
+    "/snapshot/proposal/{snapshotId}": {
       get: {
         summary: "Fetch a proposal from Snapshot",
         description: "This queries the Snapshot API for the specified proposal, creates an AI summary for it and stores it in the `common` Nance database so it can be viewed by others without querying from Snapshot API again.",

@@ -1,6 +1,4 @@
 const esbuild = require("esbuild");
-const fs = require("fs");
-const path = require("path");
 
 esbuild.build({
   entryPoints: ["src/api/index.ts"],
@@ -15,14 +13,6 @@ esbuild.build({
 }).then(() => {
 
   console.log("esbuild complete");
-
-  // Copy docs.html to dist folder
-  fs.copyFileSync("src/api/routes/docs/docs.html", path.join("dist", "docs.html"));
-  console.log("docs.html copied to dist folder");
-
-  // Copy spec.json to dist folder
-  fs.copyFileSync("src/api/routes/docs/spec.json", path.join("dist", "spec.json"));
-  console.log("spec.json copied to dist folder");
 
   console.log("Build complete");
 }).catch((e) => {
