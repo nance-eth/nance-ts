@@ -464,7 +464,7 @@ export class DiscordHandler {
     const messageObj = await this.getChannelById(this.config.discord.channelIds.transactions).messages.fetch(messageId);
     // const editedMessage = messageObj.embeds[0];
     const message = t.transactionThread(nonce, operation, links);
-    messageObj.thread?.edit({ name: message.data.title })
+    messageObj.thread?.edit({ name: message.data.title });
     // only edit description
     // message.setTitle(editedMessage.title);
     // message.setDescription(editedMessage.description);

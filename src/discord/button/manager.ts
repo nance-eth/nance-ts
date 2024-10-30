@@ -12,6 +12,13 @@ console.log(`[DISCORD] Will respond to polls containing: "${ID_KEYWORD}"`);
 export async function buttonManager(interaction: ButtonInteraction) {
   try {
     if (!interaction.guildId) return;
+
+    // so deployed bot doesn't respond when doing dev
+    const respondToInteraction = interaction.customId.includes(ID_KEYWORD);
+    if (!respondToInteraction) return;
+    const answer = interaction.customId.split(ID_KEYWORD)[1] === "1";
+    const discordId = interaction.user.id;
+
     const { space, config } = await getSpaceByConfigValue("discord.guildId", interaction.guildId);
 
     // check user has verifyRole
@@ -36,12 +43,6 @@ export async function buttonManager(interaction: ButtonInteraction) {
       await interaction.reply({ content: "Proposal not found 😔", ephemeral: true });
       return;
     }
-
-    // so deployed bot doesn't respond when doing dev
-    const respondToInteraction = interaction.customId.includes(ID_KEYWORD);
-    if (!respondToInteraction) return;
-    const answer = interaction.customId.split(ID_KEYWORD)[1] === "1";
-    const discordId = interaction.user.id;
 
     // hash discordId and proposal.uuid with secret to get unique id
     const hmac = createHmac("sha256", keys.NEXTAUTH_SECRET);

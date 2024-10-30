@@ -71,7 +71,7 @@ export const blindPollMessage = (
       { name: EMOJI.NO, value: `${no}`, inline: true },
     ])
     .setColor("#FF0000");
-  if (!!pass && !!quorum) {
+  if (pass !== undefined && quorum !== undefined) {
     const outcome = pass ? EMOJI.YES : EMOJI.NO;
     const quorumMet = (yes + no) >= quorum;
     message
