@@ -42,8 +42,8 @@ router.get("/:pid", async (req: Request, res: Response) => {
   }
 });
 
-// POST /:space/proposal/:pid/discussion
-router.post("/:pid/discussion", async (req: Request, res: Response) => {
+// GET /:space/proposal/:pid/discussion
+router.get("/:pid/discussion", async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
     const { dolt } = res.locals as Middleware;
@@ -172,7 +172,7 @@ router.delete("/:pid", async (req: Request, res: Response) => {
     const { uploaderAddress } = await validateUploaderAddress(address, envelope);
     checkPermissions(proposalInDb, proposalInDb, uploaderAddress, spaceOwners, "delete");
 
-    logProposal(proposalInDb, space, uploaderAddress, "delete");
+    logProposal(proposalInDb, space, uploaderAddress, 0, "delete");
     dolt.deleteProposal(proposalInDb.uuid).then(async (affectedRows: number) => {
       res.json({ success: true, data: { affectedRows } });
       clearCache(space);
