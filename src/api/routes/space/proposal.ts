@@ -77,7 +77,12 @@ router.put("/:pid", async (req: Request, res: Response) => {
 
     const { uploaderAddress, receipt, snapshotId } = await validateUploaderAddress(address, envelope);
     checkPermissions(proposal, proposalInDb, uploaderAddress, spaceOwners, "archive");
-    const { authorAddress, coauthors, status } = await validateUploaderVp({ proposal, proposalInDb, uploaderAddress, config });
+    const {
+      authorAddress,
+      coauthors,
+      status,
+      votingPower
+    } = await validateUploaderVp({ proposal, proposalInDb, uploaderAddress, config });
 
     const updateProposal = buildProposal({
       proposal,
@@ -91,7 +96,7 @@ router.put("/:pid", async (req: Request, res: Response) => {
       nextProposalId,
       config,
     });
-    logProposal(updateProposal, space, uploaderAddress, "edit");
+    logProposal(updateProposal, space, uploaderAddress, votingPower, "edit");
     const uuid = await dolt.editProposal(updateProposal, receipt);
     // return uuid to client, then continue doing things
     res.json({ success: true, data: { uuid } });

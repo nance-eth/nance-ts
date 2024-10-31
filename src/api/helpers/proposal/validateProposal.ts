@@ -1,13 +1,14 @@
-import { uniq } from "lodash";
+import { union, uniq } from "lodash";
 import { NanceConfig, NewProposal, Proposal, UpdateProposal } from "@nance/nance-sdk";
 import { getAddressVotingPower } from "@/snapshot/snapshotVotingPower";
 import { isNanceSpaceOwner } from "../permissions";
 import { numToPrettyString } from "@/utils";
+import { ProposalStatus } from "@nance/nance-sdk";
 
 type ValidateProposalByVp = {
   proposal: NewProposal | UpdateProposal,
   proposalInDb?: Proposal,
-  uploaderAddress?: string,
+  uploaderAddress: string,
   config: NanceConfig
 };
 
@@ -17,34 +18,38 @@ export async function validateUploaderVp(input: ValidateProposalByVp) {
   const { authorAddress: _authorAddress, coauthors: _coauthors } = proposalInDb || { authorAddress: undefined };
   const { proposalSubmissionValidation } = config;
 
-  if (!proposalSubmissionValidation || !uploaderAddress) {
-    return { authorAddress: uploaderAddress, coauthors: _coauthors, status: _status };
+  if (!proposalSubmissionValidation) {
+    return { authorAddress: uploaderAddress, coauthors: _coauthors, status: _status, votingPower: 0 };
   }
 
-  const { minBalance } = proposalSubmissionValidation;
-  const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
+  // TODO change to minVotingPower in SDK
+  const { minBalance: minVotingPower } = proposalSubmissionValidation;
+  const votingPower = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
 
-  if (balance < minBalance) {
-    // always allow if Draft
-    if (_status !== "Draft") {
+  let coauthors = _coauthors;
+  let authorAddress = _authorAddress;
+  let status = _status;
+  if (votingPower < minVotingPower) {
+    // always allow submission if Draft
+    if (_status !== "Draft" && !_authorAddress) {
       throw new Error(`
         Address ${uploaderAddress} does not meet minimum voting power of
         ${numToPrettyString(proposalSubmissionValidation.minBalance)} to
         submit a proposal!
       `);
     }
-
-    const coauthors = uniq([..._coauthors || [], uploaderAddress]);
-    const status = _status === "Draft" ? _status : proposalSubmissionValidation.notMetStatus;
-    return { coauthors, status };
-  }
-  const status = (_status === "Discussion") ? proposalSubmissionValidation.metStatus : _status;
-  const authorAddress = _authorAddress || uploaderAddress;
-  let coauthors = _coauthors;
-  if (uploaderAddress !== authorAddress) {
     coauthors = uniq([..._coauthors || [], uploaderAddress]);
+    return { authorAddress, coauthors, status, votingPower };
   }
-  return { authorAddress, coauthors, status };
+
+  // MoonDAO wants proposals to go to Temperature Check if they meet minVotingPower
+  if (status === "Discussion") {
+    status = proposalSubmissionValidation.metStatus
+  }
+
+  if (!authorAddress) authorAddress = uploaderAddress;
+  else uniq([..._coauthors || [], uploaderAddress]);
+  return { authorAddress, coauthors, status, votingPower };
 }
 
 export function checkPermissions(

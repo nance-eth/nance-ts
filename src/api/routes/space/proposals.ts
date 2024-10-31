@@ -76,7 +76,12 @@ router.post('/', async (req: Request, res) => {
     const { config, dolt, address, currentCycle, currentEvent, nextProposalId } = res.locals as Middleware;
 
     const { uploaderAddress, receipt, snapshotId } = await validateUploaderAddress(address, envelope);
-    const { authorAddress, coauthors, status } = await validateUploaderVp({ proposal, uploaderAddress, config });
+    const {
+      authorAddress,
+      coauthors,
+      status,
+      votingPower
+    } = await validateUploaderVp({ proposal, uploaderAddress, config });
 
     const newProposal = buildProposal({
       proposal,
@@ -89,7 +94,7 @@ router.post('/', async (req: Request, res) => {
       nextProposalId,
       config,
     });
-    logProposal(proposal, space, uploaderAddress, "new");
+    logProposal(proposal, space, uploaderAddress, votingPower, "new");
     dolt.addProposalToDb(newProposal, receipt).then(async (proposalRes) => {
       const { uuid } = proposalRes;
 
