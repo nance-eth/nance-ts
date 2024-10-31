@@ -19,7 +19,8 @@ router.get('/', async (_, res: Response) => {
       nextEvents,
       spaceOwners,
       nextProposalId,
-      cycleStartDate
+      cycleStartDate,
+      proposalSubmissionValidation
     } = res.locals as Middleware;
     const dolthubLink = headToUrl(config.dolt.owner, config.dolt.repo);
     const spaceInfo: SpaceInfo = {
@@ -36,6 +37,7 @@ router.get('/', async (_, res: Response) => {
       dolthubLink,
       nextProposalId,
       cycleStartDate,
+      proposalSubmissionValidation,
     };
     if (config.juicebox.gnosisSafeAddress || config.juicebox.governorAddress) {
       spaceInfo.transactorAddress = {

@@ -15,8 +15,7 @@ export const getAddressVotingPower = async (address: string, space: string): Pro
       "x-api-key": keys.SNAPSHOT_API_KEY
     });
     return vp.vp;
-  } catch (e) {
-    console.error(e);
-    return 0;
+  } catch (e: any) {
+    throw Error(`[SNAPSHOT API] ${e.message}`);
   }
 };

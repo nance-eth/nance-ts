@@ -116,9 +116,12 @@ router.post('/', async (req: Request, res) => {
         console.error(`[DISCORD] ${e}`);
       }
     }).catch((e: any) => {
-      res.json({ success: false, error: `[DATABASE ERROR]: ${e}` });
+      res.json({ success: false, error: `[DATABASE ERROR]: ${e.message}` });
     });
-  } catch (e: any) { res.json({ success: false, error: e.toString() }); }
+  } catch (e: any) {
+    console.log(`[POST PROPOSALS] ${e.message}`);
+    res.json({ success: false, error: e.message });
+  }
 });
 
 export default router;

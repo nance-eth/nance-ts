@@ -25,9 +25,10 @@ router.get("/:pid", async (req: Request, res: Response) => {
   const { dolt, config, nextProposalId } = res.locals as Middleware;
   let proposal: Proposal | undefined;
   try {
-    const proposalInfo = {
+    const proposalInfo: ProposalPacket["proposalInfo"] = {
       proposalIdPrefix: config.proposalIdPrefix,
       minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
+      minVotingPowerSubmissionBalance: config.proposalSubmissionValidation?.minBalance,
       snapshotSpace: config.snapshot.space,
       nextProposalId
     };

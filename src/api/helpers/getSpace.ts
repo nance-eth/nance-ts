@@ -48,6 +48,7 @@ export const getSpaceInfo = (spaceConfig: SQLSpaceConfig): SpaceInfoExtended => 
     spaceOwners: spaceConfig.spaceOwners,
     snapshotSpace: spaceConfig.config.snapshot.space,
     juiceboxProjectId: spaceConfig.config.juicebox.projectId,
+    proposalSubmissionValidation: spaceConfig.config.proposalSubmissionValidation,
   };
 };
 

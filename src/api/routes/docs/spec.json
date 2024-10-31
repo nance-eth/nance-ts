@@ -101,6 +101,33 @@
                           },
                           "nextProposalId": {
                             "type": "number"
+                          },
+                          "proposalSubmissionValidation": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "snapshot"
+                                ]
+                              },
+                              "minBalance": {
+                                "type": "number"
+                              },
+                              "metStatus": {
+                                "$ref": "#/components/schemas/ProposalStatus"
+                              },
+                              "notMetStatus": {
+                                "$ref": "#/components/schemas/ProposalStatus"
+                              }
+                            },
+                            "additionalProperties": false,
+                            "required": [
+                              "metStatus",
+                              "minBalance",
+                              "notMetStatus",
+                              "type"
+                            ]
                           }
                         },
                         "additionalProperties": false,
@@ -1998,6 +2025,18 @@
         ],
         "type": "string"
       },
+      "ProposalStatus": {
+        "enum": [
+          "Approved",
+          "Archived",
+          "Cancelled",
+          "Discussion",
+          "Draft",
+          "Temperature Check",
+          "Voting"
+        ],
+        "type": "string"
+      },
       "SpaceInfoResponse": {
         "type": "object",
         "properties": {
@@ -2078,6 +2117,33 @@
               },
               "nextProposalId": {
                 "type": "number"
+              },
+              "proposalSubmissionValidation": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "snapshot"
+                    ]
+                  },
+                  "minBalance": {
+                    "type": "number"
+                  },
+                  "metStatus": {
+                    "$ref": "#/components/schemas/ProposalStatus"
+                  },
+                  "notMetStatus": {
+                    "$ref": "#/components/schemas/ProposalStatus"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "metStatus",
+                  "minBalance",
+                  "notMetStatus",
+                  "type"
+                ]
               }
             },
             "additionalProperties": false,
@@ -2625,6 +2691,9 @@
                   "minTokenPassingAmount": {
                     "type": "number"
                   },
+                  "minVotingPowerSubmissionBalance": {
+                    "type": "number"
+                  },
                   "nextProposalId": {
                     "type": "number"
                   }
@@ -2790,18 +2859,6 @@
           "title",
           "uuid"
         ]
-      },
-      "ProposalStatus": {
-        "enum": [
-          "Approved",
-          "Archived",
-          "Cancelled",
-          "Discussion",
-          "Draft",
-          "Temperature Check",
-          "Voting"
-        ],
-        "type": "string"
       },
       "ProposalUploadRequest": {
         "type": "object",

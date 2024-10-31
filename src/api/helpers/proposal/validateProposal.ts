@@ -2,6 +2,7 @@ import { uniq } from "lodash";
 import { NanceConfig, NewProposal, Proposal, UpdateProposal } from "@nance/nance-sdk";
 import { getAddressVotingPower } from "@/snapshot/snapshotVotingPower";
 import { isNanceSpaceOwner } from "../permissions";
+import { numToPrettyString } from "@/utils";
 
 type ValidateProposalByVp = {
   proposal: NewProposal | UpdateProposal,
@@ -24,6 +25,15 @@ export async function validateUploaderVp(input: ValidateProposalByVp) {
   const balance = await getAddressVotingPower(uploaderAddress, config.snapshot.space);
 
   if (balance < minBalance) {
+    // always allow if Draft
+    if (_status !== "Draft") {
+      throw new Error(`
+        Address ${uploaderAddress} does not meet minimum voting power of
+        ${numToPrettyString(proposalSubmissionValidation.minBalance)} to
+        submit a proposal!
+      `);
+    }
+
     const coauthors = uniq([..._coauthors || [], uploaderAddress]);
     const status = _status === "Draft" ? _status : proposalSubmissionValidation.notMetStatus;
     return { coauthors, status };
