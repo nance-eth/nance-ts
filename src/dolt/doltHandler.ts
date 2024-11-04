@@ -445,6 +445,26 @@ export class DoltHandler {
     });
   }
 
+  async getProposalHistory(uuid: string) {
+    return this.queryDbResults(oneLine`
+      SELECT
+        to_commit_date,
+        from_body,
+        to_body,
+        from_title,
+        to_title
+      FROM dolt_diff_proposals
+      WHERE diff_type = 'modified' AND to_uuid = ?
+      ORDER BY to_commit_date
+    `, [uuid]) as unknown as {
+      to_commit_date : string;
+      from_body: string;
+      to_body: string;
+      from_title: string;
+      to_title: string;
+    }[];
+  }
+
   async insertPoll({ id, uuidOfProposal, answer }: { id: string; uuidOfProposal: string; answer: boolean }) {
     const now = new Date().toISOString();
     return this.queryDbResults(oneLine`

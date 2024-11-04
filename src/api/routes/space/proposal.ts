@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { diffChars, diffTrimmedLines } from "diff";
 import {
   Proposal,
   ProposalDeleteRequest,
@@ -36,6 +37,32 @@ router.get("/:pid", async (req: Request, res: Response) => {
     proposal = findCacheProposal(space, pid) || await dolt.getProposalByAnyId(pid);
     if (!proposal) throw new Error("Proposal not found");
     const data: ProposalPacket = { ...proposal, proposalInfo };
+    res.json({ success: true, data });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// GET /:space/proposal/:pid
+router.get("/:pid/history", async (req: Request, res: Response) => {
+  const { pid } = req.params;
+  const { dolt } = res.locals as Middleware;
+  const startTime = Date.now();
+  try {
+    const proposalDiffs = await dolt.getProposalHistory(pid);
+    if (!proposalDiffs || proposalDiffs.length === 0) throw new Error("Proposal not found");
+    const data = proposalDiffs.slice(1).map((diff, index) => {
+      const title = diffChars(diff.from_title, diff.to_title);
+      const diffBodyLines = diffTrimmedLines(diff.from_body, diff.to_body);
+      return {
+        version: index + 1,
+        datetime: new Date(diff.to_commit_date).toISOString(),
+        title,
+        diffBodyLines
+      };
+    });
+    const endTime = Date.now();
+    console.log(`Query took ${endTime - startTime}ms`);
     res.json({ success: true, data });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
