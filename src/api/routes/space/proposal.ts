@@ -125,6 +125,7 @@ router.put("/:pid", async (req: Request, res: Response) => {
     });
     logProposal(updateProposal, space, uploaderAddress, votingPower, "edit");
     const uuid = await dolt.editProposal(updateProposal, receipt);
+    clearCache(space);
     // return uuid to client, then continue doing things
     res.json({ success: true, data: { uuid } });
 
