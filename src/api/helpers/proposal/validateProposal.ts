@@ -1,4 +1,4 @@
-import { union, uniq } from "lodash";
+import { uniq } from "lodash";
 import { NanceConfig, NewProposal, Proposal, UpdateProposal } from "@nance/nance-sdk";
 import { getAddressVotingPower } from "@/snapshot/snapshotVotingPower";
 import { isNanceSpaceOwner } from "../permissions";
@@ -47,8 +47,11 @@ export async function validateUploaderVp(input: ValidateProposalByVp) {
     status = proposalSubmissionValidation.metStatus
   }
 
-  if (!authorAddress) authorAddress = uploaderAddress;
-  else uniq([..._coauthors || [], uploaderAddress]);
+  if (!authorAddress) {
+    authorAddress = uploaderAddress;
+  } else {
+    uniq([..._coauthors || [], uploaderAddress]);
+  }
   return { authorAddress, coauthors, status, votingPower };
 }
 
