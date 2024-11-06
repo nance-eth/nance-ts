@@ -1,20 +1,21 @@
-import { oneLine } from 'common-tags';
-import { DialogHandlerMessageIds, SQLSpaceConfig } from '@nance/nance-sdk';
-import { DoltSQL, cleanResultsHeader } from './doltSQL';
-import { dbOptions } from './dbConfig';
-import { sqlSchemaToString } from '../utils';
+import { oneLine } from "common-tags";
+import { DialogHandlerMessageIds, SQLSpaceConfig } from "@nance/nance-sdk";
+import { DoltSQL, cleanResultsHeader } from "./doltSQL";
+import { dbOptions } from "./dbConfig";
+import { sqlSchemaToString } from "../utils";
 
-const systemDb = 'nance_sys';
-const system = 'config';
+const systemDb = "nance_sys";
+const system = "config";
 
 const defaultDialogHandlerMessageIds: DialogHandlerMessageIds = {
-  voteRollup: '',
-  voteEndAlert: '',
-  voteQuorumAlert: '',
-  voteResultsRollup: '',
-  temperatureCheckRollup: '',
-  temperatureCheckEndAlert: '',
-  temperatureCheckStartAlert: ''
+  voteRollup: "",
+  voteEndAlert: "",
+  voteQuorumAlert: "",
+  voteResultsRollup: "",
+  temperatureCheckRollup: "",
+  temperatureCheckEndAlert: "",
+  temperatureCheckStartAlert: "",
+  voteOneDayEndAlert: "",
 };
 
 const defaultGovernanceCycle = 0;
@@ -49,19 +50,19 @@ export class DoltSysHandler {
 
   async setTransactionCommit() {
     Promise.all([
-      await this.localDolt.query('SET @@GLOBAL.dolt_transaction_commit=1'),
-      await this.localDolt.query('SET @@GLOBAL.dolt_replicate_all_heads=1'),
-      await this.localDolt.query(oneLine`SET @@GLOBAL.dolt_replicate_to_remote='origin'`)
+      await this.localDolt.query("SET @@GLOBAL.dolt_transaction_commit=1"),
+      await this.localDolt.query("SET @@GLOBAL.dolt_replicate_all_heads=1"),
+      await this.localDolt.query(oneLine`SET @@GLOBAL.dolt_replicate_to_remote="origin"`)
     ]).catch((e) => {
-      console.log('error setting transaction commit', e);
+      console.log("error setting transaction commit", e);
     });
   }
 
   async showDatabases() {
-    return this.localDolt.query('SHOW DATABASES').then((res) => {
+    return this.localDolt.query("SHOW DATABASES").then((res) => {
       return (res as unknown as { Database: string }[]).map((db) => {
         return db.Database;
-      }).filter((db) => { return db !== 'mysql' && db !== 'information_schema' && db !== systemDb; }); // remove system databases
+      }).filter((db) => { return db !== "mysql" && db !== "information_schema" && db !== systemDb; }); // remove system databases
     }).catch((e) => { return Promise.reject(e); });
   }
 
@@ -119,7 +120,7 @@ export class DoltSysHandler {
   async updateDialogHandlerMessageId(space: string, messageName: string, messageId: string) {
     return this.localDolt.queryResults(oneLine`
     UPDATE ${system}
-    SET dialogHandlerMessageIds = JSON_SET(dialogHandlerMessageIds, '$.${messageName}', ?)
+    SET dialogHandlerMessageIds = JSON_SET(dialogHandlerMessageIds, "$.${messageName}", ?)
     WHERE space = ?;
     `, [messageId, space]).then((res) => {
       return res.affectedRows;
@@ -147,7 +148,7 @@ export class DoltSysHandler {
   async getAllSpaceConfig(where?: string): Promise<SQLSpaceConfig[]> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
-      ${(where) ? `WHERE ${where}` : ''}
+      ${(where) ? `WHERE ${where}` : ""}
       ORDER BY space ASC
     `).then((res) => {
       return res as unknown as SQLSpaceConfig[];
@@ -157,7 +158,7 @@ export class DoltSysHandler {
   async getAllSpaceNames(where?: string): Promise<SQLSpaceConfig[]> {
     return this.localDolt.queryRows(oneLine`
       SELECT * FROM ${system}
-      ${(where) ? `WHERE ${where}` : ''}
+      ${(where) ? `WHERE ${where}` : ""}
       `).then((res) => {
       return res as unknown as SQLSpaceConfig[];
     }).catch((e) => { return Promise.reject(e); });

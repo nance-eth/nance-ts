@@ -179,9 +179,9 @@ export class DiscordHandler {
           content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
           embeds: [message]
         }).then((messageObj) => {
-        messageObj.crosspost();
-        return messageObj.id;
-      });
+          messageObj.crosspost();
+          return messageObj.id;
+        });
   }
 
   async sendVoteResultsRollup(proposals: Proposal[]) {
@@ -648,15 +648,19 @@ export class DiscordHandler {
   }
 
   async sendProposalActionPoll(actionPacket: ActionPacket, discussionThreadURL: string) {
-    const thread = await this.getAlertChannel().threads.fetch(getLastSlash(discussionThreadURL));
-    if (!thread) throw Error("Thread not found");
-    const message = await t.proposalActionPoll(actionPacket);
-    const pollId = await thread.send({ embeds: [message] });
-    // add reacts
-    await Promise.all([
-      pollId.react(EMOJI.YES),
-      pollId.react(EMOJI.NO),
-    ]);
-    return pollId.url;
+    try {
+      const thread = await this.getAlertChannel().threads.fetch(getLastSlash(discussionThreadURL));
+      if (!thread) throw Error("Thread not found");
+      const message = await t.proposalActionPoll(actionPacket);
+      const pollId = await thread.send({ embeds: [message] });
+      // add reacts
+      await Promise.all([
+        pollId.react(EMOJI.YES),
+        pollId.react(EMOJI.NO),
+      ]);
+      return pollId.url;
+    } catch (e: any) {
+      throw new Error(`[DISCORD] ${e.message}`);
+    }
   }
 }

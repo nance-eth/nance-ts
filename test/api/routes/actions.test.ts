@@ -12,13 +12,12 @@ describe("Actions tests", () => {
     const { proposals } = allProposalsResponse.body.data;
     const [proposal] = proposals;
     const aid = proposal.actions[0].uuid;
-    // const actionInitResponse = await request(BASE_URL).get(`/waterbox/actions/${aid}/init`);
-    // expect(actionInitResponse.body.success).toBe(false);
 
     const setStatusApprovedResponse = await request(BASE_URL)
       .patch(`/waterbox/proposal/${proposal.uuid}/status/Approved`)
       .set({ authorization: ADMIN })
       .send();
+    expect(setStatusApprovedResponse.body.error).toBeUndefined();
     expect(setStatusApprovedResponse.body.success).toBe(true);
 
     const actionInitResponse2 = await request(BASE_URL).get(`/waterbox/actions/${aid}/init`);
