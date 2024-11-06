@@ -50,7 +50,7 @@ export async function validateUploaderVp(input: ValidateProposalByVp) {
   if (!authorAddress) {
     authorAddress = uploaderAddress;
   } else {
-    uniq([..._coauthors || [], uploaderAddress]);
+    coauthors = uniq([..._coauthors || [], uploaderAddress]);
   }
   return { authorAddress, coauthors, status, votingPower };
 }
