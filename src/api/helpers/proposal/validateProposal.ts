@@ -3,7 +3,6 @@ import { NanceConfig, NewProposal, Proposal, UpdateProposal } from "@nance/nance
 import { getAddressVotingPower } from "@/snapshot/snapshotVotingPower";
 import { isNanceSpaceOwner } from "../permissions";
 import { numToPrettyString } from "@/utils";
-import { ProposalStatus } from "@nance/nance-sdk";
 
 type ValidateProposalByVp = {
   proposal: NewProposal | UpdateProposal,
@@ -44,7 +43,7 @@ export async function validateUploaderVp(input: ValidateProposalByVp) {
 
   // MoonDAO wants proposals to go to Temperature Check if they meet minVotingPower
   if (status === "Discussion") {
-    status = proposalSubmissionValidation.metStatus
+    status = proposalSubmissionValidation.metStatus;
   }
 
   if (!authorAddress) {

@@ -146,20 +146,30 @@ export function limitLength(text: string, length = 100) {
   return text;
 }
 
-export function numToPrettyString(_num: number | string | undefined, fixed = 1) {
-  const num = Number(_num);
-  if (num === undefined) {
-    return "";
-  } if (num === 0) {
-    return 0;
-  } if (num > 1E9) {
-    return `${parseFloat((num / 1E9).toFixed(fixed))}B`;
-  } if (num > 1E6) {
-    return `${parseFloat((num / 1E6).toFixed(fixed))}M`;
-  } if (num >= 1E3) {
-    return `${parseFloat((num / 1E3).toFixed(fixed))}k`;
+export function numToPrettyString(
+  num: number | string | undefined,
+  precision: number | "auto" = 2
+): string {
+  if (num === undefined) return "";
+
+  const value = Number(num);
+  if (value === 0) return "0";
+
+  let decimals = typeof precision === "number" ? precision : 0;
+  if (precision === "auto") {
+    const stringNum = String(num);
+    decimals = stringNum.includes(".")
+      ? stringNum.split(".")[1].replace(/0+$/, "").length
+      : 0;
   }
-  return parseFloat(num.toFixed(fixed)).toString();
+
+  const format = (n: number, divisor: number, suffix: string) => `${(n / divisor).toFixed(decimals)}${suffix}`;
+
+  if (value >= 1E9) return format(value, 1E9, "B");
+  if (value >= 1E6) return format(value, 1E6, "M");
+  if (value >= 1E3) return format(value, 1E3, "k");
+
+  return value.toFixed(decimals);
 }
 
 export function omitKey(object: object, key: string): Partial<typeof object> {

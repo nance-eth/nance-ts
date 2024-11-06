@@ -53,7 +53,7 @@ export const formatTransfer = async (action: Action) => {
     `[${symbol}](<${explorerPayload}/address/${payload.contract}>)`;
   const ens = await getENS(payload.to);
   const toMd = `[${ens}](<${explorerPayload}/address/${payload.to}>)`;
-  const amount = numToPrettyString(payload.amount, 3);
+  const amount = numToPrettyString(payload.amount, "auto");
   return { amount, symbolMd, toMd };
 };
 
