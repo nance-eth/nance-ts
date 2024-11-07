@@ -83,7 +83,7 @@ router.get("/:pid/discussion", async (req: Request, res: Response) => {
       await dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
     }
     discussionThreadURL = proposal.discussionThreadURL;
-    await discord.editDiscussionMessage(proposal, true);
+    await discord.editDiscussionMessage(proposal);
     discord.logout();
     clearCache(space);
     res.json({ success: true, data: discussionThreadURL });

@@ -14,7 +14,6 @@ import {
   ForumChannel,
   ThreadChannel,
 } from "discord.js";
-import { isEqual } from "lodash";
 import { Proposal, PollResults, NanceConfig, SQLPayout, ActionPacket } from "@nance/nance-sdk";
 import logger from "../logging";
 import { limitLength, getLastSlash, dateToUnixTimeStamp } from "../utils";
@@ -174,14 +173,13 @@ export class DiscordHandler {
   async sendQuorumRollup(proposals: Proposal[], endDate: Date) {
     const message = t.proposalsUnderQuorumMessage(this.spaceURL, this.config.proposalIdPrefix, proposals, this.config.snapshot.minTokenPassingAmount, this.config.name);
     return this.getAlertChannel()
-      .send(
-        {
-          content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
-          embeds: [message]
-        }).then((messageObj) => {
-          messageObj.crosspost();
-          return messageObj.id;
-        });
+      .send({
+        content: `:hotsprings: ${this.roleTag} proposals under quorum! Voting ends at <t:${dateToUnixTimeStamp(endDate)}:f>(<t:${dateToUnixTimeStamp(endDate)}:R>) :hotsprings:`,
+        embeds: [message]
+      }).then((messageObj) => {
+        messageObj.crosspost();
+        return messageObj.id;
+      });
   }
 
   async sendVoteResultsRollup(proposals: Proposal[]) {
@@ -382,7 +380,7 @@ export class DiscordHandler {
     }
   }
 
-  async editDiscussionMessage(proposal: Proposal, forceEdit = false) {
+  async editDiscussionMessage(proposal: Proposal) {
     try {
       if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const messageObj = await this.getAlertChannel().messages.fetch(getLastSlash(proposal.discussionThreadURL));
@@ -395,14 +393,9 @@ export class DiscordHandler {
         authorENS,
         customDomain
       );
-      if (
-        messageObj.embeds[0].title !== message.data.title
-        || !isEqual(messageObj.embeds[0].fields, message.data.fields)
-        || forceEdit
-      ) {
-        messageObj.edit({ embeds: [message] });
-        messageObj.thread?.edit({ name: limitLength(proposal.title) });
-      }
+
+      messageObj.edit({ embeds: [message] });
+      messageObj.thread?.edit({ name: limitLength(proposal.title) });
     } catch (e) {
       if (!proposal.discussionThreadURL) throw new Error("Proposal has no dicussion thread");
       const channel = this.getAlertChannel() as unknown as ForumChannel;

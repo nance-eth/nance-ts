@@ -11,7 +11,7 @@ async function main() {
   await sleep(2000);
   const dolt = new DoltHandler(pools[space], spaceConfig.config.proposalIdPrefix);
   const proposal = await dolt.getProposalByAnyId("509");
-  await dialogHandler.editDiscussionMessage(proposal, true);
+  await dialogHandler.editDiscussionMessage(proposal);
 }
 
 main();
