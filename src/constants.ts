@@ -19,6 +19,7 @@ export const TASKS = {
   incrementGovernanceCycle: "incrementGovernanceCycle",
   sendBookkeeping: "sendBookkeeping",
   commitAndPush: "commitAndPush",
+  updateActionTracking: "updateActionTracking",
 };
 
 export const EMOJI = {

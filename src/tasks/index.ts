@@ -12,7 +12,7 @@ import { incrementGovernanceCycle } from "./incrementGovernanceCycle";
 import { shouldSendAlert } from "./shouldSendAlert";
 import { sendBookkeeping } from "./sendBookkeeping";
 import { commitAndPush } from "./commitAndPush";
-import { sendReconfigThread } from "./sendReconfigThread";
+import { updateActionTracking } from "./updateActionTracking";
 
 export {
   sendDailyAlert,
@@ -29,5 +29,5 @@ export {
   shouldSendAlert,
   sendBookkeeping,
   commitAndPush,
-  sendReconfigThread,
+  updateActionTracking,
 };

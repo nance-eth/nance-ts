@@ -111,6 +111,12 @@ export const scheduleCalendarTasks = async (space: string, config: NanceConfig, 
       });
     }
     if (event.title === "Execution") {
+      // Action Tracking
+      const actionTrackingDate = addSecondsToDate(event.start, 4 * 60);
+      scheduleJob(`${space}:${TASKS.updateActionTracking}`, actionTrackingDate, () => {
+        tasks.updateActionTracking(space);
+      });
+
       // Bookkeeping
       const bookkeepingDate = addSecondsToDate(event.start, 5 * 60);
       scheduleJob(`${space}:${TASKS.sendBookkeeping}`, bookkeepingDate, () => {

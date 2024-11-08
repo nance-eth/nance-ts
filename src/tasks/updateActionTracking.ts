@@ -2,10 +2,16 @@ import { ActionTracking, Cancel } from "@nance/nance-sdk";
 import { getDb } from "@/dolt/pools";
 import { initActionTrackingStruct } from "./helpers/actionTracking";
 import { viableActions } from "@/api/routes/space/actions";
+import { getSpaceConfig } from "@/api/helpers/getSpace";
 
-export const updateActionTracking = async (space: string, governanceCycle: number) => {
+export const updateActionTracking = async (space: string, _governanceCycle?: number) => {
   try {
     const dolt = getDb(space);
+    let governanceCycle = _governanceCycle;
+    if (!governanceCycle) {
+      const config = await getSpaceConfig(space);
+      governanceCycle = config.currentGovernanceCycle;
+    }
 
     // initActionTracking for each proposal that was approved this cycle
     const { proposals: newProposals } = await dolt.getProposals({ status: ["Approved"], governanceCycle });
