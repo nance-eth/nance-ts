@@ -1,13 +1,15 @@
 /* eslint-disable no-await-in-loop */
 import { Router, Request, Response, NextFunction } from "express";
+import SafeApiKit from "@safe-global/api-kit";
 import { ActionPacket, Action } from "@nance/nance-sdk";
 import { isNanceSpaceOwner } from "@/api/helpers/permissions";
-import { addSecondsToDate } from "@/utils";
+import { addSecondsToDate, networkNameToChainId } from "@/utils";
 import * as tasks from "@/tasks";
 import { clearCache } from "@/api/helpers/cache";
 import { Middleware } from "./middleware";
 import { getActionPacket } from "@/api/helpers/proposal/actions";
 import { discordTransactionThread } from "@/api/helpers/discord";
+import { sendReconfigThread } from "@/tasks/sendReconfigThread";
 
 const router = Router({ mergeParams: true });
 
@@ -15,10 +17,17 @@ const router = Router({ mergeParams: true });
 router.use("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { space } = req.params;
-    const { address, spaceOwners } = res.locals as Middleware;
-    if (!address) { res.json({ success: false, error: "no SIWE address found" }); return; }
+    const { address, spaceOwners, transactorAddress, config } = res.locals as Middleware;
+    if (!address) throw new Error("no SIWE address found");
     if (!isNanceSpaceOwner(spaceOwners, address)) {
-      throw new Error(`address ${address} is not a spaceOwner of ${space}`);
+      if (!transactorAddress) throw new Error("no safe transactor address found");
+      const networkId = networkNameToChainId(transactorAddress.network);
+      const safe = new SafeApiKit({ chainId: BigInt(networkId) });
+      const safeInfo = await safe.getSafeInfo(config.juicebox.gnosisSafeAddress);
+      const { owners } = safeInfo;
+      if (!owners.includes(address)) {
+        throw new Error(`address ${address} cannot perform this operation for ${space}`);
+      }
     }
     clearCache(space);
     next();
@@ -108,7 +117,7 @@ router.post("/thread/reconfig", async (req: Request, res: Response) => {
     const { config } = res.locals as Middleware;
     const { space } = req.params;
     const { safeTxnUrl } = req.body as { safeTxnUrl?: string };
-    const payouts = await tasks.sendReconfigThread({ space, config, safeTxnUrl });
+    const payouts = await sendReconfigThread({ space, config, safeTxnUrl });
     res.json({ success: true, data: payouts });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
