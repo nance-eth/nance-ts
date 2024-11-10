@@ -17,13 +17,16 @@ const router = Router({ mergeParams: true });
 router.use("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { space } = req.params;
-    const { address, spaceOwners, transactorAddress, config } = res.locals as Middleware;
+    const { address, spaceOwners, transactorAddress } = res.locals as Middleware;
     if (!address) throw new Error("no SIWE address found");
     if (!isNanceSpaceOwner(spaceOwners, address)) {
-      if (!transactorAddress) throw new Error("no safe transactor address found");
-      const networkId = networkNameToChainId(transactorAddress.network);
+      if (!transactorAddress) {
+        throw new Error("not spaceOwner & no transactor address found");
+      }
+      const { address: safeAddress, network } = transactorAddress;
+      const networkId = networkNameToChainId(network);
       const safe = new SafeApiKit({ chainId: BigInt(networkId) });
-      const safeInfo = await safe.getSafeInfo(config.juicebox.gnosisSafeAddress);
+      const safeInfo = await safe.getSafeInfo(safeAddress);
       const { owners } = safeInfo;
       if (!owners.includes(address)) {
         throw new Error(`address ${address} cannot perform this operation for ${space}`);
@@ -31,6 +34,14 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
     }
     clearCache(space);
     next();
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+router.get("/permissions", async (req: Request, res: Response) => {
+  try {
+    res.json({ success: true });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }

@@ -49,6 +49,12 @@ export const getSpaceInfo = (spaceConfig: SQLSpaceConfig): SpaceInfoExtended => 
     snapshotSpace: spaceConfig.config.snapshot.space,
     juiceboxProjectId: spaceConfig.config.juicebox.projectId,
     proposalSubmissionValidation: spaceConfig.config.proposalSubmissionValidation,
+    transactorAddress: {
+      type: spaceConfig.config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
+      network: spaceConfig.config.juicebox.network,
+      address: spaceConfig.config.juicebox.gnosisSafeAddress ||
+        spaceConfig.config.juicebox.governorAddress,
+    }
   };
 };
 
