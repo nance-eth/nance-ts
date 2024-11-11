@@ -452,8 +452,12 @@ export class DoltHandler {
         from_body,
         to_body,
         from_title,
-        to_title
+        to_title,
+        from_proposalStatus,
+        to_proposalStatus,
+        message
       FROM dolt_diff_proposals
+      JOIN dolt_log ON to_commit = commit_hash
       WHERE diff_type = 'modified' AND to_uuid = ?
       ORDER BY to_commit_date
     `, [uuid]) as unknown as {
@@ -462,6 +466,9 @@ export class DoltHandler {
       to_body: string;
       from_title: string;
       to_title: string;
+      from_proposalStatus: ProposalStatus;
+      to_proposalStatus: ProposalStatus;
+      message: string;
     }[];
   }
 
@@ -473,6 +480,12 @@ export class DoltHandler {
         ON DUPLICATE KEY UPDATE
         answer = VALUES(answer), updatedTime = VALUES(updatedTime)
     `, [id, uuidOfProposal, answer, now, now]);
+  }
+
+  async clearPollsByProposalUuid(uuid: string) {
+    return this.queryDbResults(oneLine`
+      DELETE FROM ${pollsTable} WHERE uuidOfProposal = ?
+    `, [uuid]);
   }
 
   async getPollsByProposalUuid(uuid: string) {

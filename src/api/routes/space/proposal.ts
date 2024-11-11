@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { diffChars, diffTrimmedLines } from "diff";
+import { diffTrimmedLines } from "diff";
 import {
   Proposal,
   ProposalDeleteRequest,
@@ -51,16 +51,33 @@ router.get("/:pid/history", async (req: Request, res: Response) => {
   try {
     const proposalDiffs = await dolt.getProposalHistory(pid);
     if (!proposalDiffs || proposalDiffs.length === 0) throw new Error("Proposal not found");
-    const data = proposalDiffs.slice(1).map((diff, index) => {
-      const title = diffChars(diff.from_title, diff.to_title);
-      const diffBodyLines = diffTrimmedLines(diff.from_body, diff.to_body);
-      return {
-        version: index + 1,
-        datetime: new Date(diff.to_commit_date).toISOString(),
-        title,
-        diffBodyLines
-      };
-    });
+    const data = proposalDiffs.reduce<any>((acc, diff, index) => {
+      const title = diff.from_title !== diff.to_title ? {
+        from: diff.from_title,
+        to: diff.to_title
+      } : undefined;
+
+      const status = diff.from_proposalStatus !== diff.to_proposalStatus ? {
+        from: diff.from_proposalStatus,
+        to: diff.to_proposalStatus
+      } : undefined;
+
+      const diffLines = diffTrimmedLines(diff.from_body, diff.to_body);
+      const body = (diffLines.length !== 1 || index === 0) ? diffLines : undefined;
+      const { message: metadata } = diff;
+      // Only add to accumulator if there are actual changes
+      if (title || status || body) {
+        acc.push({
+          version: acc.length,
+          datetime: new Date(diff.to_commit_date).toISOString(),
+          status,
+          title,
+          body,
+          metadata,
+        });
+      }
+      return acc;
+    }, []);
     const endTime = Date.now();
     console.log(`Query took ${endTime - startTime}ms`);
     res.json({ success: true, data });
