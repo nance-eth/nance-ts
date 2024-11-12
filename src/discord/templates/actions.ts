@@ -41,20 +41,20 @@ export const formatCustomTransaction = async (action: Action) => {
 
 export const formatTransfer = async (action: Action) => {
   const payload = action.payload as Transfer;
-
+  const { governanceCycles } = action;
   // hotfix for chainId not being set properly
-  const { chainId: chainIdPayload } = payload as any;
+  const { amount, chainId: chainIdPayload } = payload as any;
+  const count = governanceCycles?.length;
   const explorerPayload = chainIdToExplorer(chainIdPayload);
   let symbol = "ETH";
   if (payload.contract !== "ETH") {
     symbol = await getTokenSymbol(payload.contract, action.chainId);
   }
   const symbolMd = payload.contract === "ETH" ? "ETH" :
-    `[${symbol}](<${explorerPayload}/address/${payload.contract}>)`;
+    `[$${symbol}](<${explorerPayload}/address/${payload.contract}>)`;
   const ens = await getENS(payload.to);
   const toMd = `[${ens}](<${explorerPayload}/address/${payload.to}>)`;
-  const amount = numToPrettyString(payload.amount, "auto");
-  return { amount, symbolMd, toMd };
+  return { amount, count, symbolMd, toMd };
 };
 
 export const actionsToMarkdown = async (actions: Action[]) => {
@@ -81,8 +81,10 @@ export const actionsToMarkdown = async (actions: Action[]) => {
       results.push(`${index + 1}. **[PAYOUT]** ${toWithLink} $${numberWithCommas(amount)} for ${count} ${maybePlural("cycle", count)} ($${numberWithCommas(amount * count)})${milestoneText}`);
     }
     if (action.type === "Transfer") {
-      const { amount, symbolMd, toMd } = await formatTransfer(action);
-      results.push(`${index + 1}. **[TRANSFER]** ${amount} ${symbolMd} to ${toMd}${milestoneText}`);
+      const { amount, count, symbolMd, toMd } = await formatTransfer(action);
+      const amountPretty = numToPrettyString(amount, "auto");
+      const countText = count ? ` for ${count} ${maybePlural("cycle", count)} (${numToPrettyString(amount * count, "auto")})` : "";
+      results.push(`${index + 1}. **[TRANSFER]** ${amountPretty} ${symbolMd} to ${toMd}${countText}${milestoneText}`);
     }
     if (action.type === "Cancel") {
       const payload = action.payload as Cancel;
