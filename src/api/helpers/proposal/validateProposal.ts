@@ -41,15 +41,14 @@ export async function validateUploaderVp(input: ValidateProposalByVp) {
     return { authorAddress, coauthors, status, votingPower };
   }
 
+  if (!authorAddress) { authorAddress = uploaderAddress; }
+  if (uploaderAddress !== authorAddress) {
+    coauthors = uniq([..._coauthors || [], uploaderAddress]);
+  }
+
   // MoonDAO wants proposals to go to Temperature Check if they meet minVotingPower
   if (status === "Discussion") {
     status = proposalSubmissionValidation.metStatus;
-  }
-
-  if (!authorAddress) {
-    authorAddress = uploaderAddress;
-  } else {
-    coauthors = uniq([..._coauthors || [], uploaderAddress]);
   }
   return { authorAddress, coauthors, status, votingPower };
 }
