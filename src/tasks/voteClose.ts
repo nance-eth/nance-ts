@@ -8,12 +8,15 @@ export const voteClose = async (space: string, config: NanceConfig, _proposals?:
     const dolt = getDb(space);
     const proposals = await getProposalsWithVotes(config, _proposals);
     if (proposals.length === 0) return [];
+    console.log(`[VOTE CLOSE] ${space}`);
     const updatedProposals = await Promise.all(proposals.map(async (proposal) => {
       if (!proposal.voteResults) return proposal;
       const pass = (votePassCheck(config, proposal.voteResults));
       const outcomeStatus = pass ? "Approved" : "Cancelled" as ProposalStatus;
       const updatedProposal = { ...proposal, status: outcomeStatus };
       if (!dryrun) await dolt.updateVotingClose(updatedProposal);
+      console.log(`proposal ${proposal.uuid} voteResults`);
+      console.log(`\t\t${proposal.voteResults}`);
       return updatedProposal;
     })).catch((e) => { return Promise.reject(e); });
     return updatedProposals;
