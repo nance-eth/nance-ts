@@ -105,7 +105,7 @@ router.post('/', async (req: Request, res) => {
         const discussionThreadURL = await discordNewProposal(newProposal, config);
         if (discussionThreadURL) await dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
 
-        if (space !== "waterbox") {
+        if (space !== "waterbox" && status !== "Draft") {
           const summary = await postSummary(newProposal, "proposal");
           dolt.updateSummary(uuid, summary, "proposal");
         }
