@@ -1,15 +1,12 @@
-import { DoltSysHandler } from '../dolt/doltSysHandler';
-import { DoltHandler } from '../dolt/doltHandler';
 import { getDb, getSysDb, initializePools } from '../dolt/pools';
-import { sleep } from "../utils";
 import { oneLine } from "common-tags";
 
 const QUERY = oneLine`
-  ALTER TABLE proposals add column signature varchar(255);
+  DELETE FROM dolt_ignore WHERE pattern = 'private_%';
 `;
 
 async function main() {
-  initializePools;
+  await initializePools();
   const doltSys = getSysDb();
   const spaces = await doltSys.getAllSpaceNames();
   spaces.forEach(async (config) => {

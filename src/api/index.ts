@@ -15,6 +15,7 @@ import spaceProposals from "./routes/space/proposals";
 import spaceReconfig from "./routes/space/reconfig";
 import spaceSummary from "./routes/space/summary";
 import spaceActions from "./routes/space/actions";
+import { scheduler } from "@/scheduler";
 
 const PORT = process.env.PORT || 3003;
 const app = express();
@@ -43,6 +44,7 @@ export const init = async () => {
   console.log("[API] init...");
   await initializePools();
   await discordInitInteractionManager();
+  await scheduler();
   app.use("/ish", system);
   app.use("/snapshot/proposal", snapshotProposal);
   app.use("/:space", spaceMiddleware, spaceInfo);

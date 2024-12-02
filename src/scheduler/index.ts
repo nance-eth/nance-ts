@@ -41,5 +41,3 @@ export async function scheduler() {
   scheduleReschedule();
   listScheduledJobs();
 }
-
-scheduler();
