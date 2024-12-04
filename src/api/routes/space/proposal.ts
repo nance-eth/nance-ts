@@ -104,7 +104,7 @@ router.get("/:pid/version", async (req: Request, res: Response) => {
           hash: v.commit_hash,
           date: v.to_commit_date,
           message: v.message
-        }
+        };
       })
     });
   } catch (e: any) {
@@ -116,12 +116,9 @@ router.get("/:pid/version", async (req: Request, res: Response) => {
 router.get("/:pid/version/:version", async (req: Request, res: Response) => {
   const { pid, version } = req.params;
   const { dolt } = res.locals as Middleware;
-  const startTime = Date.now();
   try {
     const diff = await dolt.getProposalVersionOf(pid, version);
     if (!diff || diff.length < 1) throw new Error("Proposal history not found");
-    const endTime = Date.now();
-    console.log(`Query took ${endTime - startTime}ms`);
     const v = diff[0];
     const data = {
       hash: v.commit_hash,
@@ -131,7 +128,7 @@ router.get("/:pid/version/:version", async (req: Request, res: Response) => {
       toTitle: v.to_title,
       fromBody: v.from_body,
       toBody: v.to_body
-    }
+    };
     res.json({ success: true, data });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
