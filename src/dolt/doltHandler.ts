@@ -472,6 +472,53 @@ export class DoltHandler {
     }[];
   }
 
+  // only consider it an edit if body or title changed
+  async getProposalVersions(uuid: string) {
+    return this.queryDbResults(oneLine`
+      SELECT
+        commit_hash,
+        to_commit_date,
+        message
+      FROM dolt_diff_proposals
+      JOIN dolt_log ON to_commit = commit_hash
+      WHERE to_uuid = ?
+        AND diff_type = 'modified'
+        AND (from_body <> to_body OR from_title <> to_title)
+      ORDER BY to_commit_date
+    `, [uuid]) as unknown as {
+      commit_hash: string;
+      to_commit_date : string;
+      message: string;
+    }[];
+  }
+
+  async getProposalVersionOf(uuid: string, hash: string) {
+    return this.queryDbResults(oneLine`
+      SELECT
+        commit_hash,
+        to_commit_date,
+        from_body,
+        to_body,
+        from_title,
+        to_title,
+        message
+      FROM dolt_diff_proposals
+      JOIN dolt_log ON to_commit = commit_hash
+      WHERE to_uuid = ? AND to_commit = ?
+        AND diff_type = 'modified'
+        AND (from_body <> to_body OR from_title <> to_title)
+      ORDER BY to_commit_date
+    `, [uuid, hash]) as unknown as {
+      commit_hash: string;
+      to_commit_date : string;
+      from_body: string;
+      to_body: string;
+      from_title: string;
+      to_title: string;
+      message: string;
+    }[];
+  }
+
   async insertPoll({ id, uuidOfProposal, answer }: { id: string; uuidOfProposal: string; answer: boolean }) {
     const now = new Date().toISOString();
     return this.queryDbResults(oneLine`

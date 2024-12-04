@@ -43,7 +43,8 @@ router.get("/:pid", async (req: Request, res: Response) => {
   }
 });
 
-// GET /:space/proposal/:pid
+// @deprecated should use /version and /version/:version endpoints instead
+// GET /:space/proposal/:pid/history
 router.get("/:pid/history", async (req: Request, res: Response) => {
   const { pid } = req.params;
   const { dolt } = res.locals as Middleware;
@@ -80,6 +81,57 @@ router.get("/:pid/history", async (req: Request, res: Response) => {
     }, []);
     const endTime = Date.now();
     console.log(`Query took ${endTime - startTime}ms`);
+    res.json({ success: true, data });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// GET /:space/proposal/:pid/version
+router.get("/:pid/version", async (req: Request, res: Response) => {
+  const { pid } = req.params;
+  const { dolt } = res.locals as Middleware;
+  const startTime = Date.now();
+  try {
+    const versions = await dolt.getProposalVersions(pid);
+    if (!versions || versions.length === 0) throw new Error("Proposal history not found");
+    const endTime = Date.now();
+    console.log(`Query took ${endTime - startTime}ms`);
+    res.json({
+      success: true,
+      data: versions.map((v) => {
+        return {
+          hash: v.commit_hash,
+          date: v.to_commit_date,
+          message: v.message
+        }
+      })
+    });
+  } catch (e: any) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+// GET /:space/proposal/:pid/version/:version
+router.get("/:pid/version/:version", async (req: Request, res: Response) => {
+  const { pid, version } = req.params;
+  const { dolt } = res.locals as Middleware;
+  const startTime = Date.now();
+  try {
+    const diff = await dolt.getProposalVersionOf(pid, version);
+    if (!diff || diff.length < 1) throw new Error("Proposal history not found");
+    const endTime = Date.now();
+    console.log(`Query took ${endTime - startTime}ms`);
+    const v = diff[0];
+    const data = {
+      hash: v.commit_hash,
+      date: v.to_commit_date,
+      message: v.message,
+      fromTitle: v.from_title,
+      toTitle: v.to_title,
+      fromBody: v.from_body,
+      toBody: v.to_body
+    }
     res.json({ success: true, data });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
