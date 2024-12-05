@@ -1,5 +1,4 @@
 import { Router, Request, Response } from "express";
-import { diffTrimmedLines } from "diff";
 import {
   Proposal,
   ProposalDeleteRequest,
@@ -37,50 +36,6 @@ router.get("/:pid", async (req: Request, res: Response) => {
     proposal = findCacheProposal(space, pid) || await dolt.getProposalByAnyId(pid);
     if (!proposal) throw new Error("Proposal not found");
     const data: ProposalPacket = { ...proposal, proposalInfo };
-    res.json({ success: true, data });
-  } catch (e: any) {
-    res.json({ success: false, error: e.message });
-  }
-});
-
-// @deprecated should use /version and /version/:version endpoints instead
-// GET /:space/proposal/:pid/history
-router.get("/:pid/history", async (req: Request, res: Response) => {
-  const { pid } = req.params;
-  const { dolt } = res.locals as Middleware;
-  const startTime = Date.now();
-  try {
-    const proposalDiffs = await dolt.getProposalHistory(pid);
-    if (!proposalDiffs || proposalDiffs.length === 0) throw new Error("Proposal not found");
-    const data = proposalDiffs.reduce<any>((acc, diff, index) => {
-      const title = diff.from_title !== diff.to_title ? {
-        from: diff.from_title,
-        to: diff.to_title
-      } : undefined;
-
-      const status = diff.from_proposalStatus !== diff.to_proposalStatus ? {
-        from: diff.from_proposalStatus,
-        to: diff.to_proposalStatus
-      } : undefined;
-
-      const diffLines = diffTrimmedLines(diff.from_body, diff.to_body);
-      const body = (diffLines.length !== 1 || index === 0) ? diffLines : undefined;
-      const { message: metadata } = diff;
-      // Only add to accumulator if there are actual changes
-      if (title || status || body) {
-        acc.push({
-          version: acc.length,
-          datetime: new Date(diff.to_commit_date).toISOString(),
-          status,
-          title,
-          body,
-          metadata,
-        });
-      }
-      return acc;
-    }, []);
-    const endTime = Date.now();
-    console.log(`Query took ${endTime - startTime}ms`);
     res.json({ success: true, data });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
@@ -204,6 +159,8 @@ router.put("/:pid", async (req: Request, res: Response) => {
       console.error(e);
     } finally {
       clearCache(space);
+      const commit = await dolt.checkAndPush("proposals", `updateProposal:${uploaderAddress}`);
+      console.log(`[DOLT] commit ${commit}`);
     }
   } catch (e: any) {
     res.json({ success: false, error: e.message });

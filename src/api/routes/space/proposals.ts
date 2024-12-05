@@ -1,7 +1,7 @@
 import { Router, Request } from "express";
 import { ProposalUploadRequest } from "@nance/nance-sdk";
 import { Middleware } from "./middleware";
-import { cache } from "@/api/helpers/cache";
+import { cache, clearCache } from "@/api/helpers/cache";
 import { postSummary } from "@/nancearizer";
 import { discordNewProposal } from "@/api/helpers/discord";
 import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
@@ -107,7 +107,7 @@ router.post('/', async (req: Request, res) => {
 
         if (space !== "waterbox" && status !== "Draft") {
           const summary = await postSummary(newProposal, "proposal");
-          dolt.updateSummary(uuid, summary, "proposal");
+          await dolt.updateSummary(uuid, summary, "proposal");
         }
         // update nextProposalId cache
         if (proposalRes.proposalId) {
@@ -115,7 +115,8 @@ router.post('/', async (req: Request, res) => {
         }
 
         // clear proposal cache
-        cache[space].proposalsPacket = {};
+        clearCache(space);
+        await dolt.checkAndPush("proposals", `newProposal:${newProposal.authorAddress}`);
       } catch (e) {
         console.error(`[DISCORD] ${space}`);
         console.error(`[DISCORD] ${e}`);

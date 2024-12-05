@@ -44,7 +44,7 @@ export const init = async () => {
   console.log("[API] init...");
   await initializePools();
   await discordInitInteractionManager();
-  await scheduler();
+  if (process.env.NODE_ENV === "production") await scheduler();
   app.use("/ish", system);
   app.use("/snapshot/proposal", snapshotProposal);
   app.use("/:space", spaceMiddleware, spaceInfo);
