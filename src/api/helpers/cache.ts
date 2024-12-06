@@ -3,6 +3,7 @@ import { ProposalsPacket, SpaceInfoExtended } from "@nance/nance-sdk";
 type Cache = {
   spaceInfo?: SpaceInfoExtended;
   nextProposalId?: number;
+  dolthubLink?: string;
   proposalsPacket?: Record<string, ProposalsPacket>;
 };
 

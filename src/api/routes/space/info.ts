@@ -1,6 +1,5 @@
 import { SpaceInfo } from "@nance/nance-sdk";
 import { Router, Request, Response } from "express";
-import { headToUrl } from "@/dolt/doltAPI";
 import { Middleware } from "./middleware";
 import { clearCache } from "@/api/helpers/cache";
 
@@ -21,9 +20,10 @@ router.get('/', async (_, res: Response) => {
       nextProposalId,
       cycleStartDate,
       proposalSubmissionValidation,
-      transactorAddress
+      transactorAddress,
+      dolthubLink,
     } = res.locals as Middleware;
-    const dolthubLink = headToUrl(config.dolt.owner, config.dolt.repo);
+    // const dolthubLink = headToUrl(config.dolt.owner, config.dolt.repo);
     const spaceInfo: SpaceInfo = {
       name,
       displayName,

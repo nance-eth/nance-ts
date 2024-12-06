@@ -10,6 +10,7 @@ import { getDb, getSysDb } from "@/dolt/pools";
 import { cache } from "@/api/helpers/cache";
 import { getSpaceInfo } from "@/api/helpers/getSpace";
 import { addressFromJWT } from "@/api/helpers/auth";
+import { headToUrl } from "@/dolt/doltAPI";
 
 const router = Router({ mergeParams: true });
 
@@ -17,6 +18,7 @@ export interface Middleware extends SpaceInfoExtended {
   dolt: DoltHandler;
   address?: string;
   nextProposalId: number;
+  dolthubLink: string;
 }
 
 router.use("/", async (req: Request, res: Response, next: NextFunction) => {
@@ -27,6 +29,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
     const query = space.toLowerCase();
     const dolt = getDb(query);
 
+    let dolthubLink = cache[query]?.dolthubLink || "";
     let spaceInfo = cache[query]?.spaceInfo;
     const now = new Date().toISOString();
     const currentEventEnd = spaceInfo?.currentEvent?.end;
@@ -34,8 +37,10 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
     if (!spaceInfo || refresh) {
       console.log(`[CACHE] refreshing ${query}`);
       const spaceConfig = await doltSys.getSpaceConfig(query);
+      const head = await dolt.getHead();
+      dolthubLink = headToUrl(spaceConfig.config.dolt.owner, spaceConfig.config.dolt.repo, head)
       spaceInfo = getSpaceInfo(spaceConfig);
-      cache[query] = { spaceInfo };
+      cache[query] = { spaceInfo, dolthubLink };
     }
 
     const jwt = auth?.split('Bearer ')[1];
@@ -51,6 +56,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
     const locals: Middleware = {
       ...spaceInfo,
       dolt,
+      dolthubLink,
       address,
       nextProposalId
     };
