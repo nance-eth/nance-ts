@@ -1,12 +1,13 @@
+import { initializePools } from '@/dolt/pools';
 import { getSpaceConfig } from '../../api/helpers/getSpace';
-import { addDaysToDate, sleep } from '../../utils';
+import { addDaysToDate } from '../../utils';
 import { voteSetup } from '../voteSetup';
 
-const space = 'moondao';
+const space = 'waterbox';
 
 async function main() {
+  await initializePools();
   const { config } = await getSpaceConfig(space);
-  await sleep(2000);
   const testEndDate = addDaysToDate(new Date(), 1);
   try {
     await voteSetup(space, config, testEndDate);

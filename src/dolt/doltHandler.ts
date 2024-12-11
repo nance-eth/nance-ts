@@ -291,6 +291,14 @@ export class DoltHandler {
     `, [summary, uuid]);
   }
 
+  async updateIPFS(snapshotId: string, cid: string) {
+    return this.queryDbResults(oneLine`
+      UPDATE ${proposalsTable} SET
+      ipfsCID = ?
+      WHERE snapshotId = ?
+    `, [cid, snapshotId]);
+  }
+
   async updateActionTracking(uuid: string, actionTracking: ActionTracking[][] | null) {
     const value = actionTracking ? JSON.stringify(actionTracking) : null;
     return this.queryDbResults(oneLine`

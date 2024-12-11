@@ -5,7 +5,6 @@ import {
 import { SnapshotHandler } from "../snapshot/snapshotHandler";
 import { getDb } from "../dolt/pools";
 import { keys } from "../keys";
-import { dotPin } from "../storage/storageHandler";
 import logger from "../logging";
 import {
   addSecondsToDate,
@@ -34,13 +33,8 @@ export const voteSetup = async (space: string, config: NanceConfig, endDate: Dat
         const end = (snapshotVoteSettings?.period)
           ? addSecondsToDate(start, snapshotVoteSettings.period)
           : endDate;
-        const { body } = proposal;
-        const proposalWithHeading = `# ${proposal.proposalId} - ${proposal.title}${body}`;
-        const ipfsURL = await dotPin(proposalWithHeading).catch((e) => {
-          throw new Error(`Failed to pin proposal to IPFS: ${e.message || e}`);
-        });
         const type = (proposal.voteSetup) ? proposal.voteSetup.type : (snapshotVoteSettings?.type || "basic");
-        const voteURL = await snapshot.createProposal(
+        const { voteURL, ipfsURL } = await snapshot.createProposal(
           proposal,
           start,
           end,

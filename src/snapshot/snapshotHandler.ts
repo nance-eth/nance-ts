@@ -25,7 +25,13 @@ export class SnapshotHandler {
     this.snapshot = new snapshot.Client712(this.hub);
   }
 
-  async createProposal(proposal: Proposal, startDate: Date, endDate: Date, options: SnapshotVoteSetupOptions, jitter: number): Promise<string> {
+  async createProposal(
+    proposal: Proposal,
+    startDate: Date,
+    endDate: Date,
+    options: SnapshotVoteSetupOptions,
+    jitter: number
+  ): Promise<{ voteURL: string; ipfsURL: string }> {
     const startTimeStamp = dateToUnixTimeStamp(startDate);
     const endTimeStamp = dateToUnixTimeStamp(endDate);
     const latestBlock = await this.provider.getBlockNumber();
@@ -42,12 +48,15 @@ export class SnapshotHandler {
       snapshot: latestBlock - jitter,
       plugins: JSON.stringify({}),
     };
-    const voteHash = await this.snapshot.proposal(this.wallet, this.wallet.address, snapProposal).then((response: any) => {
-      return response.id;
+    const snapshotProposalRes = await this.snapshot.proposal(this.wallet, this.wallet.address, snapProposal).then((response: any) => {
+      return response;
     }).catch((e) => {
       return Promise.reject(e);
     });
-    return voteHash;
+    return {
+      voteURL: snapshotProposalRes.id,
+      ipfsURL: snapshotProposalRes.ipfs
+    };
   }
 
   async getProposalVotes(proposalIds: string[]): Promise<SnapshotVoteResultsId[]> {
@@ -77,7 +86,7 @@ export class SnapshotHandler {
       proposals (
         where: {
           space: "${this.config.snapshot.space}",
-          ${gt ? `end_gt: ${gt},` : null}
+          ${gt ? `end_gt: ${gt},` : ""}
         }
         first: 1000
       ) {

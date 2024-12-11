@@ -38,7 +38,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
       console.log(`[CACHE] refreshing ${query}`);
       const spaceConfig = await doltSys.getSpaceConfig(query);
       const head = await dolt.getHead();
-      dolthubLink = headToUrl(spaceConfig.config.dolt.owner, spaceConfig.config.dolt.repo, head)
+      dolthubLink = headToUrl(spaceConfig.config.dolt.owner, spaceConfig.config.dolt.repo, head);
       spaceInfo = getSpaceInfo(spaceConfig);
       cache[query] = { spaceInfo, dolthubLink };
     }
