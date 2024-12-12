@@ -1,19 +1,22 @@
-import { pools } from "../dolt/pools";
-import { DoltHandler } from "../dolt/doltHandler";
-import { getLastSlash, sleep } from "../utils";
+import { getLastSlash } from "../utils";
 import { getSpaceConfig } from "../api/helpers/getSpace";
 import { discordLogin } from "../api/helpers/discord";
+import { getDb, initializePools } from "@/dolt/pools";
+
+const SPACE = "moondao"
 
 async function main() {
-  await sleep(2000);
-  const spaceConfig = await getSpaceConfig('moondao');
-  const dolt = new DoltHandler(pools[spaceConfig.config.name], spaceConfig.config.proposalIdPrefix);
-  const proposal = await dolt.getProposalByAnyId('152');
-  const discord = await discordLogin(spaceConfig.config);
+  await initializePools();
+  const dolt = getDb(SPACE)
+  const proposal = await dolt.getProposalByAnyId('166');
+  const { config } = await getSpaceConfig(SPACE);
+  console.log(proposal)
+  const discord = await discordLogin(config);
+  if (!proposal.discussionThreadURL) throw Error();
   // const discussionThreadURL = await discord.startDiscussion(proposal);
   // dolt.updateDiscussionURL({ ...proposal, discussionThreadURL });
-  // await discord.setupPoll(getLastSlash(discussionThreadURL))
-  await discord.editDiscussionMessage(proposal, true);
+  await discord.setupPoll(getLastSlash(proposal?.discussionThreadURL))
+  await discord.editDiscussionMessage(proposal);
 }
 
 main();
