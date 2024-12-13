@@ -189,9 +189,10 @@ export type spaceSpec = Tspec.DefineApiSpec<{
       get: {
         tags: ["Space Proposals"],
         summary: "Get proposals for a space (defaults to current Governance Cycle)",
+        description: "You can pass in cycles as comma separated list of cycles For example: /juicebox/proposals?cycle=25,26,27",
         path: { space: string },
         query: {
-          cycle?: number,
+          cycle?: string,
           keyword?: number,
           author?: string,
           limit?: number,
