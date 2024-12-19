@@ -191,7 +191,7 @@ router.patch("/:pid/sync", async (req: Request, res: Response) => {
   try {
     const { dolt, config, address, spaceOwners } = res.locals as Middleware;
     if (!address) throw Error("Must supply jwt address to change status");
-    const { pid } = req.params;
+    const { pid, space } = req.params as { space: string, pid: string };
     const proposal = await dolt.getProposalByAnyId(pid);
     if (!proposal) return;
     checkPermissions(proposal, proposal, address, spaceOwners, "admin");
@@ -206,6 +206,7 @@ router.patch("/:pid/sync", async (req: Request, res: Response) => {
     };
     await dolt.updateVotingClose(updatedProposal);
     res.json({ success: true });
+    clearCache(space);
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }
