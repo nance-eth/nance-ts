@@ -93,7 +93,8 @@ export const actionsToMarkdown = async (actions: Action[]) => {
     if (action.type === "Request Budget") {
       const payload = action.payload as RequestBudget;
       const transferMap: { [key: string]: number } = {};
-      payload.budget.forEach(async (lineItem) => {
+      for (let i = 0; i < payload.budget.length; i += 1) {
+        const lineItem = payload.budget[i];
         let symbol = lineItem.token;
         if (lineItem.token === "ETH") {
           symbol = "ETH";
@@ -101,14 +102,11 @@ export const actionsToMarkdown = async (actions: Action[]) => {
           symbol = await getTokenSymbol(lineItem.token);
         }
         transferMap[symbol] = (transferMap[symbol] || 0) + Number(lineItem.amount);
-      });
+      }
       const tokensText = Object.entries(transferMap).map(([token, amount]) => {
         return `${numberWithCommas(amount)} ${token}`;
       }).join("\n");
-      const teamText = payload.projectTeam.map((teamMember) => {
-        return `* <@${teamMember.discordUserId}>`;
-      }).join("\n");
-      results.push(`**[BUDGET REQUEST]**\n${tokensText}\n\n**[TEAM MEMBERS]**\n${teamText}`);
+      results.push(`**[BUDGET REQUEST]**\n${tokensText}`);
     }
   }
   return results.join("\n");

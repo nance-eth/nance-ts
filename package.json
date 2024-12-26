@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@ethersproject/providers": "^5.7.2",
-    "@nance/nance-sdk": "^4.1.5",
+    "@nance/nance-sdk": "^4.1.6",
     "@safe-global/api-kit": "^2.5.1",
     "@snapshot-labs/snapshot.js": "^0.11.41",
     "axios": "^1.7.2",
