@@ -42,7 +42,7 @@ response=$(curl -s -w "\n%{http_code}" $API_URL)
 http_code=$(echo "$response" | tail -n1)
 body=$(echo "$response" | sed '$d')
 
-if [ "$http_code" != "200" ] || echo "$body" | jq -e '.success == false' >/dev/null; then
+if [ "$http_code" != "200" ] && [ "$http_code" != "000" ] || echo "$body" | jq -e '.success == false' >/dev/null; then
     if [ ! -f "$ERROR_FLAG_FILE" ]; then
         touch "$ERROR_FLAG_FILE"
         date +%s > "$ERROR_START_TIME_FILE"
