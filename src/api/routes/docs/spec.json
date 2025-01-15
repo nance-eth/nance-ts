@@ -2450,60 +2450,6 @@
               {
                 "type": "object",
                 "properties": {
-                  "projectTeam": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "discordUserId": {
-                          "type": "string"
-                        },
-                        "discordUsername": {
-                          "type": "string"
-                        },
-                        "payoutAddress": {
-                          "type": "string"
-                        },
-                        "votingAddress": {
-                          "type": "string"
-                        },
-                        "isRocketeer": {
-                          "type": "boolean"
-                        }
-                      },
-                      "additionalProperties": false,
-                      "required": [
-                        "discordUserId",
-                        "discordUsername",
-                        "isRocketeer",
-                        "payoutAddress",
-                        "votingAddress"
-                      ]
-                    }
-                  },
-                  "multisigTeam": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "discordUserId": {
-                          "type": "string"
-                        },
-                        "discordUsername": {
-                          "type": "string"
-                        },
-                        "address": {
-                          "type": "string"
-                        }
-                      },
-                      "additionalProperties": false,
-                      "required": [
-                        "address",
-                        "discordUserId",
-                        "discordUsername"
-                      ]
-                    }
-                  },
                   "budget": {
                     "type": "array",
                     "items": {
@@ -2530,9 +2476,7 @@
                 },
                 "additionalProperties": false,
                 "required": [
-                  "budget",
-                  "multisigTeam",
-                  "projectTeam"
+                  "budget"
                 ]
               },
               {
