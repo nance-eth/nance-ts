@@ -266,7 +266,7 @@ export type spaceSpec = Tspec.DefineApiSpec<{
       patch: {
         tags: ["Space Single Proposal"],
         summary: "Admin route to sync Snapshot results",
-        path: { space: string, proposalId: string, status: ProposalStatus },
+        path: { space: string, proposalId: string },
         security: "jwt",
         responses: {
           200: ProposalUploadResponse;
