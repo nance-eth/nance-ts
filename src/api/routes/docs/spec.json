@@ -1745,6 +1745,22 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "proposalId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1760,10 +1776,26 @@
                       "enum": [
                         true
                       ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "proposals": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Proposal"
+                          }
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "proposals"
+                      ]
                     }
                   },
                   "additionalProperties": false,
                   "required": [
+                    "data",
                     "success"
                   ]
                 }

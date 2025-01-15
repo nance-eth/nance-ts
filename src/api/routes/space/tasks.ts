@@ -96,16 +96,26 @@ router.get("/temperatureCheckClose", async (req: Request, res: Response) => {
 
 router.get("/voteSetup", async (req: Request, res: Response) => {
   try {
-    const { endDate } = req.query as { endDate: string };
+    const { endDate, proposalId } = req.query as { endDate?: string, startDate?: string, proposalId?: string };
     const { space } = req.params;
-    const { config, nextEvents } = res.locals as Middleware;
+    const { config, nextEvents, dolt } = res.locals as Middleware;
+
+    let proposals;
+    if (proposalId) {
+      const proposal = await dolt.getProposalByAnyId(proposalId);
+      if (!proposal) throw new Error("Proposal not found");
+      proposals = [proposal];
+    }
+
     const _voteEndDate = endDate
       || nextEvents.find((e) => e.title === "Snapshot Vote")?.end
       || addSecondsToDate(new Date(), 3600);
     const voteEndDate = new Date(_voteEndDate);
-    const proposals = await tasks.voteSetup(space, config, voteEndDate);
-    await tasks.voteRollup(space, config, voteEndDate, proposals);
-    res.json({ success: true });
+
+    const updatedProposals = await tasks.voteSetup(space, config, voteEndDate, proposals);
+    await tasks.voteRollup(space, config, voteEndDate, updatedProposals);
+    clearCache(space);
+    res.json({ success: true, data: { proposals: updatedProposals } });
   } catch (e: any) {
     res.json({ success: false, error: e.message });
   }

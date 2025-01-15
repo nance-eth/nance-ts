@@ -43,7 +43,7 @@ export const voteSetup = async (space: string, config: NanceConfig, endDate: Dat
         ).catch((e) => {
           throw new Error(`[SNAPSHOT] ${e.error_description}`);
         });
-        const updatedProposal: Proposal = { ...proposal, ipfsURL, voteURL };
+        const updatedProposal: Proposal = { ...proposal, status: "Voting", ipfsURL, voteURL };
         await dolt.updateVotingSetup(updatedProposal).catch((e) => {
           throw new Error(`Failed to update voting setup in database: ${e.message || e}`);
         });

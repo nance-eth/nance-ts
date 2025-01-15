@@ -349,10 +349,18 @@ export type tasksSpec = Tspec.DefineApiSpec<{
     "/voteSetup": {
       get: {
         summary: "Setup Voting",
-        description: "Gathers all `Voting` proposals that passed `Temperature Check` and uploads them to the space Snapshot. Record poll results and send rollup message to Discord.",
-        path: { space: string },
+        description: "Gathers all `Voting` proposals that passed `Temperature Check` and uploads them to the space's Snapshot instance. Records poll results and sends rollup message to Discord. Optionally accepts a proposalId to setup a single proposal and endDate (must be a string compatible with JavaScript's new Date() constructor) to specify the vote end time.",
+        query: {
+          proposalId?: string,
+          endDate?: string
+        },
         responses: {
-          200: { success: true }
+          200: {
+            success: true,
+            data: {
+              proposals: Proposal[]
+            }
+          }
         }
       }
     },
