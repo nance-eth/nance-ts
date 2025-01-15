@@ -550,7 +550,7 @@
         "tags": [
           "Space Actions"
         ],
-        "description": "Get all actions that are NOT `Cancelled` or `Executed`. Query `?all=true` to get all actions.",
+        "description": "Get all actions that are NOT `Cancelled` or `Executed`",
         "parameters": [
           {
             "name": "space",
@@ -561,6 +561,7 @@
             }
           },
           {
+            "description": "If true, returns all actions including `Cancelled` and `Executed` ones",
             "name": "all",
             "in": "query",
             "required": false,
@@ -1731,7 +1732,7 @@
           "Space Tasks"
         ],
         "summary": "Setup Voting",
-        "description": "Gathers all `Voting` proposals that passed `Temperature Check` and uploads them to the space Snapshot. Record poll results and send rollup message to Discord.",
+        "description": "Gathers all `Voting` proposals that passed `Temperature Check` and uploads them to the space's Snapshot instance. Records poll results and sends rollup message to Discord.",
         "security": [
           {
             "jwt": []
@@ -1747,6 +1748,7 @@
             }
           },
           {
+            "description": "Optional ID to setup a single proposal instead of all eligible proposals",
             "name": "proposalId",
             "in": "query",
             "required": false,
@@ -1755,6 +1757,7 @@
             }
           },
           {
+            "description": "Optional vote end time. Accepts ISO 8601 string (e.g. \"2024-01-15T00:00:00Z\") or Unix timestamp in milliseconds",
             "name": "endDate",
             "in": "query",
             "required": false,

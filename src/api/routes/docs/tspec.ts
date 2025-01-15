@@ -141,8 +141,11 @@ export type spaceSpec = Tspec.DefineApiSpec<{
     "/{space}/actions": {
       get: {
         tags: ["Space Actions"],
-        description: "Get all actions that are NOT `Cancelled` or `Executed`. Query `?all=true` to get all actions.",
-        query: { all?: true | undefined },
+        description: "Get all actions that are NOT `Cancelled` or `Executed`",
+        query: {
+          /** If true, returns all actions including `Cancelled` and `Executed` ones */
+          all?: true | undefined
+        },
         path: { space: string },
         responses: {
           200: APIResponse<ActionPacket[]>
@@ -349,9 +352,12 @@ export type tasksSpec = Tspec.DefineApiSpec<{
     "/voteSetup": {
       get: {
         summary: "Setup Voting",
-        description: "Gathers all `Voting` proposals that passed `Temperature Check` and uploads them to the space's Snapshot instance. Records poll results and sends rollup message to Discord. Optionally accepts a proposalId to setup a single proposal and endDate (must be a string compatible with JavaScript's new Date() constructor) to specify the vote end time.",
+        description: "Gathers all `Voting` proposals that passed `Temperature Check` and uploads them to the space's Snapshot instance. Records poll results and sends rollup message to Discord.",
+        path: { space: string },
         query: {
+          /** Optional ID to setup a single proposal instead of all eligible proposals */
           proposalId?: string,
+          /** Optional vote end time. Accepts ISO 8601 string (e.g. "2024-01-15T00:00:00Z") or Unix timestamp in milliseconds */
           endDate?: string
         },
         responses: {
