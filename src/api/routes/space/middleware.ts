@@ -9,7 +9,7 @@ import { DoltHandler } from "@/dolt/doltHandler";
 import { getDb, getSysDb } from "@/dolt/pools";
 import { cache } from "@/api/helpers/cache";
 import { getSpaceInfo } from "@/api/helpers/getSpace";
-import { addressFromJWT } from "@/api/helpers/auth";
+import { addressFromHeader } from "@/api/helpers/auth";
 import { headToUrl } from "@/dolt/doltAPI";
 
 const router = Router({ mergeParams: true });
@@ -24,7 +24,6 @@ export interface Middleware extends SpaceInfoExtended {
 router.use("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const doltSys = getSysDb();
-    const auth = req?.headers?.authorization;
     const { space } = req.params;
     const query = space.toLowerCase();
     const dolt = getDb(query);
@@ -43,8 +42,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
       cache[query] = { spaceInfo, dolthubLink };
     }
 
-    const jwt = auth?.split('Bearer ')[1];
-    const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : undefined;
+    const address = await addressFromHeader(req);
 
     // get nextProposalId
     let nextProposalId = cache[query]?.nextProposalId;
@@ -61,6 +59,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
       nextProposalId
     };
     res.locals = locals;
+    console.log("address", locals.address);
     next();
   } catch (e: any) {
     res.json({ success: false, error: e.message || "Unknown error" });

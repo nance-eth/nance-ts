@@ -10,7 +10,6 @@ import { DoltHandler } from "@/dolt/doltHandler";
 import { getDb, getSysDb } from "@/dolt/pools";
 import { cache } from "@/api/helpers/cache";
 import { getSpaceInfo } from "@/api/helpers/getSpace";
-// import { addressFromJWT } from "@/api/helpers/auth";
 
 const router = Router({ mergeParams: true });
 
@@ -45,9 +44,6 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
       }
       cache[query] = { spaceInfo };
     }
-
-    // const jwt = auth?.split('Bearer ')[1];
-    // const address = (jwt && jwt !== 'null') ? await addressFromJWT(jwt) : undefined;
 
     // get nextProposalId
     let nextProposalId = cache[query]?.nextProposalId;

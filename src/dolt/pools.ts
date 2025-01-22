@@ -18,18 +18,31 @@ const createPoolManager = () => {
     sys = new DoltSysHandler(sysDolt);
 
     const spaceConfigs = await sys.getAllSpaceConfig();
-    spaceConfigs.forEach((space) => {
+    spaceConfigs.forEach((config) => {
       try {
-        const sql = new DoltSQL(dbOptions(space.space));
-        pools.set(space.space, new DoltHandler(sql, space.config.proposalIdPrefix));
+        const sql = new DoltSQL(dbOptions(config.space));
+        pools.set(config.space, new DoltHandler(sql, config.config.proposalIdPrefix));
       } catch (e) {
-        console.error(`Error creating pool for ${space.space}:`, e);
+        console.error(`Error creating pool for ${config.space}:`, e);
       }
     });
     const sql = new DoltSQL(dbOptions("common"));
     pools.set("common", new DoltHandler(sql));
     initialized = true;
     console.log("[POOLS] ready!");
+  };
+
+  const add = (space: string, proposalIdPrefix?: string): void => {
+    if (!initialized) {
+      throw new Error("Pools not initialized. Call initializePools() first.");
+    }
+    try {
+      const sql = new DoltSQL(dbOptions(space));
+      pools.set(space, new DoltHandler(sql, proposalIdPrefix));
+      console.log(`[POOLS] Added new pool for space: ${space}`);
+    } catch (e) {
+      console.error(`Error adding pool for ${space}:`, e);
+    }
   };
 
   const get = (key: string): DoltHandler => {
@@ -58,11 +71,12 @@ const createPoolManager = () => {
     initialized = false;
   };
 
-  return { initialize, getSys, get, close };
+  return { initialize, add, getSys, get, close };
 };
 const poolManager = createPoolManager();
 
 export const initializePools = poolManager.initialize;
+export const addDb = poolManager.add;
 export const getSysDb = poolManager.getSys;
 export const getDb = poolManager.get;
 export const closePools = poolManager.close;

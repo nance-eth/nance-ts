@@ -1,3 +1,4 @@
+import { Request } from "express";
 import { decode } from "next-auth/jwt";
 import { recoverTypedDataAddress } from "viem";
 import {
@@ -15,16 +16,21 @@ interface DecodedJWT {
   jti: string;
 }
 
-export async function addressFromJWT(jwt: string): Promise<string> {
-  return decode({ token: jwt, secret: keys.NEXTAUTH_SECRET }).then(async (decoded) => {
+export async function addressFromHeader(req: Request): Promise<string | undefined> {
+  const jwt = req?.headers?.authorization?.split("Bearer ")[1];
+  if (!jwt) return undefined;
+
+  try {
+    const decoded = await decode({ token: jwt, secret: keys.NEXTAUTH_SECRET });
     const { sub, iat, exp } = decoded as unknown as DecodedJWT;
     const now = unixTimeStampNow();
-    if (iat > now) return Promise.reject(new Error("JWT issued in the future"));
-    if (exp < now) return Promise.reject(new Error("JWT expired"));
+    if (iat > now) throw new Error("JWT issued in the future");
+    if (exp < now) throw new Error("JWT expired");
+    console.log("addressFromHeader: OUTPUT", sub);
     return sub;
-  }).catch((e) => {
-    return Promise.reject(e);
-  });
+  } catch (e: any) {
+    throw new Error(e);
+  }
 }
 
 export async function addressFromSignature(

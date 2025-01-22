@@ -11,7 +11,7 @@ describe("Admin update status back to a status that can be deleted", () => {
     for (let i = 0; i < proposals.length; i += 1) {
       const response = await request(BASE_URL)
         .patch(`/waterbox/proposal/${proposals[i].uuid}/status/Archived`)
-        .set({ authorization: ADMIN })
+        .set({ authorization: ADMIN });
       expect(response.body.error).toBeUndefined();
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

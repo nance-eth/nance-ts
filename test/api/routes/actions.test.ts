@@ -49,7 +49,7 @@ describe("Actions tests", () => {
   });
 
   it("start poll for action that does require one", async () => {
-    // get first action that doesn't require poll
+    // get first action that does require poll
     const pollAP = actionPackets.find((ap) => ap.action.pollRequired);
     if (!pollAP) throw new Error("No pollAction found");
     const response = await request(BASE_URL)

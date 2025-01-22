@@ -1,5 +1,7 @@
 export const DEFAULT_DASHBOARD = "https://nance.app";
 
+export const DOLTHUB_REMOTE_URL = "https://doltremoteapi.dolthub.com/nance";
+
 export const TASKS = {
   sendDailyAlert: "sendDailyAlert",
   temperatureCheckStartAlert: "temperatureCheckStartAlert",

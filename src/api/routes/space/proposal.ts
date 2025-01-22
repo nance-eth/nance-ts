@@ -155,12 +155,16 @@ router.put("/:pid", async (req: Request, res: Response) => {
       const discussionThreadURL = await discordEditProposal(updateProposal, proposalInDb, config);
       if (discussionThreadURL) await dolt.updateDiscussionURL({ ...updateProposal, discussionThreadURL });
     } catch (e) {
-      console.error("something went wrong with sql or discord update");
-      console.error(e);
+      console.log("something went wrong with sql or discord update");
+      console.log(e);
     } finally {
       clearCache(space);
-      const commit = await dolt.checkAndPush("proposals", `updateProposal:${uploaderAddress}`);
-      console.log(`[DOLT] commit ${commit}`);
+      try {
+        const commit = await dolt.checkAndPush("proposals", `updateProposal:${uploaderAddress}`);
+        console.log(`[DOLT] commit ${commit}`);
+      } catch (e) {
+        console.log("Error during checkAndPush");
+      }
     }
   } catch (e: any) {
     res.json({ success: false, error: e.message });
