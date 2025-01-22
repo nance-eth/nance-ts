@@ -26,7 +26,6 @@ export async function addressFromHeader(req: Request): Promise<string | undefine
     const now = unixTimeStampNow();
     if (iat > now) throw new Error("JWT issued in the future");
     if (exp < now) throw new Error("JWT expired");
-    console.log("addressFromHeader: OUTPUT", sub);
     return sub;
   } catch (e: any) {
     throw new Error(e);

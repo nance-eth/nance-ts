@@ -51,7 +51,6 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
       nextProposalId
     };
     res.locals = locals;
-    console.log("address", locals.address);
     next();
   } catch (e: any) {
     res.json({ success: false, error: e.message || "Unknown error" });
