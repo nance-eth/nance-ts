@@ -7,7 +7,8 @@ import { initializePools } from "@/dolt/pools";
 // routes
 import system from "./routes/system";
 import snapshotProposal from "./routes/snapshot";
-import spaceMiddleware from "./routes/space/middleware";
+import spaceMiddleware from "./middleware/space";
+import authMiddleware from "./middleware/auth";
 import spaceInfo from "./routes/space/info";
 import tasks from "./routes/space/tasks";
 import spaceProposal from "./routes/space/proposal";
@@ -45,7 +46,7 @@ export const init = async () => {
   await initializePools();
   await discordInitInteractionManager();
   if (process.env.NODE_ENV === "production") await scheduler();
-  app.use("/ish", system);
+  app.use("/ish", authMiddleware, system);
   app.use("/snapshot/proposal", snapshotProposal);
   app.use("/:space", spaceMiddleware, spaceInfo);
   app.use("/:space/tasks", tasks);

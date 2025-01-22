@@ -7,7 +7,7 @@ import {
   ProposalStatusNames,
   ProposalUpdateRequest
 } from "@nance/nance-sdk";
-import { Middleware } from "./middleware";
+import { SpaceMiddleware } from "@/api/middleware/types";
 import { clearCache, findCacheProposal } from "@/api/helpers/cache";
 import { discordEditProposal, discordLogin } from "@/api/helpers/discord";
 import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
@@ -22,7 +22,7 @@ const router = Router({ mergeParams: true });
 // GET /:space/proposal/:pid
 router.get("/:pid", async (req: Request, res: Response) => {
   const { space, pid } = req.params;
-  const { dolt, config, nextProposalId } = res.locals as Middleware;
+  const { dolt, config, nextProposalId } = res.locals as SpaceMiddleware;
   let proposal: Proposal | undefined;
   try {
     const proposalInfo: ProposalPacket["proposalInfo"] = {
@@ -45,7 +45,7 @@ router.get("/:pid", async (req: Request, res: Response) => {
 // GET /:space/proposal/:pid/version
 router.get("/:pid/version", async (req: Request, res: Response) => {
   const { pid } = req.params;
-  const { dolt } = res.locals as Middleware;
+  const { dolt } = res.locals as SpaceMiddleware;
   const startTime = Date.now();
   try {
     const versions = await dolt.getProposalVersions(pid);
@@ -70,7 +70,7 @@ router.get("/:pid/version", async (req: Request, res: Response) => {
 // GET /:space/proposal/:pid/version/:version
 router.get("/:pid/version/:version", async (req: Request, res: Response) => {
   const { pid, version } = req.params;
-  const { dolt } = res.locals as Middleware;
+  const { dolt } = res.locals as SpaceMiddleware;
   try {
     const diff = await dolt.getProposalVersionOf(pid, version);
     if (!diff || diff.length < 1) throw new Error("Proposal history not found");
@@ -94,7 +94,7 @@ router.get("/:pid/version/:version", async (req: Request, res: Response) => {
 router.get("/:pid/discussion", async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
-    const { dolt } = res.locals as Middleware;
+    const { dolt } = res.locals as SpaceMiddleware;
     const proposal = await dolt.getProposalByAnyId(pid);
     if (!proposal) throw new Error("Proposal not found");
     const discord = await discordLogin(res.locals.config);
@@ -119,7 +119,7 @@ router.put("/:pid", async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
     const { proposal, envelope } = req.body as ProposalUpdateRequest;
-    const { dolt, config, address, spaceOwners, currentCycle, currentEvent, nextProposalId } = res.locals as Middleware;
+    const { dolt, config, address, spaceOwners, currentCycle, currentEvent, nextProposalId } = res.locals as SpaceMiddleware;
 
     const proposalInDb = await dolt.getProposalByAnyId(pid);
     if (!canEditProposal(proposalInDb.status)) throw Error("Proposal is no longer editable");
@@ -176,7 +176,7 @@ router.patch("/:pid/status/:status", async (req: Request, res: Response) => {
   try {
     const { space, pid, status } = req.params as { space: string, pid: string, status: ProposalStatus };
     if (!ProposalStatusNames.includes(status)) throw Error("Invalid proposal status");
-    const { dolt, address, spaceOwners } = res.locals as Middleware;
+    const { dolt, address, spaceOwners } = res.locals as SpaceMiddleware;
     const proposalInDb = await dolt.getProposalByAnyId(pid);
     if (!proposalInDb) throw Error("Proposal not found");
     if (!address) throw Error("Must supply jwt address to change status");
@@ -193,7 +193,7 @@ router.patch("/:pid/status/:status", async (req: Request, res: Response) => {
 // sync snapshot results, admin only
 router.patch("/:pid/sync", async (req: Request, res: Response) => {
   try {
-    const { dolt, config, address, spaceOwners } = res.locals as Middleware;
+    const { dolt, config, address, spaceOwners } = res.locals as SpaceMiddleware;
     if (!address) throw Error("Must supply jwt address to change status");
     const { pid, space } = req.params as { space: string, pid: string };
     const proposal = await dolt.getProposalByAnyId(pid);
@@ -221,7 +221,7 @@ router.delete("/:pid", async (req: Request, res: Response) => {
   try {
     const { space, pid } = req.params;
     const { envelope } = req.body as ProposalDeleteRequest;
-    const { dolt, config, spaceOwners, address } = res.locals as Middleware;
+    const { dolt, config, spaceOwners, address } = res.locals as SpaceMiddleware;
     const proposalInDb = await dolt.getProposalByAnyId(pid);
     if (!proposalInDb) throw Error("Proposal not found");
     if (!canEditProposal(proposalInDb.status)) throw Error("Proposal is no longer editable");

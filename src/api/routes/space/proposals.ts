@@ -1,6 +1,6 @@
 import { Router, Request } from "express";
 import { ProposalUploadRequest } from "@nance/nance-sdk";
-import { Middleware } from "./middleware";
+import { SpaceMiddleware } from "@/api/middleware/types";
 import { cache, clearCache } from "@/api/helpers/cache";
 import { postSummary } from "@/nancearizer";
 import { discordNewProposal } from "@/api/helpers/discord";
@@ -25,7 +25,7 @@ router.get("/", async (req: Request, res) => {
   const { space } = req.params;
   try {
     const { cycle, keyword, author, limit, page } = req.query as ProposalQueryParams;
-    const { dolt, config, currentCycle } = res.locals as Middleware;
+    const { dolt, config, currentCycle } = res.locals as SpaceMiddleware;
 
     // calculate offset for SQL pagination
     const _limit = limit ? Number(limit) : 0;
@@ -73,7 +73,7 @@ router.post('/', async (req: Request, res) => {
   try {
     const { space } = req.params;
     const { proposal, envelope } = req.body as ProposalUploadRequest;
-    const { config, dolt, address, currentCycle, currentEvent, nextProposalId } = res.locals as Middleware;
+    const { config, dolt, address, currentCycle, currentEvent, nextProposalId } = res.locals as SpaceMiddleware;
 
     const { uploaderAddress, receipt, snapshotId } = await validateUploaderAddress(address, envelope);
     const {

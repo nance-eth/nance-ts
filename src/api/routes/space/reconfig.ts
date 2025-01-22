@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { Middleware } from "./middleware";
+import { SpaceMiddleware } from "@/api/middleware/types";
 import { buildJBReconfiguration } from "@/api/helpers/juicebox";
 import { gatherPayouts } from "@/tasks/sendBookkeeping";
 
@@ -12,7 +12,7 @@ router.get('/', async (req: Request, res: Response) => {
     return res.json({ success: false, error: 'reconfig only allowed for juicebox and waterbox' });
   }
   try {
-    const { currentCycle } = res.locals as Middleware;
+    const { currentCycle } = res.locals as SpaceMiddleware;
     const payouts = await gatherPayouts(space, currentCycle);
     if (!payouts) return res.json({ success: false, error: 'no payouts found' });
     const data = buildJBReconfiguration(payouts);

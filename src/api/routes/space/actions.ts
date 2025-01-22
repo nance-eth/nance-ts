@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { ActionPacket, ActionStatusNames, Proposal } from "@nance/nance-sdk";
-import { Middleware } from "./middleware";
+import { SpaceMiddleware } from "@/api/middleware/types";
 import { discordLogin } from "@/api/helpers/discord";
 import { initActionTrackingStruct } from "@/tasks/helpers/actionTracking";
 import { clearCache } from "@/api/helpers/cache";
@@ -10,12 +10,12 @@ const router = Router({ mergeParams: true });
 
 export const viableActions = ActionStatusNames.filter((status) => status !== "Executed" && status !== "Cancelled");
 const allActions = [...ActionStatusNames];
-type ActionMiddleware = Middleware & { actionPacket: ActionPacket, proposal: Proposal };
+type ActionMiddleware = SpaceMiddleware & { actionPacket: ActionPacket, proposal: Proposal };
 
 // GET /:space/actions
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const { dolt } = res.locals as Middleware;
+    const { dolt } = res.locals as SpaceMiddleware;
     const { all } = req.query as { all: string };
     const filterActions = all === "true" ? allActions : viableActions;
     const { proposals } = await dolt.getProposals({ actionTrackingStatus: filterActions });
@@ -44,7 +44,7 @@ router.get("/", async (req: Request, res: Response) => {
 router.use("/:aid", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { aid } = req.params;
-    const { dolt } = res.locals as Middleware;
+    const { dolt } = res.locals as SpaceMiddleware;
     const proposal = await dolt.getProposalByActionId(aid);
     const actionPacket = getActionPacket(proposal, aid);
     res.locals.actionPacket = actionPacket;

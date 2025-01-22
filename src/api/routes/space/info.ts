@@ -1,6 +1,6 @@
 import { SpaceInfo } from "@nance/nance-sdk";
 import { Router, Request, Response } from "express";
-import { Middleware } from "./middleware";
+import { SpaceMiddleware } from "@/api/middleware/types";
 import { clearCache } from "@/api/helpers/cache";
 
 const router = Router({ mergeParams: true });
@@ -22,7 +22,7 @@ router.get('/', async (_, res: Response) => {
       proposalSubmissionValidation,
       transactorAddress,
       dolthubLink,
-    } = res.locals as Middleware;
+    } = res.locals as SpaceMiddleware;
     // const dolthubLink = headToUrl(config.dolt.owner, config.dolt.repo);
     const spaceInfo: SpaceInfo = {
       name,

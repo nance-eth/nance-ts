@@ -1,9 +1,9 @@
 import { NewProposal, Proposal, ProposalStatus, ProposalStatusNames, UpdateProposal } from "@nance/nance-sdk";
-import { Middleware } from "@/api/routes/space/middleware";
+import { SpaceMiddleware } from "@/api/middleware/types";
 import { uuidGen } from "@/utils";
 
 type PickFromMiddleware = "config" | "currentCycle" | "currentEvent" | "nextProposalId";
-type BuildProposalInput = Pick<Middleware, PickFromMiddleware> & {
+type BuildProposalInput = Pick<SpaceMiddleware, PickFromMiddleware> & {
   proposal: NewProposal | UpdateProposal;
   proposalInDb?: Proposal;
   status: ProposalStatus;

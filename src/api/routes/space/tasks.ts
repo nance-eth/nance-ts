@@ -6,7 +6,7 @@ import { isNanceSpaceOwner } from "@/api/helpers/permissions";
 import { addSecondsToDate, networkNameToChainId } from "@/utils";
 import * as tasks from "@/tasks";
 import { clearCache } from "@/api/helpers/cache";
-import { Middleware } from "./middleware";
+import { SpaceMiddleware } from "@/api/middleware/types";
 import { getActionPacket } from "@/api/helpers/proposal/actions";
 import { discordTransactionThread } from "@/api/helpers/discord";
 import { sendReconfigThread } from "@/tasks/sendReconfigThread";
@@ -17,7 +17,7 @@ const router = Router({ mergeParams: true });
 router.use("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { space } = req.params;
-    const { address, spaceOwners, transactorAddress } = res.locals as Middleware;
+    const { address, spaceOwners, transactorAddress } = res.locals as SpaceMiddleware;
     if (!address) throw new Error("no SIWE address found");
     if (!isNanceSpaceOwner(spaceOwners, address)) {
       if (!transactorAddress) {
@@ -71,7 +71,7 @@ router.get("/temperatureCheckStart", async (req: Request, res: Response) => {
   try {
     const { endDate } = req.query as { endDate: string };
     const { space } = req.params;
-    const { config, nextEvents } = res.locals as Middleware;
+    const { config, nextEvents } = res.locals as SpaceMiddleware;
     const _temperatureCheckEndDate = endDate
       || nextEvents.find((e) => e.title === "Temperature Check")?.end
       || addSecondsToDate(new Date(), 3600);
@@ -85,7 +85,7 @@ router.get("/temperatureCheckStart", async (req: Request, res: Response) => {
 
 router.get("/temperatureCheckClose", async (req: Request, res: Response) => {
   try {
-    const { config } = res.locals as Middleware;
+    const { config } = res.locals as SpaceMiddleware;
     const { space } = req.params;
     await tasks.temperatureCheckClose(space, config);
     res.json({ success: true });
@@ -98,7 +98,7 @@ router.get("/voteSetup", async (req: Request, res: Response) => {
   try {
     const { endDate, proposalId } = req.query as { endDate?: string, startDate?: string, proposalId?: string };
     const { space } = req.params;
-    const { config, nextEvents, dolt } = res.locals as Middleware;
+    const { config, nextEvents, dolt } = res.locals as SpaceMiddleware;
 
     let proposals;
     if (proposalId) {
@@ -123,7 +123,7 @@ router.get("/voteSetup", async (req: Request, res: Response) => {
 
 router.get("/voteClose", async (req: Request, res: Response) => {
   try {
-    const { config } = res.locals as Middleware;
+    const { config } = res.locals as SpaceMiddleware;
     const { space } = req.params;
     const proposals = await tasks.voteClose(space, config);
     await tasks.voteResultsRollup(space, config, proposals);
@@ -135,7 +135,7 @@ router.get("/voteClose", async (req: Request, res: Response) => {
 
 router.post("/thread/reconfig", async (req: Request, res: Response) => {
   try {
-    const { config } = res.locals as Middleware;
+    const { config } = res.locals as SpaceMiddleware;
     const { space } = req.params;
     const { safeTxnUrl } = req.body as { safeTxnUrl?: string };
     const payouts = await sendReconfigThread({ space, config, safeTxnUrl });
@@ -148,7 +148,7 @@ router.post("/thread/reconfig", async (req: Request, res: Response) => {
 const validTransactionTypes: Action["type"][] = ["Custom Transaction", "Transfer"];
 router.post("/thread/transactions", async (req: Request, res: Response) => {
   try {
-    const { dolt, config, currentCycle } = res.locals as Middleware;
+    const { dolt, config, currentCycle } = res.locals as SpaceMiddleware;
     const { actions, safeTxnUrl } = req.body as { actions: string[], safeTxnUrl: string };
     if (!actions) throw new Error("Must provide action uuids as body");
     const actionPackets: ActionPacket[] = [];

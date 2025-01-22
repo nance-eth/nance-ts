@@ -65,11 +65,11 @@ router.get("/all", async (_, res) => {
 router.post("/config", async (req, res) => {
   try {
     const { config, spaceOwners, dryrun } = req.body as ConfigSpaceRequest;
+    const { address } = res.locals as { address: string };
     const space = config.name.replaceAll(" ", "_").toLowerCase();
     const spaceConfig = await getSpaceConfig(space);
     const displayName = config.name;
 
-    const address = await addressFromHeader(req);
     if (!address) throw new Error("no SIWE address found");
 
     // check if space exists and configurer is spaceOwner

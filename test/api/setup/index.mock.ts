@@ -14,7 +14,8 @@ import spaceProposals from "@/api/routes/space/proposals";
 import spaceReconfig from "@/api/routes/space/reconfig";
 import spaceSummary from "@/api/routes/space/summary";
 import spaceActions from "@/api/routes/space/actions";
-import mockSpaceMiddleware from "./middleware.mock";
+import mockSpaceMiddleware from "./middleware/space.mock";
+import authMiddleware from "./middleware/auth.mock";
 
 const PORT = process.env.PORT || 3003;
 const app = express();
@@ -33,7 +34,7 @@ const server = app.listen(PORT, () => {
 export const init = async () => {
   console.log("[API] init...");
   await initializePools();
-  app.use("/ish", system);
+  app.use("/ish", authMiddleware, system);
   app.use("/~/proposal", snapshotProposal);
   app.use("/:space", mockSpaceMiddleware, spaceInfo);
   app.use("/:space/tasks", tasks);
