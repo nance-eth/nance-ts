@@ -2,12 +2,11 @@ import express from "express";
 import { ConfigSpaceRequest, SpaceInfo } from "@nance/nance-sdk";
 import { createDolthubDB, headToUrl } from "@/dolt/doltAPI";
 import { dotPin } from "@/storage/storageHandler";
-import { mergeTemplateConfig, mergeConfig, uuidGen } from "@/utils";
+import { mergeConfig, uuidGen } from "@/utils";
 import logger from "@/logging";
 import { addDb, getDb, getSysDb } from "@/dolt/pools";
-import { addressFromHeader } from "@/api/helpers/auth";
 import { getAllSpaceInfo, getSpaceConfig } from "@/api/helpers/getSpace";
-import { DOLTHUB_REMOTE_URL } from "@/constants";
+import { DEFAULT_CONFIG, DOLTHUB_REMOTE_URL } from "@/constants";
 
 const router = express.Router();
 
@@ -40,14 +39,14 @@ router.get("/all", async (_, res) => {
       try {
         const dolt = getDb(space.name);
         const nextProposalId = await dolt.getNextProposalId();
-        const dolthubLink = headToUrl(space.config.dolt.owner, space.config.dolt.repo);
+        const dolthubLink = headToUrl(space.config.dolt.owner, space.config.dolt.repo || "");
         const spaceInfo: SpaceInfo = { ...space, dolthubLink, nextProposalId };
 
         if (space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress) {
           spaceInfo.transactorAddress = {
             type: space.config.juicebox.gnosisSafeAddress ? "safe" : "governor",
             network: space.config.juicebox.network,
-            address: space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress,
+            address: space.config.juicebox.gnosisSafeAddress || space.config.juicebox.governorAddress || "",
           };
         }
         return spaceInfo;
@@ -77,30 +76,38 @@ router.post("/config", async (req, res) => {
       throw new Error("configurer not spaceOwner!");
     }
 
-    // config the space in nance_sys database
-    const configIn = (spaceConfig) ? mergeConfig(spaceConfig.config, config) : mergeTemplateConfig(config);
-    configIn.proposalIdPrefix = config.proposalIdPrefix.includes("-") ? config.proposalIdPrefix : `${config.proposalIdPrefix}-`;
+    let proposalIdPrefix = config.proposalIdPrefix || config.name.slice(0, 3).toUpperCase();
+    if (!proposalIdPrefix.includes("-")) {
+      proposalIdPrefix = `${proposalIdPrefix}-`;
+    }
+    const configIn = (spaceConfig) ?
+      mergeConfig(spaceConfig.config, { ...config, proposalIdPrefix }) :
+      mergeConfig(DEFAULT_CONFIG, { ...config, proposalIdPrefix });
     const packedConfig = JSON.stringify({ address, config: configIn });
     const cid = await dotPin(packedConfig);
-    const spaceOwnersIn = spaceOwners.map((owner) => { return owner.address; });
+    let spaceOwnersCleaned: string[] = [];
+    if (spaceOwners) {
+      spaceOwnersCleaned = spaceOwners.map((owner) => { return owner.address; });
+    }
+    if (!spaceOwners) spaceOwnersCleaned = [address];
     if (!dryrun) {
       getSysDb().setSpaceConfig({
         space,
         displayName,
         cid,
-        spaceOwners: spaceOwnersIn,
+        spaceOwners: spaceOwnersCleaned,
         config: configIn,
         autoEnable: 1,
       }).then(() => {
-        res.json({ success: true, data: { space, spaceOwners: spaceOwnersIn } });
+        res.json({ success: true, data: { space, spaceOwners: spaceOwnersCleaned } });
       }).catch((e) => {
         console.error(e);
         res.json({ success: false, error: e });
       });
     } else {
       console.log("dryrun");
-      console.log(space, displayName, cid, spaceOwnersIn, configIn,);
-      res.json({ success: true, data: { dryrun, space, displayName, cid, spaceOwnersIn, configIn, } });
+      console.log(space, displayName, cid, spaceOwnersCleaned, configIn,);
+      res.json({ success: true, data: { dryrun, space, displayName, cid, spaceOwnersIn: spaceOwnersCleaned, configIn, } });
     }
 
     // create space database if it doesn't exist

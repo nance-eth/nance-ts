@@ -37,6 +37,7 @@ export const discordInitInteractionManager = async () => {
 
 const createThreadStatuses: ProposalStatus[] = ["Draft", "Discussion", "Temperature Check"];
 export const discordNewProposal = async (proposal: Proposal, config: NanceConfig) => {
+  if (!config.discord.channelIds.proposals) return null;
   const { status } = proposal;
   if (!createThreadStatuses.includes(status)) return null;
   if (status === "Draft" && !config.discord.channelIds.ideas) return null;
@@ -54,6 +55,7 @@ export const discordEditProposal = async (
   proposalInDb: Proposal,
   config: NanceConfig
 ) => {
+  if (!config.discord.channelIds.proposals) return null;
   const { status } = proposal;
   const ideasChannelExists = !!config.discord.channelIds.ideas;
   const thread = proposalInDb.discussionThreadURL;
@@ -114,7 +116,7 @@ export const discordTransactionThread = async (
   try {
     const networkId = networkNameToChainId(config.juicebox.network);
     const safe = new SafeApiKit({ chainId: BigInt(networkId) });
-    const nonce = await safe.getNextNonce(config.juicebox.gnosisSafeAddress);
+    const nonce = await safe.getNextNonce(config.juicebox.gnosisSafeAddress || "");
     const links = [
       { name: "✍️ Safe Transaction", value: safeTxnUrl, inline: true },
     ];

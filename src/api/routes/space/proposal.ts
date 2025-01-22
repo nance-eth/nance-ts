@@ -26,10 +26,10 @@ router.get("/:pid", async (req: Request, res: Response) => {
   let proposal: Proposal | undefined;
   try {
     const proposalInfo: ProposalPacket["proposalInfo"] = {
-      proposalIdPrefix: config.proposalIdPrefix,
+      proposalIdPrefix: config.proposalIdPrefix || "",
       minTokenPassingAmount: config.snapshot.minTokenPassingAmount,
       minVotingPowerSubmissionBalance: config.proposalSubmissionValidation?.minBalance,
-      snapshotSpace: config.snapshot.space,
+      snapshotSpace: config.snapshot.space || "",
       nextProposalId
     };
 
@@ -160,8 +160,10 @@ router.put("/:pid", async (req: Request, res: Response) => {
     } finally {
       clearCache(space);
       try {
-        const commit = await dolt.checkAndPush("proposals", `updateProposal:${uploaderAddress}`);
-        console.log(`[DOLT] commit ${commit}`);
+        if (config.dolt.enabled) {
+          const commit = await dolt.checkAndPush("proposals", `updateProposal:${uploaderAddress}`);
+          console.log(`[DOLT] commit ${commit}`);
+        }
       } catch (e) {
         console.log("Error during checkAndPush");
       }

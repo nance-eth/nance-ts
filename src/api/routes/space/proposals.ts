@@ -52,7 +52,7 @@ router.get("/", async (req: Request, res) => {
     data = {
       proposalInfo: {
         snapshotSpace: config?.snapshot.space || space,
-        proposalIdPrefix: config.proposalIdPrefix,
+        proposalIdPrefix: config.proposalIdPrefix || "",
         minTokenPassingAmount: config?.snapshot.minTokenPassingAmount || 0,
         nextProposalId: cache[space].nextProposalId || 0,
       },
@@ -105,10 +105,6 @@ router.post('/', async (req: Request, res) => {
         const discussionThreadURL = await discordNewProposal(newProposal, config);
         if (discussionThreadURL) await dolt.updateDiscussionURL({ ...newProposal, discussionThreadURL });
 
-        if (space !== "waterbox" && status !== "Draft") {
-          const summary = await postSummary(newProposal, "proposal");
-          await dolt.updateSummary(uuid, summary, "proposal");
-        }
         // update nextProposalId cache
         if (proposalRes.proposalId) {
           cache[space].nextProposalId = proposalRes.proposalId + 1;
@@ -116,7 +112,9 @@ router.post('/', async (req: Request, res) => {
 
         // clear proposal cache
         clearCache(space);
-        await dolt.checkAndPush("proposals", `newProposal:${newProposal.authorAddress}`);
+        if (config.dolt.enabled) {
+          await dolt.checkAndPush("proposals", `newProposal:${newProposal.authorAddress}`);
+        }
       } catch (e) {
         console.error(`[DISCORD] ${space}`);
         console.error(`[DISCORD] ${e}`);

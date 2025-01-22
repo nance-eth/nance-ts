@@ -1,5 +1,5 @@
 /* eslint-disable prefer-promise-reject-errors */
-import { SpaceInfoExtended, DateEvent, SQLSpaceConfig } from "@nance/nance-sdk";
+import { SpaceInfoExtended, DateEvent, SQLSpaceConfig, InternalDateEvent } from "@nance/nance-sdk";
 import { sum } from "lodash";
 import { getCurrentEvent, getCurrentGovernanceCycleDay, getNextEvents } from "@/calendar/events";
 import { getNextEventByName } from "./getNextEventByName";
@@ -9,19 +9,23 @@ import { getSysDb } from "@/dolt/pools";
 export const getSpaceInfo = (spaceConfig: SQLSpaceConfig): SpaceInfoExtended => {
   const { cycleStageLengths, cycleStartReference } = spaceConfig;
   const { currentGovernanceCycle } = spaceConfig;
-  if (!cycleStageLengths) throw Error(`No cycleStageLengths found for ${spaceConfig.space}`);
-  const nextEvents = getNextEvents(cycleStartReference, cycleStageLengths, new Date());
-  const currentEvent = getCurrentEvent(cycleStartReference, cycleStageLengths, new Date(), nextEvents);
-  const currentCycleDay = getCurrentGovernanceCycleDay(currentEvent, cycleStageLengths, new Date());
+  let nextEvents: InternalDateEvent[] = [];
+  let currentEvent: InternalDateEvent | null = null;
+  let currentCycleDay = 0;
+  if (cycleStageLengths) {
+    nextEvents = getNextEvents(cycleStartReference, cycleStageLengths, new Date());
+    currentEvent = getCurrentEvent(cycleStartReference, cycleStageLengths, new Date(), nextEvents);
+    currentCycleDay = getCurrentGovernanceCycleDay(currentEvent, cycleStageLengths, new Date());
+  }
   let cycleStartDate = getNextEventByName("Temperature Check", spaceConfig)?.start || new Date();
   // if this the cycle start date is in the past, then we are currently in "Temperature Check" and need to add cycle days
   if (cycleStartDate < new Date()) {
     cycleStartDate = addDaysToDate(cycleStartDate, sum(cycleStageLengths));
   }
-  const stringCurrentEvent = {
-    title: currentEvent.title,
-    start: currentEvent.start.toISOString(),
-    end: currentEvent.end.toISOString(),
+  const stringCurrentEvent: DateEvent = {
+    title: currentEvent?.title || "Unknown",
+    start: currentEvent?.start?.toISOString() || "",
+    end: currentEvent?.end?.toISOString() || "",
   };
 
   const stringNextEvents = nextEvents.reduce((acc, event, index) => {
@@ -46,14 +50,14 @@ export const getSpaceInfo = (spaceConfig: SQLSpaceConfig): SpaceInfoExtended => 
     dialog: { ...spaceConfig.dialogHandlerMessageIds },
     config: spaceConfig.config,
     spaceOwners: spaceConfig.spaceOwners,
-    snapshotSpace: spaceConfig.config.snapshot.space,
-    juiceboxProjectId: spaceConfig.config.juicebox.projectId,
+    snapshotSpace: spaceConfig.config.snapshot.space || "",
+    juiceboxProjectId: spaceConfig.config.juicebox.projectId || "",
     proposalSubmissionValidation: spaceConfig.config.proposalSubmissionValidation,
     transactorAddress: {
       type: spaceConfig.config.juicebox.gnosisSafeAddress ? 'safe' : 'governor',
       network: spaceConfig.config.juicebox.network,
       address: spaceConfig.config.juicebox.gnosisSafeAddress ||
-        spaceConfig.config.juicebox.governorAddress,
+        spaceConfig.config.juicebox.governorAddress || "",
     }
   };
 };

@@ -1,3 +1,5 @@
+import { NanceConfig } from "@nance/nance-sdk";
+
 export const DEFAULT_DASHBOARD = "https://nance.app";
 
 export const DOLTHUB_REMOTE_URL = "https://doltremoteapi.dolthub.com/nance";
@@ -48,3 +50,46 @@ export const ONE_HOUR_SECONDS = 3600;
 export const FIVE_MINUTES_SECONDS = 300;
 export const ONE_DAY_SECONDS = 24 * 60 * 60;
 export const ONE_DAY_MILLISECONDS = ONE_DAY_SECONDS * 1000;
+
+export const DEFAULT_CONFIG: NanceConfig = {
+  name: "Nance",
+  proposalIdPrefix: null,
+  allowCurrentCycleSubmission: false,
+  juicebox: {
+    network: "mainnet",
+    projectId: null,
+    gnosisSafeAddress: null
+  },
+  discord: {
+    API_KEY: "DISCORD_KEY_NANCE",
+    guildId: null,
+    roles: {
+      governance: null
+    },
+    channelIds: {
+      proposals: null,
+      bookkeeping: null,
+      transactions: null
+    },
+    poll: {
+      minYesVotes: 10,
+      yesNoRatio: 0.3
+    },
+    reminder: {
+      channelIds: null,
+      imagesCID: null,
+      imageNames: null
+    }
+  },
+  dolt: {
+    enabled: false,
+    owner: "nance",
+    repo: null
+  },
+  snapshot: {
+    space: null,
+    choices: ["For", "Against", "Abstain"],
+    minTokenPassingAmount: 1,
+    passingRatio: 0.5
+  }
+};

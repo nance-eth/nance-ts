@@ -207,13 +207,6 @@ export function sqlSchemaToString(): string[] {
   return fs.readFileSync(`${path.join(__dirname, "../assets/schema.sql")}`, "utf-8").split(";");
 }
 
-export function mergeTemplateConfig(config: any): NanceConfig {
-  const template = JSON.parse(fs.readFileSync(`${path.join(__dirname, "./config/template/template.json")}`, "utf-8"));
-  const merged = merge(template, config);
-  merged.dolt.repo = config.name;
-  return merged;
-}
-
 export function mergeConfig(configOld: NanceConfig, configNew: Partial<NanceConfig>): NanceConfig {
   return merge(configOld, configNew) as NanceConfig;
 }
