@@ -52,7 +52,8 @@ and schedule appropriate tasks.
 
 `npm run db:setup`
 
-run local db and launch API in dev mode
+run local db in one terminal and launch API in dev mode in another
 
-`npm run dev:db:local`
+`npm run db:local`
 
+`npm run dev:local`

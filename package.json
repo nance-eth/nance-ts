@@ -10,6 +10,7 @@
     "spec": "export LOCAL_DB=1 && jest",
     "test": "export LOCAL_DB=1 && jest ./test/api/setup/order.test.ts",
     "dev": "node scripts/dev.js",
+    "dev:local": "export LOCAL_DB=1 && npm run dev",
     "db:setup": "cd src/dolt/local && ./test_setup.sh",
     "db:local": "dolt sql-server --data-dir ./src/dolt/local/databases",
     "clean": "rm -rf node_modules && rm -rf dist",
