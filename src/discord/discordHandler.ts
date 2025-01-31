@@ -22,6 +22,7 @@ import { removeReacts, threadToURL } from "./helpers";
 import * as t from "./templates";
 import { getENS } from "@/api/helpers/ens";
 import { pollActionRow } from "./button/poll";
+import { pushProposalActionRow } from "./button/pushProposal";
 
 const SILENT_FLAG = 1 << 12;
 
@@ -66,7 +67,7 @@ export class DiscordHandler {
     return this.discord.channels.cache.get(this.config.discord.channelIds.proposals) as TextChannel;
   }
 
-  private getChannelById(id: string): TextChannel {
+  getChannelById(id: string): TextChannel {
     return this.discord.channels.cache.get(id) as TextChannel;
   }
 
@@ -370,9 +371,13 @@ export class DiscordHandler {
       const post = await channel.threads.fetch(threadId) as ThreadChannel;
       const messageObj = await post.fetchStarterMessage();
       const results = t.blindPollMessage({ yes, no }, pass, quorum);
+      const components = [];
+      if (!pass) {
+        components.push(pushProposalActionRow);
+      }
       await messageObj?.edit({
         embeds: [messageObj.embeds[0], results],
-        components: []
+        components
       });
       return true;
     } catch (e) {
