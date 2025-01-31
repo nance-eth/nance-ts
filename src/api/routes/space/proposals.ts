@@ -2,7 +2,6 @@ import { Router, Request } from "express";
 import { ProposalUploadRequest } from "@nance/nance-sdk";
 import { SpaceMiddleware } from "@/api/middleware/types";
 import { cache, clearCache } from "@/api/helpers/cache";
-import { postSummary } from "@/nancearizer";
 import { discordNewProposal } from "@/api/helpers/discord";
 import { validateUploaderAddress } from "@/api/helpers/snapshotUtils";
 import { validateUploaderVp } from "@/api/helpers/proposal/validateProposal";
