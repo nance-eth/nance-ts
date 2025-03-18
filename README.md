@@ -18,7 +18,7 @@ When you use Nance all of your data is published and open on [DoltHub](https://d
 We even keep our system database up-to-date on [DoltHub here](https://www.dolthub.com/repositories/nance/nance_sys) so you can use our config data if you'd like
 
 _Note:
-This repo contains both [nance-api](/src/api) and [nance-scheduler](/src/scheduler) (a [node-schedule](https://www.npmjs.com/package/node-schedule) based job runner). For production we run both of these services on [Railway](https://railway.app)._
+This repo contains both [nance-api](/src/api) and [nance-scheduler](/src/scheduler) . For production we run both of these services on [Railway](https://railway.app)._
 
 ## Self hosting API
 
@@ -41,12 +41,7 @@ We run the nance-api on [Railway](https://railway.app?referralCode=UAqXpP), you 
 `npm run start:api` --> runs compiled version of API
 
 ## Task Scheduler Usage
-`npm run build:scheduler` --> compiles scheduler to javascript
-
-`npm run start:scheduler` --> runs compiled version of scheduler
-
-This will load a JSON formatted calendar for each organization from our [nance_sys DoltDB](https://www.dolthub.com/repositories/nance/nance_sys)
-and schedule appropriate tasks.
+When you start the API the task scheduler is started as well. It is (a [node-schedule](https://www.npmjs.com/package/node-schedule) based job runner) see [scheduler/index.ts](https://github.com/nance-eth/nance-ts/blob/main/src/scheduler/index.ts#L14).
 
 ## Local Database setup
 
