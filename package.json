@@ -42,6 +42,7 @@
     "graphql-request": "^4.2.0",
     "lodash": "^4.17.21",
     "mysql2": "^3.10.3",
+    "next": "^14.2.35",
     "next-auth": "^4.24.7",
     "node-schedule": "^2.1.1",
     "promise-retry": "^2.0.1",
