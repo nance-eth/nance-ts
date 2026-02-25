@@ -300,8 +300,6 @@ export class DiscordHandler {
     const pollReactionsCollection = messageObj.reactions.cache.get(emoji);
     let users: string[] = [];
     const unverified: string[] = [];
-    // fetch members
-    await this.discord.guilds.cache.get(this.config.discord.guildId)?.members.fetch();
     const { verifyRole } = this.config.discord.poll;
     if (pollReactionsCollection !== undefined) {
       users = await pollReactionsCollection.users.fetch()
@@ -322,6 +320,8 @@ export class DiscordHandler {
   async getPollVoters(messageId: string): Promise<PollResults> {
     try {
       const messageObj = await this.getAlertChannel().messages.fetch(messageId);
+      // fetch guild members once before processing reactions
+      await this.discord.guilds.cache.get(this.config.discord.guildId)?.members.fetch();
       const yesVoteUserList = await this.getUserReactions(
         messageObj,
         EMOJI.YES
